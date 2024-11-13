@@ -1,0 +1,81 @@
+.ag-cell {
+    white-space: normal !important;
+}
+
+.form-separator-row  {
+    background-color: #BA0225 !important;
+    font-size: 20px !important;
+    color: #FFFFFF !important; 
+}
+
+.section-separator-row  {
+    background-color: #475160 !important;
+    font-size: 14px !important;
+    color: #FFFFFF !important; 
+}
+
+/* restyle radio items */
+.radio-group .form-check {
+    padding-left: 0;
+  }
+  
+  .radio-group .btn-group > .form-check:not(:last-child) > .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .radio-group .btn-group > .form-check:not(:first-child) > .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -1px;
+  }
+
+
+.grid-green-row {
+    background-color: #66c2a5 !important;
+}
+
+.grid-blue-row {
+    background-color: #119dff !important;
+}
+
+.row-dragging-grid-to-grid-container {
+    display: flex;
+    align-items: center;
+    column-gap: 20px;
+}
+
+.homeheader-section {
+    background-color: #BA0225 !important;
+    color: white;
+    padding: 5rem 0;
+}
+
+.home-button {
+    background-color: #BA0225; /* Button background color */
+    color: white; /* Button text color */
+    border: 2px solid #BA0225; /* Button border color */
+    font-size: 1.25rem; /* Adjust font size as needed */
+    padding: 10px 20px; /* Optional: Adjust padding for better appearance */
+}
+
+.home-button:hover {
+    background-color: #ffffea; /* Button background color on hover */
+    color: #BA0225; /* Button text color on hover */
+    border: 2px solid #ffffea; /* Button border color on hover */
+}
+
+.card-body-fixed {
+    height: 350px;  /* Adjust the height as needed */
+    overflow-y: auto;  /* Adds a scroll bar if content overflows */
+}
+
+.card-tools-fixed {
+    height: 480px;  /* Adjust the height as needed */
+    overflow-y: auto;  /* Adds a scroll bar if content overflows */
+}
+
+.img-logo {
+    width: 100px;
+    height: 100px;
+ }
