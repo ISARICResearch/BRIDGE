@@ -27,7 +27,7 @@ BRIDGE Version 1.0 enables users to select variables from the ARC versions that 
 
 ## How to Use BRIDGE
 
-You can find intructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, we encourage all users to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository if they would like to report any issues or to contribute improvements.
+You can find intructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, we encourage all users to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or send us a [mail](mailto:data@isaric.org) if they would like to report any issues or to contribute improvements.
 
 ## Contributors
 
