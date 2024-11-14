@@ -3,11 +3,11 @@ ISARIC BRIDGE is a web-based application designed to operationalize [ISARIC ARC]
 
 ## About BRIDGE
 
-BRIDGE (BioResearch Integrated Data tool GEnerator) is designed to serve as a resource for researchers and healthcare professionals involved in the study of outbreaks and emerging public health threats. BRIDGE automates the creation of Case Report Forms (CRFs) for specific diseases and research contexts. It generates the necessary data dictionary and XML to create a REDCap database for data capture in the ARC structure. BRIDGE allows to:
+BRIDGE (BioResearch Integrated Data tool GEnerator) is designed to serve as a resource for researchers and healthcare professionals involved in the study of outbreaks and emerging public health threats. BRIDGE allows users to:
 
-- **Choose**: BRIDGE uses the machine-readable library ARC and allows the user to choose the questions they want to include in the CRF. BRIDGE presents ARC as a tree structure with different levels: ARC version, forms, sections, and questions. Users navigate through this tree and select the questions they want to include in the CRF. Additionally, users can start with one of our Presets, which are pre-selected groups of questions. They can click on the Pre-sets tab and select those they want to include in the CRF. All selected questions can be customized.
+- **Choose**: BRIDGE uses the machine-readable library ARC and allows the user to choose the questions they want to include in the CRF. BRIDGE presents ARC as a tree structure with different levels: ARC version, forms, sections, and questions. Users navigate through this tree and select the questions they want to include in the CRF. Additionally, users can start with one of our Templates, which are pre-selected groups of questions. They can click on the Templates tab and select those they want to include in the CRF. All selected questions can be customized.
 
-- **Customize**: BRIDGE allows customization of CRFs from chosen questions, as well as selection of measurement units and answer options where pertinent. Users click the relevant question, and a checkable list appears with options for the site or disease being researched. This feature ensures that the CRF is tailored to specific needs, enhancing the precision and relevance of the data collected.
+- **Customize**: BRIDGE allows customization of CRFs from chosen questions. For some questions, users can also select measurement units or answer options from predefined checkable lists. Users can click the relevant question, and a checkable list will appear with options for the site or disease being researched. This feature ensures that the CRF is tailored to specific needs, enhancing the precision and relevance of the data collected.
 
 - **Capture**: BRIDGE generates files for creating databases within REDCap, including the data dictionary and XML needed to create a REDCap database for capturing data in the ARC structure. It also produces paper-like versions of the CRFs and completion guides. Once users are satisfied with their selections, they can name the CRF and click on generate to finalize the process, ensuring a seamless transition to data collection.
 
@@ -15,7 +15,7 @@ BRIDGE is openly available to the research community under the Creative Commons 
 
 ## BRIDGE Version 1.0
 
-BRIDGE version 1.0 enables users to select variables from the ARC versions saved in the ARC folder within the repository. It also allows the selection of templates included in these versions and supports the generation of the following files:
+BRIDGE Version 1.0 enables users to select variables from the ARC versions that are saved in the ARC folder within the repository. It also allows the selection of templates included in these versions and supports the generation of the following files:
 
 ### Files
 
@@ -27,7 +27,7 @@ BRIDGE version 1.0 enables users to select variables from the ARC versions saved
 
 ## How to Use BRIDGE
 
-You can find intructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html)
+You can find intructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, we encourage all users to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository if they would like to report any issues or to contribute improvements.
 
 ## Contributors
 
