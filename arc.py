@@ -1,10 +1,8 @@
-from github import Github
 import pandas as pd
 import requests
 import re
 import numpy as np
 from datetime import datetime
-import os
 
 #ARC - Analysis and Research Compendium 
 
@@ -34,15 +32,42 @@ def getResearchQuestionTypes(datadicc):
 
     
 
-def getARCHVersions():
 
-    arch_folders = [f.name for f in os.scandir('ARC/') if f.is_dir()]
-    '''
+     
+
+
+def getARCVersions():
+
     # GitHub API URL for the contents of the repository
-    repo_name = "ISARICResearch/DataPlatform"
-    path = "ARCH"
-    url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
+    repo_owner = "ISARICResearch"
+    repo_name = "ARC"
+    #token = 
+
+    # URL de la API
+    url_release = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases'
+
+    # Cabeceras para la solicitud con el token
+    headers = {
+        "Authorization": f"token {token}"
+    }
+
+    # Solicitud GET
+    response = requests.get(url_release, headers=headers)
+
+    # Verifica el estado de la respuesta
+    if response.status_code == 200:
+        releases = response.json()
+        tag_names = [release['tag_name'] for release in releases]
+        print(tag_names)
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+
     
+
+
+    #url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
+    
+    '''
     # Make the request
     response = requests.get(url)
     folder_names = []
@@ -54,9 +79,9 @@ def getARCHVersions():
     else:
         print("Failed to retrieve data:", response.status_code)
     '''
-    
-    
-    versions = set(arch_folders)
+
+    versions=tag_names
+    #versions = set(folder_names)
     
     # Parse versions, including handling "-rc"
     parsed_versions = []
@@ -64,15 +89,15 @@ def getARCHVersions():
     for version in versions:
         if '-rc' in version:
             base_version = version.split('-rc')[0]
-            parsed_versions.append((tuple(map(int, base_version.split('ARC')[1].split('.'))), '-rc'))
+            parsed_versions.append((tuple(map(int, base_version.split('v')[1].split('.'))), '-rc'))
             rc_version_str = version  # Store the rc version
         else:
-            parsed_versions.append((tuple(map(int, version.split('ARC')[1].split('.'))), ''))
+            parsed_versions.append((tuple(map(int, version.split('v')[1].split('.'))), ''))
     
     # Filter out "-rc" versions to get the most recent non-rc version
     non_rc_versions = [v for v, suffix in parsed_versions if suffix == '']
     most_recent_version = max(non_rc_versions)
-    most_recent_version_str = 'ARC' + '.'.join(map(str, most_recent_version))
+    most_recent_version_str = 'v' + '.'.join(map(str, most_recent_version))
     
     # Include all versions back in the list
     all_versions = list(versions)
@@ -95,10 +120,24 @@ def getVariableOrder(current_datadicc):
     return list(order['Sec_vari'])
 
 
-def getARCH(version):   
-    root='ARC/'
-    datadicc_path = root+version+'/'+'ARC.csv'
-    
+def getARC(version):   
+    #sv_selected=version
+    #v_selected=sv_selected.split('.')[0].replace(' ','%20')
+    #sv_selected=sv_selected.replace(' ','%20')
+    #token = 
+    headers = {
+    "Authorization": f"token {token}"
+    }
+    get_link=requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags',headers=headers).json()
+    for i in get_link:
+        if i['name']==version:
+            print('in getARC'+i['name'])
+            commit=i['commit']['sha']
+
+    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+
+    datadicc_path = root+commit+'/'+'ARC.csv'
+
     try:
         datadicc = pd.read_csv(datadicc_path, encoding='utf-8')
         dependencies=getDependencies(datadicc) 
@@ -116,7 +155,7 @@ def getARCH(version):
             presets.append(parts)
 
 
-        return datadicc,presets
+        return datadicc,presets,commit
     except Exception as e:
         print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
     
@@ -159,7 +198,7 @@ def getDependencies(datadicc):
         return dependencies
 
 def getTreeItems(datadicc,version):
-    version=version.replace('ICC','ARCH')
+    version=version.replace('ICC','ARC')
     include_not_show=['otherl3','otherl2','route','route2','site','agent','agent2','warn','warn2','warn3','units','add','type','vol','site','txt']
 
     dependencies=getDependencies(datadicc) 
@@ -177,7 +216,7 @@ def getTreeItems(datadicc,version):
     forItem=datadicc[['Form','Sec_name','vari','mod','Question','Variable','Type']].loc[~datadicc['mod'].isin(include_not_show)]
     forItem= forItem[forItem['Sec_name'].notna()]
 
-    tree = {'title': version, 'key': 'ARCH', 'children': []}
+    tree = {'title': version, 'key': 'ARC', 'children': []}
     seen_forms = set()
     seen_sections = {}
     primary_question_keys = {}  # To keep track of primary question nodes
@@ -326,14 +365,16 @@ def getSelectUnits(selected_variables,current_datadicc):
         return icc_var_units_selected,list(set(delete_this_variables_with_units)-set(icc_var_units_selected['Variable']))
     return None,None
 
-def getListContent(current_datadicc,version):
+def getListContent(current_datadicc,version,commit):
     level2_answers=[]
     all_rows_lists=[]
     #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='list']         
-    #root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
-    root='ARC/'
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='list']  
+    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+
+    #datadicc_path = root+commit+'/'+'ARC.csv'       
+    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
     
     list_variable_choices=[]
     for _, row in datadiccDisease_lists.iterrows():
@@ -341,7 +382,7 @@ def getListContent(current_datadicc,version):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+version+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
             try:
                 list_options = pd.read_csv(list_path,encoding='latin1') 
             except Exception as e:
@@ -520,21 +561,21 @@ def getListContent(current_datadicc,version):
 
 #HERE CHECK already modified variables x182#
 
-def getUserListContent(current_datadicc,version,mod_list,user_checked_options=None,ulist_var_name=None):
+def getUserListContent(current_datadicc,version,mod_list,commit,user_checked_options=None,ulist_var_name=None):
     level2_answers=[]
     all_rows_lists=[]
     #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='user_list']         
-    #root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
-    root='ARC/'
+    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
+    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
     ulist_variable_choices=[]
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+version+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
             try:
                 list_options = pd.read_csv(list_path,encoding='latin1') 
             
@@ -641,21 +682,24 @@ def getUserListContent(current_datadicc,version,mod_list,user_checked_options=No
 
 
 
-def getMultuListContent(current_datadicc,version,user_checked_options=None,ulist_var_name=None):
+def getMultuListContent(current_datadicc,version,commit,user_checked_options=None,ulist_var_name=None):
     level2_answers=[]
     all_rows_lists=[]
     #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='multi_list']         
-    #root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
-    root='ARC/'
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='multi_list']  
+
+    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+
+    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
+    
     ulist_variable_choices=[]
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+version+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
             try:
                 list_options = pd.read_csv(list_path,encoding='latin1') 
             

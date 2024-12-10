@@ -1,5 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
+#import dash_core_components as dcc
+#import dash_table
 from dash import dcc
 from dash import dash_table
 
@@ -8,13 +10,14 @@ from dash import html, Input, Output, State, ALL
 import pandas as pd
 from dash.exceptions import PreventUpdate
 import dash_ag_grid as dag
-import arch
+import arc as ARC
 import dash_treeview_antd
 import paperCRF
 import generate_form # Aidan: added this for format choices
 import json
 import bridge_modals 
 from dash import callback_context
+#from pdf2docx import Converter
 from datetime import datetime
 import io
 from zipfile import ZipFile
@@ -27,38 +30,40 @@ app.title ='BRIDGE'
 
 modified_list=[]
 
-versions,recentVersion=arch.getARCHVersions()
+versions,recentVersion=ARC.getARCVersions()
+
+
 currentVersion=recentVersion
-current_datadicc,presets=arch.getARCH(recentVersion)
+current_datadicc,presets,commit=ARC.getARC(recentVersion)
+print('Begining')
+
 current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
 current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
-
+'''
 for i in current_datadicc:
     print('#####################')
     print(i)
-
-tree_items_data=arch.getTreeItems(current_datadicc,recentVersion)
+'''
+tree_items_data=ARC.getTreeItems(current_datadicc,recentVersion)
 
 #List content Transformation
-arch_lists,list_variable_choices=arch.getListContent(current_datadicc,currentVersion)
-current_datadicc=arch.addTransformedRows(current_datadicc,arch_lists,arch.getVariableOrder(current_datadicc))
+ARC_lists,list_variable_choices=ARC.getListContent(current_datadicc,currentVersion,commit)
+current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_lists,ARC.getVariableOrder(current_datadicc))
 
 
 #User List content Transformation
-arch_ulist,ulist_variable_choices=arch.getUserListContent(current_datadicc,currentVersion,modified_list)
+ARC_ulist,ulist_variable_choices=ARC.getUserListContent(current_datadicc,currentVersion,modified_list,commit)
 
 
 
-current_datadicc=arch.addTransformedRows(current_datadicc,arch_ulist,arch.getVariableOrder(current_datadicc))
-arch_multilist,multilist_variable_choices=arch.getMultuListContent(current_datadicc,currentVersion)
+current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_ulist,ARC.getVariableOrder(current_datadicc))
+ARC_multilist,multilist_variable_choices=ARC.getMultuListContent(current_datadicc,currentVersion,commit)
 
-current_datadicc=arch.addTransformedRows(current_datadicc,arch_multilist,arch.getVariableOrder(current_datadicc))
+current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_multilist,ARC.getVariableOrder(current_datadicc))
 initial_current_datadicc =  current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices =  json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices =  json.dumps(multilist_variable_choices)
 
-
-print(versions)
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -134,11 +139,12 @@ sidebar = html.Div(
 )
 
 
-arch_versions = versions
-arch_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for i, version in enumerate(arch_versions)]
+ARC_versions = versions
+ARC_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for i, version in enumerate(ARC_versions)]
 
 # Grouping presets by the first column
 grouped_presets = {}
+
 for key, value in presets:
     grouped_presets.setdefault(key, []).append(value)
 
@@ -200,10 +206,10 @@ settings_content = html.Div(
             dbc.InputGroup([
                 dbc.DropdownMenu(
                     label="ARC Version",
-                    children=arch_versions_items,
-                    id="dropdown-arch-version-menu"
+                    children=ARC_versions_items,
+                    id="dropdown-ARC-version-menu"
                 ),
-                dbc.Input(id="dropdown-arch_version_input", placeholder="name")
+                dbc.Input(id="dropdown-ARC_version_input", placeholder="name")
             ]),
             dcc.Store(id='selected-version-store'),
             dcc.Store(id='selected_data-store'),
@@ -387,15 +393,18 @@ main_content = dbc.Container(
     fluid=True,
     style={"margin-top": "4rem", "margin-left": "4rem","z-index": 1,"width":"90vw"}  # Adjust margin to accommodate navbar and sidebar
 )
+
 app.layout = html.Div(
     [
         dcc.Store(id='show-Take a Look at Our Other Tools', data=True),  # Store to manage which page to display
+        
         dcc.Store(id='current_datadicc-store',data=initial_current_datadicc),
         dcc.Store(id='ulist_variable_choices-store',data=initial_ulist_variable_choices),
         dcc.Store(id='multilist_variable_choices-store',data=initial_multilist_variable_choices),
         dcc.Store(id='grouped_presets-store',data=initial_grouped_presets),
         dcc.Store(id='tree_items_data-store',data=initial_grouped_presets),
 
+        
         dcc.Store(id='templates_checks_ready', data=False),
 
         #navbar,
@@ -418,6 +427,7 @@ app.layout = html.Div(
                     children=html.Div(id="loading-output-1"),
         ),
         dcc.Store(id='selected-version-store'),
+        dcc.Store(id='commit-store'),
         dcc.Store(id='selected_data-store')
     ]
 )
@@ -451,7 +461,7 @@ def home_page():
                 dbc.Col([
                     html.H4("Accelerating Outbreak Research Response", className="mb-3"),
                     html.P("BRIDGE automates the creation of Case Report Forms (CRFs) for specific diseases and research contexts. It generates the necessary data dictionary and XML to create a REDCap database for data capture in the ARC structure. Learn more in our ", style={"font-size": "20px", "display": "inline"}),
-                    html.A("guide for getting started.", href="https://isaricresearch.github.io/Training/bridge_starting.html", target="_blank", style={"font-size": "20px", "display": "inline"})
+                    html.A("guide for getting started.", href="https://ISARICResearch.github.io/Training/bridge_starting.html", target="_blank", style={"font-size": "20px", "display": "inline"})
                 ], md=9)
             ], className="my-5"),
 
@@ -605,14 +615,14 @@ def home_page():
                         dbc.Card([
                             dbc.CardImg(src="/assets/logos/arc_logo.png", top=True),
                             dbc.CardBody([
-                                html.H4("Analysis and Research Compendium (ARC)", className="card-title"),
+                                html.H4("Analysis and ReseARC Compendium (ARC)", className="card-title"),
                                 html.P([
                                     "ARC is a comprehensive machine-readable document in CSV format, designed for use in Clinical Report Forms (CRFs) during disease outbreaks. ",
                                     "It includes a library of questions covering demographics, comorbidities, symptoms, medications, and outcomes. ",
                                     "Each question is based on a standardized schema, has specific definitions mapped to controlled terminologies, and has built-in quality control. ",
                                     "ARC is openly accessible, with version control via GitHub ensuring document integrity and collaboration."
                                 ], className="card-text"),
-                                html.A("Find Out More",  target="_blank",href="https://github.com/ISARICResearch/DataPlatform/tree/main/ARCH", style={'display': 'block', 'margin-top': '10px', 'color': '#BA0225'})
+                                html.A("Find Out More",  target="_blank",href="https://github.com/ISARICResearch/ARC", style={'display': 'block', 'margin-top': '10px', 'color': '#BA0225'})
                             ], className="card-tools-fixed")
                         ])
                     ], md=3),
@@ -828,8 +838,8 @@ def display_checked(checked,current_datadicc_saved):
 
 
 
-    column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True}, 
-                    {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
+    column_defs = [ {'headerName': "Question", 'field': "Question", 'wrapText': True}, 
+                {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
     row_data = [{'question': "", 'options': ""},
                 {'question': "", 'options': ""}]
@@ -849,17 +859,17 @@ def display_checked(checked,current_datadicc_saved):
         #############################################################
         ## REDCAP Pipeline
         delete_this_variables_with_units=[]
-        selected_variables=arch.getIncludeNotShow(selected_variables['Variable'],current_datadicc)
+        selected_variables=ARC.getIncludeNotShow(selected_variables['Variable'],current_datadicc)
 
         #Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units=arch.getSelectUnits(selected_variables['Variable'],current_datadicc)
+        arc_var_units_selected, delete_this_variables_with_units=ARC.getSelectUnits(selected_variables['Variable'],current_datadicc)
         if arc_var_units_selected is not None:
-            selected_variables = arch.addTransformedRows(selected_variables,arc_var_units_selected,arch.getVariableOrder(current_datadicc))
+            selected_variables = ARC.addTransformedRows(selected_variables,arc_var_units_selected,ARC.getVariableOrder(current_datadicc))
             if len(delete_this_variables_with_units)>0: # This remove all the unit variables that were included in a select unit type question
                 selected_variables = selected_variables.loc[~selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
 
-        selected_variables = arch.generateDailyDataType(selected_variables)
+        selected_variables = ARC.generateDailyDataType(selected_variables)
 
         #############################################################
         #############################################################
@@ -902,8 +912,8 @@ def display_checked(checked,current_datadicc_saved):
         # Convert to dictionary for row_data
         row_data = selected_variables_for_TableVisualization.to_dict(orient='records')
 
-        column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True}, 
-                        {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
+        column_defs = [ {'headerName': "Question", 'field': "Question", 'wrapText': True}, 
+                {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
 
 
@@ -979,81 +989,79 @@ def display_expanded(expanded):
 
 @app.callback(
     [Output('selected-version-store', 'data', allow_duplicate=True),
+     Output('commit-store', 'data', allow_duplicate=True),
      Output('preset-accordion', 'children', allow_duplicate=True),
-     Output('grouped_presets-store','data'),
+     Output('grouped_presets-store', 'data'),
      Output('current_datadicc-store', 'data', allow_duplicate=True),
      Output('templates_checks_ready', 'data')],
     [Input({'type': 'dynamic-version', 'index': dash.ALL}, 'n_clicks')],
-    [State('selected-version-store', 'data')],
-    prevent_initial_call=True  # Evita que se dispare inicialmente
+    [State('selected-version-store', 'data')],  # Obtenemos el valor actual del store
+    prevent_initial_call=True  # Evita que se dispare al inicio
 )
-def store_clicked_item(n_clicks,data):
+def store_clicked_item(n_clicks, selected_version_data):
     ctx = dash.callback_context
+    
+    # Si no hay cambios (es decir, no hay un input activado), no se hace nada
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
-    else:
-        button_id = ctx.triggered[0]['prop_id']
-        id_json = button_id.split(".")[0]  # Extraemos el JSON de la ID
-        try:
-            version_index = json.loads(id_json)["index"]
-            selected_version = arch_versions[version_index]
+    
+    button_id = ctx.triggered[0]['prop_id'].split(".")[0]  # Extraer la ID del botón
 
-            # Obtén el current_datadicc actualizado para la versión seleccionada
-            current_datadicc, presets = arch.getARCH(selected_version)
-            current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
-            current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+    # Revisar si el valor ha cambiado antes de ejecutar el callback
+    version_index = json.loads(button_id)["index"]
+    new_selected_version = ARC_versions[version_index]
+    
+    if new_selected_version == selected_version_data:  # No hay cambios
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+    
+    # Si hay un cambio, procesamos la lógica
+    try:
+        selected_version = new_selected_version
+        current_datadicc, presets, commit = ARC.getARC(selected_version)
+        current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
+        current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
 
+        ARC_lists, list_variable_choices = ARC.getListContent(current_datadicc, selected_version, commit)
+        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_lists, ARC.getVariableOrder(current_datadicc))
 
-            # Actualizar el contenido de current_datadicc con las transformaciones
-            arch_lists, list_variable_choices = arch.getListContent(current_datadicc, selected_version)
-            current_datadicc = arch.addTransformedRows(current_datadicc, arch_lists, arch.getVariableOrder(current_datadicc))
+        ARC_ulist, ulist_variable_choices = ARC.getUserListContent(current_datadicc, selected_version, modified_list, commit)
+        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_ulist, ARC.getVariableOrder(current_datadicc))
 
-            # Actualizar el contenido del User List y MultiList
-            arch_ulist, ulist_variable_choices = arch.getUserListContent(current_datadicc, selected_version, modified_list)
-            current_datadicc = arch.addTransformedRows(current_datadicc, arch_ulist, arch.getVariableOrder(current_datadicc))
+        ARC_multilist, multilist_variable_choices = ARC.getMultuListContent(current_datadicc, selected_version, commit)
+        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_multilist, ARC.getVariableOrder(current_datadicc))
 
-            arch_multilist, multilist_variable_choices = arch.getMultuListContent(current_datadicc, selected_version)
-            current_datadicc = arch.addTransformedRows(current_datadicc, arch_multilist, arch.getVariableOrder(current_datadicc))
+        grouped_presets = {}
+        for key, value in presets:
+            grouped_presets.setdefault(key, []).append(value)
 
-            # Agrupar los presets por la primera columna (como en la versión original)
-            grouped_presets = {}
-            for key, value in presets:
-                grouped_presets.setdefault(key, []).append(value)
-
-            # Crear los elementos del acordeón
-            accordion_items = []
-            for key, values in grouped_presets.items():
-                # Para cada grupo, crear una checklist
-                checklist = dbc.Checklist(
+        accordion_items = [
+            dbc.AccordionItem(
+                title=key,
+                children=dbc.Checklist(
                     options=[{"label": value, "value": value} for value in values],
                     value=[],
-                    #id=f'checklist-{key}',
                     id={'type': 'template_check', 'index': key},
                     switch=True,
                 )
-                # Crear un elemento de acordeón con la checklist
-                accordion_items.append(
-                    dbc.AccordionItem(
-                        title=key,
-                        children=checklist
-                    )
-                )
+            )
+            for key, values in grouped_presets.items()
+        ]
+        print('this is the selected version in store click',selected_version)
+        print('presets in store click',grouped_presets)
+        return (
+            {'selected_version': selected_version},  # Actualizamos el store con la nueva versión
+            {'commit': commit},
+            accordion_items,
+            grouped_presets,
+            current_datadicc.to_json(date_format='iso', orient='split'),
+            True
+        )
+    except json.JSONDecodeError:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
 
-
-            # Retornar los nuevos datos a los stores y actualizar el acordeón
-            print('this is the selected version in settings',selected_version)
-            print('grouped presets in settings',grouped_presets)
-            return {'selected_version': selected_version}, \
-                   accordion_items,\
-                   grouped_presets,\
-                   current_datadicc.to_json(date_format='iso', orient='split'),\
-                   True
-
-        except json.JSONDecodeError:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,False
 
 @app.callback(
-    Output("dropdown-arch_version_input", "value"),
+    Output("dropdown-ARC_version_input", "value"),
     [Input('selected-version-store', 'data')]
 )
 def update_input(data):
@@ -1063,30 +1071,82 @@ def update_input(data):
 
 
 @app.callback(
-    [Output('tree_items_container', 'children'),
-     Output('current_datadicc-store', 'data', allow_duplicate=True),
-     Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
-     Output('multilist_variable_choices-store', 'data', allow_duplicate=True)],
-    #[Input('grouped_presets-store', 'data'),Input('selected-version-store', 'data')]+[Input(f'checklist-{key}', 'value') for key in grouped_presets.keys()] , # Dynamically bind based on grouped_presets
-    [Input('grouped_presets-store', 'data'),Input('selected-version-store', 'data'),Input({'type': 'template_check', 'index': dash.ALL}, 'value')],
-    [State('current_datadicc-store', 'data'),],
-    prevent_initial_call=True
+    [
+        Output('tree_items_container', 'children'),
+        Output('current_datadicc-store', 'data', allow_duplicate=True),
+        Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
+        Output('multilist_variable_choices-store', 'data', allow_duplicate=True)
+    ],
+    [Input({'type': 'template_check', 'index': dash.ALL}, 'value')],
+    [
+        State('current_datadicc-store', 'data'),
+        State('grouped_presets-store', 'data'),
+        State('selected-version-store', 'data')
+    ],
+    prevent_initial_call=True  # Ensure callback doesn't fire on initialization
 )
-def update_output(grouped_presets, selected_version_data,values,current_datadicc_saved):
-#def update_output(*args):
-    current_datadicc=pd.read_json(current_datadicc_saved, orient='split')
+def update_output(values, current_datadicc_saved, grouped_presets, selected_version_data):
+    # Check the context to determine the triggering input
+    ctx = dash.callback_context
     currentVersion = selected_version_data.get('selected_version', None)
-    current_datadicc_temp, presets = arch.getARCH(currentVersion)
+    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    currentVersion = selected_version_data.get('selected_version', None)
+
+    current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
     current_datadicc_temp[['Sec', 'vari', 'mod']] = current_datadicc_temp['Variable'].str.split('_', n=2, expand=True)
     current_datadicc_temp[['Sec_name', 'Expla']] = current_datadicc_temp['Section'].str.split(r'[(|:]', n=1, expand=True)
 
-    tree_items_data=arch.getTreeItems(current_datadicc_temp,currentVersion)
+    tree_items_data = ARC.getTreeItems(current_datadicc_temp, currentVersion)
+    print('values en update output',values)
+    
+    if (not ctx.triggered) | (all(not sublist for sublist in values)):
+        tree_items = html.Div(
+                dash_treeview_antd.TreeView(
+                    id='input',
+                    multiple=False,
+                    checkable=True,
+                    checked=[],
+                    expanded=[],
+                    data=tree_items_data),id='tree_items_container',
+                style={
+                    'overflow-y': 'auto',  # Vertical scrollbar when needed
+                    'height': '75vh',     # Fixed height
+                    'width': '100%' ,       # Fixed width, or you can specify a value in px
+                    'white-space': 'normal',  # Allow text to wrap
+                    'overflow-x': 'hidden',     # Hide overflowed content
+                    'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+                    #'display': visibility_data['display']
+                    #'display': 'none'
+                }
+            )
+        return (tree_items, # Empty content for the tree items container
+            dash.no_update,        # Clear the current datadicc-store
+            dash.no_update,          # Clear ulist_variable_choices-store
+            dash.no_update      # Clear multilist_variable_choices-store
+        )
+        
+        #raise PreventUpdate  # Do nothing if no input triggered the callback
 
-
-
+    # Identify the specific component that triggered the callback
     if currentVersion is None or grouped_presets is None:
+        
         raise PreventUpdate  # Prevent update if data is missing
 
+  
+
+    # Proceed with your logic
+    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    currentVersion = selected_version_data.get('selected_version', None)
+
+    current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
+    current_datadicc_temp[['Sec', 'vari', 'mod']] = current_datadicc_temp['Variable'].str.split('_', n=2, expand=True)
+    current_datadicc_temp[['Sec_name', 'Expla']] = current_datadicc_temp['Section'].str.split(r'[(|:]', n=1, expand=True)
+
+    tree_items_data = ARC.getTreeItems(current_datadicc_temp, currentVersion)
+
+
+
+    
     templa_answer_opt_dict1=[]
     templa_answer_opt_dict2=[]
 
@@ -1112,14 +1172,14 @@ def update_output(grouped_presets, selected_version_data,values,current_datadicc
             template_ulist_var=current_datadicc.loc[current_datadicc['Type'].isin(['user_list','multi_list'])]
             template_ulist_lists=template_ulist_var['List']
             print('esta es la version seleccionada',currentVersion)
-            root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
+            root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
             #for t_u_list in template_ulist_lists:
             for index_tem_ul,row_tem_ul in template_ulist_var.iterrows():
-                print(row_tem_ul['Variable'])
+                #print(row_tem_ul['Variable'])
                 dict1_options=[]
                 dict2_options=[]
                 t_u_list = row_tem_ul['List']
-                list_path = root+currentVersion+'/Lists/'+t_u_list.replace('_','/')+'.csv'
+                list_path = root+commit+'/Lists/'+t_u_list.replace('_','/')+'.csv'
                 try:
                     list_options = pd.read_csv(list_path,encoding='latin1') 
 
@@ -1175,14 +1235,14 @@ def update_output(grouped_presets, selected_version_data,values,current_datadicc
     else:
         template_ulist_var=current_datadicc.loc[current_datadicc['Type'].isin(['user_list','multi_list'])]
 
-        root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
+        root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
         #for t_u_list in template_ulist_lists:
         for index_tem_ul,row_tem_ul in template_ulist_var.iterrows():
-            print(row_tem_ul['Variable'])
+            #print(row_tem_ul['Variable'])
             dict1_options=[]
             dict2_options=[]
             t_u_list = row_tem_ul['List']
-            list_path = root+currentVersion+'/Lists/'+t_u_list.replace('_','/')+'.csv'
+            list_path = root+commit+'/Lists/'+t_u_list.replace('_','/')+'.csv'
             try:
                 list_options = pd.read_csv(list_path,encoding='latin1') 
 
@@ -1256,7 +1316,12 @@ def update_output(grouped_presets, selected_version_data,values,current_datadicc
     #Check all list 
 
 
-    return tree_items,current_datadicc.to_json(date_format='iso', orient='split'),json.dumps(templa_answer_opt_dict1), json.dumps(templa_answer_opt_dict2)
+    return (
+        tree_items,
+        current_datadicc.to_json(date_format='iso', orient='split'),
+        json.dumps(templa_answer_opt_dict1),
+        json.dumps(templa_answer_opt_dict2)
+    )
 
 @app.callback(
     [Output('modal', 'is_open', allow_duplicate=True), Output('current_datadicc-store','data'),Output('ulist_variable_choices-store','data'),
@@ -1344,12 +1409,12 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks,current_datadicc_save
 
 
             #User List content Transformation
-            #arch_ulistSubmit,ulist_variable_choicesSubmit=arch.getUserListContent(current_datadicc,currentVersion,modified_list,list_options_checked,variable_submited)
+            #ARC_ulistSubmit,ulist_variable_choicesSubmit=ARC.getUserListContent(current_datadicc,currentVersion,modified_list,list_options_checked,variable_submited)
             #Este ulist_variable_choicesSubmit multilist_variable_choicesSubmit
-            #current_datadicc=arch.addTransformedRows(current_datadicc,arch_ulistSubmit,arch.getVariableOrder(current_datadicc))
+            #current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_ulistSubmit,ARC.getVariableOrder(current_datadicc))
 
-            #arch_multilistSubmit,multilist_variable_choicesSubmit=arch.getMultuListContent(current_datadicc,currentVersion,list_options_checked,variable_submited)
-            #current_datadicc=arch.addTransformedRows(current_datadicc,arch_multilistSubmit,arch.getVariableOrder(current_datadicc))
+            #ARC_multilistSubmit,multilist_variable_choicesSubmit=ARC.getMultuListContent(current_datadicc,currentVersion,list_options_checked,variable_submited)
+            #current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_multilistSubmit,ARC.getVariableOrder(current_datadicc))
 
             print(list_options_checked)
             checked.append(variable_submited)
@@ -1399,7 +1464,7 @@ def update_store(checked_values):
         Output("download-projectxml-pdf", "data"),
         Output("download-paperlike-pdf", "data")
     ],
-    [Input("crf_generate", "n_clicks"), Input("selected_data-store", "data")],
+    [Input("crf_generate", "n_clicks"), Input("selected_data-store", "data"),Input('selected-version-store', 'data'),Input('commit-store', 'data')],
     [
         State({'type': 'template_check', 'index': dash.ALL}, "value"),
         State("crf_name", "value"),
@@ -1407,7 +1472,7 @@ def update_store(checked_values):
     ],
     prevent_initial_call=True
 )
-def on_generate_click(n_clicks, json_data, values, crf_name, output_files):
+def on_generate_click(n_clicks, json_data,selected_version_data,commit_data,values, crf_name, output_files):
     print(output_files)
     if crf_name is not None:
 
@@ -1448,7 +1513,8 @@ def on_generate_click(n_clicks, json_data, values, crf_name, output_files):
 
         #paperCRF.generate_completionguide(selected_variables_fromData,path+crf_name+'_Completion_Guide_'+date+'.pdf',currentVersion, crf_name)
 
-        datadiccDisease=arch.generateCRF(selected_variables_fromData,crf_name)
+
+        datadiccDisease=ARC.generateCRF(selected_variables_fromData,crf_name)
 
         print('#############################')
         print('#############################')
@@ -1460,7 +1526,9 @@ def on_generate_click(n_clicks, json_data, values, crf_name, output_files):
             print(cosa)
 
         #datadiccDisease.to_csv(path+crf_name+'_'+date+'.csv',index=False, encoding='utf8')
-        pdf_crf=paperCRF.generate_pdf(datadiccDisease,currentVersion, crf_name)
+        currentVersion = selected_version_data.get('selected_version', None)
+        commit = commit_data.get('commit', None)
+        pdf_crf=paperCRF.generate_pdf(datadiccDisease,currentVersion, crf_name,commit)
 
 
         '''# Create a PDF to Word converter
@@ -1476,7 +1544,7 @@ def on_generate_click(n_clicks, json_data, values, crf_name, output_files):
         output = io.BytesIO()
         df.to_csv(output, index=False, encoding='utf8')
         output.seek(0)
-        pdf_data = paperCRF.generate_completionguide(selected_variables_fromData, currentVersion, crf_name)
+        pdf_data = paperCRF.generate_completionguide(selected_variables_fromData, currentVersion, crf_name,commit)
 
 
         file_name = 'ISARIC Clinical Characterisation Setup.xml'  # Set the desired download name here
@@ -1679,8 +1747,8 @@ def paralel_elements(features,id_feat,current_datadicc,selected_variables):
     [State('selected_data-store','data')],
 )
 def update_row3_content(selected_value,json_data):
-    caseDefiningVariables=arch.getResearchQuestionTypes(current_datadicc)
-    #research_question_elements=pd.read_csv('BRIDGE/assets/config_files/researchQuestions.csv') #change for deploy
+    caseDefiningVariables=ARC.getResearchQuestionTypes(current_datadicc)
+    #reseARC_question_elements=pd.read_csv('BRIDGE/assets/config_files/reseARCQuestions.csv') #change for deploy
     research_question_elements=pd.read_csv('assets/config_files/researchQuestions.csv') 
 
     group_elements=[]
@@ -1962,5 +2030,5 @@ def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
         return dash.no_update
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=True, use_reloader=False)
     #app.run_server(debug=True, host='0.0.0.0', port='8080')#change for deploy

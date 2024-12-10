@@ -12,6 +12,10 @@ from io import BytesIO
 from functools import partial
 from datetime import datetime
 
+# custom functions to generate sections of paperCRF
+from generate_form import generate_form
+from generate_opener import generate_opener
+
 
 try:
 # Register the font
@@ -49,6 +53,29 @@ def header_footer(canvas, doc,title):
     canvas.setFont("DejaVuSans", 6)
     canvas.drawString(inch, 0.75 * inch, "Licensed under a Creative Commons Attribution-ShareAlike 4.0 International License by ISARIC on behalf of the University of Oxford.")
 
+'''def format_choices(choices_str, field_type, threshold=65):
+    """
+    Format the choices string. If the combined length exceeds the threshold, use line breaks instead of commas.
+    Prepend symbols based on the field type.
+    """
+    if field_type == 'radio':
+        symbol = "○ "
+    elif field_type in ['checkbox', 'dropdown']:
+        symbol = "□ "
+    else:
+        symbol = ""
+    if len(choices_str.split('|'))<=15:
+        choices = [symbol + choice.split(',', 1)[-1].strip() for choice in choices_str.split('|')]
+        combined_choices = '   '.join(choices).strip()
+    else:
+
+        combined_choices = line_placeholder
+
+
+    if len(combined_choices) > threshold:
+        combined_choices = '<br/>'.join(choices).strip()
+
+    return combined_choices'''
 
 def create_table(data):
     table = Table(data, colWidths=[2.5*inch, 4*inch])
@@ -67,22 +94,66 @@ def create_table(data):
     table.setStyle(style)
     return table
 
-
-def generate_pdf(data_dictionary, version, db_name):
+def generate_pdf(data_dictionary, version, db_name,commit):
+    if isinstance(db_name, list):
+        db_name=db_name[0]
 
     data_dictionary = data_dictionary[~data_dictionary['Field Label'].str.startswith(('>', '->'))]
+    
+    
 
-
-
-    #root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
-    root='ARC/'
-    icc_version_path = root+version
+    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    icc_version_path = root+commit
     details = pd.read_csv(icc_version_path+'/paper_like_details.csv', encoding='latin-1')
 
 
     buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
     doc = SimpleDocTemplate(buffer, pagesize=letter)
 
+    elements = []
+
+
+    # Aidan: I created two new files and dedicated functions: generate_opener and generate_form
+    # This simple refactor will help me as I go on 
+
+    # Generates the opening information for the PaperCRF
+    elements = generate_opener(elements, details, db_name)
+
+
+    ###########################################################################
+    #elements.append(PageBreak()) # Aidan: I removed this following Yannik Update
+    #doc = SimpleDocTemplate(output_pdf_path, pagesize=letter)
+    #elements = []
+
+    # Get the predefined styles
+    #styles = getSampleStyleSheet() # Aidan: I removed this following Yannik Update
+
+    data_dictionary['Section Header'].replace('', pd.NA, inplace=True)
+    data_dictionary['Section Header'].fillna(method='ffill', inplace=True)
+
+
+    # Grouping by 'Section Header' instead of 'Form Name'
+
+    # Generates the fillable form for the PaperCRF
+    elements = generate_form(doc, data_dictionary, elements)
+
+    #doc.build(elements, onFirstPage=header_footer, onLaterPages=header_footer)
+    header_footer_partial = partial(header_footer, title=db_name)
+    doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
+    buffer.seek(0)
+
+    return buffer.getvalue()  # Return the PDF data
+
+
+
+'''
+def generate_pdf(data_dictionary, version, db_name):
+
+    root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
+    icc_version_path = root+version
+    details = pd.read_csv(icc_version_path+'/paper_like_details.csv', encoding='latin-1')
+    buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
 
     # Get the predefined styles
@@ -236,7 +307,7 @@ def generate_pdf(data_dictionary, version, db_name):
         group = data_dictionary[data_dictionary['Form Name'] == form_name]
 
         # Add form name as a title for each table
-        elements.append(Paragraph(form_name.upper(), header_style))
+        elements.append(Paragraph(form_name, header_style))
         data = []
         current_section = None
 
@@ -271,53 +342,75 @@ def generate_pdf(data_dictionary, version, db_name):
 
         table.setStyle(style)
         elements.append(table)
-        elements.append(PageBreak())
 
 
     #doc.build(elements, onFirstPage=header_footer, onLaterPages=header_footer)
     header_footer_partial = partial(header_footer, title=db_name)
     doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
     buffer.seek(0)
-    return buffer.getvalue()  # Return the PDF data
+    return buffer.getvalue()
+'''
 
-line_placeholder='_' * 30
+'''
+def generate_completionguide(data_dictionary, output_pdf_path, version, db_name):
+    data_dictionary=data_dictionary.copy()
+    root='https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
+    icc_version_path = root+version
+    details = pd.read_csv(icc_version_path+'/paper_like_details.csv', encoding='latin-1')
 
-def format_choices(choices_str, field_type, threshold=65):
-    """
-    Format the choices string. If the combined length exceeds the threshold, use line breaks instead of commas.
-    Prepend symbols based on the field type.
-    """
-    if field_type == 'radio':
-        symbol = "○ "
-    elif field_type=='list':
-        symbol="○ "
-    elif field_type=='user_list':
-        symbol="○ " 
-    elif field_type=='multi_list':
-        symbol=  "□ "         
-    elif field_type == 'checkbox' :
-        symbol = "□ "
-    elif field_type=='dropdown':
-        symbol="↧ "
-    else: 
-        symbol = ""
-    if len(choices_str.split('|'))<=15:
-        choices = [symbol + choice.split(',', 1)[-1].strip() for choice in choices_str.split('|')]
-        combined_choices = '   '.join(choices).strip()
-    else:
-        combined_choices = line_placeholder
-    if len(combined_choices) > threshold:
-        combined_choices = "\n".join(choices).strip()
-    return combined_choices
+    doc = SimpleDocTemplate(output_pdf_path, pagesize=letter)
+    elements = []
+
+    # Get the predefined styles
+    styles = getSampleStyleSheet()
+
+    normal_style = styles['Normal']
+    normal_style.fontSize = 8
+    normal_style.leading = 10
+    normal_style.fontName = 'DejaVuSans'  # Use the registered font
+
+    center_style = deepcopy(styles['Normal'])
+    center_style.fontSize = 8
+    center_style.leading = 10
+    center_style.fontName = 'DejaVuSans'  # Use the registered font
+    center_style.alignment = 1  # Center alignment
+
+    header_style = styles['Heading1']
+    header_style.fontSize = 10
+    header_style.leading = 12
+    header_style.fontName = 'DejaVuSans-Bold'  # Use the registered font
 
 
-line_placeholder='_' * 30
+    title_style = styles['Title']
+    title_style.fontSize = 14
+    title_style.leading = 20
+    title_style.fontName = 'DejaVuSans-Bold'
 
-def generate_completionguide(data_dictionary, version, db_name):
+    # Add title and design description from the details DataFrame
+    title_text = "Completion Guide"
+
+    elements.append(Paragraph("<br/><br/>"))  # Add some space
+
+    styles = getSampleStyleSheet()
+
+
+    data_dictionary['Section'].replace('', pd.NA, inplace=True)
+    data_dictionary['Section'].fillna(method='ffill', inplace=True)
+
+    for index, row in data_dictionary.iterrows():
+        elements.append(Paragraph(row['Question'], header_style))  # Add some space
+        elements.append(Paragraph(row['Definition'], normal_style))  # Add some space
+        elements.append(Paragraph(row['Completion Guideline'],normal_style))
+
+    doc.build(elements, onFirstPage=header_footer, onLaterPages=header_footer)
+'''
+
+
+
+def generate_completionguide(data_dictionary, version, db_name,commit):
     data_dictionary = data_dictionary.copy()
-    #root = 'https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/'
-    root = 'ARC/'
-    icc_version_path = root + version
+    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    icc_version_path = root + commit
     details = pd.read_csv(icc_version_path + '/paper_like_details.csv', encoding='latin-1')
 
     buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
@@ -355,3 +448,31 @@ def generate_completionguide(data_dictionary, version, db_name):
     buffer.seek(0)
     return buffer.getvalue()  # Return the PDF data
 
+
+'''
+
+def format_choices(choices_str, field_type, threshold=65):
+    """
+    Format the choices string. If the combined length exceeds the threshold, use line breaks instead of commas.
+    Prepend symbols based on the field type.
+    """
+    if field_type == 'radio':
+        symbol = "○ "
+    elif field_type=='list':
+        symbol="○ "
+    elif field_type=='user_list':
+        symbol="○ "            
+    elif field_type == 'checkbox' :
+        symbol = "□ "
+    elif field_type=='dropdown':
+        symbol="↧ "
+    else: 
+        symbol = ""
+    if len(choices_str.split('|'))<=15:
+        choices = [symbol + choice.split(',', 1)[-1].strip() for choice in choices_str.split('|')]
+        combined_choices = '   '.join(choices).strip()
+    else:
+        combined_choices = line_placeholder
+    if len(combined_choices) > threshold:
+        combined_choices = "\n".join(choices).strip()
+    return combined_choices'''
