@@ -27,13 +27,13 @@ def generate_opener(elements, details, db_name):
     center_style.alignment = 1  # Center alignment
 
     header_style = styles['Heading1']
-    header_style.fontSize = 10
-    header_style.leading = 12
+    header_style.fontSize = 12
+    header_style.leading = 14
     header_style.fontName = 'DejaVuSans-Bold'  # Use the registered font
 
 
     title_style = styles['Title']
-    title_style.fontSize = 14
+    title_style.fontSize = 16
     title_style.leading = 20
     title_style.fontName = 'DejaVuSans-Bold'
 
@@ -106,7 +106,7 @@ def generate_opener(elements, details, db_name):
 
     # Calculate the available width for the table
     page_width = 8.5 * inch
-    margin_width = 1 * inch  # Assuming a 1-inch margin on both sides
+    margin_width = .4 * inch  # Assuming a 1-inch margin on both sides
     table_width = page_width - 2 * margin_width  # subtracting both left and right margins
     num_columns = len(transformed_df.columns)
     col_width = table_width / num_columns
@@ -133,7 +133,7 @@ def generate_opener(elements, details, db_name):
 
 
     elements.append(Paragraph('GENERAL GUIDANCE', header_style))
-    elements.append(Spacer(1, 12))    
+    #elements.append(Spacer(1, 12))    
 
     for entry in details['Text'].loc[details['Paper-like section']=='GENERAL GUIDANCE']:
         bullet_point = Paragraph("• " + entry.replace('circles ()','circles (○)').replace('square boxes ()','square boxes (□)'), styles['Normal'])
