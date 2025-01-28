@@ -899,7 +899,7 @@ def display_checked(checked,current_datadicc_saved):
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
             else:
-                row['Answer Options'] = paperCRF.line_placeholder
+                row['Answer Options'] = generate_form.line_placeholder
 
             # Add the processed row to new_rows
             new_row = row.to_dict()

@@ -114,7 +114,7 @@ def generate_opener(elements, details, db_name):
     table = Table(table_data, colWidths=[col_width for _ in range(num_columns)])
 
     style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.hsl2rgb(0, 0, .7)),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),

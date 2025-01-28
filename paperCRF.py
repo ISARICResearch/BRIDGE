@@ -25,7 +25,6 @@ try:
 except:
     pdfmetrics.registerFont(TTFont('DejaVuSans', 'assets/fonts/DejaVuSans.ttf'))
     pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'assets/fonts/DejaVuSans-Bold.ttf'))
-line_placeholder='_' * 30
 
 
 def create_table(data):
@@ -54,7 +53,7 @@ def generate_pdf(data_dictionary, version, db_name,commit,isTest=False):
         # This acts to speed up iteration time on Paper like CRF changes
     if isTest:
         details = pd.read_csv('ARC/ARC1.0.0/paper_like_details.csv', encoding='latin-1')
-        buffer = "test.pdf"  # Use BytesIO object for in-memory PDF generation
+        buffer = "Tests/"+db_name+".pdf"  # Use BytesIO object for in-memory PDF generation
 
     else: 
         data_dictionary = data_dictionary[~data_dictionary['Field Label'].str.startswith(('>', '->'))]
