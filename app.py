@@ -27,7 +27,7 @@ versions, recentVersion = ARC.getARCVersions()
 
 currentVersion = recentVersion
 current_datadicc, presets, commit = ARC.getARC(recentVersion)
-print('Begining')
+print('Beginning')
 
 current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
 current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
@@ -837,7 +837,7 @@ def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
               [State('current_datadicc-store', 'data')],
               prevent_initial_call=True)
 def display_checked(checked, current_datadicc_saved):
-    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
                    {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
@@ -1098,7 +1098,7 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     # Check the context to determine the triggering input
     ctx = dash.callback_context
     currentVersion = selected_version_data.get('selected_version', None)
-    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
     current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
@@ -1338,7 +1338,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     dict2 = json.loads(multilist_variable_choices_saved)
 
     ctx = callback_context
-    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     if not ctx.triggered:
         return dash.no_update
