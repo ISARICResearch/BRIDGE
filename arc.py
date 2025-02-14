@@ -1,19 +1,24 @@
+import re
+
+import numpy as np
 import pandas as pd
 import requests
-import re
-import numpy as np
-from datetime import datetime
 
-#ARC - Analysis and Research Compendium 
+
+# ARC - Analysis and Research Compendium
 
 
 def getResearchQuestionTypes(datadicc):
-    caseDefiningFeatures=[["presentation","SIGNS AND SYMPTOMS ON ADMISSION: first data, from onset of this acute illness to day of presentation or admission"],
-                          ["daily","ASSESSMENT"],
-                          ["daily","SIGNS AND SYMPTOMS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment"],
-                          ["daily","VITAL SIGNS & ASSESSMENTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment."],
-                          ["daily","LABORATORY RESULTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment. In general, do not report results that have been rejected by the clinical team (e.g. haemolysed sample). Unless otherwise specified, if there are multiple measurements please report the measure furthest from from the normal physiological or laboratory range between 00:00 and 24:00 hours on day of assessment. If any individual test was not performed indicate 'No' or if the result is unavailable, please leave the data field blank."]
-    ]
+    caseDefiningFeatures = [["presentation",
+                             "SIGNS AND SYMPTOMS ON ADMISSION: first data, from onset of this acute illness to day of presentation or admission"],
+                            ["daily", "ASSESSMENT"],
+                            ["daily",
+                             "SIGNS AND SYMPTOMS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment"],
+                            ["daily",
+                             "VITAL SIGNS & ASSESSMENTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment."],
+                            ["daily",
+                             "LABORATORY RESULTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment. In general, do not report results that have been rejected by the clinical team (e.g. haemolysed sample). Unless otherwise specified, if there are multiple measurements please report the measure furthest from from the normal physiological or laboratory range between 00:00 and 24:00 hours on day of assessment. If any individual test was not performed indicate 'No' or if the result is unavailable, please leave the data field blank."]
+                            ]
 
     conditions = []
     for form, section in caseDefiningFeatures:
@@ -23,25 +28,17 @@ def getResearchQuestionTypes(datadicc):
     # Use pd.concat to combine all filtered DataFrames
     caseDefiningData = pd.concat(conditions, ignore_index=True)
 
+    OptionGroup = ["Patient Outcome", "Case Defining Features", "Clinical Features", "Risk Factors: Demographics",
+                   "Risk Factors: Socioeconomic", "Risk Factors: Comorbidities", "Treatment/Intevention"]
 
-    OptionGroup=["Patient Outcome","Case Defining Features","Clinical Features","Risk Factors: Demographics",
-                "Risk Factors: Socioeconomic","Risk Factors: Comorbidities","Treatment/Intevention"]
-
-
-    return caseDefiningData[['Variable','Form','Section','Question']]
-
-    
-
-
-     
+    return caseDefiningData[['Variable', 'Form', 'Section', 'Question']]
 
 
 def getARCVersions():
-
     # GitHub API URL for the contents of the repository
     repo_owner = "ISARICResearch"
     repo_name = "ARC"
-    #token = 
+    # token =
 
     # URL de la API
     url_release = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases'
@@ -62,11 +59,8 @@ def getARCVersions():
     else:
         print(f"Error: {response.status_code} - {response.text}")
 
-    
+    # url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
 
-
-    #url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
-    
     '''
     # Make the request
     response = requests.get(url)
@@ -80,9 +74,9 @@ def getARCVersions():
         print("Failed to retrieve data:", response.status_code)
     '''
 
-    versions=tag_names
-    #versions = set(folder_names)
-    
+    versions = tag_names
+    # versions = set(folder_names)
+
     # Parse versions, including handling "-rc"
     parsed_versions = []
     rc_version_str = None
@@ -93,128 +87,130 @@ def getARCVersions():
             rc_version_str = version  # Store the rc version
         else:
             parsed_versions.append((tuple(map(int, version.split('v')[1].split('.'))), ''))
-    
+
     # Filter out "-rc" versions to get the most recent non-rc version
     non_rc_versions = [v for v, suffix in parsed_versions if suffix == '']
     most_recent_version = max(non_rc_versions)
     most_recent_version_str = 'v' + '.'.join(map(str, most_recent_version))
-    
+
     # Include all versions back in the list
     all_versions = list(versions)
-    
+
     # Reorganize to ensure the first is the most recent version and the second is the "-rc" version
     all_versions.remove(most_recent_version_str)
     all_versions.insert(0, most_recent_version_str)
-    
+
     if rc_version_str in all_versions:
         all_versions.remove(rc_version_str)
         all_versions.insert(1, rc_version_str)
-    
+
     # Output the result
     return list(all_versions), most_recent_version_str
-    
+
+
 def getVariableOrder(current_datadicc):
-    current_datadicc['Sec_vari']=current_datadicc['Sec']+'_'+current_datadicc['vari']
-    order=current_datadicc[['Sec_vari']]
-    order=order.drop_duplicates().reset_index()
+    current_datadicc['Sec_vari'] = current_datadicc['Sec'] + '_' + current_datadicc['vari']
+    order = current_datadicc[['Sec_vari']]
+    order = order.drop_duplicates().reset_index()
     return list(order['Sec_vari'])
 
 
-def getARC(version):   
-    #sv_selected=version
-    #v_selected=sv_selected.split('.')[0].replace(' ','%20')
-    #sv_selected=sv_selected.replace(' ','%20')
-    #token = 
+def getARC(version):
+    # sv_selected=version
+    # v_selected=sv_selected.split('.')[0].replace(' ','%20')
+    # sv_selected=sv_selected.replace(' ','%20')
+    # token =
     headers = {
-    "Authorization": f"token {token}"
+        "Authorization": f"token {token}"
     }
-    get_link=requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags',headers=headers).json()
+    get_link = requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags', headers=headers).json()
     for i in get_link:
-        if i['name']==version:
-            print('in getARC'+i['name'])
-            commit=i['commit']['sha']
+        if i['name'] == version:
+            print('in getARC' + i['name'])
+            commit = i['commit']['sha']
 
-    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
-    datadicc_path = root+commit+'/'+'ARC.csv'
+    datadicc_path = root + commit + '/' + 'ARC.csv'
 
     try:
         datadicc = pd.read_csv(datadicc_path, encoding='utf-8')
-        dependencies=getDependencies(datadicc) 
-        datadicc = pd.merge(datadicc,dependencies[['Variable','Dependencies']],on = 'Variable')
-        
+        dependencies = getDependencies(datadicc)
+        datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
+
         # Find preset columns
         preset_columns = [col for col in datadicc.columns if "preset_" in col]
         presets = []
         # Iterate through each string in the list
         for col in preset_columns:
-            parts = col.split('_')[1:]  
+            parts = col.split('_')[1:]
             if len(parts) > 2:
                 parts[1] = ' '.join(parts[1:])
                 del parts[2:]
             presets.append(parts)
 
-
-        return datadicc,presets,commit
+        return datadicc, presets, commit
     except Exception as e:
         print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-    
+
 
 def getDependencies(datadicc):
-        mandatory=['subjid']
-    
-        #datadicc=pd.read_csv('C:/Users/egarcia/Documents/Projects/REDCap/ModifyREDCapProgramatically/data_dicc.csv')
-        #dependencies=datadicc[['Variable / Field Name', 'Branching Logic (Show field only if...)']]
-        dependencies=datadicc[['Variable', 'Skip Logic']]
-        field_dependencies=[]
-        for s in dependencies[ 'Skip Logic']:
-            cont=0
-            variable_dependencies=[]
-            if type(s)!=float:       
-                for i in s.split('['):
-                    variable=(i[:i.find(']')])
-                    if '(' in variable:
-                        variable=(variable[:variable.find('(')])
-                    if cont!=0:
-                        variable_dependencies.append(variable)
-                    cont+=1
-            field_dependencies.append(variable_dependencies)            
-        dependencies['Dependencies']=field_dependencies
-        for i in dependencies['Variable']:
-            if 'other' in i:
-                if len(dependencies['Dependencies'].loc[dependencies['Variable']==i.replace('other','')])>=1:                
-                    dependencies['Dependencies'].loc[dependencies['Variable']==i.replace('other','')].iloc[0].append(i)
-                    #print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
-            
-            if 'units' in i :
-                if len(dependencies['Dependencies'].loc[dependencies['Variable']==i.replace('units','')])>=1:                
-                    dependencies['Dependencies'].loc[dependencies['Variable']==i.replace('units','')].iloc[0].append(i)
-                    #print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
-                    
-            
-            for m in mandatory:
-                dependencies['Dependencies'].loc[dependencies['Variable']==i].iloc[0].append(m)
-                
-        return dependencies
+    mandatory = ['subjid']
 
-def getTreeItems(datadicc,version):
-    version=version.replace('ICC','ARC')
-    include_not_show=['otherl3','otherl2','route','route2','site','agent','agent2','warn','warn2','warn3','units','add','type','vol','site','txt']
+    # datadicc=pd.read_csv('C:/Users/egarcia/Documents/Projects/REDCap/ModifyREDCapProgramatically/data_dicc.csv')
+    # dependencies=datadicc[['Variable / Field Name', 'Branching Logic (Show field only if...)']]
+    dependencies = datadicc[['Variable', 'Skip Logic']]
+    field_dependencies = []
+    for s in dependencies['Skip Logic']:
+        cont = 0
+        variable_dependencies = []
+        if type(s) != float:
+            for i in s.split('['):
+                variable = (i[:i.find(']')])
+                if '(' in variable:
+                    variable = (variable[:variable.find('(')])
+                if cont != 0:
+                    variable_dependencies.append(variable)
+                cont += 1
+        field_dependencies.append(variable_dependencies)
+    dependencies['Dependencies'] = field_dependencies
+    for i in dependencies['Variable']:
+        if 'other' in i:
+            if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')]) >= 1:
+                dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')].iloc[0].append(i)
+                # print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
 
-    dependencies=getDependencies(datadicc) 
-    datadicc = pd.merge(datadicc,dependencies[['Variable','Dependencies']],on = 'Variable')
+        if 'units' in i:
+            if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')]) >= 1:
+                dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')].iloc[0].append(i)
+                # print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
+
+        for m in mandatory:
+            dependencies['Dependencies'].loc[dependencies['Variable'] == i].iloc[0].append(m)
+
+    return dependencies
+
+
+def getTreeItems(datadicc, version):
+    version = version.replace('ICC', 'ARC')
+    include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
+                        'units', 'add', 'type', 'vol', 'site', 'txt']
+
+    dependencies = getDependencies(datadicc)
+    datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
     datadicc[['Sec', 'vari', 'mod']] = datadicc['Variable'].str.split('_', n=2, expand=True)
-    #datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split('(', n=1, expand=True)
+    # datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split('(', n=1, expand=True)
     datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
 
     datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False))
     mask_true = datadicc['select units'] == True
     for index, row in datadicc[mask_true].iterrows():
         mask_sec_vari = (datadicc['Sec'] == row['Sec']) & (datadicc['vari'] == row['vari'])
-        datadicc.loc[mask_sec_vari, 'select units'] = True 
-    
-    forItem=datadicc[['Form','Sec_name','vari','mod','Question','Variable','Type']].loc[~datadicc['mod'].isin(include_not_show)]
-    forItem= forItem[forItem['Sec_name'].notna()]
+        datadicc.loc[mask_sec_vari, 'select units'] = True
+
+    forItem = datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
+        ~datadicc['mod'].isin(include_not_show)]
+    forItem = forItem[forItem['Sec_name'].notna()]
 
     tree = {'title': version, 'key': 'ARC', 'children': []}
     seen_forms = set()
@@ -226,14 +222,14 @@ def getTreeItems(datadicc,version):
         sec_name = row['Sec_name'].upper()
         vari = row['vari']
         mod = row['mod']
-        if row['Type']=='user_list':
-            question='↳ '+row['Question']
-        elif row['Type']=='multi_list':
-            question='⇉ '+row['Question']
+        if row['Type'] == 'user_list':
+            question = '↳ ' + row['Question']
+        elif row['Type'] == 'multi_list':
+            question = '⇉ ' + row['Question']
         else:
             question = row['Question']
-        Variable_name=row['Variable']
-        #question_key = f"{form}-{sec_name}-{vari}-{mod}-{question}"
+        Variable_name = row['Variable']
+        # question_key = f"{form}-{sec_name}-{vari}-{mod}-{question}"
         question_key = f"{Variable_name}"
 
         # Add form node if not already added
@@ -280,14 +276,19 @@ def getTreeItems(datadicc,version):
 
     return tree
 
-include_not_show=['otherl2','otherl3','route','route2','site','agent','agent2','warn','warn2','warn3','units','add','type','vol','site','0item','0otherl2',
-                  '0addi','1item','1otherl2','1addi','2item','2otherl2','2addi','3item','3otherl2','3addi','4item','4otherl2','4addi','txt']
+
+include_not_show = ['otherl2', 'otherl3', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
+                    'units', 'add', 'type', 'vol', 'site', '0item', '0otherl2',
+                    '0addi', '1item', '1otherl2', '1addi', '2item', '2otherl2', '2addi', '3item', '3otherl2', '3addi',
+                    '4item', '4otherl2', '4addi', 'txt']
+
 
 def extract_parenthesis_content(text):
     match = re.search(r'\(([^)]+)\)', text)
     return match.group(1) if match else text
 
-def getIncludeNotShow(selected_variables,current_datadicc):
+
+def getIncludeNotShow(selected_variables, current_datadicc):
     # Get the include not show for the selecte variables
     possible_vars_to_include = [f"{var}_{suffix}" for var in selected_variables for suffix in include_not_show]
     actual_vars_to_include = [var for var in possible_vars_to_include if var in current_datadicc['Variable'].values]
@@ -296,40 +297,40 @@ def getIncludeNotShow(selected_variables,current_datadicc):
     selected_variables = list(set(selected_variables))
     return current_datadicc.loc[current_datadicc['Variable'].isin(selected_variables)]
 
-def getSelectUnits(selected_variables,current_datadicc):
-    #current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
-    #current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
-    current_datadicc['select units'] = (current_datadicc['Question'].str.contains('(select units)', case=False, na=False))
+
+def getSelectUnits(selected_variables, current_datadicc):
+    # current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
+    # current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+    current_datadicc['select units'] = (
+        current_datadicc['Question'].str.contains('(select units)', case=False, na=False))
     mask_true = current_datadicc['select units'] == True
     for index, row in current_datadicc[mask_true].iterrows():
         mask_sec_vari = (current_datadicc['Sec'] == row['Sec']) & (current_datadicc['vari'] == row['vari'])
-        current_datadicc.loc[mask_sec_vari, 'select units'] = True 
-
+        current_datadicc.loc[mask_sec_vari, 'select units'] = True
 
     selected_select_unit = current_datadicc.loc[current_datadicc['select units'] &
-                                                current_datadicc['Variable'].isin(selected_variables) & 
+                                                current_datadicc['Variable'].isin(selected_variables) &
                                                 current_datadicc['mod'].notna()]
-    
+
     selected_select_unit['count'] = selected_select_unit.groupby(['Sec', 'vari']).transform('size')
 
     select_unit_rows = []
     seen_variables = set()
 
-    delete_this_variables_with_units=[]
+    delete_this_variables_with_units = []
 
     for _, row in selected_select_unit.iterrows():
         if row['count'] > 1:
             matching_rows = selected_select_unit[(selected_select_unit['Sec'] == row['Sec']) &
-                                                (selected_select_unit['vari'] == row['vari'])]
-            
+                                                 (selected_select_unit['vari'] == row['vari'])]
+
             for dtvwu in matching_rows['Variable']:
                 delete_this_variables_with_units.append(dtvwu)
-            
+
             max_value = pd.to_numeric(matching_rows['Maximum'], errors='coerce').max()
             min_value = pd.to_numeric(matching_rows['Minimum'], errors='coerce').min()
-            options = ' | '.join([f"{idx + 1},{extract_parenthesis_content(r['Question'])}" for idx, (_, r) in enumerate(matching_rows.iterrows())])
-
-
+            options = ' | '.join([f"{idx + 1},{extract_parenthesis_content(r['Question'])}" for idx, (_, r) in
+                                  enumerate(matching_rows.iterrows())])
 
             row_value = row.copy()
             row_value['Variable'] = row['Sec'] + '_' + row['vari']
@@ -350,7 +351,6 @@ def getSelectUnits(selected_variables,current_datadicc):
             row_units['Question'] = 'Select ' + row['Question'].split('(')[0] + 'units'
             row_units['Validation'] = None
 
-
             if row_value['Variable'] not in seen_variables:
                 select_unit_rows.append(row_value)
                 seen_variables.add(row_value['Variable'])
@@ -362,187 +362,195 @@ def getSelectUnits(selected_variables,current_datadicc):
     if len(select_unit_rows) > 0:
         icc_var_units_selected_rows = pd.DataFrame(select_unit_rows).reset_index(drop=True)
         icc_var_units_selected = icc_var_units_selected_rows
-        return icc_var_units_selected,list(set(delete_this_variables_with_units)-set(icc_var_units_selected['Variable']))
-    return None,None
+        return icc_var_units_selected, list(
+            set(delete_this_variables_with_units) - set(icc_var_units_selected['Variable']))
+    return None, None
 
-def getListContent(current_datadicc,version,commit):
-    level2_answers=[]
-    all_rows_lists=[]
-    #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
+
+def getListContent(current_datadicc, version, commit):
+    level2_answers = []
+    all_rows_lists = []
+    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='list']  
-    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
+    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
-    #datadicc_path = root+commit+'/'+'ARC.csv'       
-    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
-    
-    list_variable_choices=[]
+    # datadicc_path = root+commit+'/'+'ARC.csv'
+    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
+
+    list_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
             try:
-                list_options = pd.read_csv(list_path,encoding='latin1') 
+                list_options = pd.read_csv(list_path, encoding='latin1')
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-                
-            list_options=list_options.sort_values(by=list_options.columns[0],ascending=True)
-            list_choises=''
-            list_variable_choices_aux=[]
-            cont_lo=1
+
+            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
+            list_choises = ''
+            list_variable_choices_aux = []
+            cont_lo = 1
             for lo in list_options[list_options.columns[0]]:
                 if cont_lo == 88:
-                    cont_lo=89
+                    cont_lo = 89
                 elif cont_lo == 99:
-                    cont_lo =100
+                    cont_lo = 100
                 try:
-                    list_variable_choices_aux.append([cont_lo,lo])
-                    list_choises+=str(cont_lo)+ ', '+lo+' | '
+                    list_variable_choices_aux.append([cont_lo, lo])
+                    list_choises += str(cont_lo) + ', ' + lo + ' | '
                 except:
                     print('error')
-                cont_lo+=1
-            list_choises = list_choises+ '88, ' +'Other'
-            arrows = ['','>', '->', '>->', '->->','>->->']     
+                cont_lo += 1
+            list_choises = list_choises + '88, ' + 'Other'
+            arrows = ['', '>', '->', '>->', '->->', '>->->']
 
-            #row['Type']='radio'
+            # row['Type']='radio'
             repeat_n = 5
-            questions_for_this_list=[]
-            other_info = current_datadicc.loc[(current_datadicc['Sec']==row['Sec'])&
-                            (current_datadicc['vari']==row['vari'])&
-                            (current_datadicc['Variable']!=row['Variable'])]
-            
-            #remove_other_info_from_diseaseDic = remove_other_info_from_diseaseDic+list(other_info['Variable'])
+            questions_for_this_list = []
+            other_info = current_datadicc.loc[(current_datadicc['Sec'] == row['Sec']) &
+                                              (current_datadicc['vari'] == row['vari']) &
+                                              (current_datadicc['Variable'] != row['Variable'])]
+
+            # remove_other_info_from_diseaseDic = remove_other_info_from_diseaseDic+list(other_info['Variable'])
             for n in range(repeat_n):
                 #########################################
                 #########################################
                 #########################################
                 # Falta agregar las otras opciones con el mismo sec_var
-                dropdown_row = row.copy()   
-                dropdown_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+str(n)+'item'
-                #dropdown_row['Answer Options'] = list_choises.replace("| 88, Other","| 88_"+str(n)+", Other")
+                dropdown_row = row.copy()
+                dropdown_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + str(n) + 'item'
+                # dropdown_row['Answer Options'] = list_choises.replace("| 88, Other","| 88_"+str(n)+", Other")
                 dropdown_row['Answer Options'] = list_choises
                 dropdown_row['Type'] = "dropdown"
-                dropdown_row['Validation']='autocomplete'
-                dropdown_row['Maximum'] = None  
-                dropdown_row['Minimum'] = None  
-                dropdown_row['List']=None
-                if  row['Question']!= 'NSAIDs':
+                dropdown_row['Validation'] = 'autocomplete'
+                dropdown_row['Maximum'] = None
+                dropdown_row['Minimum'] = None
+                dropdown_row['List'] = None
+                if row['Question'] != 'NSAIDs':
                     if n == 0:
                         if 'select' in row['Question'].lower():
-                            dropdown_row['Question']=arrows[n]+ row['Question'] 
+                            dropdown_row['Question'] = arrows[n] + row['Question']
                         else:
-                            dropdown_row['Question']=arrows[n]+'Select ' + row['Question'].lower() 
+                            dropdown_row['Question'] = arrows[n] + 'Select ' + row['Question'].lower()
                     else:
                         if 'select' in row['Question'].lower():
-                            dropdown_row['Question']=arrows[n]+ row['Question'].lower() +' '+str(n+1)
+                            dropdown_row['Question'] = arrows[n] + row['Question'].lower() + ' ' + str(n + 1)
                         else:
-                            dropdown_row['Question']=arrows[n]+'Select additional ' + row['Question'].lower() +' '+str(n+1)
+                            dropdown_row['Question'] = arrows[n] + 'Select additional ' + row[
+                                'Question'].lower() + ' ' + str(n + 1)
                 else:
-                    if n==0:
+                    if n == 0:
                         if 'select' in row['Question'].lower():
-                            dropdown_row['Question']=arrows[n]+ row['Question'] 
+                            dropdown_row['Question'] = arrows[n] + row['Question']
                         else:
-                            dropdown_row['Question']=arrows[n]+'Select ' + row['Question'] 
+                            dropdown_row['Question'] = arrows[n] + 'Select ' + row['Question']
                     else:
                         if 'select' in row['Question'].lower():
-                            dropdown_row['Question']=arrows[n] + row['Question'] +' '+str(n+1)
+                            dropdown_row['Question'] = arrows[n] + row['Question'] + ' ' + str(n + 1)
                         else:
-                            dropdown_row['Question']=arrows[n]+'Select additional ' + row['Question'] +' '+str(n+1)
+                            dropdown_row['Question'] = arrows[n] + 'Select additional ' + row['Question'] + ' ' + str(
+                                n + 1)
 
-                dropdown_row['mod']=str(n)+'item'
+                dropdown_row['mod'] = str(n) + 'item'
                 dropdown_row['vari'] = row['vari']
                 if n == 0:
-                    dropdown_row['Skip Logic']= '['+row['Variable']+"]='1'"
+                    dropdown_row['Skip Logic'] = '[' + row['Variable'] + "]='1'"
                 else:
-                    dropdown_row['Skip Logic']= '['+row['Sec'] +'_'+ row['vari']+'_'+str(n-1)+'addi'+"]='1'" 
+                    dropdown_row['Skip Logic'] = '[' + row['Sec'] + '_' + row['vari'] + '_' + str(
+                        n - 1) + 'addi' + "]='1'"
 
-                other_row = row.copy()             
-                other_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+str(n)+'otherl2'
+                other_row = row.copy()
+                other_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + str(n) + 'otherl2'
                 other_row['Answer Options'] = None
                 other_row['Type'] = 'text'
-                other_row['Maximum'] = None  
-                other_row['Minimum'] = None  
-                other_row['Skip Logic']='['+dropdown_row['Variable'] +"]='88'"
-                if row['Variable']=='inclu_disease':
-                    other_row['Question']=arrows[n]+"Specify other infection the individual is suspected/confirmed to have"
+                other_row['Maximum'] = None
+                other_row['Minimum'] = None
+                other_row['Skip Logic'] = '[' + dropdown_row['Variable'] + "]='88'"
+                if row['Variable'] == 'inclu_disease':
+                    other_row['Question'] = arrows[
+                                                n] + "Specify other infection the individual is suspected/confirmed to have"
                 else:
-                    if n ==0:
-                        if row['Question'] !='NSAIDs':
+                    if n == 0:
+                        if row['Question'] != 'NSAIDs':
                             if 'other' in row['Question'].lower():
-                                other_row['Question']=arrows[n]+'Specify ' + row['Question'].lower()+''
+                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'].lower() + ''
                             else:
-                                other_row['Question']=arrows[n]+'Specify other ' + row['Question'].lower()+''
+                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question'].lower() + ''
                         else:
                             if 'other' in row['Question'].lower():
-                                other_row['Question']=arrows[n]+'Specify ' + row['Question']
+                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question']
                             else:
-                                other_row['Question']=arrows[n]+'Specify other ' + row['Question']
+                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question']
                     else:
-                        if row['Question'] !='NSAIDs':
+                        if row['Question'] != 'NSAIDs':
                             if 'other' in row['Question'].lower():
-                                other_row['Question']=arrows[n]+'Specify ' + row['Question'].lower()+' '+str(n+1)
+                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'].lower() + ' ' + str(
+                                    n + 1)
                             else:
-                                other_row['Question']=arrows[n]+'Specify other ' + row['Question'].lower()+' '+str(n+1)
+                                other_row['Question'] = arrows[n] + 'Specify other ' + row[
+                                    'Question'].lower() + ' ' + str(n + 1)
                         else:
                             if 'other' in row['Question'].lower():
-                                other_row['Question']=arrows[n]+'Specify ' + row['Question']+' '+str(n+1)
+                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'] + ' ' + str(n + 1)
                             else:
-                                other_row['Question']=arrows[n]+'Specify other ' + row['Question']+' '+str(n+1)
-                other_row['List']=None
-                other_row['mod']=str(n)+'otherl2'
+                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question'] + ' ' + str(
+                                    n + 1)
+                other_row['List'] = None
+                other_row['mod'] = str(n) + 'otherl2'
                 other_row['vari'] = row['vari']
                 questions_for_this_list.append(dropdown_row)
-                questions_for_this_list.append(other_row)          
+                questions_for_this_list.append(other_row)
 
-                if len (other_info)>1:
+                if len(other_info) > 1:
                     for index, oi in other_info.iterrows():
                         other_info_row = oi.copy()
-                        if n ==0:
-                            other_info_row['Question'] = arrows[n]+' '+oi['Question']
+                        if n == 0:
+                            other_info_row['Question'] = arrows[n] + ' ' + oi['Question']
                         else:
-                            other_info_row['Question'] = arrows[n]+' '+oi['Question']+' '+str(n+1)
-                            other_info_row['Skip Logic']= '['+additional_row['Variable']+"]='1'"
-                        other_info_row['Variable'] = oi['Sec'] +'_'+ oi['vari']+'_'+str(n)+oi['mod']
-                        other_info_row['Skip Logic']= '['+additional_row['Variable']+"]='1'"
-                        other_info_row['List']=None
-                        other_info_row['mod']=str(n)+oi['mod']
-                        other_info_row['vari'] = oi['vari']            
+                            other_info_row['Question'] = arrows[n] + ' ' + oi['Question'] + ' ' + str(n + 1)
+                            other_info_row['Skip Logic'] = '[' + additional_row['Variable'] + "]='1'"
+                        other_info_row['Variable'] = oi['Sec'] + '_' + oi['vari'] + '_' + str(n) + oi['mod']
+                        other_info_row['Skip Logic'] = '[' + additional_row['Variable'] + "]='1'"
+                        other_info_row['List'] = None
+                        other_info_row['mod'] = str(n) + oi['mod']
+                        other_info_row['vari'] = oi['vari']
                         questions_for_this_list.append(other_info_row)
 
-                elif len(other_info)==1:
-                    oi=other_info.iloc[0] 
+                elif len(other_info) == 1:
+                    oi = other_info.iloc[0]
                     other_info_row = oi.copy()
-                    if n==0:
-                        other_info_row['Question'] = arrows[n]+''+oi['Question']
+                    if n == 0:
+                        other_info_row['Question'] = arrows[n] + '' + oi['Question']
                     else:
-                        other_info_row['Question'] = arrows[n]+''+oi['Question']+' '+str(n+1)
-                        other_info_row['Skip Logic']= '['+additional_row['Variable']+"]='1'"
-                    other_info_row['Variable'] = oi['Sec'] +'_'+ oi['vari']+'_'+str(n)+oi['mod']
-                    other_info_row['List']=None
-                    other_info_row['mod']=str(n)+oi['mod']
-                    other_info_row['vari'] = oi['vari']            
-                    questions_for_this_list.append(other_info_row)     
+                        other_info_row['Question'] = arrows[n] + '' + oi['Question'] + ' ' + str(n + 1)
+                        other_info_row['Skip Logic'] = '[' + additional_row['Variable'] + "]='1'"
+                    other_info_row['Variable'] = oi['Sec'] + '_' + oi['vari'] + '_' + str(n) + oi['mod']
+                    other_info_row['List'] = None
+                    other_info_row['mod'] = str(n) + oi['mod']
+                    other_info_row['vari'] = oi['vari']
+                    questions_for_this_list.append(other_info_row)
 
-
-                if n < repeat_n-1:
+                if n < repeat_n - 1:
                     additional_row = row.copy()
-                    additional_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+str(n)+'addi'
+                    additional_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + str(n) + 'addi'
                     additional_row['Answer Options'] = row['Answer Options']
                     additional_row['Type'] = 'radio'
-                    additional_row['Maximum'] = None  
-                    additional_row['Minimum'] = None  
-                    additional_row['Skip Logic']=dropdown_row['Skip Logic']
+                    additional_row['Maximum'] = None
+                    additional_row['Minimum'] = None
+                    additional_row['Skip Logic'] = dropdown_row['Skip Logic']
                     if additional_row['Question'] != 'NSAIDs':
-                        additional_row['Question']=arrows[n]+'Any additional ' + additional_row['Question'].lower()+' ?'
+                        additional_row['Question'] = arrows[n] + 'Any additional ' + additional_row[
+                            'Question'].lower() + ' ?'
                     else:
-                        additional_row['Question']=arrows[n]+'Any additional ' + additional_row['Question']+' ?'
-                    additional_row['List']=None
-                    additional_row['mod']=str(n)+'addi'
-                    additional_row['vari'] = row['vari']            
+                        additional_row['Question'] = arrows[n] + 'Any additional ' + additional_row['Question'] + ' ?'
+                    additional_row['List'] = None
+                    additional_row['mod'] = str(n) + 'addi'
+                    additional_row['vari'] = row['vari']
                     questions_for_this_list.append(additional_row)
-                                        
 
             all_rows_lists.append(row)
             '''if len (other_info)>1:
@@ -550,35 +558,34 @@ def getListContent(current_datadicc,version,commit):
                     all_rows_lists.append(oi)
             elif len(other_info)==1:
                 all_rows_lists.append(other_info.iloc[0])'''
-            for qftl in questions_for_this_list :
+            for qftl in questions_for_this_list:
                 all_rows_lists.append(qftl)
-            list_variable_choices.append([row['Variable'],list_variable_choices_aux])
+            list_variable_choices.append([row['Variable'], list_variable_choices_aux])
     arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
-    
-    return arc_list,list_variable_choices
+
+    return arc_list, list_variable_choices
 
 
+# HERE CHECK already modified variables x182#
 
-#HERE CHECK already modified variables x182#
-
-def getUserListContent(current_datadicc,version,mod_list,commit,user_checked_options=None,ulist_var_name=None):
-    level2_answers=[]
-    all_rows_lists=[]
-    #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
+def getUserListContent(current_datadicc, version, mod_list, commit, user_checked_options=None, ulist_var_name=None):
+    level2_answers = []
+    all_rows_lists = []
+    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='user_list']         
-    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
-    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
-    ulist_variable_choices=[]
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
+    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
+    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
             try:
-                list_options = pd.read_csv(list_path,encoding='latin1') 
-            
+                list_options = pd.read_csv(list_path, encoding='latin1')
+
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
 
@@ -587,122 +594,120 @@ def getUserListContent(current_datadicc,version,mod_list,commit,user_checked_opt
                 l1_choices=default_options[row['Variable']]
             else:
                 l1_choices=user_selected_opt'''
-            list_options=list_options.sort_values(by=list_options.columns[0],ascending=True)
+            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
             default = True
-            
-            l2_choices=''
-            l1_choices=''
-            cont_lo=1
-            ulist_variable_choices_aux=[]
+
+            l2_choices = ''
+            l1_choices = ''
+            cont_lo = 1
+            ulist_variable_choices_aux = []
             for lo in list_options[list_options.columns[0]]:
                 if cont_lo == 88:
-                    cont_lo=89
+                    cont_lo = 89
                 elif cont_lo == 99:
-                    cont_lo =100
+                    cont_lo = 100
                 try:
-                    
+
                     if user_checked_options is None:
-                        
+
                         list_options['Selected'] = pd.to_numeric(list_options['Selected'], errors='coerce')
 
-                        if list_options['Selected'].loc[list_options[list_options.columns[0]]==lo].iloc[0]==1:
-                            l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                            ulist_variable_choices_aux.append([cont_lo,lo,1])
+                        if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
+                            l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                            ulist_variable_choices_aux.append([cont_lo, lo, 1])
                         else:
-                            l2_choices+=str(cont_lo)+ ', '+lo+' | '
-                            ulist_variable_choices_aux.append([cont_lo,lo,0])
+                            l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                            ulist_variable_choices_aux.append([cont_lo, lo, 0])
                     else:
                         if row['Variable'] == ulist_var_name:
                             if lo in list(user_checked_options['Option']):
-                                l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                                ulist_variable_choices_aux.append([cont_lo,lo,1])
+                                l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 1])
                             else:
-                                l2_choices+=str(cont_lo)+ ', '+lo+' | '   
-                                ulist_variable_choices_aux.append([cont_lo,lo,0])
+                                l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 0])
                         else:
-                            if list_options['Selected'].loc[list_options[list_options.columns[0]]==lo].iloc[0]==1:
-                                l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                                ulist_variable_choices_aux.append([cont_lo,lo,1])
+                            if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
+                                l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 1])
                             else:
-                                l2_choices+=str(cont_lo)+ ', '+lo+' | '            
-                                ulist_variable_choices_aux.append([cont_lo,lo,0])                                     
-                                                    
+                                l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 0])
+
                 except Exception as e:
-                    print(row['List']+f": Failed to add to lists of choices due to {e}.")
-                cont_lo+=1
-            l2_choices = l2_choices+ '88, ' +'Other' 
-            
-            ulist_variable_choices.append([row['Variable'],ulist_variable_choices_aux])
-            
-            #row['Type']='radio'
-            row['Answer Options']=l1_choices+ '88, ' +'Other' 
+                    print(row['List'] + f": Failed to add to lists of choices due to {e}.")
+                cont_lo += 1
+            l2_choices = l2_choices + '88, ' + 'Other'
 
+            ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            dropdown_row = row.copy()   
-            other_row = row.copy()    
-            dropdown_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+'otherl2'
-            dropdown_row['Answer Options'] =l2_choices
+            # row['Type']='radio'
+            row['Answer Options'] = l1_choices + '88, ' + 'Other'
+
+            dropdown_row = row.copy()
+            other_row = row.copy()
+            dropdown_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl2'
+            dropdown_row['Answer Options'] = l2_choices
             dropdown_row['Type'] = "dropdown"
-            dropdown_row['Validation']='autocomplete'
-            dropdown_row['Maximum'] = None  
-            dropdown_row['Minimum'] = None  
-            dropdown_row['List']=None
-            if row['Variable']=='medi_medtype':
-                dropdown_row['Question']= 'Select other agents administered while hospitalised or at discharge'
-                other_row['Question']='Specify other agents administered while hospitalised or at discharge'
+            dropdown_row['Validation'] = 'autocomplete'
+            dropdown_row['Maximum'] = None
+            dropdown_row['Minimum'] = None
+            dropdown_row['List'] = None
+            if row['Variable'] == 'medi_medtype':
+                dropdown_row['Question'] = 'Select other agents administered while hospitalised or at discharge'
+                other_row['Question'] = 'Specify other agents administered while hospitalised or at discharge'
             else:
-                dropdown_row['Question']='Select ' + row['Question']+''
-                other_row['Question']='Specify other ' + row['Question']+''
-            dropdown_row['mod']='otherl2'
-            dropdown_row['Skip Logic']='['+row['Variable'] +"]='88'"
-            
-            other_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+'otherl3'
+                dropdown_row['Question'] = 'Select ' + row['Question'] + ''
+                other_row['Question'] = 'Specify other ' + row['Question'] + ''
+            dropdown_row['mod'] = 'otherl2'
+            dropdown_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
+
+            other_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl3'
             other_row['Answer Options'] = None
             other_row['Type'] = 'text'
-            other_row['Maximum'] = None  
-            other_row['Minimum'] = None  
-            if row['Variable']!='inclu_disease':
-                other_row['Skip Logic']='['+row['Sec'] +'_'+ row['vari']+'_'+'otherl2' +"]='88'"
+            other_row['Maximum'] = None
+            other_row['Minimum'] = None
+            if row['Variable'] != 'inclu_disease':
+                other_row['Skip Logic'] = '[' + row['Sec'] + '_' + row['vari'] + '_' + 'otherl2' + "]='88'"
             else:
-                other_row['Skip Logic']='['+row['Variable'] +"]='88'"
-            
-            other_row['List']=None
-            other_row['mod']='otherl3'
+                other_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
 
-            row['Question']=row['Question']
-            
+            other_row['List'] = None
+            other_row['mod'] = 'otherl3'
+
+            row['Question'] = row['Question']
+
             all_rows_lists.append(row)
-            if row['Variable']!='inclu_disease':
+            if row['Variable'] != 'inclu_disease':
                 all_rows_lists.append(dropdown_row)
             all_rows_lists.append(other_row)
-            
+
     arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
 
-    return arc_list,ulist_variable_choices
+    return arc_list, ulist_variable_choices
 
 
-
-def getMultuListContent(current_datadicc,version,commit,user_checked_options=None,ulist_var_name=None):
-    level2_answers=[]
-    all_rows_lists=[]
-    #datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
+def getMultuListContent(current_datadicc, version, commit, user_checked_options=None, ulist_var_name=None):
+    level2_answers = []
+    all_rows_lists = []
+    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
     #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type']=='multi_list']  
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
 
-    root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
+    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
-    #root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
-    
-    ulist_variable_choices=[]
+    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
+
+    ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root+commit+'/Lists/'+row['List'].replace('_','/')+'.csv'
+            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
             try:
-                list_options = pd.read_csv(list_path,encoding='latin1') 
-            
+                list_options = pd.read_csv(list_path, encoding='latin1')
+
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
 
@@ -711,128 +716,128 @@ def getMultuListContent(current_datadicc,version,commit,user_checked_options=Non
                 l1_choices=default_options[row['Variable']]
             else:
                 l1_choices=user_selected_opt'''
-            list_options=list_options.sort_values(by=list_options.columns[0],ascending=True)
+            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
             default = True
-            
-            l2_choices=''
-            l1_choices=''
-            cont_lo=1
-            ulist_variable_choices_aux=[]
+
+            l2_choices = ''
+            l1_choices = ''
+            cont_lo = 1
+            ulist_variable_choices_aux = []
             for lo in list_options[list_options.columns[0]]:
                 if cont_lo == 88:
-                    cont_lo=89
+                    cont_lo = 89
                 elif cont_lo == 99:
-                    cont_lo =100
+                    cont_lo = 100
                 try:
-                    
+
                     if user_checked_options is None:
-                        
+
                         list_options['Selected'] = pd.to_numeric(list_options['Selected'], errors='coerce')
 
-                        if list_options['Selected'].loc[list_options[list_options.columns[0]]==lo].iloc[0]==1:
-                            l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                            ulist_variable_choices_aux.append([cont_lo,lo,1])
+                        if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
+                            l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                            ulist_variable_choices_aux.append([cont_lo, lo, 1])
                         else:
-                            l2_choices+=str(cont_lo)+ ', '+lo+' | '
-                            ulist_variable_choices_aux.append([cont_lo,lo,0])
+                            l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                            ulist_variable_choices_aux.append([cont_lo, lo, 0])
                     else:
                         if row['Variable'] == ulist_var_name:
                             if lo in list(user_checked_options['Option']):
-                                l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                                ulist_variable_choices_aux.append([cont_lo,lo,1])
+                                l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 1])
                             else:
-                                l2_choices+=str(cont_lo)+ ', '+lo+' | '   
-                                ulist_variable_choices_aux.append([cont_lo,lo,0])
+                                l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 0])
                         else:
-                            if list_options['Selected'].loc[list_options[list_options.columns[0]]==lo].iloc[0]==1:
-                                l1_choices+=str(cont_lo)+ ', '+lo+' | '
-                                ulist_variable_choices_aux.append([cont_lo,lo,1])
+                            if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
+                                l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 1])
                             else:
-                                l2_choices+=str(cont_lo)+ ', '+lo+' | '            
-                                ulist_variable_choices_aux.append([cont_lo,lo,0])                                     
-                                                    
+                                l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                                ulist_variable_choices_aux.append([cont_lo, lo, 0])
+
                 except Exception as e:
-                    print(row['List']+f": Failed to add to lists of choices due to {e}.")
-                cont_lo+=1
-            l2_choices = l2_choices+ '88, ' +'Other' 
-            
-            ulist_variable_choices.append([row['Variable'],ulist_variable_choices_aux])
-            
-            #row['Type']='radio'
-            row['Answer Options']=l1_choices+ '88, ' +'Other' 
+                    print(row['List'] + f": Failed to add to lists of choices due to {e}.")
+                cont_lo += 1
+            l2_choices = l2_choices + '88, ' + 'Other'
 
+            ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            dropdown_row = row.copy()   
-            other_row = row.copy()    
-            dropdown_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+'otherl2'
-            dropdown_row['Answer Options'] =l2_choices
+            # row['Type']='radio'
+            row['Answer Options'] = l1_choices + '88, ' + 'Other'
+
+            dropdown_row = row.copy()
+            other_row = row.copy()
+            dropdown_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl2'
+            dropdown_row['Answer Options'] = l2_choices
             dropdown_row['Type'] = "dropdown"
-            dropdown_row['Validation']='autocomplete'
-            dropdown_row['Maximum'] = None  
-            dropdown_row['Minimum'] = None  
-            dropdown_row['List']=None
-            if row['Variable']=='medi_medtype':
-                dropdown_row['Question']= 'Select other agents administered while hospitalised or at discharge'
-                other_row['Question']='Specify other agents administered while hospitalised or at discharge'
+            dropdown_row['Validation'] = 'autocomplete'
+            dropdown_row['Maximum'] = None
+            dropdown_row['Minimum'] = None
+            dropdown_row['List'] = None
+            if row['Variable'] == 'medi_medtype':
+                dropdown_row['Question'] = 'Select other agents administered while hospitalised or at discharge'
+                other_row['Question'] = 'Specify other agents administered while hospitalised or at discharge'
             else:
-                dropdown_row['Question']='Select ' + row['Question']+''
-                other_row['Question']='Specify other ' + row['Question']+''
-            dropdown_row['mod']='otherl2'
-            #dropdown_row['Skip Logic']='['+row['Variable'] +"]='88'"
-            dropdown_row['Skip Logic']='['+row['Variable'] +"(88)]='1'"
-            #dropdown_row['Skip Logic']='['dates_firstsym(88)]='1'
-            
-            other_row['Variable'] = row['Sec'] +'_'+ row['vari']+'_'+'otherl3'
+                dropdown_row['Question'] = 'Select ' + row['Question'] + ''
+                other_row['Question'] = 'Specify other ' + row['Question'] + ''
+            dropdown_row['mod'] = 'otherl2'
+            # dropdown_row['Skip Logic']='['+row['Variable'] +"]='88'"
+            dropdown_row['Skip Logic'] = '[' + row['Variable'] + "(88)]='1'"
+            # dropdown_row['Skip Logic']='['dates_firstsym(88)]='1'
+
+            other_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl3'
             other_row['Answer Options'] = None
             other_row['Type'] = 'text'
-            other_row['Maximum'] = None  
-            other_row['Minimum'] = None  
-            if row['Variable']!='inclu_disease':
-                other_row['Skip Logic']='['+row['Sec'] +'_'+ row['vari']+'_'+'otherl2' +"]='88'"
+            other_row['Maximum'] = None
+            other_row['Minimum'] = None
+            if row['Variable'] != 'inclu_disease':
+                other_row['Skip Logic'] = '[' + row['Sec'] + '_' + row['vari'] + '_' + 'otherl2' + "]='88'"
             else:
-                other_row['Skip Logic']='['+row['Variable'] +"]='88'"
-            
-            other_row['List']=None
-            other_row['mod']='otherl3'
+                other_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
 
-            row['Question']=row['Question']
-            
+            other_row['List'] = None
+            other_row['mod'] = 'otherl3'
+
+            row['Question'] = row['Question']
+
             all_rows_lists.append(row)
-            if row['Variable']!='inclu_disease':
+            if row['Variable'] != 'inclu_disease':
                 all_rows_lists.append(dropdown_row)
             all_rows_lists.append(other_row)
-            
+
     arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
 
-    return arc_list,ulist_variable_choices
+    return arc_list, ulist_variable_choices
 
 
 def generateDailyDataType(current_datadicc):
-    datadiccDisease=current_datadicc.copy()
-    daily_sections=list(datadiccDisease['Section'].loc[datadiccDisease['Form']=='daily'].unique())
-    if len (daily_sections)>0:
+    datadiccDisease = current_datadicc.copy()
+    daily_sections = list(datadiccDisease['Section'].loc[datadiccDisease['Form'] == 'daily'].unique())
+    if len(daily_sections) > 0:
         if 'ASSESSMENT' in daily_sections:
             daily_sections.remove('ASSESSMENT')
-        if len(daily_sections)==1:
-            datadiccDisease = datadiccDisease.loc[datadiccDisease['Variable']!='daily_data_type']
-        elif len(daily_sections)>1:
-            daily_type_dicc={"VITAL SIGNS & ASSESSMENTS": "1, Vital Signs & Assessments ",
-                            "TREATMENTS & INTERVENTIONS": "2, Treatments & Interventions ",
-                            "LABORATORY RESULTS":"3, Laboratory Results ",
-                            "IMAGING": "4, Imaging "}
-            daily_type_otions=''
+        if len(daily_sections) == 1:
+            datadiccDisease = datadiccDisease.loc[datadiccDisease['Variable'] != 'daily_data_type']
+        elif len(daily_sections) > 1:
+            daily_type_dicc = {"VITAL SIGNS & ASSESSMENTS": "1, Vital Signs & Assessments ",
+                               "TREATMENTS & INTERVENTIONS": "2, Treatments & Interventions ",
+                               "LABORATORY RESULTS": "3, Laboratory Results ",
+                               "IMAGING": "4, Imaging "}
+            daily_type_otions = ''
             for daily_sec in daily_sections:
                 for daily_type in daily_type_dicc:
                     if daily_sec.startswith(daily_type):
-                        daily_type_otions+=daily_type_otions+daily_type_dicc[daily_type]+'|'
+                        daily_type_otions += daily_type_otions + daily_type_dicc[daily_type] + '|'
             daily_type_otions = daily_type_otions[:-1]
-                        
-            datadiccDisease['Answer Options'].loc[datadiccDisease['Variable']=='daily_data_type']=daily_type_otions 
-        return datadiccDisease
-    return current_datadicc   
 
-def addTransformedRows(selected_variables, arc_var_units_selected,order):
-    arc_var_units_selected['Sec_vari']=arc_var_units_selected['Sec']+'_'+arc_var_units_selected['vari']
+            datadiccDisease['Answer Options'].loc[datadiccDisease['Variable'] == 'daily_data_type'] = daily_type_otions
+        return datadiccDisease
+    return current_datadicc
+
+
+def addTransformedRows(selected_variables, arc_var_units_selected, order):
+    arc_var_units_selected['Sec_vari'] = arc_var_units_selected['Sec'] + '_' + arc_var_units_selected['vari']
     result = selected_variables.copy().reset_index(drop=True)
     arc_var_units_selected = arc_var_units_selected[result.columns]
 
@@ -851,11 +856,12 @@ def addTransformedRows(selected_variables, arc_var_units_selected,order):
 
             if base_var in result['Variable'].values:
                 # Find the index of the base variable row
-                #base_index = result.index[result['Variable'] == base_var].tolist()[0]
+                # base_index = result.index[result['Variable'] == base_var].tolist()[0]
                 base_index = result.index[result['Variable'].str.startswith(base_var)].max()
                 row_df = pd.DataFrame([row]).reset_index(drop=True)
                 # Insert the new row immediately after the base variable row
-                result = pd.concat([result.iloc[:base_index + 1], row_df, result.iloc[base_index + 1:]]).reset_index(drop=True)
+                result = pd.concat([result.iloc[:base_index + 1], row_df, result.iloc[base_index + 1:]]).reset_index(
+                    drop=True)
 
 
             else:
@@ -876,7 +882,9 @@ def addTransformedRows(selected_variables, arc_var_units_selected,order):
 
                     # Insert the row at the determined position or append if no next variable is found
                     if insert_before_index is not None:
-                        result = pd.concat([result.iloc[:insert_before_index], row_df, result.iloc[insert_before_index:]]).reset_index(drop=True)
+                        result = pd.concat(
+                            [result.iloc[:insert_before_index], row_df, result.iloc[insert_before_index:]]).reset_index(
+                            drop=True)
                     else:
                         result = pd.concat([result, row_df]).reset_index(drop=True)
                 else:
@@ -884,51 +892,55 @@ def addTransformedRows(selected_variables, arc_var_units_selected,order):
                     row_df = pd.DataFrame([row]).reset_index(drop=True)
                     result = pd.concat([result, row_df]).reset_index(drop=True)
 
-
     return result
 
+
 def customAlignment(datadicc):
-    mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & ((datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4)&
-                                                                   (datadicc['Choices, Calculations, OR Slider Labels'].str.len()<=40))
+    mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
+                (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
+                (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
     datadicc.loc[mask, 'Custom Alignment'] = 'RH'
     return datadicc
-def generateCRF(datadiccDisease,db_name):
-    datadiccDisease['Type'].loc[datadiccDisease['Type']=='user_list']='radio'
-    datadiccDisease['Type'].loc[datadiccDisease['Type']=='multi_list']='checkbox'
-    datadiccDisease['Type'].loc[datadiccDisease['Type']=='list']='radio'
-    datadiccDisease=datadiccDisease[['Form','Section','Variable',
-                                    'Type','Question',
-                                    'Answer Options', 
-                                    'Validation', 
-                                    'Minimum', 'Maximum', 
-                                    'Skip Logic']]
-        
-    datadiccDisease.columns=["Form Name","Section Header","Variable / Field Name","Field Type","Field Label",
-                "Choices, Calculations, OR Slider Labels","Text Validation Type OR Show Slider Number",
-                "Text Validation Min","Text Validation Max","Branching Logic (Show field only if...)"]   
-    redcap_cols=['Variable / Field Name', 'Form Name', 'Section Header', 'Field Type',
-            'Field Label', 'Choices, Calculations, OR Slider Labels', 'Field Note',
-            'Text Validation Type OR Show Slider Number', 'Text Validation Min',
-            'Text Validation Max', 'Identifier?',
-            'Branching Logic (Show field only if...)', 'Required Field?',
-            'Custom Alignment', 'Question Number (surveys only)',
-            'Matrix Group Name', 'Matrix Ranking?', 'Field Annotation']
+
+
+def generateCRF(datadiccDisease, db_name):
+    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'user_list'] = 'radio'
+    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'multi_list'] = 'checkbox'
+    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'list'] = 'radio'
+    datadiccDisease = datadiccDisease[['Form', 'Section', 'Variable',
+                                       'Type', 'Question',
+                                       'Answer Options',
+                                       'Validation',
+                                       'Minimum', 'Maximum',
+                                       'Skip Logic']]
+
+    datadiccDisease.columns = ["Form Name", "Section Header", "Variable / Field Name", "Field Type", "Field Label",
+                               "Choices, Calculations, OR Slider Labels", "Text Validation Type OR Show Slider Number",
+                               "Text Validation Min", "Text Validation Max", "Branching Logic (Show field only if...)"]
+    redcap_cols = ['Variable / Field Name', 'Form Name', 'Section Header', 'Field Type',
+                   'Field Label', 'Choices, Calculations, OR Slider Labels', 'Field Note',
+                   'Text Validation Type OR Show Slider Number', 'Text Validation Min',
+                   'Text Validation Max', 'Identifier?',
+                   'Branching Logic (Show field only if...)', 'Required Field?',
+                   'Custom Alignment', 'Question Number (surveys only)',
+                   'Matrix Group Name', 'Matrix Ranking?', 'Field Annotation']
     datadiccDisease = datadiccDisease.reindex(columns=redcap_cols)
-    
-    datadiccDisease['Field Type'].loc[datadiccDisease['Field Type'].isin(['date_dmy', 'number','integer', 'datetime_dmy'])]='text'
-    datadiccDisease=datadiccDisease.loc[datadiccDisease['Field Type'].isin([ 'text', 'notes', 'radio', 'dropdown', 'calc',
-        'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
-    datadiccDisease['Section Header'] = datadiccDisease['Section Header'].where(datadiccDisease['Section Header'] != datadiccDisease['Section Header'].shift(), np.nan) 
+
+    datadiccDisease['Field Type'].loc[
+        datadiccDisease['Field Type'].isin(['date_dmy', 'number', 'integer', 'datetime_dmy'])] = 'text'
+    datadiccDisease = datadiccDisease.loc[
+        datadiccDisease['Field Type'].isin(['text', 'notes', 'radio', 'dropdown', 'calc',
+                                            'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
+    datadiccDisease['Section Header'] = datadiccDisease['Section Header'].where(
+        datadiccDisease['Section Header'] != datadiccDisease['Section Header'].shift(), np.nan)
     # For the new empty columns, fill NaN values with a default value (in this case an empty string)
     datadiccDisease.fillna('', inplace=True)
-    
 
-
-    #datadiccDisease['Branching Logic (Show field only if...)']=['']*len(datadiccDisease)
-    datadiccDisease['Section Header'].replace('', np.nan, inplace=True)      
+    # datadiccDisease['Branching Logic (Show field only if...)']=['']*len(datadiccDisease)
+    datadiccDisease['Section Header'].replace('', np.nan, inplace=True)
     datadiccDisease = customAlignment(datadiccDisease)
-    
-    #date=datetime.today().strftime('%Y-%m-%d')
-    #path='C:/Users/egarcia/OneDrive - Nexus365/Projects/CBCG/Outputs/'
-    #datadiccDisease.to_csv(path+db_name+'_'+date+'.csv',index=False, encoding='utf8')
+
+    # date=datetime.today().strftime('%Y-%m-%d')
+    # path='C:/Users/egarcia/OneDrive - Nexus365/Projects/CBCG/Outputs/'
+    # datadiccDisease.to_csv(path+db_name+'_'+date+'.csv',index=False, encoding='utf8')
     return datadiccDisease
