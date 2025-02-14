@@ -897,8 +897,8 @@ def addTransformedRows(selected_variables, arc_var_units_selected, order):
 
 def customAlignment(datadicc):
     mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
-                (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
-                (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
+            (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
+            (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
     datadicc.loc[mask, 'Custom Alignment'] = 'RH'
     return datadicc
 
