@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+pd.options.mode.copy_on_write = True
+
 
 # ARC - Analysis and Research Compendium
 
@@ -202,7 +204,7 @@ def getTreeItems(datadicc, version):
     # datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split('(', n=1, expand=True)
     datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
 
-    datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False))
+    datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
     mask_true = datadicc['select units'] == True
     for index, row in datadicc[mask_true].iterrows():
         mask_sec_vari = (datadicc['Sec'] == row['Sec']) & (datadicc['vari'] == row['vari'])
@@ -302,7 +304,7 @@ def getSelectUnits(selected_variables, current_datadicc):
     # current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
     # current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
     current_datadicc['select units'] = (
-        current_datadicc['Question'].str.contains('(select units)', case=False, na=False))
+        current_datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
     mask_true = current_datadicc['select units'] == True
     for index, row in current_datadicc[mask_true].iterrows():
         mask_sec_vari = (current_datadicc['Sec'] == row['Sec']) & (current_datadicc['vari'] == row['vari'])
@@ -897,8 +899,8 @@ def addTransformedRows(selected_variables, arc_var_units_selected, order):
 
 def customAlignment(datadicc):
     mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
-            (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
-            (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
+                (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
+                (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
     datadicc.loc[mask, 'Custom Alignment'] = 'RH'
     return datadicc
 
