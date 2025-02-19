@@ -1,6 +1,7 @@
 import io
 import json
 import re
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
 import dash
@@ -1144,7 +1145,7 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
         raise PreventUpdate  # Prevent update if data is missing
 
     # Proceed with your logic
-    current_datadicc = pd.read_json(current_datadicc_saved, orient='split')
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
     current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
@@ -1520,7 +1521,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         return 'No data available', None, None, None, None
 
     if trigger_id == 'crf_generate':
-        selected_variables_fromData = pd.read_json(json_data, orient='split')
+        selected_variables_fromData = pd.read_json(io.StringIO(json_data), orient='split')
 
         date = datetime.today().strftime('%Y-%m-%d')
 

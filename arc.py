@@ -907,9 +907,9 @@ def customAlignment(datadicc):
 
 
 def generateCRF(datadiccDisease, db_name):
-    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'user_list'] = 'radio'
-    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'multi_list'] = 'checkbox'
-    datadiccDisease['Type'].loc[datadiccDisease['Type'] == 'list'] = 'radio'
+    datadiccDisease.loc[datadiccDisease['Type'] == 'user_list', 'Type'] = 'radio'
+    datadiccDisease.loc[datadiccDisease['Type'] == 'multi_list', 'Type'] = 'checkbox'
+    datadiccDisease.loc[datadiccDisease['Type'] == 'list', 'Type'] = 'radio'
     datadiccDisease = datadiccDisease[['Form', 'Section', 'Variable',
                                        'Type', 'Question',
                                        'Answer Options',
@@ -929,18 +929,18 @@ def generateCRF(datadiccDisease, db_name):
                    'Matrix Group Name', 'Matrix Ranking?', 'Field Annotation']
     datadiccDisease = datadiccDisease.reindex(columns=redcap_cols)
 
-    datadiccDisease['Field Type'].loc[
-        datadiccDisease['Field Type'].isin(['date_dmy', 'number', 'integer', 'datetime_dmy'])] = 'text'
+    datadiccDisease.loc[
+        datadiccDisease['Field Type'].isin(['date_dmy', 'number', 'integer', 'datetime_dmy']), 'Field Type'] = 'text'
     datadiccDisease = datadiccDisease.loc[
         datadiccDisease['Field Type'].isin(['text', 'notes', 'radio', 'dropdown', 'calc',
                                             'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
     datadiccDisease['Section Header'] = datadiccDisease['Section Header'].where(
         datadiccDisease['Section Header'] != datadiccDisease['Section Header'].shift(), np.nan)
     # For the new empty columns, fill NaN values with a default value (in this case an empty string)
-    datadiccDisease.fillna('', inplace=True)
+    datadiccDisease = datadiccDisease.fillna('')
 
     # datadiccDisease['Branching Logic (Show field only if...)']=['']*len(datadiccDisease)
-    datadiccDisease['Section Header'].replace('', np.nan, inplace=True)
+    datadiccDisease['Section Header'] = datadiccDisease['Section Header'].replace({'': np.nan})
     datadiccDisease = customAlignment(datadiccDisease)
 
     # date=datetime.today().strftime('%Y-%m-%d')
