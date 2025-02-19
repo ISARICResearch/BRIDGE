@@ -826,14 +826,15 @@ def generateDailyDataType(current_datadicc):
                                "TREATMENTS & INTERVENTIONS": "2, Treatments & Interventions ",
                                "LABORATORY RESULTS": "3, Laboratory Results ",
                                "IMAGING": "4, Imaging "}
-            daily_type_otions = ''
+            daily_type_options = ''
             for daily_sec in daily_sections:
                 for daily_type in daily_type_dicc:
                     if daily_sec.startswith(daily_type):
-                        daily_type_otions += daily_type_otions + daily_type_dicc[daily_type] + '|'
-            daily_type_otions = daily_type_otions[:-1]
+                        daily_type_options = daily_type_options + daily_type_dicc[daily_type] + '|'
+            daily_type_options = daily_type_options[:-1]
 
-            datadiccDisease['Answer Options'].loc[datadiccDisease['Variable'] == 'daily_data_type'] = daily_type_otions
+            # This doesn't seem to do anything?
+            datadiccDisease.loc[datadiccDisease['Variable'] == 'daily_data_type', 'Answer Options'] = daily_type_options
         return datadiccDisease
     return current_datadicc
 
@@ -899,8 +900,8 @@ def addTransformedRows(selected_variables, arc_var_units_selected, order):
 
 def customAlignment(datadicc):
     mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
-                (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
-                (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
+            (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
+            (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
     datadicc.loc[mask, 'Custom Alignment'] = 'RH'
     return datadicc
 

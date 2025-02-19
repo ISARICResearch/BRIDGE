@@ -16,6 +16,8 @@ import bridge_modals
 import generate_form  # Aidan: added this for format choices
 import paperCRF
 
+pd.options.mode.copy_on_write = True
+
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
