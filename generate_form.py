@@ -1,35 +1,36 @@
-import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle, Paragraph, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet
 from copy import deepcopy
 
-line_placeholder='_' * 30
+import pandas as pd
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Table, TableStyle, Paragraph, PageBreak
+
+line_placeholder = '_' * 30
+
 
 # Aidan: Format choices was moved into here to not reference paperCRF
-    # This is required because we cannot have 'circular imports'
+# This is required because we cannot have 'circular imports'
 def format_choices(choices_str, field_type, threshold=65):
-
     """
     Format the choices string. If the combined length exceeds the threshold, use line breaks instead of commas.
     Prepend symbols based on the field type.
     """
     if field_type == 'radio':
         symbol = "○ "
-    elif field_type=='list':
-        symbol="○ "
-    elif field_type=='user_list':
-        symbol="○ " 
-    elif field_type=='multi_list':
-        symbol=  "□ "         
-    elif field_type == 'checkbox' :
+    elif field_type == 'list':
+        symbol = "○ "
+    elif field_type == 'user_list':
+        symbol = "○ "
+    elif field_type == 'multi_list':
         symbol = "□ "
-    elif field_type=='dropdown':
-        symbol="↧ "
-    else: 
+    elif field_type == 'checkbox':
+        symbol = "□ "
+    elif field_type == 'dropdown':
+        symbol = "↧ "
+    else:
         symbol = ""
-    if len(choices_str.split('|'))<=15:
+    if len(choices_str.split('|')) <= 15:
         choices = [symbol + choice.split(',', 1)[-1].strip() for choice in choices_str.split('|')]
         combined_choices = '   '.join(choices).strip()
     else:
@@ -40,7 +41,7 @@ def format_choices(choices_str, field_type, threshold=65):
 
 
 def generate_form(doc, data_dictionary, elements):
-        # Get the predefined styles
+    # Get the predefined styles
     styles = getSampleStyleSheet()
 
     normal_style = styles['Normal']
@@ -84,7 +85,7 @@ def generate_form(doc, data_dictionary, elements):
                 current_section = row['Section Header']
                 data.append(current_section)
 
-            if row['Variable / Field Name'].endswith(("_oth","_other","oth")):
+            if row['Variable / Field Name'].endswith(("_oth", "_other", "oth")):
                 data[-1] = [data[-1], Paragraph('Specify Other' + '_' * 16, normal_style)]
 
             elif row['Variable / Field Name'].endswith(("_units")):
@@ -126,7 +127,7 @@ def generate_form(doc, data_dictionary, elements):
                     data.insert(j + 0, None)
                     x.append(int((j + 1) / 4))
 
-        datas = [data[i:i+4] for i in range(0, len(data), 4)]
+        datas = [data[i:i + 4] for i in range(0, len(data), 4)]
 
         data = datas
         matching_indices = [i for i, sublist in enumerate(data) if
@@ -138,7 +139,8 @@ def generate_form(doc, data_dictionary, elements):
 
         width, height = letter
         table_width = width - 2 * doc.leftMargin
-        table = Table(data, colWidths=[width * 0.04, width * 0.23, width * 0.23, width * 0.23, width * 0.23, width * 0.04])
+        table = Table(data,
+                      colWidths=[width * 0.04, width * 0.23, width * 0.23, width * 0.23, width * 0.23, width * 0.04])
         style = TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEFTPADDING', (0, 0), (0, -1), 30),

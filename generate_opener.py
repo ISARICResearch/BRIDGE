@@ -1,16 +1,16 @@
+from copy import deepcopy
+
 import pandas as pd
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
-from copy import deepcopy
 from reportlab.platypus import Spacer
+from reportlab.platypus import Table, TableStyle, Paragraph
+
 
 def generate_opener(elements, details, db_name):
-
     if isinstance(db_name, list):
-        db_name=db_name[0]
-        
+        db_name = db_name[0]
 
     # Get the predefined styles
     styles = getSampleStyleSheet()
@@ -31,7 +31,6 @@ def generate_opener(elements, details, db_name):
     header_style.leading = 12
     header_style.fontName = 'DejaVuSans-Bold'  # Use the registered font
 
-
     title_style = styles['Title']
     title_style.fontSize = 14
     title_style.leading = 20
@@ -43,13 +42,12 @@ def generate_opener(elements, details, db_name):
     elements.append(Paragraph(title_text, title_style))
     elements.append(Paragraph("<br/><br/>"))  # Add some space
 
-
-
     # Adding title and design description
 
     # Extracting the 'DESIGN OF THIS CASE REPORT FORM (CRF)' from the details dataset
 
-    design_desc = details.loc[details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text'].values[0].replace('[PROJECT_NAME]',db_name) 
+    design_desc = details.loc[details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text'].values[
+        0].replace('[PROJECT_NAME]', db_name)
     elements.append(Paragraph('DESIGN OF THIS CASE REPORT FORM (CRF)', header_style))
     elements.append(Paragraph(design_desc, normal_style))
 
@@ -59,7 +57,7 @@ def generate_opener(elements, details, db_name):
 
     # Filtering out rows that are not related to form details
     form_details = details[
-        ~details['Text'].str.startswith("Timing /Events:") & 
+        ~details['Text'].str.startswith("Timing /Events:") &
         details['Paper-like section'].isin(['PRESENTATION FORM', 'DAILY FORM', 'OUTCOME FORM'])].copy()
 
     # Build the paragraphs with the desired format
@@ -80,13 +78,17 @@ def generate_opener(elements, details, db_name):
     # Joining the constructed paragraphs with line breaks and add to the elements list
     elements.append(Paragraph('<br/>'.join(presentation_paragraphs), normal_style))
 
-    elements.append(Paragraph(details['Text'].loc[details['Paper-like section']=='Follow-up details'].iloc[0],normal_style))
+    elements.append(
+        Paragraph(details['Text'].loc[details['Paper-like section'] == 'Follow-up details'].iloc[0], normal_style))
 
     elements.append(Paragraph("<br/>"))  # Add some space
-    elements.append(Spacer(1, 10)) 
+    elements.append(Spacer(1, 10))
     ###########################################################################
-    details_event_table=details[(details['Text'].str.startswith("Timing /Events:")) | (details['Paper-like section']=='Timing /Events' ) ].copy()
-    columns = ['Forms']+details_event_table['Text'].loc[details_event_table['Paper-like section']=='Timing /Events'].iloc[0].split(' | ')
+    details_event_table = details[(details['Text'].str.startswith("Timing /Events:")) | (
+                details['Paper-like section'] == 'Timing /Events')].copy()
+    columns = ['Forms'] + \
+              details_event_table['Text'].loc[details_event_table['Paper-like section'] == 'Timing /Events'].iloc[
+                  0].split(' | ')
     transformed_df = pd.DataFrame(columns=columns)
     transformed_df["Forms"] = details_event_table["Paper-like section"]
     for col in columns[1:]:
@@ -95,8 +97,7 @@ def generate_opener(elements, details, db_name):
         else:
             transformed_df[col] = details_event_table["Text"].apply(lambda x: 'COMPLETE' if col in x else '')
 
-    transformed_df = transformed_df.loc[transformed_df['Forms']!='Timing /Events' ]
-
+    transformed_df = transformed_df.loc[transformed_df['Forms'] != 'Timing /Events']
 
     # Convert DataFrame data into a list of lists with Paragraphs for wrapping
     table_data = [[Paragraph(str(item), center_style) for item in row] for row in transformed_df.values.tolist()]
@@ -128,16 +129,16 @@ def generate_opener(elements, details, db_name):
     table.setStyle(style)
 
     elements.append(table)
-    elements.append(Spacer(1, 30)) 
+    elements.append(Spacer(1, 30))
     ###########################################################################
 
-
     elements.append(Paragraph('GENERAL GUIDANCE', header_style))
-    elements.append(Spacer(1, 12))    
+    elements.append(Spacer(1, 12))
 
-    for entry in details['Text'].loc[details['Paper-like section']=='GENERAL GUIDANCE']:
-        bullet_point = Paragraph("• " + entry.replace('circles ()','circles (○)').replace('square boxes ()','square boxes (□)'), styles['Normal'])
+    for entry in details['Text'].loc[details['Paper-like section'] == 'GENERAL GUIDANCE']:
+        bullet_point = Paragraph(
+            "• " + entry.replace('circles ()', 'circles (○)').replace('square boxes ()', 'square boxes (□)'),
+            styles['Normal'])
         elements.append(bullet_point)
-
 
     return elements
