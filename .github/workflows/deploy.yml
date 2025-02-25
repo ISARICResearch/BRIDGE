@@ -1,7 +1,7 @@
 name: Deploy Bridge to EC2
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -11,20 +11,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create private key file
-        run: |
-          echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-
-      - name: Authenticate to AWS
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region eu-north-1
+      - name: Assume AWS IAM Role
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-2
+          role-session-name: GitHubActionsDeploy
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
       - name: Build and Push Docker Image
         run: |
@@ -32,15 +28,20 @@ jobs:
           docker tag isaric-bridge:latest ${{ secrets.ECR_REPOSITORY }}:latest
           docker push ${{ secrets.ECR_REPOSITORY }}:latest
 
+      - name: Create private key file
+        run: |
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
       - name: SSH into EC2 and Deploy Container
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
           # Stop and remove the existing container
-          docker stop dash_app || true
-          docker rm dash_app || true
+          docker stop isaric-bridge || true
+          docker rm isaric-bridge || true
 
           # Pull the latest Docker image from ECR
-          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
           docker pull ${{ secrets.ECR_REPOSITORY }}:latest
 
           # Run the new container
