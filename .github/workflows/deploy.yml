@@ -1,10 +1,6 @@
 name: Deploy Bridge to EC2
 
 on:
-  workflow_run:
-    workflows: ["Docker Build and Test"]
-    types:
-        - completed
   workflow_dispatch: 
 
 jobs:
