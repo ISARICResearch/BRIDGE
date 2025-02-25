@@ -1,5 +1,9 @@
 name: Deploy Bridge to EC2
 
+permissions:
+  id-token: write  # Required for OIDC authentication
+  contents: read   # Required to check out the repo
+
 on:
   workflow_dispatch:
 
