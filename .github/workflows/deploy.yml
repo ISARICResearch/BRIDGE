@@ -39,7 +39,7 @@ jobs:
 
       - name: SSH into EC2 and Deploy Container
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
           # Stop and remove the existing container
           docker stop isaric-bridge || true
           docker rm isaric-bridge || true
