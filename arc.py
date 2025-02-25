@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import requests
 import re
@@ -38,21 +40,11 @@ def getResearchQuestionTypes(datadicc):
 
 def getARCVersions():
 
-    # GitHub API URL for the contents of the repository
-    repo_owner = "ISARICResearch"
-    repo_name = "ARC"
-    #token = 
-
     # URL de la API
-    url_release = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases'
+    url_release = f'https://api.github.com/repos/ISARICResearch/ARC/releases'
 
-    # Cabeceras para la solicitud con el token
-    headers = {
-        "Authorization": f"token {token}"
-    }
 
-    # Solicitud GET
-    response = requests.get(url_release, headers=headers)
+    response = requests.get(url_release)
 
     # Verifica el estado de la respuesta
     if response.status_code == 200:
@@ -124,16 +116,11 @@ def getARC(version):
     #sv_selected=version
     #v_selected=sv_selected.split('.')[0].replace(' ','%20')
     #sv_selected=sv_selected.replace(' ','%20')
-    #token = 
-    headers = {
-    "Authorization": f"token {token}"
-    }
-    get_link=requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags',headers=headers).json()
+    get_link=requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags').json()
     for i in get_link:
         if i['name']==version:
             print('in getARC'+i['name'])
             commit=i['commit']['sha']
-
     root='https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
     datadicc_path = root+commit+'/'+'ARC.csv'

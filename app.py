@@ -26,6 +26,7 @@ import random
 from urllib.parse import parse_qs, urlparse
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],suppress_callback_exceptions=True)
+server = app.server
 app.title ='BRIDGE'
 
 modified_list=[]
