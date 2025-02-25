@@ -22,9 +22,16 @@ jobs:
           aws-region: eu-west-2
           role-session-name: GitHubActionsDeploy
 
+      - name: Verify AWS Credentials
+        run: aws sts get-caller-identity
+
       - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+
+      - name: Verify ECR Repository Exists
+        run: |
+          aws ecr describe-repositories --repository-names $(echo ${{ secrets.ECR_REPOSITORY }} | awk -F'/' '{print $NF}') --region eu-west-2
 
       - name: Build and Push Docker Image
         run: |
@@ -40,15 +47,16 @@ jobs:
       - name: SSH into EC2 and Deploy Container
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-          # Stop and remove the existing container
+
+          # Authenticate to ECR
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+
+          # Stop and remove the existing container if running
           docker stop isaric-bridge || true
           docker rm isaric-bridge || true
 
           # Pull the latest Docker image from ECR
-          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
           docker pull ${{ secrets.ECR_REPOSITORY }}:latest
-
-          # Run the new container
           docker run -d --name isaric-bridge -p 80:8050 ${{ secrets.ECR_REPOSITORY }}:latest
           EOF
 
