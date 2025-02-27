@@ -9,7 +9,7 @@ from reportlab.platypus import Table, TableStyle, Paragraph, PageBreak
 line_placeholder = '_' * 30
 
 
-# Aidan: Format choices was moved into here to not reference paperCRF
+# Aidan: Format choices was moved into here to not reference paper_crf
 # This is required because we cannot have 'circular imports'
 def format_choices(choices_str, field_type, threshold=65):
     """

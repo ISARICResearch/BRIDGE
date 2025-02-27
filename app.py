@@ -2,6 +2,7 @@ import io
 import json
 import re
 from datetime import datetime
+from os.path import join, abspath, dirname
 from urllib.parse import parse_qs, urlparse
 
 import dash
@@ -12,12 +13,15 @@ import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
-import arc as ARC
-import bridge_modals
-import generate_form  # Aidan: added this for format choices
-import paperCRF
+from src import generate_form, paper_crf, arc, bridge_modals
 
 pd.options.mode.copy_on_write = True
+
+config_dir_full = join(dirname(abspath(__file__)), 'assets', 'config_files')
+assets_dir = join('assets')
+icons_dir = join(assets_dir, 'icons')
+logos_dir = join(assets_dir, 'logos')
+screenshots_dir = join(assets_dir, 'screenshots')
 
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
@@ -26,10 +30,10 @@ app.title = 'BRIDGE'
 
 modified_list = []
 
-versions, recentVersion = ARC.getARCVersions()
+versions, recentVersion = arc.getARCVersions()
 
 currentVersion = recentVersion
-current_datadicc, presets, commit = ARC.getARC(recentVersion)
+current_datadicc, presets, commit = arc.getARC(recentVersion)
 print('Beginning')
 
 current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
@@ -39,19 +43,19 @@ for i in current_datadicc:
     print('#####################')
     print(i)
 '''
-tree_items_data = ARC.getTreeItems(current_datadicc, recentVersion)
+tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
 
 # List content Transformation
-ARC_lists, list_variable_choices = ARC.getListContent(current_datadicc, currentVersion, commit)
-current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_lists, ARC.getVariableOrder(current_datadicc))
+ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, commit)
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
 
 # User List content Transformation
-ARC_ulist, ulist_variable_choices = ARC.getUserListContent(current_datadicc, currentVersion, modified_list, commit)
+ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, modified_list, commit)
 
-current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_ulist, ARC.getVariableOrder(current_datadicc))
-ARC_multilist, multilist_variable_choices = ARC.getMultuListContent(current_datadicc, currentVersion, commit)
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
+ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, commit)
 
-current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_multilist, ARC.getVariableOrder(current_datadicc))
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
@@ -63,7 +67,7 @@ navbar = dbc.Navbar(
                 # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src="/assets/ISARIC_logo_wh.png", height="60px")),
+                        dbc.Col(html.Img(src=join(logos_dir, "ISARIC_logo_wh.png"), height="60px")),
                         dbc.Col(
                             dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator", className="ms-2")),
                     ],
@@ -87,7 +91,7 @@ navbar_big = dbc.Navbar(
                 # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src="assets/ISARIC_logo_wh.png", height="100px")),
+                        dbc.Col(html.Img(src=join(logos_dir, "ISARIC_logo_wh.png"), height="100px")),
                         dbc.Col(
                             dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator", className="ms-2")),
                     ],
@@ -107,15 +111,10 @@ navbar_big = dbc.Navbar(
 # Sidebar with icons
 sidebar = html.Div(
     [
-        # dbc.NavLink(html.I(className="fas fa-home"), id="toggle-settings-1", n_clicks=0),
-        # dbc.NavLink(html.I(className="fas fa-book"), id="toggle-settings-2", n_clicks=0),
-        # Add more icons as needed
-
-        dbc.NavLink(html.Img(src="/assets/icons/Settings_off.png", style={'width': '40px'}, id='settings_icon'),
+        dbc.NavLink(html.Img(src=join(icons_dir, "Settings_off.png"), style={'width': '40px'}, id='settings_icon'),
                     id="toggle-settings-1", n_clicks=0),
-        dbc.NavLink(html.Img(src="/assets/icons/preset_off.png", style={'width': '40px'}, id='preset_icon'),
+        dbc.NavLink(html.Img(src=join(icons_dir, "preset_off.png"), style={'width': '40px'}, id='preset_icon'),
                     id="toggle-settings-2", n_clicks=0),
-        # dbc.NavLink(html.Img(src="/assets/icons/question_off.png", style={'width': '40px'},id='question_icon'), id="toggle-question", n_clicks=0),
 
     ],
     style={
@@ -442,7 +441,7 @@ def home_page():
                     ], style={'padding': '2rem'})
                 ], md=6, style={'display': 'flex', 'align-items': 'center', 'background-color': '#475160'}),
                 dbc.Col([
-                    html.Img(src="/assets/home_main.png", style={'width': '100%'})
+                    html.Img(src=join(screenshots_dir, "home_main.png"), style={'width': '100%'})
                 ], md=6)
             ])
         ], style={'padding': '0', 'margin': '0', 'background-color': '#475160'}),
@@ -479,7 +478,7 @@ def home_page():
                                 "Additionally, users can start with one of our Presets, which are pre-selected groups of questions. They can click on the Pre-sets tab and select those they want to include in the CRF. All selected questions can be customized."
                             ], className="card-text")
                         ], className="card-body-fixed"),
-                        dbc.CardImg(src="/assets/card1.png", bottom=True, className="card-img-small"),
+                        dbc.CardImg(src=join(screenshots_dir, "card1.png"), bottom=True, className="card-img-small"),
                     ], className="mb-3")
                 ], md=4),
                 dbc.Col([
@@ -495,7 +494,7 @@ def home_page():
                                 "This feature ensures that the CRF is tailored to specific needs, enhancing the precision and relevance of the data collected."
                             ], className="card-text")
                         ], className="card-body-fixed"),
-                        dbc.CardImg(src="/assets/card2.png", bottom=True, className="card-img-small"),
+                        dbc.CardImg(src=join(screenshots_dir, "card2.png"), bottom=True, className="card-img-small"),
                     ], className="mb-3")
                 ], md=4),
                 dbc.Col([
@@ -511,7 +510,7 @@ def home_page():
                                 "Once users are satisfied with their selections, they can name the CRF and click on generate to finalize the process, ensuring a seamless transition to data collection."
                             ], className="card-text")
                         ], className="card-body-fixed"),
-                        dbc.CardImg(src="/assets/card3.png", bottom=True, className="card-img-small"),
+                        dbc.CardImg(src=join(screenshots_dir, "card3.png"), bottom=True, className="card-img-small"),
                     ], className="mb-3")
                 ], md=4),
 
@@ -525,19 +524,20 @@ def home_page():
                 dbc.Row([
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/FIOCRUZ_logo.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "FIOCRUZ_logo.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/global_health.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "global_health.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/puc_rio.png", className="img-fluid", style={"height": "100px"})
+                            html.Img(src=join(logos_dir, "puc_rio.png"), className="img-fluid",
+                                     style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
 
@@ -548,25 +548,25 @@ def home_page():
                 dbc.Row([
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/CONTAGIO_Logo.jpg", className="img-fluid",
+                            html.Img(src=join(logos_dir, "CONTAGIO_Logo.jpg"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/LONG_CCCC.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "LONG_CCCC.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/penta_col.jpg", className="img-fluid",
+                            html.Img(src=join(logos_dir, "penta_col.jpg"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/VERDI_Logo.jpg", className="img-fluid",
+                            html.Img(src=join(logos_dir, "VERDI_Logo.jpg"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto")
@@ -582,25 +582,25 @@ def home_page():
                 dbc.Row([
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/wellcome-logo.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "wellcome-logo.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/billmelinda-logo.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "billmelinda-logo.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/uk-international-logo.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "uk-international-logo.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src="/assets/logos/FundedbytheEU.png", className="img-fluid",
+                            html.Img(src=join(logos_dir, "FundedbytheEU.png"), className="img-fluid",
                                      style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto")
@@ -616,7 +616,7 @@ def home_page():
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
-                            dbc.CardImg(src="/assets/logos/arc_logo.png", top=True),
+                            dbc.CardImg(src=join(logos_dir, "arc_logo.png"), top=True),
                             dbc.CardBody([
                                 html.H4("Analysis and ReseARC Compendium (ARC)", className="card-title"),
                                 html.P([
@@ -632,7 +632,7 @@ def home_page():
                     ], md=3),
                     dbc.Col([
                         dbc.Card([
-                            dbc.CardImg(src="/assets/logos/fhirflat_logo.png", top=True),
+                            dbc.CardImg(src=join(logos_dir, "fhirflat_logo.png"), top=True),
                             dbc.CardBody([
                                 html.H4("FHIRflat", className="card-title"),
                                 html.P([
@@ -651,7 +651,7 @@ def home_page():
 
                     dbc.Col([
                         dbc.Card([
-                            dbc.CardImg(src="/assets/logos/polyflame_logo.png", top=True),
+                            dbc.CardImg(src=join(logos_dir, "polyflame_logo.png"), top=True),
                             dbc.CardBody([
                                 html.H4("Polymorphic FLexible Analytics and Modelling Engine (PolyFLAME)",
                                         className="card-title"),
@@ -669,7 +669,7 @@ def home_page():
                     ], md=3),
                     dbc.Col([
                         dbc.Card([
-                            dbc.CardImg(src="/assets/logos/vertex_logo.png", top=True),
+                            dbc.CardImg(src=join(logos_dir, "vertex_logo.png"), top=True),
                             dbc.CardBody([
                                 html.H4("Visual Evidence & Research Tool for Exploration (VERTEX)",
                                         className="card-title"),
@@ -794,8 +794,8 @@ def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     # Initialize the state of icons
-    preset_icon_img = "/assets/icons/preset_off.png"
-    settings_icon_img = "/assets/icons/Settings_off.png"
+    preset_icon_img = join(icons_dir, "preset_off.png")
+    settings_icon_img = join(icons_dir, "Settings_off.png")
 
     # Toggle logic
     if button_id == "toggle-settings-2":
@@ -808,7 +808,7 @@ def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
             new_is_in_presets = not is_in_presets
             new_is_in_settings = False
 
-        preset_icon_img = "/assets/icons/preset_on.png" if new_is_in_presets else "/assets/icons/preset_off.png"
+        preset_icon_img = join(icons_dir, "preset_on.png") if new_is_in_presets else join(icons_dir, "preset_off.png")
 
     elif button_id == "toggle-settings-1":
         # If presets is open, close it and open settings
@@ -820,7 +820,8 @@ def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
             new_is_in_settings = not is_in_settings
             new_is_in_presets = False
 
-        settings_icon_img = "/assets/icons/Settings_on.png" if new_is_in_settings else "/assets/icons/Settings_off.png"
+        settings_icon_img = join(icons_dir, "Settings_on.png") if new_is_in_settings else join(icons_dir,
+                                                                                               "Settings_off.png")
 
     else:
         # Default state if no button is clicked
@@ -864,19 +865,19 @@ def display_checked(checked, current_datadicc_saved):
         #############################################################
         ## REDCAP Pipeline
         delete_this_variables_with_units = []
-        selected_variables = ARC.getIncludeNotShow(selected_variables['Variable'], current_datadicc)
+        selected_variables = arc.getIncludeNotShow(selected_variables['Variable'], current_datadicc)
 
         # Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units = ARC.getSelectUnits(selected_variables['Variable'],
+        arc_var_units_selected, delete_this_variables_with_units = arc.getSelectUnits(selected_variables['Variable'],
                                                                                       current_datadicc)
         if arc_var_units_selected is not None:
-            selected_variables = ARC.addTransformedRows(selected_variables, arc_var_units_selected,
-                                                        ARC.getVariableOrder(current_datadicc))
+            selected_variables = arc.addTransformedRows(selected_variables, arc_var_units_selected,
+                                                        arc.getVariableOrder(current_datadicc))
             if len(delete_this_variables_with_units) > 0:  # This remove all the unit variables that were included in a select unit type question
                 selected_variables = selected_variables.loc[
                     ~selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
-        selected_variables = ARC.generateDailyDataType(selected_variables)
+        selected_variables = arc.generateDailyDataType(selected_variables)
 
         #############################################################
         #############################################################
@@ -907,7 +908,7 @@ def display_checked(checked, current_datadicc_saved):
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
             else:
-                row['Answer Options'] = paperCRF.line_placeholder
+                row['Answer Options'] = paper_crf.line_placeholder
 
             # Add the processed row to new_rows
             new_row = row.to_dict()
@@ -1027,20 +1028,20 @@ def store_clicked_item(n_clicks, selected_version_data):
     # Si hay un cambio, procesamos la lógica
     try:
         selected_version = new_selected_version
-        current_datadicc, presets, commit = ARC.getARC(selected_version)
+        current_datadicc, presets, commit = arc.getARC(selected_version)
         current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
         current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
 
-        ARC_lists, list_variable_choices = ARC.getListContent(current_datadicc, selected_version, commit)
-        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_lists, ARC.getVariableOrder(current_datadicc))
+        ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, selected_version, commit)
+        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
 
-        ARC_ulist, ulist_variable_choices = ARC.getUserListContent(current_datadicc, selected_version, modified_list,
+        ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, selected_version, modified_list,
                                                                    commit)
-        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_ulist, ARC.getVariableOrder(current_datadicc))
+        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
 
-        ARC_multilist, multilist_variable_choices = ARC.getMultuListContent(current_datadicc, selected_version, commit)
-        current_datadicc = ARC.addTransformedRows(current_datadicc, ARC_multilist,
-                                                  ARC.getVariableOrder(current_datadicc))
+        ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, selected_version, commit)
+        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist,
+                                                  arc.getVariableOrder(current_datadicc))
 
         grouped_presets = {}
         for key, value in presets:
@@ -1104,12 +1105,12 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
-    current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
+    current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
     current_datadicc_temp[['Sec', 'vari', 'mod']] = current_datadicc_temp['Variable'].str.split('_', n=2, expand=True)
     current_datadicc_temp[['Sec_name', 'Expla']] = current_datadicc_temp['Section'].str.split(r'[(|:]', n=1,
                                                                                               expand=True)
 
-    tree_items_data = ARC.getTreeItems(current_datadicc_temp, currentVersion)
+    tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
     print('values en update output', values)
 
     if (not ctx.triggered) | (all(not sublist for sublist in values)):
@@ -1148,12 +1149,12 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
-    current_datadicc_temp, presets, commit = ARC.getARC(currentVersion)
+    current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
     current_datadicc_temp[['Sec', 'vari', 'mod']] = current_datadicc_temp['Variable'].str.split('_', n=2, expand=True)
     current_datadicc_temp[['Sec_name', 'Expla']] = current_datadicc_temp['Section'].str.split(r'[(|:]', n=1,
                                                                                               expand=True)
 
-    tree_items_data = ARC.getTreeItems(current_datadicc_temp, currentVersion)
+    tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
 
     templa_answer_opt_dict1 = []
     templa_answer_opt_dict2 = []
@@ -1293,7 +1294,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             elif row_tem_ul['Type'] == 'multi_list':
                 templa_answer_opt_dict2.append([row_tem_ul['Variable'], dict2_options])
                 ###########
-
     tree_items = html.Div(
         dash_treeview_antd.TreeView(
             id='input',
@@ -1525,9 +1525,9 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
 
         date = datetime.today().strftime('%Y-%m-%d')
 
-        # paperCRF.generate_completionguide(selected_variables_fromData,path+crf_name+'_Completion_Guide_'+date+'.pdf',currentVersion, crf_name)
+        # paper_crf.generate_completionguide(selected_variables_fromData,path+crf_name+'_Completion_Guide_'+date+'.pdf',currentVersion, crf_name)
 
-        datadiccDisease = ARC.generateCRF(selected_variables_fromData, crf_name)
+        datadiccDisease = arc.generateCRF(selected_variables_fromData, crf_name)
 
         print('#############################')
         print('#############################')
@@ -1541,7 +1541,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         # datadiccDisease.to_csv(path+crf_name+'_'+date+'.csv',index=False, encoding='utf8')
         currentVersion = selected_version_data.get('selected_version', None)
         commit = commit_data.get('commit', None)
-        pdf_crf = paperCRF.generate_pdf(datadiccDisease, currentVersion, crf_name, commit)
+        pdf_crf = paper_crf.generate_pdf(datadiccDisease, currentVersion, crf_name, commit)
 
         '''# Create a PDF to Word converter
         cv = Converter('dataDiccs/'+crf_name+'_'+date+'.pdf')
@@ -1556,10 +1556,9 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         output = io.BytesIO()
         df.to_csv(output, index=False, encoding='utf8')
         output.seek(0)
-        pdf_data = paperCRF.generate_completionguide(selected_variables_fromData, currentVersion, crf_name, commit)
+        pdf_data = paper_crf.generate_completionguide(selected_variables_fromData, currentVersion, crf_name, commit)
 
         file_name = 'ISARIC Clinical Characterisation Setup.xml'  # Set the desired download name here
-        # file_path = 'BRIDGE/assets/config_files/'+file_name
         file_path = 'assets/config_files/' + file_name  # Change this for deploy
         # Open the XML file and read its content
         with open(file_path, 'rb') as file:  # 'rb' mode to read as binary
@@ -1765,9 +1764,8 @@ def paralel_elements(features, id_feat, current_datadicc, selected_variables):
     [State('selected_data-store', 'data')],
 )
 def update_row3_content(selected_value, json_data):
-    caseDefiningVariables = ARC.getResearchQuestionTypes(current_datadicc)
-    # reseARC_question_elements=pd.read_csv('BRIDGE/assets/config_files/reseARCQuestions.csv') #change for deploy
-    research_question_elements = pd.read_csv('assets/config_files/researchQuestions.csv')
+    caseDefiningVariables = arc.getResearchQuestionTypes(current_datadicc)
+    research_question_elements = pd.read_csv(join(config_dir_full, 'researchQuestions.csv'))
 
     group_elements = []
     for tq_opGroup in research_question_elements['Option Group'].unique():
