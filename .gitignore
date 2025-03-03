@@ -1,0 +1,3 @@
+*.pem
+.vscode
+__pycache__
