@@ -59,7 +59,7 @@ jobs:
 
           # Pull the latest Docker image from ECR
           docker pull ${{ secrets.ECR_REPOSITORY }}:latest
-          docker run -d --name isaric-bridge -p 80:8050 ${{ secrets.ECR_REPOSITORY }}:latest
+          docker run -d --name isaric-bridge -p 8050:8050 ${{ secrets.ECR_REPOSITORY }}:latest
           EOF
 
       - name: Cleanup private key
