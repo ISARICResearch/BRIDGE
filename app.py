@@ -14,7 +14,7 @@ from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.bridge_main import MainContent
+from src.bridge_main import MainContent, NavBar
 
 pd.options.mode.copy_on_write = True
 
@@ -60,30 +60,6 @@ current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.g
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
-
-navbar = dbc.Navbar(
-    dbc.Container(
-        [
-            html.A(
-                # Use row and col to control vertical alignment of logo / brand
-                dbc.Row(
-                    [
-                        dbc.Col(html.Img(src=join(logos_dir, "ISARIC_logo_wh.png"), height="60px")),
-                        dbc.Col(
-                            dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator", className="ms-2")),
-                    ],
-                    align="center",
-                    className="g-0",
-                ),
-                href="https://isaric.org/",
-                style={"textDecoration": "none"},
-            ),
-            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
-        ]
-    ),
-    color="#BA0225",
-    dark=True,
-)
 
 # Sidebar with icons
 sidebar = html.Div(
@@ -302,7 +278,7 @@ app.layout = html.Div(
 
 def main_app():
     return html.Div([
-        navbar,
+        NavBar.navbar,
         sidebar,
         settings_column,
         preset_column,

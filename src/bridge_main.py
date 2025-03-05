@@ -100,3 +100,30 @@ class MainContent:
         style={"margin-top": "4rem", "margin-left": "4rem", "z-index": 1, "width": "90vw"}
         # Adjust margin to accommodate navbar and sidebar
     )
+
+
+class NavBar:
+    navbar = dbc.Navbar(
+        dbc.Container(
+            [
+                html.A(
+                    # Use row and col to control vertical alignment of logo / brand
+                    dbc.Row(
+                        [
+                            dbc.Col(html.Img(src=f"{logos_dir}/ISARIC_logo_wh.png", height="60px")),
+                            dbc.Col(
+                                dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator",
+                                                className="ms-2")),
+                        ],
+                        align="center",
+                        className="g-0",
+                    ),
+                    href="https://isaric.org/",
+                    style={"textDecoration": "none"},
+                ),
+                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            ]
+        ),
+        color="#BA0225",
+        dark=True,
+    )
