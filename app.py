@@ -18,11 +18,11 @@ from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, Tre
 
 pd.options.mode.copy_on_write = True
 
-config_dir_full = join(dirname(abspath(__file__)), 'assets', 'config_files')
-assets_dir = 'assets'
-icons_dir = join(assets_dir, 'icons')
-logos_dir = join(assets_dir, 'logos')
-screenshots_dir = join(assets_dir, 'screenshots')
+CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
+ASSETS_DIR = '/assets'
+ICONS_DIR = f'{ASSETS_DIR}/icons'
+LOGOS_DIR = f'{ASSETS_DIR}/logos'
+SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
@@ -41,11 +41,7 @@ print('Beginning')
 
 current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
 current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
-'''
-for i in current_datadicc:
-    print('#####################')
-    print(i)
-'''
+
 tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
 
 # List content Transformation
@@ -137,8 +133,6 @@ def start_app(n_clicks):
 # get URL parameter
 ####################
 @app.callback(
-    # [Output('crf_name', 'value')] + [Output(f'checklist-{key}', 'value') for key in grouped_presets.keys()],
-    # [Output('crf_name', 'value')] ,
     [Output('crf_name', 'value'), Output({'type': 'template_check', 'index': ALL}, 'value')],
     [Input('templates_checks_ready', 'data')],
     [State('url', 'href')],
@@ -172,7 +166,6 @@ def update_output_based_on_url(template_check_flag, href):
         return [value], [checklist_values[key] for key in grouped_presets.keys()]
     else:
         return dash.no_update
-    # return [value]
 
 
 #################################
@@ -1109,7 +1102,7 @@ def paralel_elements(features, id_feat, current_datadicc, selected_variables):
 )
 def update_row3_content(selected_value, json_data):
     caseDefiningVariables = arc.getResearchQuestionTypes(current_datadicc)
-    research_question_elements = pd.read_csv(join(config_dir_full, 'researchQuestions.csv'))
+    research_question_elements = pd.read_csv(join(CONFIG_DIR_FULL, 'researchQuestions.csv'))
 
     group_elements = []
     for tq_opGroup in research_question_elements['Option Group'].unique():
