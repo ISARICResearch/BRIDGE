@@ -2,7 +2,7 @@ import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import html, Input, Output, State
+from dash import dcc, html, Input, Output, State
 
 pd.options.mode.copy_on_write = True
 
@@ -63,13 +63,7 @@ class MainContent:
             dbc.Row(
                 [
                     dbc.Col([html.Div(),
-
-                             # tree_items,
-
-                             html.Div(id='output-expanded', style={'display': 'none'})
-                             ]
-
-                            , width=5),  # 45% width
+                             html.Div(id='output-expanded', style={'display': 'none'})], width=5),  # 45% width
                     dbc.Col(
                         [
                             dbc.Row([html.Div(),
@@ -131,7 +125,6 @@ class NavBar:
 
 
 class SideBar:
-    # Sidebar with icons
     sidebar = html.Div(
         [
             dbc.NavLink(html.Img(src=f"{icons_dir}/Settings_off.png", style={'width': '40px'}, id='settings_icon'),
@@ -213,3 +206,66 @@ class SideBar:
             return new_is_in_presets, new_is_in_settings, is_in_tree, settings_icon_img, preset_icon_img
 
         return app
+
+
+class Settings:
+    def __init__(self, arc_versions):
+        self.ARC_versions = arc_versions
+
+        self.ARC_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for
+                                   i, version in enumerate(self.ARC_versions)]
+
+        self.settings_content = html.Div(
+            [
+                html.H3("Settings", id="settings-text-2"),
+
+                # ICC Version dropdown
+                html.Div([
+                    dbc.InputGroup([
+                        dbc.DropdownMenu(
+                            label="ARC Version",
+                            children=self.ARC_versions_items,
+                            id="dropdown-ARC-version-menu"
+                        ),
+                        dbc.Input(id="dropdown-ARC_version_input", placeholder="name")
+                    ]),
+                    dcc.Store(id='selected-version-store'),
+                    dcc.Store(id='selected_data-store'),
+                ], style={'margin-bottom': '20px'}),
+
+                # Output Files checkboxes
+                dcc.Store(id="output-files-store"),
+                # Checklist component
+                html.Div([
+                    html.Label("Output Files", htmlFor="output-files-checkboxes"),
+                    dbc.Checklist(
+                        id="output-files-checkboxes",
+                        options=[
+                            {'label': 'ISARIC Clinical Characterization XML', 'value': 'redcap_xml'},
+                            {'label': 'REDCap Data Dictionary', 'value': 'redcap_csv'},
+                            {'label': 'Paper-like CRF', 'value': 'paper_like'},
+                            # {'label': 'Completion Guide', 'value': 'completion_guide'},
+                        ],
+                        value=['redcap_xml', 'redcap_csv', 'paper_like'],  # Default selected values
+                        inline=True
+                    )
+                ], style={'margin-bottom': '20px'}),
+
+            ],
+            style={"padding": "2rem"}
+        )
+
+        self.settings_column = dbc.Fade(
+            self.settings_content,
+            id="settings-column",
+            is_in=False,  # Initially hidden
+            style={
+                "position": "fixed",
+                "top": "5rem",
+                "left": "4rem",
+                "bottom": 0,
+                "width": "20rem",
+                "background-color": "#dddddd",
+                "z-index": 2001
+            }
+        )

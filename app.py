@@ -14,7 +14,7 @@ from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.bridge_main import MainContent, NavBar, SideBar
+from src.bridge_main import MainContent, NavBar, SideBar, Settings
 
 pd.options.mode.copy_on_write = True
 
@@ -64,8 +64,6 @@ initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
 
 ARC_versions = versions
-ARC_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for i, version in
-                      enumerate(ARC_versions)]
 
 # Grouping presets by the first column
 grouped_presets = {}
@@ -108,75 +106,6 @@ preset_column = dbc.Fade(
         style={"padding": "2rem"}
     ),
     id="presets-column",
-    is_in=False,  # Initially hidden
-    style={
-        "position": "fixed",
-        "top": "5rem",
-        "left": "4rem",
-        "bottom": 0,
-        "width": "20rem",
-        "background-color": "#dddddd",
-        "z-index": 2001
-    }
-)
-
-settings_content = html.Div(
-    [
-        html.H3("Settings", id="settings-text-2"),
-
-        # ICC Version dropdown
-        html.Div([
-            dbc.InputGroup([
-                dbc.DropdownMenu(
-                    label="ARC Version",
-                    children=ARC_versions_items,
-                    id="dropdown-ARC-version-menu"
-                ),
-                dbc.Input(id="dropdown-ARC_version_input", placeholder="name")
-            ]),
-            dcc.Store(id='selected-version-store'),
-            dcc.Store(id='selected_data-store'),
-            # dcc.Store(id='visibility-store', data={'display': 'block'})
-        ], style={'margin-bottom': '20px'}),
-
-        # Output Files checkboxes
-        dcc.Store(id="output-files-store"),
-        # Checklist component
-        html.Div([
-            html.Label("Output Files", htmlFor="output-files-checkboxes"),
-            dbc.Checklist(
-                id="output-files-checkboxes",
-                options=[
-                    {'label': 'ISARIC Clinical Characterization XML', 'value': 'redcap_xml'},
-                    {'label': 'REDCap Data Dictionary', 'value': 'redcap_csv'},
-                    {'label': 'Paper-like CRF', 'value': 'paper_like'},
-                    # {'label': 'Completion Guide', 'value': 'completion_guide'},
-                ],
-                value=['redcap_xml', 'redcap_csv', 'paper_like'],  # Default selected values
-                inline=True
-            )
-        ], style={'margin-bottom': '20px'}),
-
-    ],
-    style={"padding": "2rem"}
-)
-'''html.Div([
-    html.Label("'Paperlike' Files", htmlFor="paperlike-files-checkboxes"),
-    dbc.Checklist(
-        id="paperlike-files-checkboxes",
-        options=[
-            {'label': 'pdf', 'value': 'PDF'},
-            {'label': 'word', 'value': 'Word'},
-            # Add more papers as needed
-        ],
-        value=['paper1'],  # Default selected values
-        inline=True
-    )
-]),'''
-
-settings_column = dbc.Fade(
-    settings_content,
-    id="settings-column",
     is_in=False,  # Initially hidden
     style={
         "position": "fixed",
@@ -258,7 +187,7 @@ def main_app():
     return html.Div([
         NavBar.navbar,
         SideBar.sidebar,
-        settings_column,
+        Settings(ARC_versions).settings_column,
         preset_column,
         tree_column,
         MainContent.main_content,
