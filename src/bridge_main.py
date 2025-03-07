@@ -1,6 +1,7 @@
 import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
+import dash_treeview_antd
 import pandas as pd
 from dash import dcc, html, Input, Output, State
 
@@ -292,3 +293,41 @@ class Presets:
             "z-index": 2001
         }
     )
+
+
+class TreeItems:
+    def __init__(self, tree_items_data):
+        self.tree_items_data = tree_items_data
+
+        self.tree_items = html.Div(
+            dash_treeview_antd.TreeView(
+                id='input',
+                multiple=False,
+                checkable=True,
+                checked=[],
+                data=self.tree_items_data), id='tree_items_container',
+            style={
+                'overflow-y': 'auto',  # Vertical scrollbar when needed
+                'height': '100%',  # Fixed height
+                'width': '100%',  # Fixed width, or you can specify a value in px
+                'white-space': 'normal',  # Allow text to wrap
+                'overflow-x': 'hidden',  # Hide overflowed content
+                'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+                'display': 'block'
+            }
+        )
+
+        self.tree_column = dbc.Fade(
+            self.tree_items,
+            id="tree-column",
+            is_in=True,  # Initially show
+            style={
+                "position": "fixed",
+                "top": "5rem",
+                "left": "4rem",
+                "bottom": 0,
+                "width": "30rem",
+                "background-color": "#ffffff",
+                "z-index": 2
+            }
+        )

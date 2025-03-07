@@ -14,7 +14,7 @@ from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets
+from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
 
 pd.options.mode.copy_on_write = True
 
@@ -73,40 +73,6 @@ for key, value in presets:
 
 initial_grouped_presets = json.dumps(grouped_presets)
 
-tree_items = html.Div(
-    dash_treeview_antd.TreeView(
-        id='input',
-        multiple=False,
-        checkable=True,
-        checked=[],
-        data=tree_items_data), id='tree_items_container',
-    style={
-        'overflow-y': 'auto',  # Vertical scrollbar when needed
-        'height': '100%',  # Fixed height
-        'width': '100%',  # Fixed width, or you can specify a value in px
-        'white-space': 'normal',  # Allow text to wrap
-        'overflow-x': 'hidden',  # Hide overflowed content
-        'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-        'display': 'block'
-    }
-)
-
-tree_column = dbc.Fade(
-    tree_items,
-    # html.Div("Hello"),
-    id="tree-column",
-    is_in=True,  # Initially show
-    style={
-        "position": "fixed",
-        "top": "5rem",
-        "left": "4rem",
-        "bottom": 0,
-        "width": "30rem",
-        "background-color": "#ffffff",
-        "z-index": 2
-    }
-)
-
 app.layout = html.Div(
     [
         dcc.Store(id='show-Take a Look at Our Other Tools', data=True),  # Store to manage which page to display
@@ -144,7 +110,7 @@ def main_app():
         SideBar.sidebar,
         Settings(ARC_versions).settings_column,
         Presets.preset_column,
-        tree_column,
+        TreeItems(tree_items_data).tree_column,
         MainContent.main_content,
     ])
 
