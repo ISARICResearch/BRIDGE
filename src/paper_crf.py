@@ -16,12 +16,12 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from src.generate_form import generate_form
 from src.generate_opener import generate_opener
 
-assets_dir = join(dirname(dirname(abspath(__file__))), 'assets')
-font_dir = join(assets_dir, 'fonts')
-logo_dir = join(assets_dir, 'logos')
+ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
+FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
+LOGOS_DIR_FULL = join(ASSETS_DIR_FULL, 'logos')
 
-pdfmetrics.registerFont(TTFont('DejaVuSans', join(font_dir, 'DejaVuSans.ttf')))
-pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', join(font_dir, 'DejaVuSans-Bold.ttf')))
+pdfmetrics.registerFont(TTFont('DejaVuSans', join(FONTS_DIR_FULL, 'DejaVuSans.ttf')))
+pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', join(FONTS_DIR_FULL, 'DejaVuSans-Bold.ttf')))
 line_placeholder = '_' * 30
 
 
@@ -34,7 +34,7 @@ def header_footer(canvas, doc, title):
     formatted_date = current_date.strftime("%d%b%y").upper()
 
     # Draw the first logo
-    canvas.drawInlineImage(join(logo_dir, 'ISARIC_logo.png'), 50, 730, width=69,
+    canvas.drawInlineImage(join(LOGOS_DIR_FULL, 'ISARIC_logo.png'), 50, 730, width=69,
                            height=30)  # change for deploy# adjust the width and height accordingly
 
     # Now, for the text, ensure it's positioned after the second logo + some spacing

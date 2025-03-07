@@ -19,7 +19,7 @@ from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, Tre
 pd.options.mode.copy_on_write = True
 
 CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
-ASSETS_DIR = '/assets'
+ASSETS_DIR = 'assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
 SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
