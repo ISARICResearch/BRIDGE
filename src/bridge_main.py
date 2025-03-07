@@ -269,3 +269,26 @@ class Settings:
                 "z-index": 2001
             }
         )
+
+
+class Presets:
+    preset_column = dbc.Fade(
+        html.Div(
+            [
+                html.H3("Templates", id="settings-text-1"),
+                dbc.Accordion(id='preset-accordion')  # ID to be updated dynamically
+            ],
+            style={"padding": "2rem"}
+        ),
+        id="presets-column",
+        is_in=False,  # Initially hidden
+        style={
+            "position": "fixed",
+            "top": "5rem",
+            "left": "4rem",
+            "bottom": 0,
+            "width": "20rem",
+            "background-color": "#dddddd",
+            "z-index": 2001
+        }
+    )

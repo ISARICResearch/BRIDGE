@@ -14,7 +14,7 @@ from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.bridge_main import MainContent, NavBar, SideBar, Settings
+from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets
 
 pd.options.mode.copy_on_write = True
 
@@ -72,51 +72,6 @@ for key, value in presets:
     grouped_presets.setdefault(key, []).append(value)
 
 initial_grouped_presets = json.dumps(grouped_presets)
-# Creating the accordion items
-accordion_items = []
-for key, values in grouped_presets.items():
-    # For each group, create a checklist
-    checklist = dbc.Checklist(
-        options=[{"label": value, "value": value} for value in values],
-        value=[],
-        # id=f'checklist-{key}',
-        id={'type': 'template_check', 'index': key},
-        switch=True,
-    )
-    # Create an accordion item with the checklist
-    accordion_items.append(
-        dbc.AccordionItem(
-            title=key,
-            children=checklist
-        )
-    )
-preset_accordion = dbc.Accordion(accordion_items)
-preset_content = html.Div(
-    [html.H3("Templates", id="settings-text-1"),
-     preset_accordion
-     ], style={"padding": "2rem"}
-)
-
-preset_column = dbc.Fade(
-    html.Div(
-        [
-            html.H3("Templates", id="settings-text-1"),
-            dbc.Accordion(id='preset-accordion')  # ID to be updated dynamically
-        ],
-        style={"padding": "2rem"}
-    ),
-    id="presets-column",
-    is_in=False,  # Initially hidden
-    style={
-        "position": "fixed",
-        "top": "5rem",
-        "left": "4rem",
-        "bottom": 0,
-        "width": "20rem",
-        "background-color": "#dddddd",
-        "z-index": 2001
-    }
-)
 
 tree_items = html.Div(
     dash_treeview_antd.TreeView(
@@ -188,7 +143,7 @@ def main_app():
         NavBar.navbar,
         SideBar.sidebar,
         Settings(ARC_versions).settings_column,
-        preset_column,
+        Presets.preset_column,
         tree_column,
         MainContent.main_content,
     ])
