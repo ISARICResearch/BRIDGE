@@ -14,7 +14,7 @@ from dash import callback_context, dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.bridge_main import MainContent, NavBar
+from src.bridge_main import MainContent, NavBar, SideBar
 
 pd.options.mode.copy_on_write = True
 
@@ -28,6 +28,8 @@ app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
 app.title = 'BRIDGE'
+
+app = SideBar.add_sidebar(app)
 
 modified_list = []
 
@@ -60,30 +62,6 @@ current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.g
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
-
-# Sidebar with icons
-sidebar = html.Div(
-    [
-        dbc.NavLink(html.Img(src=join(icons_dir, "Settings_off.png"), style={'width': '40px'}, id='settings_icon'),
-                    id="toggle-settings-1", n_clicks=0),
-        dbc.NavLink(html.Img(src=join(icons_dir, "preset_off.png"), style={'width': '40px'}, id='preset_icon'),
-                    id="toggle-settings-2", n_clicks=0),
-
-    ],
-    style={
-        "position": "fixed",
-        "top": "5rem",  # Height of the navbar
-        "left": 0,
-        "bottom": 0,
-        "width": "4rem",
-        "padding": "2rem 1rem",
-        "background-color": "#dddddd",
-        "display": "flex",
-        "flexDirection": "column",
-        "alignItems": "center",
-        # "z-index": 2000
-    }
-)
 
 ARC_versions = versions
 ARC_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for i, version in
@@ -279,7 +257,7 @@ app.layout = html.Div(
 def main_app():
     return html.Div([
         NavBar.navbar,
-        sidebar,
+        SideBar.sidebar,
         settings_column,
         preset_column,
         tree_column,
@@ -348,62 +326,6 @@ def update_output_based_on_url(template_check_flag, href):
 
 
 #################################
-
-@app.callback(
-    [Output("presets-column", "is_in"),
-     Output("settings-column", "is_in"),
-     Output("tree-column", 'is_in'),
-     Output("settings_icon", "src"),
-     Output("preset_icon", "src")],
-    [Input("toggle-settings-2", "n_clicks"),
-     Input("toggle-settings-1", "n_clicks")],
-    [State("presets-column", "is_in"),
-     State("settings-column", "is_in")],
-    prevent_initial_call=True
-)
-def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
-    ctx = dash.callback_context
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    # Initialize the state of icons
-    preset_icon_img = join(icons_dir, "preset_off.png")
-    settings_icon_img = join(icons_dir, "Settings_off.png")
-
-    # Toggle logic
-    if button_id == "toggle-settings-2":
-        # If settings is open, close it and open presets
-        if is_in_settings:
-            new_is_in_presets = True
-            new_is_in_settings = False
-        else:
-            # Toggle the state of presets
-            new_is_in_presets = not is_in_presets
-            new_is_in_settings = False
-
-        preset_icon_img = join(icons_dir, "preset_on.png") if new_is_in_presets else join(icons_dir, "preset_off.png")
-
-    elif button_id == "toggle-settings-1":
-        # If presets is open, close it and open settings
-        if is_in_presets:
-            new_is_in_settings = True
-            new_is_in_presets = False
-        else:
-            # Toggle the state of settings
-            new_is_in_settings = not is_in_settings
-            new_is_in_presets = False
-
-        settings_icon_img = join(icons_dir, "Settings_on.png") if new_is_in_settings else join(icons_dir,
-                                                                                               "Settings_off.png")
-
-    else:
-        # Default state if no button is clicked
-        new_is_in_presets = is_in_presets
-        new_is_in_settings = is_in_settings
-
-    # Determine tree-column visibility
-    is_in_tree = not (new_is_in_presets or new_is_in_settings)
-
-    return new_is_in_presets, new_is_in_settings, is_in_tree, settings_icon_img, preset_icon_img
 
 
 @app.callback([Output('CRF_representation_grid', 'columnDefs'),

@@ -1,7 +1,8 @@
+import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import html
+from dash import html, Input, Output, State
 
 pd.options.mode.copy_on_write = True
 
@@ -127,3 +128,88 @@ class NavBar:
         color="#BA0225",
         dark=True,
     )
+
+
+class SideBar:
+    # Sidebar with icons
+    sidebar = html.Div(
+        [
+            dbc.NavLink(html.Img(src=f"{icons_dir}/Settings_off.png", style={'width': '40px'}, id='settings_icon'),
+                        id="toggle-settings-1", n_clicks=0),
+            dbc.NavLink(html.Img(src=f"{icons_dir}/preset_off.png", style={'width': '40px'}, id='preset_icon'),
+                        id="toggle-settings-2", n_clicks=0),
+
+        ],
+        style={
+            "position": "fixed",
+            "top": "5rem",  # Height of the navbar
+            "left": 0,
+            "bottom": 0,
+            "width": "4rem",
+            "padding": "2rem 1rem",
+            "background-color": "#dddddd",
+            "display": "flex",
+            "flexDirection": "column",
+            "alignItems": "center",
+            # "z-index": 2000
+        }
+    )
+
+    @staticmethod
+    def add_sidebar(app):
+        @app.callback(
+            [Output("presets-column", "is_in"),
+             Output("settings-column", "is_in"),
+             Output("tree-column", 'is_in'),
+             Output("settings_icon", "src"),
+             Output("preset_icon", "src")],
+            [Input("toggle-settings-2", "n_clicks"),
+             Input("toggle-settings-1", "n_clicks")],
+            [State("presets-column", "is_in"),
+             State("settings-column", "is_in")],
+            prevent_initial_call=True
+        )
+        def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
+            ctx = dash.callback_context
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+            # Initialize the state of icons
+            preset_icon_img = f"{icons_dir}/preset_off.png"
+            settings_icon_img = f"{icons_dir}/Settings_off.png"
+
+            # Toggle logic
+            if button_id == "toggle-settings-2":
+                # If settings is open, close it and open presets
+                if is_in_settings:
+                    new_is_in_presets = True
+                    new_is_in_settings = False
+                else:
+                    # Toggle the state of presets
+                    new_is_in_presets = not is_in_presets
+                    new_is_in_settings = False
+
+                preset_icon_img = f"{icons_dir}/preset_on.png" if new_is_in_presets else f"{icons_dir}/preset_off.png"
+
+            elif button_id == "toggle-settings-1":
+                # If presets is open, close it and open settings
+                if is_in_presets:
+                    new_is_in_settings = True
+                    new_is_in_presets = False
+                else:
+                    # Toggle the state of settings
+                    new_is_in_settings = not is_in_settings
+                    new_is_in_presets = False
+
+                settings_icon_img = f"{icons_dir}/Settings_on.png" if new_is_in_settings else f"{icons_dir}/Settings_off.png"
+
+            else:
+                # Default state if no button is clicked
+                new_is_in_presets = is_in_presets
+                new_is_in_settings = is_in_settings
+
+            # Determine tree-column visibility
+            is_in_tree = not (new_is_in_presets or new_is_in_settings)
+
+            return new_is_in_presets, new_is_in_settings, is_in_tree, settings_icon_img, preset_icon_img
+
+        return app
