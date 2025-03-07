@@ -7,10 +7,10 @@ from dash import dcc, html, Input, Output, State
 
 pd.options.mode.copy_on_write = True
 
-assets_dir = '../assets'
-icons_dir = f'{assets_dir}/icons'
-logos_dir = f'{assets_dir}/logos'
-screenshots_dir = f'{assets_dir}/screenshots'
+ASSETS_DIR = '../assets'
+ICONS_DIR = f'{ASSETS_DIR}/icons'
+LOGOS_DIR = f'{ASSETS_DIR}/logos'
+SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 
 
 class MainContent:
@@ -106,7 +106,7 @@ class NavBar:
                     # Use row and col to control vertical alignment of logo / brand
                     dbc.Row(
                         [
-                            dbc.Col(html.Img(src=f"{logos_dir}/ISARIC_logo_wh.png", height="60px")),
+                            dbc.Col(html.Img(src=f"{LOGOS_DIR}/ISARIC_logo_wh.png", height="60px")),
                             dbc.Col(
                                 dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator",
                                                 className="ms-2")),
@@ -128,9 +128,9 @@ class NavBar:
 class SideBar:
     sidebar = html.Div(
         [
-            dbc.NavLink(html.Img(src=f"{icons_dir}/Settings_off.png", style={'width': '40px'}, id='settings_icon'),
+            dbc.NavLink(html.Img(src=f"{ICONS_DIR}/Settings_off.png", style={'width': '40px'}, id='settings_icon'),
                         id="toggle-settings-1", n_clicks=0),
-            dbc.NavLink(html.Img(src=f"{icons_dir}/preset_off.png", style={'width': '40px'}, id='preset_icon'),
+            dbc.NavLink(html.Img(src=f"{ICONS_DIR}/preset_off.png", style={'width': '40px'}, id='preset_icon'),
                         id="toggle-settings-2", n_clicks=0),
 
         ],
@@ -168,8 +168,8 @@ class SideBar:
             button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
             # Initialize the state of icons
-            preset_icon_img = f"{icons_dir}/preset_off.png"
-            settings_icon_img = f"{icons_dir}/Settings_off.png"
+            preset_icon_img = f"{ICONS_DIR}/preset_off.png"
+            settings_icon_img = f"{ICONS_DIR}/Settings_off.png"
 
             # Toggle logic
             if button_id == "toggle-settings-2":
@@ -182,7 +182,7 @@ class SideBar:
                     new_is_in_presets = not is_in_presets
                     new_is_in_settings = False
 
-                preset_icon_img = f"{icons_dir}/preset_on.png" if new_is_in_presets else f"{icons_dir}/preset_off.png"
+                preset_icon_img = f"{ICONS_DIR}/preset_on.png" if new_is_in_presets else f"{ICONS_DIR}/preset_off.png"
 
             elif button_id == "toggle-settings-1":
                 # If presets is open, close it and open settings
@@ -194,7 +194,7 @@ class SideBar:
                     new_is_in_settings = not is_in_settings
                     new_is_in_presets = False
 
-                settings_icon_img = f"{icons_dir}/Settings_on.png" if new_is_in_settings else f"{icons_dir}/Settings_off.png"
+                settings_icon_img = f"{ICONS_DIR}/Settings_on.png" if new_is_in_settings else f"{ICONS_DIR}/Settings_off.png"
 
             else:
                 # Default state if no button is clicked
