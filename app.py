@@ -3,6 +3,7 @@ import json
 import re
 from datetime import datetime
 from os.path import join, abspath, dirname
+from urllib.parse import parse_qs, urlparse
 
 import dash
 import dash_ag_grid as dag
@@ -26,6 +27,7 @@ SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
+server = app.server
 app.title = 'BRIDGE'
 
 modified_list = []
@@ -97,7 +99,6 @@ app.layout = html.Div(
 )
 
 app = SideBar.add_sidebar(app)
-# app = BridgeCrf(grouped_presets).add_callbacks(app)
 
 
 def main_app():
@@ -129,6 +130,45 @@ def start_app(n_clicks):
         return '/main'
 
 
+####################
+# get URL parameter
+####################
+@app.callback(
+    [Output('crf_name', 'value'), Output({'type': 'template_check', 'index': dash.ALL}, 'value')],
+    [Input('templates_checks_ready', 'data')],
+    [State('url', 'href')],
+    prevent_initial_call=True,
+)
+def update_output_based_on_url(template_check_flag, href):
+    if not template_check_flag:
+        return dash.no_update
+
+    if href is None:
+        return [''] + [[] for _ in grouped_presets.keys()]
+
+    if '?param=' in href:
+        # Parse the URL to extract the parameters
+        parsed_url = urlparse(href)
+        params = parse_qs(parsed_url.query)
+
+        # Accessing the 'param' parameter
+        param_value = params.get('param', [''])[0]  # Default to an empty string if the parameter is not present
+
+        # Example: Split param_value by underscore
+        group, value = param_value.split('_') if '_' in param_value else (None, None)
+
+        # Prepare the outputs
+        checklist_values = {key: [] for key in grouped_presets.keys()}
+
+        if group in grouped_presets and value in grouped_presets[group]:
+            checklist_values[group] = [value]
+
+        # Return the value for 'crf_name' and checklist values
+        return [value], [checklist_values[key] for key in grouped_presets.keys()]
+    else:
+        return dash.no_update
+
+
 #################################
 
 
@@ -149,7 +189,6 @@ def display_checked(checked, current_datadicc_saved):
 
     selected_variables = pd.DataFrame()
     if checked and len(checked) > 0:
-        # selected_variables=current_datadicc.loc[current_datadicc['Variable'].isin(checked)]
         # global selected_variables
         selected_dependency_lists = current_datadicc['Dependencies'].loc[
             current_datadicc['Variable'].isin(checked)].tolist()
@@ -162,7 +201,6 @@ def display_checked(checked, current_datadicc_saved):
         #############################################################
         #############################################################
         ## REDCAP Pipeline
-        delete_this_variables_with_units = []
         selected_variables = arc.getIncludeNotShow(selected_variables['Variable'], current_datadicc)
 
         # Select Units Transformation
@@ -202,7 +240,6 @@ def display_checked(checked, current_datadicc_saved):
                 formatted_choices = generate_form.format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
             elif row['Validation'] == 'date_dmy':
-                # date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[_2_][_0_][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
             else:
@@ -251,12 +288,10 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     dict2 = json.loads(multilist_variable_choices_saved)
     datatatata = dict1 + dict2
 
-    # datatatata=json.loads(ulist_variable_choices_saved)
     if (selected is not None):
         if len(selected) > 0:
             if selected[0] in list(current_datadicc['Variable']):
                 question = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                type = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
                 definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
                 completion = \
                     current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
@@ -400,8 +435,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     # Check the context to determine the triggering input
     ctx = dash.callback_context
     currentVersion = selected_version_data.get('selected_version', None)
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    currentVersion = selected_version_data.get('selected_version', None)
 
     current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
     current_datadicc_temp[['Sec', 'vari', 'mod']] = current_datadicc_temp['Variable'].str.split('_', n=2, expand=True)
@@ -427,8 +460,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 'white-space': 'normal',  # Allow text to wrap
                 'overflow-x': 'hidden',  # Hide overflowed content
                 'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-                # 'display': visibility_data['display']
-                # 'display': 'none'
             }
         )
         return (tree_items,  # Empty content for the tree items container
@@ -437,7 +468,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 dash.no_update  # Clear multilist_variable_choices-store
                 )
 
-        # raise PreventUpdate  # Do nothing if no input triggered the callback
 
     # Identify the specific component that triggered the callback
     if currentVersion is None or grouped_presets is None:
@@ -457,12 +487,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     templa_answer_opt_dict1 = []
     templa_answer_opt_dict2 = []
 
-    # checked_values = args
     checked_values = values
     print('checked_values', checked_values)
     print(' grouped_presets in update output', grouped_presets)
-    # checked_values = args[:-1]
-    # visibility_data = args[-1]
     formatted_output = []
     for key, values in zip(grouped_presets.keys(), checked_values):
         if values:  # Check if the list of values is not empty
@@ -477,12 +504,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
 
             ##########Modificacion para template options in userlist
             template_ulist_var = current_datadicc.loc[current_datadicc['Type'].isin(['user_list', 'multi_list'])]
-            template_ulist_lists = template_ulist_var['List']
             print('esta es la version seleccionada', currentVersion)
             root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-            # for t_u_list in template_ulist_lists:
             for index_tem_ul, row_tem_ul in template_ulist_var.iterrows():
-                # print(row_tem_ul['Variable'])
                 dict1_options = []
                 dict2_options = []
                 t_u_list = row_tem_ul['List']
@@ -494,7 +518,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                     print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
                     continue
 
-                # template_list_options=list_options.loc[list_options[checked_key]==1]
                 list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
                 cont_lo = 1
                 select_answer_options = ''
@@ -540,21 +563,18 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
         template_ulist_var = current_datadicc.loc[current_datadicc['Type'].isin(['user_list', 'multi_list'])]
 
         root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-        # for t_u_list in template_ulist_lists:
+
         for index_tem_ul, row_tem_ul in template_ulist_var.iterrows():
-            # print(row_tem_ul['Variable'])
             dict1_options = []
             dict2_options = []
             t_u_list = row_tem_ul['List']
             list_path = root + commit + '/Lists/' + t_u_list.replace('_', '/') + '.csv'
             try:
                 list_options = pd.read_csv(list_path, encoding='latin1')
-
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
                 continue
 
-            # template_list_options=list_options.loc[list_options[checked_key]==1]
             list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
             cont_lo = 1
             select_answer_options = ''
@@ -607,8 +627,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             'white-space': 'normal',  # Allow text to wrap
             'overflow-x': 'hidden',  # Hide overflowed content
             'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-            # 'display': visibility_data['display']
-            # 'display': 'none'
         }
     )
 
@@ -647,8 +665,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
-
-        # return False, f"Processed value: {question.split('[')[1][:-1]}"  # Closes modal and updates output
         variable_submited = question.split('[')[1][:-1]
         modified_list.append(variable_submited)
         ulist_variables = [i[0] for i in ulist_variable_choices]
@@ -678,7 +694,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                                 option_var_select[1]) + ' | '
                     new_submited_line.append([var_select, new_submited_options])
                     dict1[position][1] = new_submited_line[0][1]
-                    # current_datadicc['Answer Options'].loc[current_datadicc['Variable']==variable_submited].iloc[0]=select_answer_options+'88, Other'
                     current_datadicc.loc[current_datadicc[
                                              'Variable'] == variable_submited, 'Answer Options'] = select_answer_options + '88, Other'
                     if variable_submited + '_otherl2' in list(current_datadicc['Variable']):
@@ -717,14 +732,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                 position_multi_check += 1
             multilist_variable_choicesSubmit = dict2
 
-            # User List content Transformation
-            # ARC_ulistSubmit,ulist_variable_choicesSubmit=ARC.getUserListContent(current_datadicc,currentVersion,modified_list,list_options_checked,variable_submited)
-            # Este ulist_variable_choicesSubmit multilist_variable_choicesSubmit
-            # current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_ulistSubmit,ARC.getVariableOrder(current_datadicc))
-
-            # ARC_multilistSubmit,multilist_variable_choicesSubmit=ARC.getMultuListContent(current_datadicc,currentVersion,list_options_checked,variable_submited)
-            # current_datadicc=ARC.addTransformedRows(current_datadicc,ARC_multilistSubmit,ARC.getVariableOrder(current_datadicc))
-
             print(list_options_checked)
             checked.append(variable_submited)
             tree_items = html.Div(
@@ -742,8 +749,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     'white-space': 'normal',  # Allow text to wrap
                     'overflow-x': 'hidden',  # Hide overflowed content
                     'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-                    # 'display': visibility_data['display']
-                    # 'display': 'none'
                 }
             )
             return False, current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
@@ -823,8 +828,6 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
 
         date = datetime.today().strftime('%Y-%m-%d')
 
-        # paper_crf.generate_completionguide(selected_variables_fromData,path+crf_name+'_Completion_Guide_'+date+'.pdf',currentVersion, crf_name)
-
         datadiccDisease = arc.generateCRF(selected_variables_fromData, crf_name)
 
         print('#############################')
@@ -840,15 +843,6 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         currentVersion = selected_version_data.get('selected_version', None)
         commit = commit_data.get('commit', None)
         pdf_crf = paper_crf.generate_pdf(datadiccDisease, currentVersion, crf_name, commit)
-
-        '''# Create a PDF to Word converter
-        cv = Converter('dataDiccs/'+crf_name+'_'+date+'.pdf')
-
-        # Convert all pages of the PDF to a Word document
-        cv.convert('dataDiccs/'+crf_name+'_'+date+'.docx')
-
-        # Close the converter
-        cv.close()'''
 
         df = datadiccDisease.copy()
         output = io.BytesIO()
@@ -914,7 +908,6 @@ def update_row2_options(selected_value):
                 labelClassName="btn btn-outline-primary",
                 labelCheckedClassName="active",
                 options=options,
-                # value=options[0]['value'] if options else None,
             ),
             html.Div(id="rq_questions_div"),
         ],
@@ -927,7 +920,6 @@ def update_row2_options(selected_value):
 def init_grid(dataframe, id_grid):
     # Define the new column definitions
     columnDefs = [
-        # {'field': 'Form', "checkboxSelection": True},
         {'field': 'Form'},
         {'field': 'Section'},
         {'field': 'Question'},
@@ -1010,7 +1002,6 @@ def feature_accordion(features, id_feat, selected):
             selection = selected['Variable'].loc[selected['Section'] == sec]
             # For each group, create a checklist
         checklist = dbc.Checklist(
-            # options=[{"label": value, "value": value} for value in features['Question'].loc[features['Section']==sec]],
             options=[{"label": row['Question'], "value": row['Variable']} for _, row in
                      features.loc[features['Section'] == sec].iterrows()],
             value=selection,
@@ -1022,7 +1013,6 @@ def feature_accordion(features, id_feat, selected):
         feat_accordion_items.append(
             dbc.AccordionItem(
                 title=sec.split(":")[0],
-                # children=checklist
                 children=html.Div(checklist, style={'height': '100px', 'overflowY': 'auto'})
             )
         )
@@ -1062,7 +1052,6 @@ def paralel_elements(features, id_feat, current_datadicc, selected_variables):
     [State('selected_data-store', 'data')],
 )
 def update_row3_content(selected_value, json_data):
-    caseDefiningVariables = arc.getResearchQuestionTypes(current_datadicc)
     research_question_elements = pd.read_csv(join(CONFIG_DIR_FULL, 'researchQuestions.csv'))
 
     group_elements = []
@@ -1072,37 +1061,22 @@ def update_row3_content(selected_value, json_data):
             research_question_elements['Option Group'] == tq_opGroup]:
             if type(rq_element) == str:
                 for rq_aux in rq_element.split(';'):
-                    # print(rq_element)
                     all_elements.append(rq_aux.strip())
         group_elements.append([tq_opGroup, all_elements])
 
     group_elements = pd.DataFrame(data=group_elements, columns=['Group Option', 'Variables'])
 
     if json_data is None:
-        data = {
-            'id': [1, 2, 3],
-            'Form': ['Form A', 'Form B', 'Form C'],
-            'Section': ['Section 1', 'Section 2', 'Section 3'],
-            'Label': ['Label 1', 'Label 2', 'Label 3'],
-        }
         selected_variables_fromData = None
-        # accord=feature_accordion(caseDefiningVariables,'clinic_feat')
-        # text=''
     else:
         selected_variables_fromData = pd.read_json(json_data, orient='split')
         selected_variables_fromData = selected_variables_fromData[['Variable', 'Form', 'Section', 'Question']]
-        # selected_variables_caseDefining=selected_variables_fromData.loc[selected_variables_fromData['Variable'].isin(caseDefiningVariables['Variable'])]
-        # accord=feature_accordion(caseDefiningVariables,'clinic_feat',selected=selected_variables_caseDefining)
-        # text=feature_text(current_datadicc,selected_variables_caseDefining)
 
-    # grid_display = init_grid(pd.DataFrame(data),'selected_features_grid')
     tabs_content = []
     selected_question = ''
 
-    # feature_selector=createFeatureSelection('feature_selector',"Case Defining Features",caseDefiningVariables['Question'])
     if selected_value == "CD_Features":
         OptionGroup = ["Case Defining Features"]
-        # caseDefiningVariables = current_datadicc.loc[current_datadicc['Variable']==]
         caseDefiningVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_features = paralel_elements(
             current_datadicc.loc[current_datadicc['Variable'].isin(list(caseDefiningVariables.iloc[0]))], 'case_feat',
@@ -1238,9 +1212,7 @@ def update_row3_content(selected_value, json_data):
 
 @app.callback(
     Output('case_feat_text-content', 'children'),
-    # [Input('clinic_feat_checklist-0', 'value')],
     [Input(f'case_feat_checklist-{key}', 'value') for key in range(4)],
-    # [State('selected_data-store','data')],
     prevent_initial_call=True
 )
 def update_Researh_questions_grid(*args):
@@ -1372,4 +1344,3 @@ def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
-    # app.run_server(debug=True, host='0.0.0.0', port='8080')#change for deploy

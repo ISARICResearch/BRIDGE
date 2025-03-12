@@ -15,8 +15,6 @@ BRIDGE is openly available to the research community under the Creative Commons 
 
 ## BRIDGE Version 1.0
 
-BRIDGE Version 1.0 enables users to select variables from the ARC versions that are saved in the ARC folder within the repository. It also allows the selection of templates included in these versions and supports the generation of the following files:
-
 ### Files
 
    - **Clinical Characterization XML:** This XML file provides a recommended configuration and structure for clinical characterization studies. It includes information about users, events, project settings, and functionality, serving as a reference for setting up clinical characterization studies.
@@ -27,7 +25,7 @@ BRIDGE Version 1.0 enables users to select variables from the ARC versions that 
 
 ## How to Use BRIDGE
 
-You can find intructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
+You can find instructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
 
 ## Contributors
 

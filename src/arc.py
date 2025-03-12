@@ -37,21 +37,10 @@ def getResearchQuestionTypes(datadicc):
 
 
 def getARCVersions():
-    # GitHub API URL for the contents of the repository
-    repo_owner = "ISARICResearch"
-    repo_name = "ARC"
-    # token =
-
     # URL de la API
-    url_release = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases'
+    url_release = f'https://api.github.com/repos/ISARICResearch/ARC/releases'
 
-    # Cabeceras para la solicitud con el token
-    headers = {
-        "Authorization": f"token {token}"
-    }
-
-    # Solicitud GET
-    response = requests.get(url_release, headers=headers)
+    response = requests.get(url_release)
 
     # Verifica el estado de la respuesta
     if response.status_code == 200:
@@ -60,21 +49,6 @@ def getARCVersions():
         print(tag_names)
     else:
         print(f"Error: {response.status_code} - {response.text}")
-
-    # url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
-
-    '''
-    # Make the request
-    response = requests.get(url)
-    folder_names = []
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        contents = response.json()
-        folder_names = [item['name'] for item in contents if item['type'] == 'dir']
-    else:
-        print("Failed to retrieve data:", response.status_code)
-    '''
 
     versions = tag_names
     # versions = set(folder_names)
@@ -118,14 +92,7 @@ def getVariableOrder(current_datadicc):
 
 
 def getARC(version):
-    # sv_selected=version
-    # v_selected=sv_selected.split('.')[0].replace(' ','%20')
-    # sv_selected=sv_selected.replace(' ','%20')
-    # token =
-    headers = {
-        "Authorization": f"token {token}"
-    }
-    get_link = requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags', headers=headers).json()
+    get_link = requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags').json()
     for i in get_link:
         if i['name'] == version:
             print('in getARC' + i['name'])
@@ -159,8 +126,6 @@ def getARC(version):
 def getDependencies(datadicc):
     mandatory = ['subjid']
 
-    # datadicc=pd.read_csv('C:/Users/egarcia/Documents/Projects/REDCap/ModifyREDCapProgramatically/data_dicc.csv')
-    # dependencies=datadicc[['Variable / Field Name', 'Branching Logic (Show field only if...)']]
     dependencies = datadicc[['Variable', 'Skip Logic']]
     field_dependencies = []
     for s in dependencies['Skip Logic']:
@@ -180,12 +145,10 @@ def getDependencies(datadicc):
         if 'other' in i:
             if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')]) >= 1:
                 dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')].iloc[0].append(i)
-                # print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
 
         if 'units' in i:
             if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')]) >= 1:
                 dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')].iloc[0].append(i)
-                # print(dependencies['Dependencies'].loc[dependencies['Variable / Field Name']==i.replace('other','')])
 
         for m in mandatory:
             dependencies['Dependencies'].loc[dependencies['Variable'] == i].iloc[0].append(m)
@@ -201,7 +164,6 @@ def getTreeItems(datadicc, version):
     dependencies = getDependencies(datadicc)
     datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
     datadicc[['Sec', 'vari', 'mod']] = datadicc['Variable'].str.split('_', n=2, expand=True)
-    # datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split('(', n=1, expand=True)
     datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
 
     datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
@@ -231,7 +193,6 @@ def getTreeItems(datadicc, version):
         else:
             question = row['Question']
         Variable_name = row['Variable']
-        # question_key = f"{form}-{sec_name}-{vari}-{mod}-{question}"
         question_key = f"{Variable_name}"
 
         # Add form node if not already added
@@ -301,8 +262,6 @@ def getIncludeNotShow(selected_variables, current_datadicc):
 
 
 def getSelectUnits(selected_variables, current_datadicc):
-    # current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
-    # current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
     current_datadicc['select units'] = (
         current_datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
     mask_true = current_datadicc['select units'] == True
@@ -370,15 +329,9 @@ def getSelectUnits(selected_variables, current_datadicc):
 
 
 def getListContent(current_datadicc, version, commit):
-    level2_answers = []
     all_rows_lists = []
-    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
-    #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
     root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-
-    # datadicc_path = root+commit+'/'+'ARC.csv'
-    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
 
     list_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
@@ -417,11 +370,7 @@ def getListContent(current_datadicc, version, commit):
                                               (current_datadicc['vari'] == row['vari']) &
                                               (current_datadicc['Variable'] != row['Variable'])]
 
-            # remove_other_info_from_diseaseDic = remove_other_info_from_diseaseDic+list(other_info['Variable'])
             for n in range(repeat_n):
-                #########################################
-                #########################################
-                #########################################
                 # Falta agregar las otras opciones con el mismo sec_var
                 dropdown_row = row.copy()
                 dropdown_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + str(n) + 'item'
@@ -571,33 +520,21 @@ def getListContent(current_datadicc, version, commit):
 # HERE CHECK already modified variables x182#
 
 def getUserListContent(current_datadicc, version, mod_list, commit, user_checked_options=None, ulist_var_name=None):
-    level2_answers = []
     all_rows_lists = []
-    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
-    #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
-    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
     root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
     ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
-
         else:
             list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
             try:
                 list_options = pd.read_csv(list_path, encoding='latin1')
-
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
 
-            '''user_selected_opt = user_list_options['Options'].loc[user_list_options['Variable']==row['Variable']].iloc[0]
-            if user_selected_opt == '':
-                l1_choices=default_options[row['Variable']]
-            else:
-                l1_choices=user_selected_opt'''
             list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
-            default = True
 
             l2_choices = ''
             l1_choices = ''
@@ -609,9 +546,7 @@ def getUserListContent(current_datadicc, version, mod_list, commit, user_checked
                 elif cont_lo == 99:
                     cont_lo = 100
                 try:
-
                     if user_checked_options is None:
-
                         list_options['Selected'] = pd.to_numeric(list_options['Selected'], errors='coerce')
 
                         if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
@@ -643,7 +578,6 @@ def getUserListContent(current_datadicc, version, mod_list, commit, user_checked
 
             ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            # row['Type']='radio'
             row['Answer Options'] = l1_choices + '88, ' + 'Other'
 
             dropdown_row = row.copy()
@@ -690,15 +624,10 @@ def getUserListContent(current_datadicc, version, mod_list, commit, user_checked
 
 
 def getMultuListContent(current_datadicc, version, commit, user_checked_options=None, ulist_var_name=None):
-    level2_answers = []
     all_rows_lists = []
-    # datadiccDisease_lists = current_datadicc.loc[(((current_datadicc['Type']=='list') |(current_datadicc['Type']=='user_list') )&
-    #                                            (current_datadicc['Variable'].isin(selected_variables)))]     
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
 
     root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-
-    # root='https://raw.githubusercontent.com/ISARICReseARC/DataPlatform/main/ARC/'
 
     ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
@@ -713,13 +642,7 @@ def getMultuListContent(current_datadicc, version, commit, user_checked_options=
             except Exception as e:
                 print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
 
-            '''user_selected_opt = user_list_options['Options'].loc[user_list_options['Variable']==row['Variable']].iloc[0]
-            if user_selected_opt == '':
-                l1_choices=default_options[row['Variable']]
-            else:
-                l1_choices=user_selected_opt'''
             list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
-            default = True
 
             l2_choices = ''
             l1_choices = ''
@@ -733,7 +656,6 @@ def getMultuListContent(current_datadicc, version, commit, user_checked_options=
                 try:
 
                     if user_checked_options is None:
-
                         list_options['Selected'] = pd.to_numeric(list_options['Selected'], errors='coerce')
 
                         if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
@@ -765,7 +687,6 @@ def getMultuListContent(current_datadicc, version, commit, user_checked_options=
 
             ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            # row['Type']='radio'
             row['Answer Options'] = l1_choices + '88, ' + 'Other'
 
             dropdown_row = row.copy()
@@ -784,9 +705,7 @@ def getMultuListContent(current_datadicc, version, commit, user_checked_options=
                 dropdown_row['Question'] = 'Select ' + row['Question'] + ''
                 other_row['Question'] = 'Specify other ' + row['Question'] + ''
             dropdown_row['mod'] = 'otherl2'
-            # dropdown_row['Skip Logic']='['+row['Variable'] +"]='88'"
             dropdown_row['Skip Logic'] = '[' + row['Variable'] + "(88)]='1'"
-            # dropdown_row['Skip Logic']='['dates_firstsym(88)]='1'
 
             other_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl3'
             other_row['Answer Options'] = None
@@ -833,7 +752,7 @@ def generateDailyDataType(current_datadicc):
                         daily_type_options = daily_type_options + daily_type_dicc[daily_type] + '|'
             daily_type_options = daily_type_options[:-1]
 
-            # This doesn't seem to do anything?
+            # TODO: This doesn't seem to do anything?
             datadiccDisease.loc[datadiccDisease['Variable'] == 'daily_data_type', 'Answer Options'] = daily_type_options
         return datadiccDisease
     return current_datadicc
@@ -859,7 +778,6 @@ def addTransformedRows(selected_variables, arc_var_units_selected, order):
 
             if base_var in result['Variable'].values:
                 # Find the index of the base variable row
-                # base_index = result.index[result['Variable'] == base_var].tolist()[0]
                 base_index = result.index[result['Variable'].str.startswith(base_var)].max()
                 row_df = pd.DataFrame([row]).reset_index(drop=True)
                 # Insert the new row immediately after the base variable row
@@ -939,11 +857,7 @@ def generateCRF(datadiccDisease, db_name):
     # For the new empty columns, fill NaN values with a default value (in this case an empty string)
     datadiccDisease = datadiccDisease.fillna('')
 
-    # datadiccDisease['Branching Logic (Show field only if...)']=['']*len(datadiccDisease)
     datadiccDisease['Section Header'] = datadiccDisease['Section Header'].replace({'': np.nan})
     datadiccDisease = customAlignment(datadiccDisease)
 
-    # date=datetime.today().strftime('%Y-%m-%d')
-    # path='C:/Users/egarcia/OneDrive - Nexus365/Projects/CBCG/Outputs/'
-    # datadiccDisease.to_csv(path+db_name+'_'+date+'.csv',index=False, encoding='utf8')
     return datadiccDisease
