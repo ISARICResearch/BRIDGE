@@ -1,8 +1,11 @@
+''' This Generate Form script is for generating and storing styles '''
+
+
 from reportlab.lib.styles import getSampleStyleSheet
 from copy import deepcopy
 
 line_placeholder='_' * 40
-   
+
 # So at the moment, one table is made and added to our elements array, before returning the elements array.
 
 # I am interested in chunking this into new tables for each 

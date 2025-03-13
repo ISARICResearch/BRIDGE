@@ -13,9 +13,9 @@ from functools import partial
 from datetime import datetime
 
 # custom functions to generate sections of paperCRF
-from generate_form import generate_form
-from generate_opener import generate_opener
-from generate_header_footer import generate_header_footer
+from generate_pdf.form import generate_form
+from generate_pdf.opener import generate_opener
+from generate_pdf.header_footer import generate_header_footer
 
 
 try:

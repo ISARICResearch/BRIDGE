@@ -24,9 +24,30 @@ def generate_header_footer(canvas,doc, title):
     # - Header Content - #
 
     # Draw the first logo
-    logo_scale = 0.87
-        # Moves image to X, Y with 0,0 being bottom left hand corner.
-    canvas.drawInlineImage("assets/ISARIC_logo.png", 25, 752, width=69*logo_scale, height=30*logo_scale)  #change for deploy
+    logo_scale_isaric = 0.87
+    logo_scale_contagio0 = 0.165
+    logo_scale_contagio1 = 2.2
+    logo_scale_euro = .2
+    logo_scale_flag = .021
+
+
+    # Moves image to X, Y with 0,0 being bottom left hand corner.
+    canvas.drawInlineImage("assets/ISARIC_logo.png", 25, 752, width=69*logo_scale_isaric, height=30*logo_scale_isaric)  #change for deploy
+    
+    ''' Here I was adding other logos with a fake 'opacity' applied, but have since removed
+    canvas.drawInlineImage("assets/logos/contagio.jpg", 135, 759, width=344*logo_scale_contagio0, height=71*logo_scale_contagio0)  #change for deploy
+    #canvas.drawInlineImage("assets/logos/CONTAGIO_Logo.jpg", 135, 747, width=25*logo_scale_contagio1, height=13*logo_scale_contagio1)  #change for deploy
+    #canvas.setFillColorRGB(1, 1, 1, alpha=0.3)  # White with 50% opacity
+    #canvas.rect(135, 747, width=25*logo_scale_contagio1, height=13*logo_scale_contagio1, fill=1, stroke=0)
+    #canvas.drawInlineImage("assets/logos/EuroComm_sm.png", 100, 750, width=114*logo_scale_euro, height=129*logo_scale_euro)  #change for deploy
+    canvas.drawInlineImage("assets/logos/FundedbytheEU.png", 97, 754, width=1304*logo_scale_flag, height=919*logo_scale_flag)  #change for deploy
+    
+    canvas.saveState()
+    canvas.setFillColorRGB(1, 1, 1, alpha=0.3)  # White with 50% opacity
+    canvas.rect(95, 749, width=100, height=30, fill=1, stroke=0)
+    canvas.restoreState()
+    ''' 
+
     #canvas.drawInlineImage("BRIDGE/assets/ISARIC_logo.png", 25, 752, width=69*logo_scale, height=30*logo_scale) 
 
     # Change: now the text in header and footer is a shade of grey, like in paper version

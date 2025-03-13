@@ -1,6 +1,21 @@
+''' This Generate Form script is for defining the classes, properties, and methods needed to create the forms '''
+
+''' 
+It defines:
+Section >               a group of questions in a form, all under on Section Header (usually)
+  Subsection >          a group of all connected or all disconnected questions within a section
+  SubsectionStyle           simply an enum for the subsection to define how it should be styled (BL, Heading, or neither)
+    Subsubsection >     a group of questions in a subsection. Only matter if connected by Branching Logic
+      Row >             a row of fields on the final sheet
+        Field >         a single item on the form. Can be a question / answer pair or a Heading
+          Dependency    each field can have dependencies, this holds the dependencies from the Branching Logic in a clear and reproducable way
+
+'''
+
+
 from typing import List, Union
 from reportlab.platypus import Paragraph
-import generate_form_styles as style
+import generate_pdf.styles as style
 from enum import Enum
 
 line_placeholder='_' * 40
@@ -399,8 +414,8 @@ class Subsubsection:
 # Define an Enum for subsection types
 class SubsectionStyle(Enum):
     HEADING = "heading"
-    QA_DEFAULT = "qa_default"
-    QA_LIGHTBORDER = "qa_lightborder"
+    QA_BLACK = "QA_BLACK"
+    QA_GREY = "QA_GREY"
     QA_BOARDERLESS = "qa_boarderless"
 
 # Custom class to store sub sub sections of fields - most important for branching logic
@@ -408,12 +423,12 @@ class Subsection:
     def __init__(self,
                  fields: list[Field],
                  style: SubsectionStyle,
-                 special_heading: bool = False
+                 special_heading: bool = False,
                  ):
-        self.fields = fields
-        self.style = style
-        self.special_heading = special_heading
-        self.subsubsections: List[Subsubsection] = []
+        self.fields = fields                            # Holds all fields in subsection
+        self.style = style                              # Holds style of subsection
+        self.special_heading = special_heading          # Holds if 'special heading' should be there (subsection should have "If ___:")
+        self.subsubsections: List[Subsubsection] = []   # Hold the subsubsections (only more than 1 when Branching Logic requires it)
     
     # Function to divide fields into rows that make sense  
     def _get_conditional_text(self, dependencies: List[Dependency]):
@@ -491,13 +506,12 @@ class Subsection:
         def check_for_oneline_dependent ():
             nonlocal current_subsub
             if len(current_subsub.fields) == 1 and bool(current_subsub.header):
-                print('oneline!!', current_subsub.fields[0].name)
                 current_condition = current_subsub.header[1].question.text
                 current_header = current_subsub.header[0]
                 question_text = current_condition + ' ' + current_subsub.fields[0].question.text
                 current_field = current_subsub.fields[0]
                 current_field.question = Paragraph(text=question_text, style=style.normal)
-                current_subsub = Subsubsection(fields=[current_header, current_field], header=[])            
+                current_subsub = Subsubsection(fields=[current_header, current_field], conditional_text=current_condition)            
 
         ### Iterate through self.fields ###
         for i, field in enumerate(self.fields):
@@ -531,8 +545,7 @@ class Subsection:
             # if parent in field's dependencies, add it to that subsubsection
             if current_subsub.parent in dependency_names:
                 conditional_text = self._get_conditional_text(subsection_dependencies)
-                
-
+    
 
                 #for dependency in field.dependencies:
                 #    if current_subsub.parent == dependency.field_name:
@@ -563,12 +576,20 @@ class Subsection:
         self.subsubsections = subsubsections
         return subsubsections
 
+# Define an Enum for subsection types
+class SectionType(Enum):
+    STANDARD = "standard"
+    MEDICATION = "medication"
+    TESTING = "testing"
+
 # Custom class section
 class Section:
     def __init__(self,
-                 fields: list[Field]
+                 fields: list[Field],
+                 type: SectionType = SectionType.STANDARD
                  ):
         self.fields = fields
+        self.type = type
         self.subsections: List[Subsection] = []
 
 
@@ -622,12 +643,18 @@ class Section:
 
                 if subsection_fields:
                     if subsection_dependencies_set == set():
-                        finalize_subsection(SubsectionStyle.QA_DEFAULT)
+                        finalize_subsection(SubsectionStyle.QA_BLACK)
                     else:
                         finalize_subsection(SubsectionStyle.QA_BOARDERLESS)
 
                 subsections.append(Subsection([field], SubsectionStyle.HEADING))
                 continue
+
+            # Handle Custom Forms
+            special_form_prefixes = ["vital_", "sympt_", "lesion_", "treat_", "critd_", "labs_", "imagi_", "test_"]
+            special_form = bool(field.name.startswith(tuple(special_form_prefixes)))
+            if ((i == 1) and (special_form == True)):
+                special_heading = field.name
 
             # Handle Special Forms
             special_form_prefixes = ["vital_", "sympt_", "lesion_", "treat_", "critd_", "labs_", "imagi_", "test_"]
@@ -665,7 +692,7 @@ class Section:
                         subsection_fields.append(field)
                         subsection_names_set.add(field.name)
                     elif subsection_names_set.isdisjoint(dependencies):
-                        finalize_subsection(SubsectionStyle.QA_DEFAULT)
+                        finalize_subsection(SubsectionStyle.QA_BLACK)
                         subsection_fields.append(field)
                         subsection_names_set.add(field.name)
                         subsection_dependencies_set.update(dependencies, next_dependencies)
@@ -687,7 +714,7 @@ class Section:
                     name_overlap = not subsection_names_set.isdisjoint(dependencies)
 
                     if not dependency_overlap and not name_overlap:
-                        finalize_subsection(SubsectionStyle.QA_BOARDERLESS)
+                        finalize_subsection(SubsectionStyle.QA_GREY)
 
                     subsection_fields.append(field)
                     subsection_names_set.add(field.name)
@@ -704,7 +731,7 @@ class Section:
         ### Finalize the last subsection ###
         if subsection_fields:
             if subsection_dependencies_set == set():
-                finalize_subsection(SubsectionStyle.QA_DEFAULT)
+                finalize_subsection(SubsectionStyle.QA_BLACK)
             else:
                 finalize_subsection(SubsectionStyle.QA_BOARDERLESS)
 
@@ -739,7 +766,7 @@ class Section:
             if field.is_heading:
                 # if currently a subsection, finish it
                 if subsection_fields:
-                    finalize_subsection(SubsectionStyle.QA_DEFAULT)
+                    finalize_subsection(SubsectionStyle.QA_BLACK)
                 # then add heading subsection
                 subsections.append(Subsection([field], SubsectionStyle.HEADING))
                 continue
@@ -750,7 +777,7 @@ class Section:
         ### Finalize the last subsection ###
         if subsection_fields:
 
-            finalize_subsection(SubsectionStyle.QA_DEFAULT)
+            finalize_subsection(SubsectionStyle.QA_BLACK)
 
         ### Save and return result ###
         self.subsections = subsections

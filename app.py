@@ -13,7 +13,7 @@ import dash_ag_grid as dag
 import arc as ARC
 import dash_treeview_antd
 import paperCRF
-import generate_form # Aidan: added this for format choices
+import generate_pdf.form as form # Aidan: added this for format choices
 import json
 import bridge_modals 
 from dash import callback_context
@@ -892,14 +892,14 @@ def display_checked(checked,current_datadicc_saved):
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox','list','user_list','multi_list']:
 
-                formatted_choices = generate_form.format_choices(row['Answer Options'], row['Type'])
+                formatted_choices = form.format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
             elif row['Validation'] == 'date_dmy':
                 #date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[_2_][_0_][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
             else:
-                row['Answer Options'] = generate_form.line_placeholder
+                row['Answer Options'] = form.line_placeholder
 
             # Add the processed row to new_rows
             new_row = row.to_dict()
