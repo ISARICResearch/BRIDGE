@@ -72,7 +72,8 @@ class MainContent:
                             dbc.Row(
                                 [
                                     dbc.Col(dbc.Input(placeholder="CRF Name", type="text", id='crf_name')),
-                                    dbc.Col(dbc.Button("Generate", color="primary", id='crf_generate'))
+                                    dbc.Col(dbc.Button("Generate", color="primary", id='crf_generate')),
+                                    dbc.Col(dbc.Button("Save", color="primary", id='crf_save'))
                                 ],
                                 style={"height": "10%"}  # Remaining height for input and button
                             ),

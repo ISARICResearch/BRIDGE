@@ -86,11 +86,16 @@ app.layout = html.Div(
         dcc.Download(id='download-compGuide-pdf'),
         dcc.Download(id='download-projectxml-pdf'),
         dcc.Download(id='download-paperlike-pdf'),
+        dcc.Download(id='save-crf'),
         bridge_modals.variableInformation_modal(),
         bridge_modals.researchQuestions_modal(),
         dcc.Loading(id="loading-1",
                     type="default",
                     children=html.Div(id="loading-output-1"),
+                    ),
+        dcc.Loading(id="loading-2",
+                    type="default",
+                    children=html.Div(id="loading-output-2"),
                     ),
         dcc.Store(id='selected-version-store'),
         dcc.Store(id='commit-store'),
@@ -134,7 +139,10 @@ def start_app(n_clicks):
 # get URL parameter
 ####################
 @app.callback(
-    [Output('crf_name', 'value'), Output({'type': 'template_check', 'index': dash.ALL}, 'value')],
+    [
+        Output('crf_name', 'value'),
+        Output({'type': 'template_check', 'index': dash.ALL}, 'value')
+    ],
     [Input('templates_checks_ready', 'data')],
     [State('url', 'href')],
     prevent_initial_call=True,
@@ -468,7 +476,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 dash.no_update  # Clear multilist_variable_choices-store
                 )
 
-
     # Identify the specific component that triggered the callback
     if currentVersion is None or grouped_presets is None:
         raise PreventUpdate  # Prevent update if data is missing
@@ -723,7 +730,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                                 option_var_select_multi_check[1]) + ' | '
                     new_submited_line_multi_check.append([var_select_multi_check, new_submited_options_multi_check])
                     dict2[position_multi_check][1] = new_submited_line_multi_check[0][1]
-                    # current_datadicc['Answer Options'].loc[current_datadicc['Variable']==variable_submited].iloc[0]=select_answer_options+'88, Other'
                     current_datadicc.loc[current_datadicc[
                                              'Variable'] == variable_submited, 'Answer Options'] = select_answer_options_multi_check + '88, Other'
                     if variable_submited + '_otherl2' in list(current_datadicc['Variable']):
@@ -773,6 +779,21 @@ def update_store(checked_values):
     return checked_values
 
 
+def get_crf_name(crf_name, checked_values):
+    if crf_name is not None:
+        if isinstance(crf_name, list):
+            crf_name = crf_name[0]
+    else:
+        extracted_text = [item for sublist in checked_values for item in sublist if item]
+        print(extracted_text)
+        if len(extracted_text) > 0:
+            crf_name = extracted_text[0]
+    if not crf_name:
+        crf_name = 'no_name'
+    print('crf_name:', crf_name)
+    return crf_name
+
+
 @app.callback(
     [
         Output("loading-output-1", "children"),
@@ -781,8 +802,12 @@ def update_store(checked_values):
         Output("download-projectxml-pdf", "data"),
         Output("download-paperlike-pdf", "data")
     ],
-    [Input("crf_generate", "n_clicks"), Input("selected_data-store", "data"), Input('selected-version-store', 'data'),
-     Input('commit-store', 'data')],
+    [
+        Input("crf_generate", "n_clicks"),
+        Input("selected_data-store", "data"),
+        Input('selected-version-store', 'data'),
+        Input('commit-store', 'data')
+    ],
     [
         State({'type': 'template_check', 'index': dash.ALL}, "value"),
         State("crf_name", "value"),
@@ -790,24 +815,8 @@ def update_store(checked_values):
     ],
     prevent_initial_call=True
 )
-def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, values, crf_name, output_files):
+def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, checked_values, crf_name, output_files):
     print(output_files)
-    if crf_name is not None:
-
-        print('crf_name:', crf_name)
-
-        if isinstance(crf_name, list):
-            crf_name = crf_name[0]
-    else:
-        checked_values = values
-        extracted_text = [item for sublist in checked_values for item in sublist if item]
-        print(extracted_text)
-        if len(extracted_text) > 0:
-            crf_name = extracted_text[0]
-        else:
-            crf_name = 'no_name'
-
-    # global selected_variables
 
     ctx = dash.callback_context
     # Check which input triggered the callback
@@ -824,6 +833,8 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         return 'No data available', None, None, None, None
 
     if trigger_id == 'crf_generate':
+        crf_name = get_crf_name(crf_name, checked_values)
+
         selected_variables_fromData = pd.read_json(io.StringIO(json_data), orient='split')
 
         date = datetime.today().strftime('%Y-%m-%d')
@@ -839,7 +850,6 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         for cosa in datadiccDisease.columns:
             print(cosa)
 
-        # datadiccDisease.to_csv(path+crf_name+'_'+date+'.csv',index=False, encoding='utf8')
         currentVersion = selected_version_data.get('selected_version', None)
         commit = commit_data.get('commit', None)
         pdf_crf = paper_crf.generate_pdf(datadiccDisease, currentVersion, crf_name, commit)
@@ -851,7 +861,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
         pdf_data = paper_crf.generate_completionguide(selected_variables_fromData, currentVersion, crf_name, commit)
 
         file_name = 'ISARIC Clinical Characterisation Setup.xml'  # Set the desired download name here
-        file_path = 'assets/config_files/' + file_name  # Change this for deploy
+        file_path = f'{CONFIG_DIR_FULL}/{file_name}'  # Change this for deploy
         # Open the XML file and read its content
         with open(file_path, 'rb') as file:  # 'rb' mode to read as binary
             content = file.read()
@@ -863,8 +873,55 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, v
                            f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None, \
             dcc.send_bytes(content, file_name) if 'redcap_xml' in output_files else None, \
             dcc.send_bytes(pdf_crf, f"{crf_name}_paperlike_{date}.pdf") if 'paper_like' in output_files else None
+
     else:
         return "", None, None, None, None
+
+
+@app.callback(
+    [
+        Output("loading-output-2", "children"),
+        Output("save-crf", "data")
+    ],
+    [
+        Input("crf_save", "n_clicks"),
+        Input("selected_data-store", "data"),
+        Input('selected-version-store', 'data'),
+    ],
+    [
+        State("crf_name", "value"),
+    ],
+    prevent_initial_call=True
+)
+def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
+    ctx = dash.callback_context
+    # Check which input triggered the callback
+    if not ctx.triggered:
+        trigger_id = 'No clicks yet'
+    else:
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if n_clicks is None:
+        # Return empty or initial state if button hasn't been clicked
+        return "", None
+
+    if trigger_id == 'crf_save':
+        crf_name = get_crf_name(crf_name, [])
+
+        current_version = selected_version_data.get('selected_version', None)
+        date = datetime.today().strftime('%Y-%m-%d')
+        filename_csv = f'{crf_name}_{current_version}_{date}.csv'
+
+        df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
+
+        df = df_selected_variables.copy()
+        output = io.BytesIO()
+        df.to_csv(output, index=False, encoding='utf8')
+        output.seek(0)
+
+        return "", dcc.send_bytes(output.getvalue(), filename_csv)
+    else:
+        return "", None
 
 
 @app.callback(
