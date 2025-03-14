@@ -89,17 +89,17 @@ app.layout = html.Div(
         dcc.Download(id='save-crf'),
         bridge_modals.variableInformation_modal(),
         bridge_modals.researchQuestions_modal(),
-        dcc.Loading(id="loading-1",
+        dcc.Loading(id="loading-generate",
                     type="default",
-                    children=html.Div(id="loading-output-1"),
+                    children=html.Div(id="loading-output-generate"),
                     ),
-        dcc.Loading(id="loading-2",
+        dcc.Loading(id="loading-save",
                     type="default",
-                    children=html.Div(id="loading-output-2"),
+                    children=html.Div(id="loading-output-save"),
                     ),
         dcc.Store(id='selected-version-store'),
         dcc.Store(id='commit-store'),
-        dcc.Store(id='selected_data-store')
+        dcc.Store(id='selected_data-store'),
     ]
 )
 
@@ -779,6 +779,15 @@ def update_store(checked_values):
     return checked_values
 
 
+def get_trigger_id(ctx):
+    # Check which input triggered the callback
+    if not ctx.triggered:
+        trigger_id = 'No clicks yet'
+    else:
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    return trigger_id
+
+
 def get_crf_name(crf_name, checked_values):
     if crf_name is not None:
         if isinstance(crf_name, list):
@@ -796,7 +805,7 @@ def get_crf_name(crf_name, checked_values):
 
 @app.callback(
     [
-        Output("loading-output-1", "children"),
+        Output("loading-output-generate", "children"),
         Output("download-dataframe-csv", "data"),
         Output("download-compGuide-pdf", "data"),
         Output("download-projectxml-pdf", "data"),
@@ -819,18 +828,16 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
     print(output_files)
 
     ctx = dash.callback_context
-    # Check which input triggered the callback
-    if not ctx.triggered:
-        trigger_id = 'No clicks yet'
-    else:
-        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-    if n_clicks is None:
+    if not n_clicks:
         # Return empty or initial state if button hasn't been clicked
-        return "", None, None, None, None
-    # Return the text from 'crf_name' input field
-    if json_data is None:
-        return 'No data available', None, None, None, None
+        return '', None, None, None, None
+
+    if not any(json.loads(json_data).values()):
+        # Nothing ticked
+        return '', None, None, None, None
+
+    trigger_id = get_trigger_id(ctx)
 
     if trigger_id == 'crf_generate':
         crf_name = get_crf_name(crf_name, checked_values)
@@ -880,30 +887,29 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
 
 @app.callback(
     [
-        Output("loading-output-2", "children"),
-        Output("save-crf", "data")
+        Output('loading-output-save', 'children'),
+        Output('save-crf', 'data')
     ],
     [
-        Input("crf_save", "n_clicks"),
-        Input("selected_data-store", "data"),
+        Input('crf_save', 'n_clicks'),
+        Input('selected_data-store', 'data'),
         Input('selected-version-store', 'data'),
     ],
-    [
-        State("crf_name", "value"),
-    ],
+    State('crf_name', 'value'),
     prevent_initial_call=True
 )
 def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
     ctx = dash.callback_context
-    # Check which input triggered the callback
-    if not ctx.triggered:
-        trigger_id = 'No clicks yet'
-    else:
-        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-    if n_clicks is None:
+    if not n_clicks:
         # Return empty or initial state if button hasn't been clicked
-        return "", None
+        return '', None
+
+    if not any(json.loads(json_data).values()):
+        # Nothing ticked
+        return '', None
+
+    trigger_id = get_trigger_id(ctx)
 
     if trigger_id == 'crf_save':
         crf_name = get_crf_name(crf_name, [])
@@ -919,9 +925,31 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
         df.to_csv(output, index=False, encoding='utf8')
         output.seek(0)
 
-        return "", dcc.send_bytes(output.getvalue(), filename_csv)
+        return '', dcc.send_bytes(output.getvalue(), filename_csv)
     else:
-        return "", None
+        return '', None
+
+
+@app.callback(
+    Output('output-crf-upload', 'children'),
+    [
+        Input('upload-crf', 'contents')
+    ],
+    State('upload-crf', 'filename'),
+    prevent_initial_call=True
+)
+def on_upload_crf(list_of_contents, list_of_names):
+    # TODO: Add functionality
+    ctx = dash.callback_context
+
+    if list_of_names is None:
+        return ''
+
+    print(list_of_contents)
+    print(list_of_names)
+
+    trigger_id = get_trigger_id(ctx)
+    print(trigger_id)
 
 
 @app.callback(

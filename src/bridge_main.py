@@ -73,7 +73,30 @@ class MainContent:
                                 [
                                     dbc.Col(dbc.Input(placeholder="CRF Name", type="text", id='crf_name')),
                                     dbc.Col(dbc.Button("Generate", color="primary", id='crf_generate')),
-                                    dbc.Col(dbc.Button("Save", color="primary", id='crf_save'))
+                                    dbc.Col(dbc.Button("Save", color="primary", id='crf_save')),
+                                ],
+                                style={"height": "10%"}  # Remaining height for input and button
+                            ),
+                            dbc.Row(
+                                [
+                                    dcc.Upload(
+                                        id='upload-crf',
+                                        children=html.Div([
+                                            'Drag and Drop or ',
+                                            html.A('Select File')
+                                        ]),
+                                        style={
+                                            'width': '100%',
+                                            'height': '60px',
+                                            'lineHeight': '60px',
+                                            'borderWidth': '1px',
+                                            'borderStyle': 'dashed',
+                                            'borderRadius': '5px',
+                                            'textAlign': 'center',
+                                            'margin': '10px'
+                                        },
+                                    ),
+                                    html.Div(id='output-crf-upload'),
                                 ],
                                 style={"height": "10%"}  # Remaining height for input and button
                             ),
