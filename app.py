@@ -101,6 +101,7 @@ app.layout = html.Div(
         dcc.Store(id='selected-version-store'),
         dcc.Store(id='commit-store'),
         dcc.Store(id='selected_data-store'),
+        dcc.Store(id='upload-version-store'),
     ]
 )
 
@@ -340,6 +341,46 @@ def display_expanded(expanded):
     return 'You have expanded {}'.format(expanded)
 
 
+def get_version_related_data(selected_version):
+    df_version_datadicc, version_presets, version_commit = arc.getARC(selected_version)
+    df_version_datadicc[['Sec', 'vari', 'mod']] = df_version_datadicc['Variable'].str.split('_', n=2, expand=True)
+    df_version_datadicc[['Sec_name', 'Expla']] = df_version_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+
+    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_datadicc, selected_version,
+                                                                          version_commit)
+    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_lists,
+                                                 arc.getVariableOrder(df_version_datadicc))
+
+    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_datadicc, selected_version,
+                                                                               modified_list, version_commit)
+    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_ulist,
+                                                 arc.getVariableOrder(df_version_datadicc))
+
+    version_arc_multilist, version_multilist_variable_choices = arc.getMultuListContent(df_version_datadicc,
+                                                                                        selected_version,
+                                                                                        version_commit)
+    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_multilist,
+                                                 arc.getVariableOrder(df_version_datadicc))
+
+    version_grouped_presets = {}
+    for section, preset_name in version_presets:
+        version_grouped_presets.setdefault(section, []).append(preset_name)
+
+    accordion_items = [
+        dbc.AccordionItem(
+            title=section,
+            children=dbc.Checklist(
+                options=[{"label": preset_name, "value": preset_name} for preset_name in preset_names],
+                value=[],
+                id={'type': 'template_check', 'index': section},
+                switch=True,
+            )
+        )
+        for section, preset_names in version_grouped_presets.items()
+    ]
+    return df_version_datadicc, version_commit, version_grouped_presets, accordion_items
+
+
 @app.callback(
     [Output('selected-version-store', 'data', allow_duplicate=True),
      Output('commit-store', 'data', allow_duplicate=True),
@@ -364,43 +405,13 @@ def store_clicked_item(n_clicks, selected_version_data):
     version_index = json.loads(button_id)["index"]
     new_selected_version = ARC_versions[version_index]
 
-    if new_selected_version == selected_version_data:  # No hay cambios
+    if selected_version_data and new_selected_version == selected_version_data.get('selected_version', None):
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
 
     # Si hay un cambio, procesamos la lógica
     try:
         selected_version = new_selected_version
-        current_datadicc, presets, commit = arc.getARC(selected_version)
-        current_datadicc[['Sec', 'vari', 'mod']] = current_datadicc['Variable'].str.split('_', n=2, expand=True)
-        current_datadicc[['Sec_name', 'Expla']] = current_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
-
-        ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, selected_version, commit)
-        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
-
-        ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, selected_version, modified_list,
-                                                                   commit)
-        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
-
-        ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, selected_version, commit)
-        current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist,
-                                                  arc.getVariableOrder(current_datadicc))
-
-        grouped_presets = {}
-        for key, value in presets:
-            grouped_presets.setdefault(key, []).append(value)
-
-        accordion_items = [
-            dbc.AccordionItem(
-                title=key,
-                children=dbc.Checklist(
-                    options=[{"label": value, "value": value} for value in values],
-                    value=[],
-                    id={'type': 'template_check', 'index': key},
-                    switch=True,
-                )
-            )
-            for key, values in grouped_presets.items()
-        ]
+        current_datadicc, commit, grouped_presets, accordion_items = get_version_related_data(selected_version)
         print('this is the selected version in store click', selected_version)
         print('presets in store click', grouped_presets)
         return (
@@ -852,7 +863,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
 @app.callback(
     [
         Output('loading-output-save', 'children'),
-        Output('save-crf', 'data')
+        Output('save-crf', 'data'),
     ],
     [
         Input('crf_save', 'n_clicks'),
@@ -880,6 +891,7 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 
         current_version = selected_version_data.get('selected_version', None)
         date = datetime.today().strftime('%Y-%m-%d')
+        # Naming convention expected when uploading
         filename_csv = f'{crf_name}_{current_version}_{date}.csv'
 
         df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
@@ -895,25 +907,32 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 
 
 @app.callback(
-    Output('output-crf-upload', 'children'),
     [
-        Input('upload-crf', 'contents')
+        Output('upload-version-store', 'data'),
     ],
-    State('upload-crf', 'filename'),
+    [
+        Input('upload-crf', 'filename'),
+        Input('upload-crf', 'contents'),
+    ],
+    [
+        State('upload-version-store', 'data'),
+        State('upload-crf', 'contents'),
+    ],
     prevent_initial_call=True
 )
-def on_upload_crf(list_of_contents, list_of_names):
-    # TODO: Add functionality
-    ctx = dash.callback_context
+def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_contents):
+    if filename:
+        try:
+            upload_version = re.search(r'v\d\.\d\.\d', filename).group(0)
+        except AttributeError:
+            print(f'Failed to determine ARC version from file {filename}')
+            return dash.no_update
 
-    if list_of_names is None:
-        return ''
+        return (
+            {'upload_version': upload_version},
+        )
 
-    print(list_of_contents)
-    print(list_of_names)
-
-    trigger_id = get_trigger_id(ctx)
-    print(trigger_id)
+    return dash.no_update
 
 
 @app.callback(

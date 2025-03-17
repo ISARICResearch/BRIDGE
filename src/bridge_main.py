@@ -96,7 +96,6 @@ class MainContent:
                                             'margin': '10px'
                                         },
                                     ),
-                                    html.Div(id='output-crf-upload'),
                                 ],
                                 style={"height": "10%"}  # Remaining height for input and button
                             ),
