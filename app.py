@@ -908,7 +908,7 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 
 @app.callback(
     [
-        Output('upload-version-store', 'data'),
+        Output('upload-version-store', 'data', allow_duplicate=True),
     ],
     [
         Input('upload-crf', 'filename'),
@@ -933,6 +933,52 @@ def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_conte
         )
 
     return dash.no_update
+
+
+@app.callback(
+    [
+        Output('selected-version-store', 'data', allow_duplicate=True),
+        Output('commit-store', 'data', allow_duplicate=True),
+        Output('preset-accordion', 'children', allow_duplicate=True),
+        Output('grouped_presets-store', 'data', allow_duplicate=True),
+        Output('current_datadicc-store', 'data', allow_duplicate=True),
+        Output('templates_checks_ready', 'data', allow_duplicate=True),
+        Output('upload-crf', 'contents'),
+    ],
+    [
+        Input('upload-version-store', 'data'),
+    ],
+    [
+        State('selected-version-store', 'data'),
+    ],
+    prevent_initial_call=True
+)
+def load_upload_arc_version(upload_version_data, selected_version_data):
+    ctx = dash.callback_context
+
+    if not ctx.triggered:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+
+    upload_version = upload_version_data.get('upload_version', None)
+
+    if selected_version_data and upload_version == selected_version_data.get('selected_version', None):
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+
+    try:
+        df_upload_current_datadicc, upload_commit, upload_grouped_presets, upload_accordion_items = \
+            get_version_related_data(upload_version)
+        print('this is the uploaded version', upload_version)
+        return (
+            {'selected_version': upload_version},
+            {'commit': upload_commit},
+            upload_accordion_items,
+            upload_grouped_presets,
+            df_upload_current_datadicc.to_json(date_format='iso', orient='split'),
+            True,
+            None
+        )
+    except json.JSONDecodeError:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
 
 @app.callback(
