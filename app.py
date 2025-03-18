@@ -938,6 +938,7 @@ def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_conte
         Output('grouped_presets-store', 'data', allow_duplicate=True),
         Output('current_datadicc-store', 'data', allow_duplicate=True),
         Output('upload-crf-ready', 'data'),
+        Output('crf_name', 'value', allow_duplicate=True),
     ],
     [
         Input('upload-version-store', 'data'),
@@ -945,19 +946,20 @@ def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_conte
     [
         State('selected-version-store', 'data'),
         State('upload-crf-ready', 'data'),
+        State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version(upload_version_data, selected_version_data, upload_crf_ready):
+def load_upload_arc_version(upload_version_data, selected_version_data, upload_crf_ready, crf_name):
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
     upload_version = upload_version_data.get('upload_version', None)
 
     if selected_version_data and upload_version == selected_version_data.get('selected_version', None):
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
     try:
         df_upload_version, version_commit, version_grouped_presets, version_accordion_items = \
@@ -970,9 +972,10 @@ def load_upload_arc_version(upload_version_data, selected_version_data, upload_c
             version_grouped_presets,
             df_upload_version.to_json(date_format='iso', orient='split'),
             True,
+            None,
         )
     except json.JSONDecodeError:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
 
 @app.callback(
