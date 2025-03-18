@@ -173,7 +173,7 @@ class SideBar:
     )
 
     @staticmethod
-    def add_sidebar(app):
+    def add_sidebar_callbacks(app):
         @app.callback(
             [Output("presets-column", "is_in"),
              Output("settings-column", "is_in"),

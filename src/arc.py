@@ -10,6 +10,15 @@ pd.options.mode.copy_on_write = True
 # ARC - Analysis and Research Compendium
 
 
+def add_required_datadicc_columns(df_datadicc):
+    # TODO: This seems to be run a lot
+    if not all(['Sec', 'vari', 'mod']) in df_datadicc.columns:
+        df_datadicc[['Sec', 'vari', 'mod']] = df_datadicc['Variable'].str.split('_', n=2, expand=True)
+    if not all(['Sec_name', 'Expla']) in df_datadicc.columns:
+        df_datadicc[['Sec_name', 'Expla']] = df_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+    return df_datadicc
+
+
 def getResearchQuestionTypes(datadicc):
     caseDefiningFeatures = [["presentation",
                              "SIGNS AND SYMPTOMS ON ADMISSION: first data, from onset of this acute illness to day of presentation or admission"],
@@ -161,10 +170,11 @@ def getTreeItems(datadicc, version):
     include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
                         'units', 'add', 'type', 'vol', 'site', 'txt']
 
-    dependencies = getDependencies(datadicc)
-    datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
-    datadicc[['Sec', 'vari', 'mod']] = datadicc['Variable'].str.split('_', n=2, expand=True)
-    datadicc[['Sec_name', 'Expla']] = datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+    if 'Dependencies' not in datadicc.columns:
+        dependencies = getDependencies(datadicc)
+        datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
+
+    datadicc = add_required_datadicc_columns(datadicc)
 
     datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
     mask_true = datadicc['select units'] == True
