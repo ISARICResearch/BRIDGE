@@ -1,13 +1,69 @@
 import re
+from typing import List
 
 import numpy as np
 import pandas as pd
 import requests
+from requests.exceptions import RequestException
 
 pd.options.mode.copy_on_write = True
 
 
-# ARC - Analysis and Research Compendium
+class ArcApiClientError(Exception):
+    pass
+
+
+class ArcApiClient:
+    BASE_URL_API: str = 'https://api.github.com/repos/ISARICResearch/ARC'
+    BASE_URL_RAW_CONTENT: str = 'https://raw.githubusercontent.com/ISARICResearch/ARC'
+
+    def get_response(self, endpoint: str) -> List[dict]:
+        api_url = f'{self.BASE_URL_API}/{endpoint}'
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()
+            if response.json():
+                return response.json()
+            else:
+                raise ArcApiClientError(f"No output for endpoint '{endpoint}'")
+        except RequestException as e:
+            raise ArcApiClientError(e)
+
+    def _get_response_tags(self):
+        tag_list = self.get_response('tags')
+        return tag_list
+
+    def _get_raw_data_dataframe(self, endpoint):
+        data_path = '/'.join([self.BASE_URL_RAW_CONTENT, endpoint])
+        try:
+            df = pd.read_csv(data_path, encoding='utf-8')
+        except UnicodeDecodeError:
+            df = pd.read_csv(data_path, encoding='latin1')
+        except Exception as e:
+            print(e)
+            raise ArcApiClientError(f'Unable to read URL {data_path}')
+        return df
+
+    def get_version_sha(self, version):
+        tag_list = self._get_response_tags()
+        try:
+            version_dict = list(filter(lambda x: x['name'] == version, tag_list))[0]
+            version_sha = version_dict['commit']['sha']
+            return version_sha
+        except Exception as e:
+            print(e)
+            raise ArcApiClientError(f"Unable to determine commit for version '{version}'")
+
+    def get_dataframe_arc(self, sha):
+        endpoint = '/'.join([sha, 'ARC.csv'])
+        df = self._get_raw_data_dataframe(endpoint)
+        return df
+
+    def get_dataframe_list(self, sha, list_name):
+        endpoint = '/'.join([sha, 'Lists', f'{list_name}.csv'])
+        df = self._get_raw_data_dataframe(endpoint)
+        df = df.sort_values(by=df.columns[0], ascending=True)
+        return df
 
 
 def add_required_datadicc_columns(df_datadicc):
@@ -46,21 +102,12 @@ def getResearchQuestionTypes(datadicc):
 
 
 def getARCVersions():
-    # URL de la API
-    url_release = f'https://api.github.com/repos/ISARICResearch/ARC/releases'
+    releases = ArcApiClient().get_response('releases')
 
-    response = requests.get(url_release)
-
-    # Verifica el estado de la respuesta
-    if response.status_code == 200:
-        releases = response.json()
-        tag_names = [release['tag_name'] for release in releases]
-        print(tag_names)
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
+    tag_names = [release['tag_name'] for release in releases]
+    print(tag_names)
 
     versions = tag_names
-    # versions = set(folder_names)
 
     # Parse versions, including handling "-rc"
     parsed_versions = []
@@ -101,35 +148,28 @@ def getVariableOrder(current_datadicc):
 
 
 def getARC(version):
-    get_link = requests.get('https://api.github.com/repos/ISARICResearch/ARC/tags').json()
-    for i in get_link:
-        if i['name'] == version:
-            print('in getARC' + i['name'])
-            commit = i['commit']['sha']
-
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-
-    datadicc_path = root + commit + '/' + 'ARC.csv'
+    print(f'in getARC {version}')
+    commit_sha = ArcApiClient().get_version_sha(version)
+    df_datadicc = ArcApiClient().get_dataframe_arc(commit_sha)
 
     try:
-        datadicc = pd.read_csv(datadicc_path, encoding='utf-8')
-        dependencies = getDependencies(datadicc)
-        datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
+        df_dependencies = getDependencies(df_datadicc)
+        df_datadicc = pd.merge(df_datadicc, df_dependencies[['Variable', 'Dependencies']], on='Variable')
 
         # Find preset columns
-        preset_columns = [col for col in datadicc.columns if "preset_" in col]
-        presets = []
+        preset_column_list = [col for col in df_datadicc.columns if "preset_" in col]
+        preset_list = []
         # Iterate through each string in the list
-        for col in preset_columns:
-            parts = col.split('_')[1:]
+        for preset_column in preset_column_list:
+            parts = preset_column.split('_')[1:]
             if len(parts) > 2:
                 parts[1] = ' '.join(parts[1:])
                 del parts[2:]
-            presets.append(parts)
+            preset_list.append(parts)
 
-        return datadicc, presets, commit
+        return df_datadicc, preset_list, commit_sha
     except Exception as e:
-        print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
+        print(f"Failed to format ARC data: {e}")
 
 
 def getDependencies(datadicc):
@@ -341,7 +381,6 @@ def getSelectUnits(selected_variables, current_datadicc):
 def getListContent(current_datadicc, version, commit):
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
     list_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
@@ -349,13 +388,7 @@ def getListContent(current_datadicc, version, commit):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
-            try:
-                list_options = pd.read_csv(list_path, encoding='latin1')
-            except Exception as e:
-                print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-
-            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
+            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
             list_choises = ''
             list_variable_choices_aux = []
             cont_lo = 1
@@ -532,19 +565,12 @@ def getListContent(current_datadicc, version, commit):
 def getUserListContent(current_datadicc, version, mod_list, commit, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
     ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('list witout corresponding repository file')
+            print('list without corresponding repository file')
         else:
-            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
-            try:
-                list_options = pd.read_csv(list_path, encoding='latin1')
-            except Exception as e:
-                print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-
-            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
+            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
@@ -637,22 +663,13 @@ def getMultuListContent(current_datadicc, version, commit, user_checked_options=
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
 
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-
     ulist_variable_choices = []
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
             print('list witout corresponding repository file')
 
         else:
-            list_path = root + commit + '/Lists/' + row['List'].replace('_', '/') + '.csv'
-            try:
-                list_options = pd.read_csv(list_path, encoding='latin1')
-
-            except Exception as e:
-                print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-
-            list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
+            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
