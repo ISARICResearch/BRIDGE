@@ -527,15 +527,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 checkable=True,
                 checked=[],
                 expanded=[],
-                data=tree_items_data), id='tree_items_container',
-            style={
-                'overflow-y': 'auto',  # Vertical scrollbar when needed
-                'height': '75vh',  # Fixed height
-                'width': '100%',  # Fixed width, or you can specify a value in px
-                'white-space': 'normal',  # Allow text to wrap
-                'overflow-x': 'hidden',  # Hide overflowed content
-                'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-            }
+                data=tree_items_data),
+            id='tree_items_container',
+            className='tree-items'
         )
         return (tree_items,  # Empty content for the tree items container
                 dash.no_update,  # Clear the current datadicc-store
@@ -589,15 +583,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             checkable=True,
             checked=checked,
             expanded=checked,
-            data=tree_items_data), id='tree_items_container',
-        style={
-            'overflow-y': 'auto',  # Vertical scrollbar when needed
-            'height': '75vh',  # Fixed height
-            'width': '100%',  # Fixed width, or you can specify a value in px
-            'white-space': 'normal',  # Allow text to wrap
-            'overflow-x': 'hidden',  # Hide overflowed content
-            'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-        }
+            data=tree_items_data),
+        id='tree_items_container',
+        className='tree-items'
     )
 
     return (
@@ -719,15 +707,9 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     checkable=True,
                     checked=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
                     expanded=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
-                    data=tree_items_data), id='tree_items_container',
-                style={
-                    'overflow-y': 'auto',  # Vertical scrollbar when needed
-                    'height': '75vh',  # Fixed height
-                    'width': '100%',  # Fixed width, or you can specify a value in px
-                    'white-space': 'normal',  # Allow text to wrap
-                    'overflow-x': 'hidden',  # Hide overflowed content
-                    'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-                }
+                    data=tree_items_data),
+                id='tree_items_container',
+                className='tree-items'
             )
             return False, current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
                 ulist_variable_choicesSubmit), json.dumps(multilist_variable_choicesSubmit), tree_items
@@ -862,10 +844,12 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
     ],
     [
         Input('crf_save', 'n_clicks'),
+    ],
+    [
         Input('selected_data-store', 'data'),
         Input('selected-version-store', 'data'),
+        State('crf_name', 'value'),
     ],
-    State('crf_name', 'value'),
     prevent_initial_call=True
 )
 def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
@@ -909,13 +893,9 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
         Input('upload-crf', 'filename'),
         Input('upload-crf', 'contents'),
     ],
-    [
-        State('upload-version-store', 'data'),
-        State('upload-crf', 'contents'),
-    ],
     prevent_initial_call=True
 )
-def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_contents):
+def on_upload_crf(filename, file_contents):
     if filename:
         try:
             upload_version = re.search(r'v\d\.\d\.\d', filename).group(0)
@@ -945,12 +925,11 @@ def on_upload_crf(filename, file_contents, upload_version_data, upload_crf_conte
     ],
     [
         State('selected-version-store', 'data'),
-        State('upload-crf-ready', 'data'),
-        State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version(upload_version_data, selected_version_data, upload_crf_ready, crf_name):
+def load_upload_arc_version(upload_version_data, selected_version_data):
+    # def load_upload_arc_version(upload_version_data, selected_version_data, upload_crf_ready, crf_name):
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -1018,15 +997,9 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
             checkable=True,
             checked=checked,
             expanded=checked,
-            data=tree_items_current_datadicc), id='tree_items_container',
-        style={
-            'overflow-y': 'auto',  # Vertical scrollbar when needed
-            'height': '75vh',  # Fixed height
-            'width': '100%',  # Fixed width, or you can specify a value in px
-            'white-space': 'normal',  # Allow text to wrap
-            'overflow-x': 'hidden',  # Hide overflowed content
-            'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-        }
+            data=tree_items_current_datadicc),
+        id='tree_items_container',
+        className='tree-items'
     )
 
     upload_answer_opt_dict1 = []
@@ -1037,7 +1010,7 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
 
     return (
         tree_items,
-        current_datadicc.to_json(date_format='iso', orient='split'),
+        df_current_datadicc.to_json(date_format='iso', orient='split'),
         json.dumps(upload_answer_opt_dict1),
         json.dumps(upload_answer_opt_dict2),
         None,
