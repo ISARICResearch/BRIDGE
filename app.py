@@ -15,6 +15,7 @@ from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from src import generate_form, paper_crf, arc, bridge_modals, index
+from src.arc import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
 
 pd.options.mode.copy_on_write = True
@@ -24,7 +25,6 @@ ASSETS_DIR = 'assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
 SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
-ARC_ROOT = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
@@ -443,15 +443,8 @@ def update_for_template_options(df_current_datadicc, answer_opt_dict1, answer_op
         dict1_options = []
         dict2_options = []
         t_u_list = row_tem_ul['List']
-        list_path = f'{ARC_ROOT}{commit}{'/Lists/'}{t_u_list.replace('_', '/')}{'.csv'}'
+        list_options = ArcApiClient().get_dataframe_list(commit, t_u_list.replace('_', '/'))
 
-        try:
-            list_options = pd.read_csv(list_path, encoding='latin1')
-        except Exception as e:
-            print(f"Failed to fetch remote file due to: {e}. Attempting to read from local file.")
-            continue
-
-        list_options = list_options.sort_values(by=list_options.columns[0], ascending=True)
         cont_lo = 1
         select_answer_options = ''
 
