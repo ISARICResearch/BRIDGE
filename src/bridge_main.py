@@ -50,7 +50,7 @@ class MainContent:
         ),
         style={
             'overflow-y': 'auto',  # Vertical scrollbar when needed
-            'height': '75vh',  # Fixed height
+            'height': '60vh',  # Fixed height
             'width': '100%',  # Fixed width, or you can specify a value in px
             'white-space': 'normal',  # Allow text to wrap
             'overflow-x': 'hidden',  # Hide overflowed content
@@ -68,18 +68,20 @@ class MainContent:
                     dbc.Col(
                         [
                             dbc.Row([html.Div(),
-                                     grid]),  # 90% height
+                                     grid]),
+                            html.Br(),
                             dbc.Row(
                                 [
-                                    dbc.Col(dbc.Input(placeholder="CRF Name", type="text", id='crf_name')),
-                                    dbc.Col(dbc.Button("Generate", color="primary", id='crf_generate')),
-                                    dbc.Col(dbc.Button("Save", color="primary", id='crf_save')),
+                                    dbc.Col(dbc.Input(placeholder="CRF Name", type="text", id='crf_name'), width=5),
+                                    dbc.Col(dbc.Button("Generate", color="primary", id='crf_generate'), width=2),
+                                    dbc.Col(dbc.Button("Save Template", color="primary", id='crf_save'), width=3),
                                 ],
-                                style={"height": "10%"}  # Remaining height for input and button
+                                style={"height": "8%"},
                             ),
                             dbc.Row(
                                 [
-                                    dcc.Upload(
+                                    dbc.Col(dbc.Button("Upload Template", color="secondary", disabled=True), width=2),
+                                    dbc.Col(dcc.Upload(
                                         id='upload-crf',
                                         children=html.Div([
                                             'Drag and Drop or ',
@@ -93,11 +95,10 @@ class MainContent:
                                             'borderStyle': 'dashed',
                                             'borderRadius': '5px',
                                             'textAlign': 'center',
-                                            'margin': '10px'
                                         },
-                                    ),
+                                    ), ),
                                 ],
-                                style={"height": "10%"}  # Remaining height for input and button
+                                style={"height": "10%"}
                             ),
                             dbc.Row(html.Div([
                                 "BRIDGE is being developed by ISARIC. For inquiries, support, or collaboration, please write to: ",
