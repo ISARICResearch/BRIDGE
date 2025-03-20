@@ -2,13 +2,13 @@
     white-space: normal !important;
 }
 
-.form-separator-row  {
+.form-separator-row {
     background-color: #BA0225 !important;
     font-size: 20px !important;
     color: #FFFFFF !important;
 }
 
-.section-separator-row  {
+.section-separator-row {
     background-color: #475160 !important;
     font-size: 14px !important;
     color: #FFFFFF !important;
@@ -17,18 +17,18 @@
 /* restyle radio items */
 .radio-group .form-check {
     padding-left: 0;
-  }
+}
 
-  .radio-group .btn-group > .form-check:not(:last-child) > .btn {
+.radio-group .btn-group > .form-check:not(:last-child) > .btn {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-  }
+}
 
-  .radio-group .btn-group > .form-check:not(:first-child) > .btn {
+.radio-group .btn-group > .form-check:not(:first-child) > .btn {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     margin-left: -1px;
-  }
+}
 
 
 .grid-green-row {
@@ -66,25 +66,16 @@
 }
 
 .card-body-fixed {
-    height: 350px;  /* Adjust the height as needed */
-    overflow-y: auto;  /* Adds a scroll bar if content overflows */
+    height: 350px; /* Adjust the height as needed */
+    overflow-y: auto; /* Adds a scroll bar if content overflows */
 }
 
 .card-tools-fixed {
-    height: 480px;  /* Adjust the height as needed */
-    overflow-y: auto;  /* Adds a scroll bar if content overflows */
+    height: 480px; /* Adjust the height as needed */
+    overflow-y: auto; /* Adds a scroll bar if content overflows */
 }
 
 .img-logo {
     width: 100px;
     height: 100px;
- }
-
-.tree-items {
-    overflow-y: auto;  /* Vertical scrollbar when needed */
-    height: 75vh;  /* Fixed height */
-    width: 100%;  /* Fixed width, or you can specify a value in px */
-    white-space: normal;  /* Allow text to wrap */
-    overflow-x: hidden;  /* Hide overflowed content */
-    text-overflow: ellipsis;  /* Indicate more content with an ellipsis */
 }

@@ -522,7 +522,15 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 expanded=[],
                 data=tree_items_data),
             id='tree_items_container',
-            className='tree-items'
+            style={
+                'overflow-y': 'auto',  # Vertical scrollbar when needed
+                'height': '100%',  # Fixed height
+                'width': '100%',  # Fixed width, or you can specify a value in px
+                'white-space': 'normal',  # Allow text to wrap
+                'overflow-x': 'hidden',  # Hide overflowed content
+                'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+                'display': 'block'
+            }
         )
         return (tree_items,  # Empty content for the tree items container
                 dash.no_update,  # Clear the current datadicc-store
@@ -578,7 +586,15 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             expanded=checked,
             data=tree_items_data),
         id='tree_items_container',
-        className='tree-items'
+        style={
+            'overflow-y': 'auto',  # Vertical scrollbar when needed
+            'height': '100%',  # Fixed height
+            'width': '100%',  # Fixed width, or you can specify a value in px
+            'white-space': 'normal',  # Allow text to wrap
+            'overflow-x': 'hidden',  # Hide overflowed content
+            'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+            'display': 'block'
+        }
     )
 
     return (
@@ -702,7 +718,15 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     expanded=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
                     data=tree_items_data),
                 id='tree_items_container',
-                className='tree-items'
+                style={
+                    'overflow-y': 'auto',  # Vertical scrollbar when needed
+                    'height': '100%',  # Fixed height
+                    'width': '100%',  # Fixed width, or you can specify a value in px
+                    'white-space': 'normal',  # Allow text to wrap
+                    'overflow-x': 'hidden',  # Hide overflowed content
+                    'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+                    'display': 'block'
+                }
             )
             return False, current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
                 ulist_variable_choicesSubmit), json.dumps(multilist_variable_choicesSubmit), tree_items
@@ -992,7 +1016,15 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
             expanded=checked,
             data=tree_items_current_datadicc),
         id='tree_items_container',
-        className='tree-items'
+        style={
+            'overflow-y': 'auto',  # Vertical scrollbar when needed
+            'height': '100%',  # Fixed height
+            'width': '100%',  # Fixed width, or you can specify a value in px
+            'white-space': 'normal',  # Allow text to wrap
+            'overflow-x': 'hidden',  # Hide overflowed content
+            'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
+            'display': 'block'
+        }
     )
 
     upload_answer_opt_dict1 = []

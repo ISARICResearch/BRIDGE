@@ -329,7 +329,8 @@ class TreeItems:
                 multiple=False,
                 checkable=True,
                 checked=[],
-                data=self.tree_items_data), id='tree_items_container',
+                data=self.tree_items_data),
+            id='tree_items_container',
             style={
                 'overflow-y': 'auto',  # Vertical scrollbar when needed
                 'height': '100%',  # Fixed height
