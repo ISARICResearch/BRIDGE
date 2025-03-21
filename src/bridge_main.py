@@ -30,7 +30,8 @@ class MainContent:
             dashGridOptions={
                 "rowDragManaged": True,
                 "rowDragEntireRow": True,
-                "rowDragMultiRow": True, "rowSelection": "multiple",
+                "rowDragMultiRow": True,
+                "rowSelection": "multiple",
                 "suppressMoveWhenRowDragging": True,
                 "autoHeight": True
             },
@@ -44,18 +45,16 @@ class MainContent:
                 'width': '100%',  # Fixed width, or you can specify a value in px
                 'white-space': 'normal',  # Allow text to wrap
                 'overflow-x': 'hidden',  # Hide overflowed content
-
             }
 
         ),
         style={
             'overflow-y': 'auto',  # Vertical scrollbar when needed
-            'height': '60vh',  # Fixed height
+            'height': '68vh',  # Fixed height
             'width': '100%',  # Fixed width, or you can specify a value in px
             'white-space': 'normal',  # Allow text to wrap
             'overflow-x': 'hidden',  # Hide overflowed content
-            'text-overflow': 'ellipsis'  # Indicate more content with an ellipsis
-
+            'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
         }
     )
 
@@ -117,7 +116,14 @@ class MainContent:
             )
         ],
         fluid=True,
-        style={"margin-top": "4rem", "margin-left": "4rem", "z-index": 1, "width": "90vw"}
+        style={
+            "margin-top": "1rem",
+            "margin-bottom": "1rem",
+            "margin-left": "1rem",
+            "margin-right": "1rem",
+            "z-index": 2,
+            "width": "98vw",
+        }
         # Adjust margin to accommodate navbar and sidebar
     )
 
@@ -160,7 +166,7 @@ class SideBar:
         ],
         style={
             "position": "fixed",
-            "top": "5rem",  # Height of the navbar
+            "top": "4.7rem",  # Height of the navbar
             "left": 0,
             "bottom": 0,
             "width": "4rem",
@@ -334,11 +340,12 @@ class TreeItems:
             style={
                 'overflow-y': 'auto',  # Vertical scrollbar when needed
                 'height': '100%',  # Fixed height
-                'width': '100%',  # Fixed width, or you can specify a value in px
+                'width': '98%',  # Fixed width, or you can specify a value in px
                 'white-space': 'normal',  # Allow text to wrap
-                'overflow-x': 'hidden',  # Hide overflowed content
+                'overflow-x': 'auto',  # Horizontal scrollbar when needed
                 'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
-                'display': 'block'
+                'display': 'block',
+                "z-index": 1
             }
         )
 
@@ -351,8 +358,7 @@ class TreeItems:
                 "top": "5rem",
                 "left": "4rem",
                 "bottom": 0,
-                "width": "30rem",
-                "background-color": "#ffffff",
-                "z-index": 2
+                "width": "40rem",
+                "z-index": 1
             }
         )

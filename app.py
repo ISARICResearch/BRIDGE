@@ -525,9 +525,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             style={
                 'overflow-y': 'auto',  # Vertical scrollbar when needed
                 'height': '100%',  # Fixed height
-                'width': '100%',  # Fixed width, or you can specify a value in px
+                'width': '98%',  # Fixed width, or you can specify a value in px
                 'white-space': 'normal',  # Allow text to wrap
-                'overflow-x': 'hidden',  # Hide overflowed content
+                'overflow-x': 'auto',  # Horizontal scrollbar when needed
                 'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
                 'display': 'block'
             }
@@ -589,9 +589,9 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
         style={
             'overflow-y': 'auto',  # Vertical scrollbar when needed
             'height': '100%',  # Fixed height
-            'width': '100%',  # Fixed width, or you can specify a value in px
+            'width': '98%',  # Fixed width, or you can specify a value in px
             'white-space': 'normal',  # Allow text to wrap
-            'overflow-x': 'hidden',  # Hide overflowed content
+            'overflow-x': 'auto',  # Horizontal scrollbar when needed
             'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
             'display': 'block'
         }
@@ -721,9 +721,9 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                 style={
                     'overflow-y': 'auto',  # Vertical scrollbar when needed
                     'height': '100%',  # Fixed height
-                    'width': '100%',  # Fixed width, or you can specify a value in px
+                    'width': '98%',  # Fixed width, or you can specify a value in px
                     'white-space': 'normal',  # Allow text to wrap
-                    'overflow-x': 'hidden',  # Hide overflowed content
+                    'overflow-x': 'auto',  # Horizontal scrollbar when needed
                     'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
                     'display': 'block'
                 }
@@ -1019,9 +1019,9 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
         style={
             'overflow-y': 'auto',  # Vertical scrollbar when needed
             'height': '100%',  # Fixed height
-            'width': '100%',  # Fixed width, or you can specify a value in px
+            'width': '98%',  # Fixed width, or you can specify a value in px
             'white-space': 'normal',  # Allow text to wrap
-            'overflow-x': 'hidden',  # Hide overflowed content
+            'overflow-x': 'auto',  # Horizontal scrollbar when needed
             'text-overflow': 'ellipsis',  # Indicate more content with an ellipsis
             'display': 'block'
         }
@@ -1031,7 +1031,7 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
     upload_answer_opt_dict2 = []
 
     df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-        df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+    df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
 
     return (
         tree_items,
