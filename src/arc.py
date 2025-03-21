@@ -67,11 +67,8 @@ class ArcApiClient:
 
 
 def add_required_datadicc_columns(df_datadicc):
-    # TODO: This seems to be run a lot
-    if not all(['Sec', 'vari', 'mod']) in df_datadicc.columns:
-        df_datadicc[['Sec', 'vari', 'mod']] = df_datadicc['Variable'].str.split('_', n=2, expand=True)
-    if not all(['Sec_name', 'Expla']) in df_datadicc.columns:
-        df_datadicc[['Sec_name', 'Expla']] = df_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
+    df_datadicc[['Sec', 'vari', 'mod']] = df_datadicc['Variable'].str.split('_', n=2, expand=True)
+    df_datadicc[['Sec_name', 'Expla']] = df_datadicc['Section'].str.split(r'[(|:]', n=1, expand=True)
     return df_datadicc
 
 
@@ -562,7 +559,7 @@ def getListContent(current_datadicc, version, commit):
 
 # HERE CHECK already modified variables x182#
 
-def getUserListContent(current_datadicc, version, mod_list, commit, user_checked_options=None, ulist_var_name=None):
+def getUserListContent(current_datadicc, commit, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
     ulist_variable_choices = []

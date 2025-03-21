@@ -49,7 +49,7 @@ ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentV
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
 
 # User List content Transformation
-ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, modified_list, commit)
+ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, commit)
 
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
 ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, commit)
@@ -351,8 +351,7 @@ def get_version_related_data(selected_version):
     df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_lists,
                                                  arc.getVariableOrder(df_version_datadicc))
 
-    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_datadicc, selected_version,
-                                                                               modified_list, version_commit)
+    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_datadicc, version_commit)
     df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_ulist,
                                                  arc.getVariableOrder(df_version_datadicc))
 
@@ -504,6 +503,8 @@ def update_for_template_options(df_current_datadicc, answer_opt_dict1, answer_op
 def update_output(values, current_datadicc_saved, grouped_presets, selected_version_data):
     # Check the context to determine the triggering input
     ctx = dash.callback_context
+    # TODO
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
     current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
@@ -543,13 +544,12 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
         raise PreventUpdate  # Prevent update if data is missing
 
     # Proceed with your logic
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    currentVersion = selected_version_data.get('selected_version', None)
+    # TODO: This is mpox
 
-    current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
-    current_datadicc_temp = arc.add_required_datadicc_columns(current_datadicc_temp)
+    # current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
+    # current_datadicc_temp = arc.add_required_datadicc_columns(current_datadicc_temp)
 
-    tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
+    # tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
 
     checked_values = values
     print('checked_values', checked_values)
