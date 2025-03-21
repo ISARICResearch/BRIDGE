@@ -292,7 +292,7 @@ class Settings:
             is_in=False,  # Initially hidden
             style={
                 "position": "fixed",
-                "top": "5rem",
+                "top": "4.7rem",
                 "left": "4rem",
                 "bottom": 0,
                 "width": "20rem",
