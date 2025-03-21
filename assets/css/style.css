@@ -79,3 +79,13 @@
     width: 100px;
     height: 100px;
 }
+
+.tree-item {
+    overflow-y: scroll; /* Vertical scrollbar when needed */
+    height: 100%; /* Fixed height */
+    width: 100%; /* Fixed width, or you can specify a value in px */
+    white-space: normal; /* Allow text to wrap */
+    overflow-x: scroll; /* Horizontal scrollbar when needed */
+    text-overflow: ellipsis; /* Indicate more content with an ellipsis */
+    display: block;
+}
