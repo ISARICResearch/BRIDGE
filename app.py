@@ -503,7 +503,6 @@ def update_for_template_options(df_current_datadicc, answer_opt_dict1, answer_op
 def update_output(values, current_datadicc_saved, grouped_presets, selected_version_data):
     # Check the context to determine the triggering input
     ctx = dash.callback_context
-    # TODO
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     currentVersion = selected_version_data.get('selected_version', None)
 
@@ -544,13 +543,6 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
         raise PreventUpdate  # Prevent update if data is missing
 
     # Proceed with your logic
-    # TODO: This is mpox
-
-    # current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
-    # current_datadicc_temp = arc.add_required_datadicc_columns(current_datadicc_temp)
-
-    # tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
-
     checked_values = values
     print('checked_values', checked_values)
     print('grouped_presets in update output', grouped_presets)
@@ -946,7 +938,6 @@ def on_upload_crf(filename, file_contents):
     prevent_initial_call=True
 )
 def load_upload_arc_version(upload_version_data, selected_version_data):
-    # def load_upload_arc_version(upload_version_data, selected_version_data, upload_crf_ready, crf_name):
     ctx = dash.callback_context
 
     if not ctx.triggered:
