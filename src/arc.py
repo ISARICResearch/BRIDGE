@@ -375,7 +375,7 @@ def getSelectUnits(selected_variables, current_datadicc):
     return None, None
 
 
-def getListContent(current_datadicc, version, commit):
+def getListContent(current_datadicc, commit):
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
 
@@ -656,7 +656,7 @@ def getUserListContent(current_datadicc, commit, user_checked_options=None, ulis
     return arc_list, ulist_variable_choices
 
 
-def getMultuListContent(current_datadicc, version, commit, user_checked_options=None, ulist_var_name=None):
+def getMultuListContent(current_datadicc, commit, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
 
@@ -848,7 +848,7 @@ def customAlignment(datadicc):
     return datadicc
 
 
-def generateCRF(datadiccDisease, db_name):
+def generateCRF(datadiccDisease):
     datadiccDisease.loc[datadiccDisease['Type'] == 'user_list', 'Type'] = 'radio'
     datadiccDisease.loc[datadiccDisease['Type'] == 'multi_list', 'Type'] = 'checkbox'
     datadiccDisease.loc[datadiccDisease['Type'] == 'list', 'Type'] = 'radio'
