@@ -45,14 +45,14 @@ current_datadicc = arc.add_required_datadicc_columns(current_datadicc)
 tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
 
 # List content Transformation
-ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, commit)
+ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, commit)
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
 
 # User List content Transformation
 ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, commit)
 
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
-ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, commit)
+ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, commit)
 
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
@@ -346,8 +346,7 @@ def get_version_related_data(selected_version):
     df_version_datadicc, version_presets, version_commit = arc.getARC(selected_version)
     df_version_datadicc = arc.add_required_datadicc_columns(df_version_datadicc)
 
-    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_datadicc, selected_version,
-                                                                          version_commit)
+    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_datadicc, version_commit)
     df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_lists,
                                                  arc.getVariableOrder(df_version_datadicc))
 
@@ -356,7 +355,6 @@ def get_version_related_data(selected_version):
                                                  arc.getVariableOrder(df_version_datadicc))
 
     version_arc_multilist, version_multilist_variable_choices = arc.getMultuListContent(df_version_datadicc,
-                                                                                        selected_version,
                                                                                         version_commit)
     df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_multilist,
                                                  arc.getVariableOrder(df_version_datadicc))
@@ -435,14 +433,15 @@ def update_input(data):
     return data.get('selected_version')
 
 
-def update_for_template_options(df_current_datadicc, answer_opt_dict1, answer_opt_dict2, checked_key=None):
+def update_for_template_options(version_commit, df_current_datadicc, answer_opt_dict1, answer_opt_dict2,
+                                checked_key=None):
     template_ulist_var = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]
 
     for index_tem_ul, row_tem_ul in template_ulist_var.iterrows():
         dict1_options = []
         dict2_options = []
         t_u_list = row_tem_ul['List']
-        list_options = ArcApiClient().get_dataframe_list(commit, t_u_list.replace('_', '/'))
+        list_options = ArcApiClient().get_dataframe_list(version_commit, t_u_list.replace('_', '/'))
 
         cont_lo = 1
         select_answer_options = ''
@@ -555,11 +554,11 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
                 checked = checked + list(current_datadicc['Variable'].loc[current_datadicc[checked_key].notnull()])
 
             current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-                current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2, checked_key=checked_key)
+                commit, current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2, checked_key=checked_key)
 
     else:
         current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-            current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2)
+            commit, current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2)
 
     tree_items = html.Div(
         dash_treeview_antd.TreeView(
@@ -783,7 +782,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
 
         date = datetime.today().strftime('%Y-%m-%d')
 
-        datadiccDisease = arc.generateCRF(selected_variables_fromData, crf_name)
+        datadiccDisease = arc.generateCRF(selected_variables_fromData)
 
         print('#############################')
         print('#############################')
@@ -855,8 +854,8 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 
         current_version = selected_version_data.get('selected_version', None)
         date = datetime.today().strftime('%Y-%m-%d')
-        # Naming convention expected when uploading
-        filename_csv = f'template_{crf_name}_{current_version}_{date}.csv'
+        # Naming convention expected when uploading`
+        filename_csv = f'template_{crf_name}_{current_version.replace('.', '_')}_{date}.csv'
 
         df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
         df_selected_variables = df_selected_variables[['Variable']]
@@ -883,13 +882,12 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 def on_upload_crf(filename, file_contents):
     if filename:
         try:
-            upload_version = re.search(r'v\d\.\d\.\d', filename).group(0)
+            upload_version = re.search(r'v\d_\d_\d', filename).group(0)
         except AttributeError:
-            print(f'Failed to determine ARC version from file {filename}')
-            return dash.no_update
+            raise AttributeError(f'Failed to determine ARC version from file {filename}')
 
         return (
-            {'upload_version': upload_version},
+            {'upload_version': upload_version.replace('_', '.')},
         )
 
     return dash.no_update
@@ -971,6 +969,9 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
     df_upload = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
     checked = list(df_upload['Variable'])
 
+    # Need commit for this ARC version
+    _current_datadicc, version_commit, _grouped_presets, _accordion_items = get_version_related_data(upload_version)
+
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     tree_items_current_datadicc = arc.getTreeItems(df_current_datadicc, upload_version)
 
@@ -990,7 +991,7 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
     upload_answer_opt_dict2 = []
 
     df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-    df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+        version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
 
     return (
         tree_items,
