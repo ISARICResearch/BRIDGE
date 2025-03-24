@@ -50,7 +50,7 @@ class MainContent:
         ),
         style={
             'overflow-y': 'auto',  # Vertical scrollbar when needed
-            'height': '68vh',  # Fixed height
+            'height': '67vh',  # Fixed height
             'width': '100%',  # Fixed width, or you can specify a value in px
             'white-space': 'normal',  # Allow text to wrap
             'overflow-x': 'hidden',  # Hide overflowed content
@@ -165,7 +165,7 @@ class SideBar:
         ],
         style={
             "position": "fixed",
-            "top": "4.7rem",  # Height of the navbar
+            "top": "4.75rem",  # Height of the navbar
             "left": 0,
             "bottom": 0,
             "width": "4rem",
@@ -291,7 +291,7 @@ class Settings:
             is_in=False,  # Initially hidden
             style={
                 "position": "fixed",
-                "top": "4.7rem",
+                "top": "4.75rem",  # Height of the navbar
                 "left": "4rem",
                 "bottom": 0,
                 "width": "20rem",
@@ -314,7 +314,7 @@ class Presets:
         is_in=False,  # Initially hidden
         style={
             "position": "fixed",
-            "top": "4.7rem",
+            "top": "4.75rem",  # Height of the navbar
             "left": "4rem",
             "bottom": 0,
             "width": "20rem",
@@ -346,7 +346,7 @@ class TreeItems:
             style={
                 "position": "fixed",
                 "left": "4rem",
-                "width": "38rem",
+                "width": "33rem",
                 "height": "90%",
             }
         )
