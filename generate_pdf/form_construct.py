@@ -178,14 +178,23 @@ def construct_medication_form(fields: List[Field]):
             # Add question
             if field.name == "medi_medtype":
                 row.append(Paragraph(text='Type of agent', style=style.normal))
-            elif (field.name == "medi_medstartdate") or (field.name == "medi_medenddate"):
-                row.append(Paragraph(text=field.question.text + "   [D-M-Y]", style=style.normal))      
             else:
                 row.append(field.question)  # Question column
 
             # Add answers
             if field.name in fields_to_add_answer:
                 row.extend([field.answer] * answer_col_count)  # Empty answer columns
+            elif (field.name == "medi_medstartdate") or (field.name == "medi_medenddate"):
+                # Modify the text in the copied field.answer
+                field.answer[0].text = field.answer[0].text.replace('_', '')
+
+                field_answer_copy = field.answer.copy()
+          
+                # Extend the row with the modified copy (not the original field.answer)
+                #'[ <font color="lightgrey">DD</font> / <font color="lightgrey">MM</font> / 20<font color="lightgrey">YY</font> ]'
+                row.extend([Paragraph(
+                    text='<font color="lightgrey">[ DD / MM / 20YY ]</font>'  
+                    )] * answer_col_count)
             else:
                 row.extend([''] * answer_col_count)  # Empty answer columns
             
@@ -196,7 +205,7 @@ def construct_medication_form(fields: List[Field]):
             if field.name == 'medi_treat':
                 row = ['']  # Left margin
                 row.append(Paragraph(text='Medication Name', style=style.normal))  # Question column
-               # Create a list of Paragraphs for the answer (3 blank lines)
+                # Create a list of Paragraphs for the answer (3 blank lines)
                 #answer = [Paragraph(text='', style=style.normal) for _ in range(3)]
                 # Create a list of Spacer elements for the answer (3 blank lines)
                 answer = [Spacer(1, 10) for _ in range(3)]  # 20 points of space per line
@@ -260,10 +269,10 @@ def construct_testing_form(fields: List[Field]):
     question_col_width = (table_width / 6) * .89
 
     # Create the heading table
-    heading_widths = [margin_width, table_width, margin_width]  
+    heading_widths = [margin_width, table_width, margin_width]
     heading_paragraph = fields[0].title
     heading_paragraph.style = style.section_header
-    heading = Table([['',heading_paragraph,'']], colWidths=heading_widths) 
+    heading = Table([['',heading_paragraph,'']], colWidths=heading_widths)
     heading.keepWithNext = True
     heading.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -289,11 +298,8 @@ def construct_testing_form(fields: List[Field]):
             # Create a row with the question paragraph and empty answer columns
             row = ['']  # Left margin
 
-            # Add question
-            if field.name == "medi_medtype":
-                row.append(Paragraph(text='Type of agent', style=style.normal))
-            else:
-                row.append(field.question)  # Question column
+            # Add question           
+            row.append(field.question)  # Question column
 
             # Add answers
             if (field.name == "test_collectiondate"):
@@ -306,9 +312,11 @@ def construct_testing_form(fields: List[Field]):
                 field_answer_copy = field.answer.copy()
           
                 # Extend the row with the modified copy (not the original field.answer)
+                #'[ <font color="lightgrey">DD</font> / <font color="lightgrey">MM</font> / 20<font color="lightgrey">YY</font> ]'
                 row.extend([Paragraph(
-                    text='[ <font color="lightgrey">DD</font> / <font color="lightgrey">MM</font> / 20<font color="lightgrey">YY</font> ]'  
+                    text='<font color="lightgrey">[ DD / MM / 20YY ]</font>'  
                     )] * answer_col_count)
+            
             elif field.name in fields_to_add_answer:
 
                 if 'other' in field.answer[-1].text.lower():
