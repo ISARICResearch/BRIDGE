@@ -458,7 +458,11 @@ def update_for_template_options(version_commit, df_current_datadicc, answer_opt_
             else:
                 selected_column = 'Selected'
 
-            if row[selected_column] == 1:
+            selected_value = row[selected_column]
+            if isinstance(selected_value, str):
+                selected_value = float(1) if selected_value.replace(' ', '') == '1' else None
+
+            if pd.notnull(selected_value) and int(selected_value) == 1:
                 if row_tem_ul['Type'] == 'user_list':
                     dict1_options.append([str(cont_lo), str(row[list_options.columns[0]]), 1])
                 elif row_tem_ul['Type'] == 'multi_list':
