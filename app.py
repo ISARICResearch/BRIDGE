@@ -830,13 +830,14 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
         Input('crf_save', 'n_clicks'),
     ],
     [
+        Input('current_datadicc-store', 'data'),
         Input('selected_data-store', 'data'),
         Input('selected-version-store', 'data'),
         State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
+def on_save_click(n_clicks, current_datadicc_saved, json_data, selected_version_data, crf_name):
     ctx = dash.callback_context
 
     if not n_clicks:
@@ -854,14 +855,29 @@ def on_save_click(n_clicks, json_data, selected_version_data, crf_name):
 
         current_version = selected_version_data.get('selected_version', None)
         date = datetime.today().strftime('%Y-%m-%d')
-        # Naming convention expected when uploading`
+        # Naming convention expected when uploading
         filename_csv = f'template_{crf_name}_{current_version.replace('.', '_')}_{date}.csv'
 
+        df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
-        df_selected_variables = df_selected_variables[['Variable']]
+
+        df_save = pd.DataFrame()
+        for row_index, row in df_selected_variables[['Sec', 'vari']].drop_duplicates().iterrows():
+            df_save_section = df_current_datadicc[df_current_datadicc['Sec'] == row['Sec']]
+            if row['vari']:
+                df_save_section = df_save_section[df_save_section['vari'] == row['vari']]
+            df_save = pd.concat([df_save, df_save_section], ignore_index=True)
+        df_save = df_save[[
+            'Variable',
+            'Form',
+            'Section',
+            'Type',
+            'Answer Options',
+            'Validation',
+        ]]
 
         output = io.BytesIO()
-        df_selected_variables.to_csv(output, index=False, encoding='utf8')
+        df_save.to_csv(output, index=False, encoding='utf8')
         output.seek(0)
 
         return '', dcc.send_bytes(output.getvalue(), filename_csv)
