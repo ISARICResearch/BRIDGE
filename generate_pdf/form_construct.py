@@ -158,8 +158,8 @@ def construct_medication_form(fields: List[Field]):
         ('LINEABOVE', (1, 0), (-2, 0), line_width, colors.black),
     ]))
 
-    fields_to_add = ['medi_medtype', 'medi_treat', 'medi_medstartdate', 'medi_medenddate', 'medi_numdays', 'medi_frequency', 'medi_dose', 'medi_offlab']
-    fields_to_add_answer = ['medi_medtype', 'medi_treat', 'medi_offlab']
+    fields_to_add = ['medi_medtype', 'medi_treat', 'medi_medstartdate', 'medi_medenddate', 'medi_numdays', 'medi_frequency', 'medi_dose', 'medi_units', 'medi_numdoses', 'medi_offlab']
+    fields_to_add_answer = ['medi_medtype', 'medi_treat', 'medi_offlab', 'medi_dose']
     
     route_suffix = '_route'
     route_question = "Medication route"
@@ -257,7 +257,7 @@ def construct_medication_form(fields: List[Field]):
     # Return the table (or add it to your story if you're building a PDF)
     return [heading, body]
 
-
+''' Function to generate the custom Pathogen Testing form '''
 def construct_testing_form(fields: List[Field]):
 
     # Define the page size
@@ -287,13 +287,14 @@ def construct_testing_form(fields: List[Field]):
     # Initialize the body content
     body_content = []
 
-    fields_to_add = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_result', 'test_ctvalue', 'test_genrep_db', 'test_genrep_ref']
-    fields_to_add_answer = ['test_collectiondate','test_biospecimentype', 'test_labtestmethod', 'test_result', 'test_genrep_db']
+    fields_to_add = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_result', 'test_ctvalue', 'test_genrep_db', 'test_genrep_ref', 'test_genrep_yn']
+    fields_to_add_answer = ['test_collectiondate','test_biospecimentype', 'test_labtestmethod', 'test_result', 'test_genrep_db', 'test_genrep_yn']
     fields_to_add_other = ['test_biospecimentype', 'test_labtestmethod', 'test_genrep_db']
 
 
     # Iterate through the fields and add rows to the body content
     for field in fields:
+        print(field.name)
         if not field.is_heading and field.name in fields_to_add:
             # Create a row with the question paragraph and empty answer columns
             row = ['']  # Left margin
@@ -317,6 +318,20 @@ def construct_testing_form(fields: List[Field]):
                     text='<font color="lightgrey">[ DD / MM / 20YY ]</font>'  
                     )] * answer_col_count)
             
+            # Custom genrep_ref add
+            elif (field.name == "test_genrep_db"):
+
+                if 'other' in field.answer[-1].text.lower():
+                    field.answer.pop(-1)
+
+                if 'true':
+                    field.answer.append(Paragraph(text='○ TEST ' + ('_'*20), style=style.normal))
+
+                if (field.name in fields_to_add_other):    
+                    field.answer.append(Paragraph(text='○ Other ' + ('_'*20), style=style.normal))
+
+                row.extend([field.answer] * answer_col_count)  # filled answer columns
+
             elif field.name in fields_to_add_answer:
 
                 if 'other' in field.answer[-1].text.lower():
@@ -325,7 +340,7 @@ def construct_testing_form(fields: List[Field]):
                 if (field.name in fields_to_add_other):    
                     field.answer.append(Paragraph(text='○ Other ' + ('_'*20), style=style.normal))
                 
-                row.extend([field.answer] * answer_col_count)  # Empty answer columns
+                row.extend([field.answer] * answer_col_count)  # filled answer columns
             else:
                 row.extend([''] * answer_col_count)  # Empty answer columns
 

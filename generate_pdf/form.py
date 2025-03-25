@@ -197,7 +197,6 @@ def create_field(row, section):
             for choice in row['Choices, Calculations, OR Slider Labels'].split('|'):
                 #if choice.split(',', 1)[0].strip() in ['1','2','3','4','5','6', '10']:
                 choices.append(symbol + choice.split(',', 1)[-1].strip())
-                print(symbol + choice.split(',', 1)[-1].strip())
         else:
             choices = [symbol + choice.split(',', 1)[-1].strip() for choice in row['Choices, Calculations, OR Slider Labels'].split('|')]
 
