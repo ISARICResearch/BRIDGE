@@ -488,6 +488,15 @@ def update_for_template_options(version_commit, df_current_datadicc, answer_opt_
     return df_current_datadicc, answer_opt_dict1, answer_opt_dict2
 
 
+def get_checked_template_list(grouped_presets_dict, checked_values_list):
+    checked_template_list = []
+    for template_section, template_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
+        if template_checked_list:  # Check if the list of values is not empty
+            for template_checked in template_checked_list:
+                checked_template_list.append([template_section, template_checked.replace(' ', '_')])
+    return checked_template_list
+
+
 @app.callback(
     [
         Output('tree_items_container', 'children'),
@@ -541,18 +550,14 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     checked_values = values
     print('checked_values', checked_values)
     print('grouped_presets in update output', grouped_presets)
-    formatted_output = []
-    for key, values in zip(grouped_presets.keys(), checked_values):
-        if values:  # Check if the list of values is not empty
-            for value in values:
-                formatted_output.append([key, value.replace(' ', '_')])
+    checked_template_list = get_checked_template_list(grouped_presets, checked_values)
 
     checked = []
     templa_answer_opt_dict1 = []
     templa_answer_opt_dict2 = []
 
-    if len(formatted_output) > 0:
-        for ps in formatted_output:
+    if len(checked_template_list) > 0:
+        for ps in checked_template_list:
             checked_key = 'preset_' + ps[0] + '_' + ps[1]
             if checked_key in current_datadicc:
                 checked = checked + list(current_datadicc['Variable'].loc[current_datadicc[checked_key].notnull()])
@@ -832,16 +837,19 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
     ],
     [
         Input('crf_save', 'n_clicks'),
+        Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
     ],
     [
-        Input('current_datadicc-store', 'data'),
-        Input('selected_data-store', 'data'),
-        Input('selected-version-store', 'data'),
+        State('current_datadicc-store', 'data'),
+        State('grouped_presets-store', 'data'),
+        State('selected_data-store', 'data'),
+        State('selected-version-store', 'data'),
         State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, current_datadicc_saved, json_data, selected_version_data, crf_name):
+def on_save_click(n_clicks, checked_values, current_datadicc_saved, grouped_presets, json_data, selected_version_data,
+                  crf_name):
     ctx = dash.callback_context
 
     if not n_clicks:
@@ -879,6 +887,14 @@ def on_save_click(n_clicks, current_datadicc_saved, json_data, selected_version_
             'Answer Options',
             'Validation',
         ]]
+
+        checked_template_list = get_checked_template_list(grouped_presets, checked_values)
+        preset_list = []
+        for ps in checked_template_list:
+            checked_key = 'preset_' + ps[0] + '_' + ps[1]
+            preset_list.append(checked_key)
+        preset_list_output = '|'.join(preset_list)
+        df_save.loc[:, 'Checked Presets'] = preset_list_output
 
         output = io.BytesIO()
         df_save.to_csv(output, index=False, encoding='utf8')
@@ -1009,9 +1025,16 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
 
     upload_answer_opt_dict1 = []
     upload_answer_opt_dict2 = []
-
-    df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-        version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+    checked_presets = [x for x in df_upload['Checked Presets'].drop_duplicates() if pd.notnull(x)]
+    if checked_presets:
+        check_preset_list = checked_presets[0].split('|')
+        for checked_key in check_preset_list:
+            df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
+                version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2,
+                checked_key=checked_key)
+    else:
+        df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
+            version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
 
     return (
         tree_items,
