@@ -841,23 +841,18 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
         Input('input', 'checked'),
     ],
     [
+        State('current_datadicc-store', 'data'),
         State('grouped_presets-store', 'data'),
-        State('selected_data-store', 'data'),
         State('selected-version-store', 'data'),
         State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, checked_template_values, checked_variables, grouped_presets, json_data,
+def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, grouped_presets,
                   selected_version_data, crf_name):
     ctx = dash.callback_context
 
-    if not n_clicks:
-        # Return empty or initial state if button hasn't been clicked
-        return '', None
-
-    if not any(json.loads(json_data).values()):
-        # Nothing ticked
+    if not n_clicks or not checked_variables:
         return '', None
 
     trigger_id = get_trigger_id(ctx)
@@ -870,8 +865,8 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, grouped_
         # Naming convention expected when uploading
         filename_csv = f'template_{crf_name}_{current_version.replace('.', '_')}_{date}.csv'
 
-        df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
-        df_save = df_selected_variables[['Variable']].loc[df_selected_variables['Variable'].isin(checked_variables)]
+        df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+        df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
 
         checked_template_list = get_checked_template_list(grouped_presets, checked_template_values)
         preset_list = []
