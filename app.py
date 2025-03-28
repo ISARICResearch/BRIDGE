@@ -838,9 +838,9 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
     [
         Input('crf_save', 'n_clicks'),
         Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
+        Input('input', 'checked'),
     ],
     [
-        State('current_datadicc-store', 'data'),
         State('grouped_presets-store', 'data'),
         State('selected_data-store', 'data'),
         State('selected-version-store', 'data'),
@@ -848,8 +848,8 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, checked_values, current_datadicc_saved, grouped_presets, json_data, selected_version_data,
-                  crf_name):
+def on_save_click(n_clicks, checked_template_values, checked_variables, grouped_presets, json_data,
+                  selected_version_data, crf_name):
     ctx = dash.callback_context
 
     if not n_clicks:
@@ -870,25 +870,10 @@ def on_save_click(n_clicks, checked_values, current_datadicc_saved, grouped_pres
         # Naming convention expected when uploading
         filename_csv = f'template_{crf_name}_{current_version.replace('.', '_')}_{date}.csv'
 
-        df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_selected_variables = pd.read_json(io.StringIO(json_data), orient='split')
+        df_save = df_selected_variables[['Variable']].loc[df_selected_variables['Variable'].isin(checked_variables)]
 
-        df_save = pd.DataFrame()
-        for row_index, row in df_selected_variables[['Sec', 'vari']].drop_duplicates().iterrows():
-            df_save_section = df_current_datadicc[df_current_datadicc['Sec'] == row['Sec']]
-            if row['vari']:
-                df_save_section = df_save_section[df_save_section['vari'] == row['vari']]
-            df_save = pd.concat([df_save, df_save_section], ignore_index=True)
-        df_save = df_save[[
-            'Variable',
-            'Form',
-            'Section',
-            'Type',
-            'Answer Options',
-            'Validation',
-        ]]
-
-        checked_template_list = get_checked_template_list(grouped_presets, checked_values)
+        checked_template_list = get_checked_template_list(grouped_presets, checked_template_values)
         preset_list = []
         for ps in checked_template_list:
             checked_key = 'preset_' + ps[0] + '_' + ps[1]
