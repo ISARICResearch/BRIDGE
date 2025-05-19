@@ -26,7 +26,6 @@ import random
 from urllib.parse import parse_qs, urlparse
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],suppress_callback_exceptions=True)
-server = app.server
 app.title ='BRIDGE'
 
 modified_list=[]
@@ -69,25 +68,45 @@ initial_multilist_variable_choices =  json.dumps(multilist_variable_choices)
 navbar = dbc.Navbar(
     dbc.Container(
         [
+            
             html.A(
-                # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
                         dbc.Col(html.Img(src="/assets/ISARIC_logo_wh.png", height="60px")),
-                        dbc.Col(dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator", className="ms-2")),
                     ],
                     align="center",
-                    className="g-0",
+                    className="g-0 me-auto",
                 ),
                 href="https://isaric.org/",
                 style={"textDecoration": "none"},
             ),
+
+            
+            html.A(
+                dbc.NavbarBrand(
+                    "BRIDGE - BioResearch Integrated Data tool GEnerator",
+                    className="mx-auto"
+                ),
+                href="https://isaric-bridge.replit.app/",
+                style={"textDecoration": "none", "color": "white"},
+            ),
+
+            
+            html.A(
+                dbc.NavbarBrand("Getting started with BRIDGE"),
+                href="https://isaricresearch.github.io/Training/bridge_starting.html",
+                style={"textDecoration": "none", "color": "white"},
+            ),
+
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
-        ]
+        ],
+        className="d-flex justify-content-between w-100"
     ),
     color="#BA0225",
     dark=True,
+    className="px-3",  
 )
+
 
 navbar_big = dbc.Navbar(
     dbc.Container(
@@ -747,6 +766,16 @@ def update_output_based_on_url(template_check_flag,href):
 
         # Accessing the 'param' parameter
         param_value = params.get('param', [''])[0]  # Default to an empty string if the parameter is not present
+        param_map = {
+            'ari': 'ARChetype Syndromic CRF_ARI',
+            'mpox': 'ARChetype Disease CRF_Mpox',
+            'dengue': 'ARChetype Disease CRF_Dengue',
+            'h5nx': 'ARChetype Disease CRF_H5Nx',
+            'covid':'ARChetype Disease CRF_Covid'
+        }
+
+        if param_value in param_map:
+            param_value = param_map[param_value]
 
         # Example: Split param_value by underscore
         group, value = param_value.split('_') if '_' in param_value else (None, None)
@@ -2032,4 +2061,4 @@ def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
-    #app.run_server(debug=True, host='0.0.0.0', port='8080')#change for deploy
+    #app.run_server(debug=True, host='0.0.0.0', port='8080', use_reloader=False)#change for deploy
