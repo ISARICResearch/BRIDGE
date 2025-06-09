@@ -29,7 +29,7 @@ SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
-server = app.server
+
 app.title = 'BRIDGE'
 
 modified_list = []
@@ -164,7 +164,16 @@ def update_output_based_on_url(template_check_flag, href):
 
         # Accessing the 'param' parameter
         param_value = params.get('param', [''])[0]  # Default to an empty string if the parameter is not present
+        param_map = {
+            'ari': 'ARChetype Syndromic CRF_ARI',
+            'mpox': 'ARChetype Disease CRF_Mpox',
+            'dengue': 'ARChetype Disease CRF_Dengue',
+            'h5nx': 'ARChetype Disease CRF_H5Nx',
+            'covid':'ARChetype Disease CRF_Covid'
+        }
 
+        if param_value in param_map:
+            param_value = param_map[param_value]
         # Example: Split param_value by underscore
         group, value = param_value.split('_') if '_' in param_value else (None, None)
 
@@ -1502,3 +1511,4 @@ def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
+    #app.run_server(debug=True, host='0.0.0.0', port='8080', use_reloader=False)#change for deploy

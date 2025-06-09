@@ -132,25 +132,37 @@ class NavBar:
         dbc.Container(
             [
                 html.A(
-                    # Use row and col to control vertical alignment of logo / brand
                     dbc.Row(
                         [
                             dbc.Col(html.Img(src=f"{LOGOS_DIR}/ISARIC_logo_wh.png", height="60px")),
-                            dbc.Col(
-                                dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator",
-                                                className="ms-2")),
                         ],
                         align="center",
-                        className="g-0",
+                        className="g-0 me-auto",
                     ),
                     href="https://isaric.org/",
                     style={"textDecoration": "none"},
                 ),
+                html.A(
+                    dbc.NavbarBrand(
+                        "BRIDGE - BioResearch Integrated Data tool GEnerator",
+                        className="mx-auto"
+                    ),
+                    href="https://isaric-bridge.replit.app/",
+                    style={"textDecoration": "none", "color": "white"},
+                ),
+
+                html.A(
+                    dbc.NavbarBrand("Getting started with BRIDGE"),
+                    href="https://isaricresearch.github.io/Training/bridge_starting.html",
+                    style={"textDecoration": "none", "color": "white"},
+                ),
                 dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
-            ]
+            ],
+            className="d-flex justify-content-between w-100"
         ),
         color="#BA0225",
         dark=True,
+        className="px-3",
     )
 
 
