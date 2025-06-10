@@ -104,7 +104,7 @@ def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
     data_dictionary['Section Header'].fillna(method='ffill', inplace=True)
 
     # Generates the form for the PaperCRF
-    elements = generate_form(doc, data_dictionary, elements, locate_phrase)
+    elements = generate_form(data_dictionary, elements, locate_phrase)
 
     # Finally, generate the header_footer and bild the document with it
     header_footer_partial = partial(generate_header_footer, title=db_name)
