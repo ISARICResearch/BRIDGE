@@ -872,7 +872,8 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, current_
         current_version = selected_version_data.get('selected_version', None)
         date = datetime.today().strftime('%Y-%m-%d')
         # Naming convention expected when uploading
-        filename_csv = f'template_{crf_name}_{current_version.replace('.', '_')}_{date}.csv'
+        version_string = current_version.replace('.', '_')
+        filename_csv = f'template_{crf_name}_{version_string}_{date}.csv'
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
