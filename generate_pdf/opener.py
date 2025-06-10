@@ -27,17 +27,17 @@ def generate_opener(elements, details, db_name):
     center_style.alignment = 1  # Center alignment
 
     header_style = styles['Heading1']
-    header_style.fontSize = 10
-    header_style.leading = 12
+    header_style.fontSize = 12
+    header_style.leading = 14
     header_style.fontName = 'DejaVuSans-Bold'  # Use the registered font
 
     title_style = styles['Title']
-    title_style.fontSize = 14
+    title_style.fontSize = 16
     title_style.leading = 20
     title_style.fontName = 'DejaVuSans-Bold'
 
     # Add title and design description from the details DataFrame
-    title_text = details[details['Paper-like section'] == 'Title']['Text'].values[0]
+    title_text = details[details['Paper-like section'] == 'Title']['Text_translation'].values[0]
     title_text = title_text.replace('CORE', db_name).upper()
     elements.append(Paragraph(title_text, title_style))
     elements.append(Paragraph("<br/><br/>"))  # Add some space
@@ -46,9 +46,13 @@ def generate_opener(elements, details, db_name):
 
     # Extracting the 'DESIGN OF THIS CASE REPORT FORM (CRF)' from the details dataset
 
-    design_desc = details.loc[details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text'].values[
+    design_desc = \
+    details.loc[details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text_translation'].values[
         0].replace('[PROJECT_NAME]', db_name)
-    elements.append(Paragraph('DESIGN OF THIS CASE REPORT FORM (CRF)', header_style))
+    temp = details.loc[details[
+                           'Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Paper-like section_translation'].values[
+        0]
+    elements.append(Paragraph(temp, header_style))
     elements.append(Paragraph(design_desc, normal_style))
 
     elements.append(Paragraph("<br/><br/>"))  # Add some space
@@ -65,8 +69,8 @@ def generate_opener(elements, details, db_name):
     presentation_paragraphs = []
 
     for _, row in form_details.iterrows():
-        form_name = row['Paper-like section']
-        text = row['Text']
+        form_name = row['Paper-like section_translation']
+        text = row['Text_translation']
 
         # Check if the form name has been added before
         if form_name not in form_names_added:
@@ -79,25 +83,30 @@ def generate_opener(elements, details, db_name):
     elements.append(Paragraph('<br/>'.join(presentation_paragraphs), normal_style))
 
     elements.append(
-        Paragraph(details['Text'].loc[details['Paper-like section'] == 'Follow-up details'].iloc[0], normal_style))
+        Paragraph(details['Text_translation'].loc[details['Paper-like section'] == 'Follow-up details'].iloc[0],
+                  normal_style))
 
     elements.append(Paragraph("<br/>"))  # Add some space
     elements.append(Spacer(1, 10))
     ###########################################################################
     details_event_table = details[(details['Text'].str.startswith("Timing /Events:")) | (
-                details['Paper-like section'] == 'Timing /Events')].copy()
-    columns = ['Forms'] + \
-              details_event_table['Text'].loc[details_event_table['Paper-like section'] == 'Timing /Events'].iloc[
-                  0].split(' | ')
+            details['Paper-like section'] == 'Timing /Events')].copy()
+    columns = ['Forms'] + details_event_table['Text_translation'].loc[
+        details_event_table['Paper-like section'] == 'Timing /Events'].iloc[0].split(' | ')
     transformed_df = pd.DataFrame(columns=columns)
-    transformed_df["Forms"] = details_event_table["Paper-like section"]
+    transformed_df["Forms"] = details_event_table["Paper-like section_translation"]
+
     for col in columns[1:]:
         if col in [event for event in columns if '(' in event]:
-            transformed_df[col] = details_event_table["Text"].apply(lambda x: '(COMPLETE)' if col in x else '')
+            transformed_df[col] = details_event_table["Text_translation"].apply(
+                lambda x: '(COMPLETE)' if col in x else '')
         else:
-            transformed_df[col] = details_event_table["Text"].apply(lambda x: 'COMPLETE' if col in x else '')
+            transformed_df[col] = details_event_table["Text_translation"].apply(
+                lambda x: 'COMPLETE' if col in x else '')
 
-    transformed_df = transformed_df.loc[transformed_df['Forms'] != 'Timing /Events']
+    translation_timing = \
+        details["Paper-like section_translation"].loc[(details['Paper-like section'] == 'Timing /Events')].iloc[0]
+    transformed_df = transformed_df.loc[transformed_df['Forms'] != translation_timing]
 
     # Convert DataFrame data into a list of lists with Paragraphs for wrapping
     table_data = [[Paragraph(str(item), center_style) for item in row] for row in transformed_df.values.tolist()]
@@ -107,7 +116,7 @@ def generate_opener(elements, details, db_name):
 
     # Calculate the available width for the table
     page_width = 8.5 * inch
-    margin_width = 1 * inch  # Assuming a 1-inch margin on both sides
+    margin_width = .4 * inch  # Assuming a 1-inch margin on both sides
     table_width = page_width - 2 * margin_width  # subtracting both left and right margins
     num_columns = len(transformed_df.columns)
     col_width = table_width / num_columns
@@ -115,7 +124,7 @@ def generate_opener(elements, details, db_name):
     table = Table(table_data, colWidths=[col_width for _ in range(num_columns)])
 
     style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.hsl2rgb(0, 0, .7)),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -132,10 +141,11 @@ def generate_opener(elements, details, db_name):
     elements.append(Spacer(1, 30))
     ###########################################################################
 
-    elements.append(Paragraph('GENERAL GUIDANCE', header_style))
+    temp = details.loc[details['Paper-like section'] == 'GENERAL GUIDANCE', 'Paper-like section_translation'].values[0]
+    elements.append(Paragraph(temp, header_style))
     elements.append(Spacer(1, 12))
 
-    for entry in details['Text'].loc[details['Paper-like section'] == 'GENERAL GUIDANCE']:
+    for entry in details['Text_translation'].loc[details['Paper-like section'] == 'GENERAL GUIDANCE']:
         bullet_point = Paragraph(
             "• " + entry.replace('circles ()', 'circles (○)').replace('square boxes ()', 'square boxes (□)'),
             styles['Normal'])
