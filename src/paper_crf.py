@@ -1,54 +1,34 @@
-from copy import deepcopy
-from datetime import datetime
 from functools import partial
 from io import BytesIO
-from os.path import join, dirname, abspath
 
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-from src.generate_form import generate_form
-from src.generate_opener import generate_opener
+from generate_pdf.form import generate_form
+from generate_pdf.guide import generate_guide_doc
+from generate_pdf.header_footer import generate_header_footer
+from generate_pdf.opener import generate_opener
 
-ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
-FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
-LOGOS_DIR_FULL = join(ASSETS_DIR_FULL, 'logos')
+# Register the font
+try:
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'BRIDGE/assets/fonts/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'BRIDGE/assets/fonts/DejaVuSans-Bold.ttf'))
+except:
+    pdfmetrics.registerFont(TTFont('DejaVuSans', '../assets/fonts/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '../assets/fonts/DejaVuSans-Bold.ttf'))
 
-pdfmetrics.registerFont(TTFont('DejaVuSans', join(FONTS_DIR_FULL, 'DejaVuSans.ttf')))
-pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', join(FONTS_DIR_FULL, 'DejaVuSans-Bold.ttf')))
-line_placeholder = '_' * 30
-
-
-def header_footer(canvas, doc, title):
-    # Add two logos in the header
-    # Get the current date
-    current_date = datetime.now()
-
-    # Format the date as required
-    formatted_date = current_date.strftime("%d%b%y").upper()
-
-    # Draw the first logo
-    canvas.drawInlineImage(join(LOGOS_DIR_FULL, 'ISARIC_logo.png'), 50, 730, width=69,
-                           height=30)  # change for deploy# adjust the width and height accordingly
-
-    # Now, for the text, ensure it's positioned after the second logo + some spacing
-    text_x_position = 270  # 160 + 100 + 10
-    canvas.setFont("DejaVuSans", 8)
-    canvas.drawString(text_x_position, 730,
-                      "PARTICIPANT IDENTIFICATION #: [___][___][___][___][___]-­‐ [___][___][___][___]")
-    # Footer content
-
-    canvas.setFont("DejaVuSans", 8)
-    canvas.drawString(inch, 0.95 * inch, "ISARIC " + title.upper() + " CASE REPORT FORM " + formatted_date.upper())
-    canvas.setFont("DejaVuSans", 6)
-    canvas.drawString(inch, 0.75 * inch,
-                      "Licensed under a Creative Commons Attribution-ShareAlike 4.0 International License by ISARIC on behalf of the University of Oxford.")
+# Register font family
+registerFontFamily(
+    'DejaVuSans',
+    normal='DejaVuSans',
+    bold='DejaVuSans-Bold'
+)
 
 
 def create_table(data):
@@ -69,75 +49,90 @@ def create_table(data):
     return table
 
 
-def generate_pdf(data_dictionary, version, db_name, commit):
+def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
     if isinstance(db_name, list):
         db_name = db_name[0]
 
+    # Set buffer (changes based on production or test)
+    if is_test:
+        buffer = "Tests/" + db_name + ".pdf"  # Use BytesIO object for in-memory PDF generation
+    else:
+        buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
+
+    # Remove rows where 'Field Label' starts with '>' or '->'
     data_dictionary = data_dictionary[~data_dictionary['Field Label'].str.startswith(('>', '->'))]
 
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
-    icc_version_path = root + commit
-    details = pd.read_csv(icc_version_path + '/paper_like_details.csv', encoding='latin-1')
+    root = f'https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/{version}/{language}'
 
-    buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    # Get Paper-Like details and supplemental phrases from the specified language and version
+    details = pd.read_csv(root + '/paper_like_details.csv', encoding='utf-8')
+    supplemental_phrases = pd.read_csv(root + '/supplemental_phrases.csv', encoding='utf-8')
 
+    # Locate the phrase in the supplemental phrases DataFrame
+    def locate_phrase(variable: str) -> dict:
+        try:
+            phrase = supplemental_phrases.loc[supplemental_phrases['variable'] == variable, 'text'].values[0]
+            return {"error": False, "text": phrase}
+        except IndexError:
+            print(f"Variable '{variable}' not found in supplemental phrases.")
+            return {"error": True, "text": ""}
+
+    # Define margin widths for the document as a whole
+    left_margin = 0.3 * inch
+    right_margin = 0.3 * inch
+    top_margin = 0.7 * inch
+    bottom_margin = 0.7 * inch
+
+    # Create new document from template with defined margins
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=left_margin,
+        rightMargin=right_margin,
+        topMargin=top_margin,
+        bottomMargin=bottom_margin
+    )
+
+    # elements is an array holding each item to be added to the pdf from "generate_opener" and "generate_form"
     elements = []
 
     # Generates the opening information for the PaperCRF
     elements = generate_opener(elements, details, db_name)
 
-    data_dictionary['Section Header'] = data_dictionary['Section Header'].replace({'': pd.NA})
-    data_dictionary['Section Header'] = data_dictionary['Section Header'].ffill()
-
     # Grouping by 'Section Header' instead of 'Form Name'
+    data_dictionary['Section Header'].replace('', pd.NA, inplace=True)
+    data_dictionary['Section Header'].fillna(method='ffill', inplace=True)
 
-    # Generates the fillable form for the PaperCRF
-    elements = generate_form(doc, data_dictionary, elements)
+    # Generates the form for the PaperCRF
+    elements = generate_form(doc, data_dictionary, elements, locate_phrase)
 
-    # doc.build(elements, onFirstPage=header_footer, onLaterPages=header_footer)
-    header_footer_partial = partial(header_footer, title=db_name)
+    # Finally, generate the header_footer and bild the document with it
+    header_footer_partial = partial(generate_header_footer, title=db_name)
     doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
-    buffer.seek(0)
 
+    # If production, save the pdf from memory
+    if is_test:
+        return None
+
+    buffer.seek(0)
     return buffer.getvalue()  # Return the PDF data
 
 
-def generate_completionguide(data_dictionary, version, db_name, commit):
+# Function to generate separate completion guide pdf document.
+def generate_completionguide(data_dictionary, version, db_name, is_test=False):
     data_dictionary = data_dictionary.copy()
-    root = 'https://raw.githubusercontent.com/ISARICResearch/ARC/'
 
-    buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    elements = []
+    # Set buffer (changes based on production or test)
+    if is_test:
+        buffer = "Tests/" + version + "_completionGuide.pdf"  # Set local test pdf path
+    else:
+        buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
-    # Get the predefined styles and configure them
-    styles = getSampleStyleSheet()
-    normal_style = deepcopy(styles['Normal'])
-    normal_style.fontSize = 8
-    normal_style.leading = 10
-    normal_style.fontName = 'DejaVuSans'
+    generate_guide_doc(data_dictionary, version, db_name, buffer)
 
-    header_style = deepcopy(styles['Heading1'])
-    header_style.fontSize = 10
-    header_style.leading = 12
-    header_style.fontName = 'DejaVuSans-Bold'
-
-    # Assume 'header_footer' function is defined elsewhere
-    # and 'data_dictionary' processing is as before
-
-    # Process data_dictionary and add Paragraphs to elements
-    data_dictionary['Section'] = data_dictionary['Section'].replace({'': pd.NA})
-    data_dictionary['Section'] = data_dictionary['Section'].ffill()
-
-    for index, row in data_dictionary.iterrows():
-        elements.append(Paragraph(row['Question'], header_style))
-        elements.append(Paragraph(row['Definition'], normal_style))
-        elements.append(Paragraph(row['Completion Guideline'], normal_style))
-
-    # Build the document
-    doc.build(elements)  # Removed the onFirstPage and onLaterPages for simplicity
-
-    # Move the cursor of the BytesIO object to the beginning
-    buffer.seek(0)
+    # if test, return
+    if is_test:
+        return None
+    # If production, save the pdf from memory
+    buffer.seek(0)  # Move the cursor of the BytesIO object to the beginning
     return buffer.getvalue()  # Return the PDF data
