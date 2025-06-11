@@ -24,14 +24,18 @@ from zipfile import ZipFile
 import re
 import random
 from urllib.parse import parse_qs, urlparse
+from logger import setup_logger
+
+logger = setup_logger(__name__)
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],suppress_callback_exceptions=True)
 app.title ='BRIDGE'
+server = app.server
 
 modified_list=[]
 
+logger.info('Starting BRIDGE application')
 versions,recentVersion=ARC.getARCVersions()
-
 
 currentVersion=recentVersion
 current_datadicc,presets,commit=ARC.getARC(recentVersion)
@@ -865,7 +869,6 @@ def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
 
 def display_checked(checked,current_datadicc_saved):
     current_datadicc=pd.read_json(current_datadicc_saved, orient='split')
-
 
 
     column_defs = [ {'headerName': "Question", 'field': "Question", 'wrapText': True}, 

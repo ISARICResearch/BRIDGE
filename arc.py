@@ -6,6 +6,9 @@ import re
 import numpy as np
 from datetime import datetime
 
+from logger import setup_logger
+
+logger = setup_logger(__name__)
 #ARC - Analysis and Research Compendium 
 
 
@@ -32,78 +35,62 @@ def getResearchQuestionTypes(datadicc):
 
     return caseDefiningData[['Variable','Form','Section','Question']]
 
-    
-
-
-     
 
 
 def getARCVersions():
+    logger.info("Fetching ARC versions from GitHub API...")
+    logger.info("GITHUB_TOKEN is set." if os.getenv('GITHUB_TOKEN') else "GITHUB_TOKEN is not set. Making unauthenticated request.")
+    url_release = 'https://api.github.com/repos/ISARICResearch/ARC/releases'
 
-    # URL de la API
-    url_release = f'https://api.github.com/repos/ISARICResearch/ARC/releases'
+    # Use GITHUB_TOKEN if it exists; otherwise, make unauthenticated request
+    # Unauthenticated requests are limited to 60 requests per hour
+    github_token = os.getenv('GITHUB_TOKEN')
+    headers = {'Authorization': f'token {github_token}'} if github_token else {}
 
+    try:
+        if github_token:
+            print("Making authenticated request to GitHub API.")
+        response = requests.get(url_release, headers=headers)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching release data: {e}")
+        return [], None
 
-    response = requests.get(url_release)
+    releases = response.json()
+    tag_names = [release['tag_name'] for release in releases]
 
-    # Verifica el estado de la respuesta
-    if response.status_code == 200:
-        releases = response.json()
-        tag_names = [release['tag_name'] for release in releases]
-        print(tag_names)
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-
-    
-
-
-    #url = f"https://api.github.com/repos/{repo_name}/contents/{path}"
-    
-    '''
-    # Make the request
-    response = requests.get(url)
-    folder_names = []
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        contents = response.json()
-        folder_names = [item['name'] for item in contents if item['type'] == 'dir']
-    else:
-        print("Failed to retrieve data:", response.status_code)
-    '''
-
-    versions=tag_names
-    #versions = set(folder_names)
-    
-    # Parse versions, including handling "-rc"
+    # Parse versions, handling '-rc'
     parsed_versions = []
     rc_version_str = None
-    for version in versions:
-        if '-rc' in version:
-            base_version = version.split('-rc')[0]
-            parsed_versions.append((tuple(map(int, base_version.split('v')[1].split('.'))), '-rc'))
-            rc_version_str = version  # Store the rc version
-        else:
-            parsed_versions.append((tuple(map(int, version.split('v')[1].split('.'))), ''))
-    
-    # Filter out "-rc" versions to get the most recent non-rc version
+    for version in tag_names:
+        try:
+            if '-rc' in version:
+                base_version = version.split('-rc')[0]
+                parsed_versions.append((tuple(map(int, base_version.split('v')[1].split('.'))), '-rc'))
+                rc_version_str = version
+            else:
+                parsed_versions.append((tuple(map(int, version.split('v')[1].split('.'))), ''))
+        except Exception as e:
+            print(f"Skipping unrecognized version format '{version}': {e}")
+
     non_rc_versions = [v for v, suffix in parsed_versions if suffix == '']
+    if not non_rc_versions:
+        print("No valid non-rc versions found.")
+        return tag_names, None
+
     most_recent_version = max(non_rc_versions)
     most_recent_version_str = 'v' + '.'.join(map(str, most_recent_version))
-    
-    # Include all versions back in the list
-    all_versions = list(versions)
-    
-    # Reorganize to ensure the first is the most recent version and the second is the "-rc" version
-    all_versions.remove(most_recent_version_str)
-    all_versions.insert(0, most_recent_version_str)
-    
-    if rc_version_str in all_versions:
+
+    all_versions = tag_names[:]
+    if most_recent_version_str in all_versions:
+        all_versions.remove(most_recent_version_str)
+        all_versions.insert(0, most_recent_version_str)
+
+    if rc_version_str and rc_version_str in all_versions:
         all_versions.remove(rc_version_str)
         all_versions.insert(1, rc_version_str)
-    
-    # Output the result
-    return list(all_versions), most_recent_version_str
+
+    return all_versions, most_recent_version_str
     
 def getVariableOrder(current_datadicc):
     current_datadicc['Sec_vari']=current_datadicc['Sec']+'_'+current_datadicc['vari']
