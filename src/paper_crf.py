@@ -1,5 +1,7 @@
 from functools import partial
 from io import BytesIO
+from os import environ
+from os.path import join, dirname, abspath
 
 import pandas as pd
 from reportlab.lib import colors
@@ -10,18 +12,17 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-from generate_pdf.form import generate_form
-from generate_pdf.guide import generate_guide_doc
-from generate_pdf.header_footer import generate_header_footer
-from generate_pdf.opener import generate_opener
+from src.arc import ArcApiClient
+from src.generate_pdf.form import generate_form
+from src.generate_pdf.guide import generate_guide_doc
+from src.generate_pdf.header_footer import generate_header_footer
+from src.generate_pdf.opener import generate_opener
 
-# Register the font
-try:
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'BRIDGE/assets/fonts/DejaVuSans.ttf'))
-    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'BRIDGE/assets/fonts/DejaVuSans-Bold.ttf'))
-except:
-    pdfmetrics.registerFont(TTFont('DejaVuSans', '../assets/fonts/DejaVuSans.ttf'))
-    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '../assets/fonts/DejaVuSans-Bold.ttf'))
+ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
+FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
+
+pdfmetrics.registerFont(TTFont('DejaVuSans', join(FONTS_DIR_FULL, 'DejaVuSans.ttf')))
+pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', join(FONTS_DIR_FULL, 'DejaVuSans-Bold.ttf')))
 
 # Register font family
 registerFontFamily(
@@ -49,12 +50,12 @@ def create_table(data):
     return table
 
 
-def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
+def generate_pdf(data_dictionary, version, db_name, language):
     if isinstance(db_name, list):
         db_name = db_name[0]
 
     # Set buffer (changes based on production or test)
-    if is_test:
+    if environ.get('ENV') == 'test':
         buffer = "Tests/" + db_name + ".pdf"  # Use BytesIO object for in-memory PDF generation
     else:
         buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
@@ -62,11 +63,9 @@ def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
     # Remove rows where 'Field Label' starts with '>' or '->'
     data_dictionary = data_dictionary[~data_dictionary['Field Label'].str.startswith(('>', '->'))]
 
-    root = f'https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/{version}/{language}'
-
     # Get Paper-Like details and supplemental phrases from the specified language and version
-    details = pd.read_csv(root + '/paper_like_details.csv', encoding='utf-8')
-    supplemental_phrases = pd.read_csv(root + '/supplemental_phrases.csv', encoding='utf-8')
+    details = ArcApiClient().get_dataframe_paper_like_details(version, language)
+    supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(version, language)
 
     # Locate the phrase in the supplemental phrases DataFrame
     def locate_phrase(variable: str) -> dict:
@@ -111,7 +110,7 @@ def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
     doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
 
     # If production, save the pdf from memory
-    if is_test:
+    if environ.get('ENV') == 'test':
         return None
 
     buffer.seek(0)
@@ -119,19 +118,18 @@ def generate_pdf(data_dictionary, version, db_name, language, is_test=False):
 
 
 # Function to generate separate completion guide pdf document.
-def generate_completionguide(data_dictionary, version, db_name, is_test=False):
+def generate_completionguide(data_dictionary, version, db_name):
     data_dictionary = data_dictionary.copy()
 
     # Set buffer (changes based on production or test)
-    if is_test:
+    if environ.get('ENV') == 'test':
         buffer = "Tests/" + version + "_completionGuide.pdf"  # Set local test pdf path
     else:
         buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
     generate_guide_doc(data_dictionary, version, db_name, buffer)
 
-    # if test, return
-    if is_test:
+    if environ.get('ENV') == 'test':
         return None
     # If production, save the pdf from memory
     buffer.seek(0)  # Move the cursor of the BytesIO object to the beginning
