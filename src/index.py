@@ -144,8 +144,7 @@ def home_page():
                     ], width="auto"),
                     dbc.Col([
                         html.Div([
-                            html.Img(src=f"{LOGOS_DIR}/puc_rio.png", className="img-fluid",
-                                     style={"height": "100px"})
+                            html.Img(src=f"{LOGOS_DIR}/puc_rio.png", className="img-fluid", style={"height": "100px"})
                         ], className="d-flex justify-content-center")
                     ], width="auto"),
 
@@ -259,24 +258,6 @@ def home_page():
 
                     dbc.Col([
                         dbc.Card([
-                            dbc.CardImg(src=f"{LOGOS_DIR}/polyflame_logo.png", top=True),
-                            dbc.CardBody([
-                                html.H4("Polymorphic FLexible Analytics and Modelling Engine (PolyFLAME)",
-                                        className="card-title"),
-                                html.P([
-                                    "PolyFLAME processes and transforms data using the FHIRflat library. ",
-                                    "Once input data is brought into FHIRflat, it is represented as a (optionally zipped) folder of FHIR resources, with a parquet file corresponding to each resource: patient.parquet, encounter.parquet, and so on. ",
-                                    "PolyFLAME is an easy-to-use library that can be utilized in Jupyter notebooks and other downstream code to query answers to common research questions in a reproducible analytical pipeline (RAP). "
-                                ], className="card-text"),
-                                html.A("Find Out More", target="_blank",
-                                       href="https://polyflame.readthedocs.io/en/latest/index.html",
-                                       style={'display': 'block', 'margin-top': '10px', 'color': '#BA0225'})
-                            ], className="card-tools-fixed"),
-
-                        ])
-                    ], md=3),
-                    dbc.Col([
-                        dbc.Card([
                             dbc.CardImg(src=f"{LOGOS_DIR}/vertex_logo.png", top=True),
                             dbc.CardBody([
                                 html.H4("Visual Evidence & Research Tool for Exploration (VERTEX)",
@@ -293,7 +274,7 @@ def home_page():
                             ], className="card-tools-fixed")
                         ])
                     ], md=3)
-                ], className="my-5")
+                ], className="my-5", justify="center")
             ], className="container")
         ], className="py-5"),
 
