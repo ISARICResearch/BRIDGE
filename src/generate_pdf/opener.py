@@ -47,8 +47,9 @@ def generate_opener(elements, details, db_name):
     # Extracting the 'DESIGN OF THIS CASE REPORT FORM (CRF)' from the details dataset
 
     design_desc = \
-    details.loc[details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text_translation'].values[
-        0].replace('[PROJECT_NAME]', db_name)
+        details.loc[
+            details['Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Text_translation'].values[
+            0].replace('[PROJECT_NAME]', db_name)
     temp = details.loc[details[
                            'Paper-like section'] == 'DESIGN OF THIS CASE REPORT FORM (CRF)', 'Paper-like section_translation'].values[
         0]

@@ -6,8 +6,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Table, TableStyle, Paragraph, Spacer
 
-import generate_pdf.styles as style
-from generate_pdf.form_classes import Field, SubsectionStyle, Row, Subsubsection
+import src.generate_pdf.styles as style
+from src.generate_pdf.form_classes import Field, SubsectionStyle, Row, Subsubsection
 
 grey_70 = colors.hsl2rgb(0, 0, .7)
 grey_80 = colors.hsl2rgb(0, 0, .8)

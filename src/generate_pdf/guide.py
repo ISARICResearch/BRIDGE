@@ -11,12 +11,11 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, PageTemplate, Frame, Flowable
 from reportlab.platypus import Spacer, NextPageTemplate
 
-from generate_pdf.header_footer import generate_guide_header_footer
+from src.generate_pdf.header_footer import generate_guide_header_footer
 
 
 class StyleSet:
     def __init__(self):
-
         styles = getSampleStyleSheet()
 
         blue = colors.hsl2rgb(.57, .6, .35)
@@ -41,14 +40,17 @@ class StyleSet:
         self.section.fontName = 'DejaVuSans'
         self.section.textColor = blue
 
+
 # Instantiate once, then reuse
 style = StyleSet()
+
 
 class TrackingParagraph(Paragraph):
     def __init__(self, text, style, key, kind):
         super().__init__(text, style)
         self.key = key  # the form or section name
         self.kind = kind  # either 'form' or 'section'
+
 
 class TrackingDocTemplate(BaseDocTemplate):
     def __init__(self, *args, **kwargs):
@@ -65,13 +67,14 @@ class TrackingDocTemplate(BaseDocTemplate):
                 'page': page_num
             })
 
-def generate_guide_doc(data_dictionary, version, crf_name, buffer):    
+
+def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     # Define margin widths for the document as a whole
     left_margin = 0.3 * inch
     right_margin = 0.3 * inch
     top_margin = 0.5 * inch
     bottom_margin = 0.5 * inch
-        
+
     page_width, page_height = letter
 
     # Two columns: split usable width
@@ -84,7 +87,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     header_footer_partial = partial(generate_guide_header_footer, title=guide_title)
 
     # First page: single column, same margins
-    frame_one_col = Frame( left_margin, bottom_margin, usable_width, column_height, id='one_col' )
+    frame_one_col = Frame(left_margin, bottom_margin, usable_width, column_height, id='one_col')
     template_one_col = PageTemplate(id='OneCol', frames=[frame_one_col], onPage=header_footer_partial)
 
     # Two-column page (already defined)
@@ -103,7 +106,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     )
 
     doc.addPageTemplates([template_one_col, template_two_col])
-    
+
     # First pass: Build and collect TOC data
     elements = [NextPageTemplate('TwoCol')] + generate_guide_content(data_dictionary)
     doc.build(elements)
@@ -111,7 +114,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     # Second pass: Rebuild with TOC inserted at the top
     toc = create_table_of_contents(doc.toc_entries)
 
-    final_elements = toc + [ NextPageTemplate('TwoCol'), PageBreak() ] + generate_guide_content(data_dictionary)
+    final_elements = toc + [NextPageTemplate('TwoCol'), PageBreak()] + generate_guide_content(data_dictionary)
 
     doc = TrackingDocTemplate(
         buffer,
@@ -125,6 +128,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     doc.addPageTemplates([template_one_col, template_two_col])
     doc.build(final_elements)
 
+
 def generate_guide_content(data_dictionary):
     elements = []
 
@@ -134,30 +138,35 @@ def generate_guide_content(data_dictionary):
     # Process data_dictionary and add Paragraphs to elements
     data_dictionary['Section'].replace('', pd.NA, inplace=True)
     data_dictionary['Section'].fillna(method='ffill', inplace=True)
-    
+
     current_form = ""
     current_section = ""
 
     for index, row in data_dictionary.iterrows():
-        if '_oth' in row['Variable'] : continue  
-        if '_units' in row['Variable'] : continue
+        if '_oth' in row['Variable']: continue
+        if '_units' in row['Variable']: continue
 
         # Add a new Form header
         if type(row['Form']) == str:
             if row['Form'] != current_form:
                 current_form = row['Form']
                 elements.append(Spacer(1, 0.07 * inch))
-                elements.append(TrackingParagraph(row['Form'].upper() + " FORM", style.form, row['Form'], 'form')) # is my tracking paragraph correct?
+                elements.append(TrackingParagraph(row['Form'].upper() + " FORM", style.form, row['Form'],
+                                                  'form'))  # is my tracking paragraph correct?
                 elements.append(Spacer(1, 0.07 * inch))
         # Add a new Section header
         if type(row['Section']) == str:
             if row['Section'] != current_section:
                 current_section = row['Section']
-                elements.append(TrackingParagraph(row['Section'].title(), style.section, row['Section'], 'section')) # is my tracking paragraph correct?
-        elements.append(Paragraph(("<b>"+row['Question']+"</b>: " + row['Definition'] + " " + row['Completion Guideline']), style.normal))
+                elements.append(TrackingParagraph(row['Section'].title(), style.section, row['Section'],
+                                                  'section'))  # is my tracking paragraph correct?
+        elements.append(
+            Paragraph(("<b>" + row['Question'] + "</b>: " + row['Definition'] + " " + row['Completion Guideline']),
+                      style.normal))
         elements.append(Spacer(1, 0.07 * inch))
 
     return elements
+
 
 class TOCEntry(Flowable):
     def __init__(self, title, page, style, width, dot_color=colors.black, line_y=4):
@@ -183,7 +192,7 @@ class TOCEntry(Flowable):
 
         def strip_tags(text):
             return re.sub(r'<[^>]*>', '', text)
-        
+
         # Accurately measure raw string width (strip HTML if needed)
         title_plain = self.title.replace('&nbsp;', ' ')
         title_width = stringWidth(strip_tags(title_plain), self.style.fontName, self.style.fontSize)
@@ -203,6 +212,7 @@ class TOCEntry(Flowable):
         page_obj.drawOn(canvas, page_x, 0)
 
         canvas.restoreState()
+
 
 def create_table_of_contents(toc_entries, total_width=560):
     styles = getSampleStyleSheet()

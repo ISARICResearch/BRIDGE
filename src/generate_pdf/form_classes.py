@@ -17,7 +17,7 @@ from typing import List, Union
 
 from reportlab.platypus import Paragraph
 
-import generate_pdf.styles as style
+import src.generate_pdf.styles as style
 
 line_placeholder = '_' * 40
 
