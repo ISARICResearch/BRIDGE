@@ -3,6 +3,7 @@ from io import BytesIO
 from os import environ
 from os.path import join, dirname, abspath
 
+import numpy as np
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -17,6 +18,8 @@ from src.generate_pdf.form import generate_form
 from src.generate_pdf.guide import generate_guide_doc
 from src.generate_pdf.header_footer import generate_header_footer
 from src.generate_pdf.opener import generate_opener
+
+pd.options.mode.copy_on_write = True
 
 ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
 FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
@@ -99,8 +102,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
     elements = generate_opener(elements, details, db_name)
 
     # Grouping by 'Section Header' instead of 'Form Name'
-    data_dictionary['Section Header'].replace('', pd.NA, inplace=True)
-    data_dictionary['Section Header'].fillna(method='ffill', inplace=True)
+    data_dictionary['Section Header'] = data_dictionary['Section Header'].replace({'': np.nan})
 
     # Generates the form for the PaperCRF
     elements = generate_form(data_dictionary, elements, locate_phrase)

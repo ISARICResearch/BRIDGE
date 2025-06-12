@@ -106,7 +106,7 @@ def generate_form(data_dictionary, elements, locate_phrase):
                     return dependencies
 
                 # Get field's name:
-                variable_name = row[0]
+                variable_name = row['Variable / Field Name']
 
                 # Get field's dependencies:
                 branching_logic = row['Branching Logic (Show field only if...)']
@@ -151,7 +151,6 @@ def generate_form(data_dictionary, elements, locate_phrase):
                         Specifically 'test_biospecimentype' 
                         This just only pulls the answers presented to me to add to the form'''
                         for choice in row['Choices, Calculations, OR Slider Labels'].split('|'):
-                            # if choice.split(',', 1)[0].strip() in ['1','2','3','4','5','6', '10']:
                             choices.append(symbol + choice.split(',', 1)[-1].strip())
                     else:
                         choices = [symbol + choice.split(',', 1)[-1].strip() for choice in
@@ -266,7 +265,7 @@ def generate_form(data_dictionary, elements, locate_phrase):
                 current_section_index = len(section_fields) - 1
                 section_fields[current_section_index].append(
                     cl.Field(
-                        name=row[0],
+                        name=row['Variable / Field Name'],
                         data=[row],
                         is_heading=True,
                         title=Paragraph(current_section_name, style.section_header)

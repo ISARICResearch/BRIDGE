@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 from functools import partial
 
-import pandas as pd
+import numpy as np
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -137,8 +137,7 @@ def generate_guide_content(data_dictionary):
     # and 'data_dictionary' processing is as before
 
     # Process data_dictionary and add Paragraphs to elements
-    data_dictionary['Section'].replace('', pd.NA, inplace=True)
-    data_dictionary['Section'].fillna(method='ffill', inplace=True)
+    data_dictionary['Section'] = data_dictionary['Section'].replace({'': np.nan})
 
     current_form = ""
     current_section = ""
