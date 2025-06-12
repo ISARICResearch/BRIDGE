@@ -8,7 +8,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, PageTemplate, Frame, Flowable
+from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, \
+    PageTemplate, Frame, Flowable
 from reportlab.platypus import Spacer, NextPageTemplate
 
 from src.generate_pdf.header_footer import generate_guide_header_footer
@@ -188,6 +189,7 @@ class TOCEntry(Flowable):
 
         # Draw title Paragraph
         text_obj = Paragraph(self.title, self.style)
+        tw, th = text_obj.wrap(self.width - 50, self.height)
         text_obj.drawOn(canvas, 0, 0)
 
         def strip_tags(text):
