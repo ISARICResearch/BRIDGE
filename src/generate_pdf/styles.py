@@ -1,10 +1,11 @@
 """ This Generate Form script is for generating and storing styles """
 
-from typing import Literal
-from reportlab.lib.styles import getSampleStyleSheet
 from copy import deepcopy
+from typing import Literal
 
-line_placeholder='_' * 40
+from reportlab.lib.styles import getSampleStyleSheet
+
+line_placeholder = '_' * 40
 
 # So at the moment, one table is made and added to our elements array, before returning the elements array.
 
@@ -39,8 +40,9 @@ title.fontSize = 16
 title.leading = 20
 title.fontName = 'DejaVuSans-Bold'
 
-RowShade = Literal["none", "conditional", "descriptive"] # how to shade a row
+RowShade = Literal["none", "conditional", "descriptive"]  # how to shade a row
 
-SectionType = Literal["standard", "medication", "testing"] # subsection types
+SectionType = Literal["standard", "medication", "testing"]  # subsection types
 
-SubsubsectionType = Literal["separate_items", "conditional_group", "conditional_isolates", "section_header", "descriptive_header"]
+SubsubsectionType = Literal[
+    "separate_items", "conditional_group", "conditional_isolates", "section_header", "descriptive_header"]
