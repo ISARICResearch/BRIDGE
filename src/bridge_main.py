@@ -10,7 +10,6 @@ pd.options.mode.copy_on_write = True
 ASSETS_DIR = '../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
-SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 
 
 class MainContent:
@@ -251,33 +250,65 @@ class SideBar:
 
 
 class Settings:
-    def __init__(self, arc_versions):
-        self.ARC_versions = arc_versions
-
-        self.ARC_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for
-                                   i, version in enumerate(self.ARC_versions)]
-
+    def __init__(self, arc_versions, current_version, arc_languages):
         self.settings_content = html.Div(
             [
                 html.H3("Settings", id="settings-text-2"),
 
-                # ICC Version dropdown
+                # VERSION
                 html.Div([
-                    dbc.InputGroup([
-                        dbc.DropdownMenu(
-                            label="ARC Version",
-                            children=self.ARC_versions_items,
-                            id="dropdown-ARC-version-menu"
-                        ),
-                        dbc.Input(id="dropdown-ARC_version_input", placeholder="name")
-                    ]),
-                    dcc.Store(id='selected-version-store'),
-                    dcc.Store(id='selected_data-store'),
-                ], style={'margin-bottom': '20px'}),
+                    html.Label("Version:", style={"fontWeight": "bold", "fontSize": "16px"}),
 
-                # Output Files checkboxes
-                dcc.Store(id="output-files-store"),
-                # Checklist component
+                    dbc.InputGroup([
+                        dcc.Dropdown(
+                            id="dropdown-ARC-version-menu",
+                            options=[{"label": version, "value": version} for version in arc_versions],
+                            value=current_version,
+                            clearable=False,
+                            style={
+                                "backgroundColor": "#ffffff",
+                                "borderRadius": "8px",
+
+                                "height": "40px",
+                                "width": "180px",
+                                "fontSize": "18px",
+                            }
+                        ),
+                        dbc.Input(id="dropdown-ARC_version_input", value=current_version, disabled=True,
+                                  style={"display": "none"})
+                    ]),
+                    dcc.Store(id='selected-version-store', data={'selected_version': current_version}),
+                    dcc.Store(id='selected_data-store'),
+                ], style={'marginBottom': '20px'}),
+
+                # LANGUAGE
+                html.Div([
+                    html.Label("Language:", style={"fontWeight": "bold", "fontSize": "16px"}),
+
+                    dbc.InputGroup([
+                        dcc.Dropdown(
+                            id="dropdown-ARC-language-menu",
+                            options=[{"label": language, "value": language} for language in arc_languages],
+                            value="English",
+                            disabled=True,
+                            clearable=False,
+                            style={
+                                "backgroundColor": "#ffffff",
+                                "borderRadius": "8px",
+
+                                "height": "40px",
+                                "width": "180px",
+                                "fontSize": "18px",
+
+                            }
+                        ),
+                        dbc.Input(id="dropdown-ARC_language_input", value="English", disabled=True,
+                                  style={"display": "none"})
+                    ]),
+                    dcc.Store(id='selected-language-store', data={'selected_language': 'English'})
+                ], style={'marginBottom': '20px'}),
+
+                # OUTPUT FILES
                 html.Div([
                     html.Label("Output Files", htmlFor="output-files-checkboxes"),
                     dbc.Checklist(
@@ -285,14 +316,14 @@ class Settings:
                         options=[
                             {'label': 'ISARIC Clinical Characterization XML', 'value': 'redcap_xml'},
                             {'label': 'REDCap Data Dictionary', 'value': 'redcap_csv'},
-                            {'label': 'Paper-like CRF', 'value': 'paper_like'},
-                            # {'label': 'Completion Guide', 'value': 'completion_guide'},
+                            {'label': 'Paper-like CRF and Completion Guide', 'value': 'paper_like'},
                         ],
-                        value=['redcap_xml', 'redcap_csv', 'paper_like'],  # Default selected values
+                        value=['redcap_xml', 'redcap_csv', 'paper_like'],
                         inline=True
                     )
                 ], style={'margin-bottom': '20px'}),
 
+                dcc.Store(id="output-files-store")
             ],
             style={"padding": "2rem"}
         )
