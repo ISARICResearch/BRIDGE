@@ -26,8 +26,6 @@ pd.options.mode.copy_on_write = True
 
 logger = setup_logger(__name__)
 
-CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
-
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
@@ -36,47 +34,49 @@ server = app.server
 
 logger.info('Starting BRIDGE application')
 
-versions, recentVersion = arc.getARCVersions()
-langs = ArcApiClient().get_arc_language_list(recentVersion)
+# Global variables
+CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
 
-currentVersion = recentVersion
-current_datadicc, presets, commit = arc.getARC(recentVersion)
-current_datadicc = arc.add_required_datadicc_columns(current_datadicc)
+ARC_VERSIONS, CURRENT_VERSION = arc.getARCVersions()
+ARC_LANGUAGES = ArcApiClient().get_arc_language_list(CURRENT_VERSION)
 
-tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
+CURRENT_DATADICC, PRESETS, COMMIT = arc.getARC(CURRENT_VERSION)
+CURRENT_DATADICC = arc.add_required_datadicc_columns(CURRENT_DATADICC)
+
+TREE_ITEMS_DATA = arc.getTreeItems(CURRENT_DATADICC, CURRENT_VERSION)
 
 # List content Transformation
-ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, 'English')
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
+ARC_LISTS, LIST_VARIABLE_CHOICES = arc.getListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_LISTS, arc.getVariableOrder(CURRENT_DATADICC))
 
 # User List content Transformation
-ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, 'English')
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
-ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, 'English')
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
-initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
-initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
-initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
+ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.getUserListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_ULIST, arc.getVariableOrder(CURRENT_DATADICC))
 
-ARC_VERSIONS = versions
-ARC_LANGUAGES = langs
+ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.getMultuListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_MULTILIST, arc.getVariableOrder(CURRENT_DATADICC))
+
+INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='split')
+INITIAL_ULIST_VARIABLE_CHOICES = json.dumps(ULIST_VARIABLE_CHOICES)
+INITIAL_MULTILIST_VARIABLE_CHOICES = json.dumps(MULTILIST_VARIABLE_CHOICES)
+
 MODIFIED_LIST = []
 
 # Grouping presets by the first column
-grouped_presets = {}
+GROUPED_PRESETS = {}
 
-for key, value in presets:
-    grouped_presets.setdefault(key, []).append(value)
+for key, value in PRESETS:
+    GROUPED_PRESETS.setdefault(key, []).append(value)
 
-INITIAL_GROUPED_PRESETS = json.dumps(grouped_presets)
+INITIAL_GROUPED_PRESETS = json.dumps(GROUPED_PRESETS)
 
 app.layout = html.Div(
     [
         dcc.Store(id='show-Take a Look at Our Other Tools', data=True),  # Store to manage which page to display
 
-        dcc.Store(id='current_datadicc-store', data=initial_current_datadicc),
-        dcc.Store(id='ulist_variable_choices-store', data=initial_ulist_variable_choices),
-        dcc.Store(id='multilist_variable_choices-store', data=initial_multilist_variable_choices),
+        dcc.Store(id='current_datadicc-store', data=INITIAL_CURRENT_DATADICC),
+        dcc.Store(id='ulist_variable_choices-store', data=INITIAL_ULIST_VARIABLE_CHOICES),
+        dcc.Store(id='multilist_variable_choices-store', data=INITIAL_MULTILIST_VARIABLE_CHOICES),
         dcc.Store(id='grouped_presets-store', data=INITIAL_GROUPED_PRESETS),
         dcc.Store(id='tree_items_data-store', data=INITIAL_GROUPED_PRESETS),
         dcc.Store(id='checklist-values-store', data={}),
@@ -135,9 +135,9 @@ def main_app():
             type="circle",  # Spinner style: 'default', 'circle', 'dot'
             fullscreen=True,  # Covers the full screen
             children=[
-                Settings(ARC_VERSIONS, ARC_LANGUAGES, currentVersion, 'English').settings_column,
+                Settings(ARC_VERSIONS, ARC_LANGUAGES, CURRENT_VERSION, 'English').settings_column,
                 Presets.preset_column,
-                TreeItems(tree_items_data).tree_column,
+                TreeItems(TREE_ITEMS_DATA).tree_column,
                 MainContent.main_content,
             ]
         ),
@@ -183,7 +183,7 @@ def update_output_based_on_url(template_check_flag, href):
         return dash.no_update
 
     if href is None:
-        return [''] + [[] for _ in grouped_presets.keys()]
+        return [''] + [[] for _ in GROUPED_PRESETS.keys()]
 
     if '?param=' in href:
         # Parse the URL to extract the parameters
@@ -206,13 +206,13 @@ def update_output_based_on_url(template_check_flag, href):
         group, value = param_value.split('_') if '_' in param_value else (None, None)
 
         # Prepare the outputs
-        checklist_values = {key: [] for key in grouped_presets.keys()}
+        checklist_values = {key: [] for key in GROUPED_PRESETS.keys()}
 
-        if group in grouped_presets and value in grouped_presets[group]:
+        if group in GROUPED_PRESETS and value in GROUPED_PRESETS[group]:
             checklist_values[group] = [value]
 
         # Return the value for 'crf_name' and checklist values
-        return [value], [checklist_values[key] for key in grouped_presets.keys()]
+        return [value], [checklist_values[key] for key in GROUPED_PRESETS.keys()]
     else:
         return dash.no_update
 
@@ -746,8 +746,8 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
 
         variable_submited = question.split('[')[1][:-1]
         MODIFIED_LIST.append(variable_submited)
-        ulist_variables = [i[0] for i in ulist_variable_choices]
-        multilist_variables = [i[0] for i in multilist_variable_choices]
+        ulist_variables = [i[0] for i in ULIST_VARIABLE_CHOICES]
+        multilist_variables = [i[0] for i in MULTILIST_VARIABLE_CHOICES]
         if (variable_submited in ulist_variables) | (variable_submited in multilist_variables):
             list_options_checked = []
             for lo in checked_options:
@@ -818,7 +818,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     checkable=True,
                     checked=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
                     expanded=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
-                    data=tree_items_data),
+                    data=TREE_ITEMS_DATA),
                 id='tree_items_container',
                 className='tree-item',
             )
@@ -1382,8 +1382,8 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Case Defining Features"]
         caseDefiningVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_features = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(caseDefiningVariables.iloc[0]))], 'case_feat',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(caseDefiningVariables.iloc[0]))], 'case_feat',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Features", children=[html.P(" "), paralel_elements_features]))
         selected_question = "What are the [case defining features]?"
 
@@ -1391,8 +1391,8 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Clinical Features"]
         clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_features = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
         selected_question = "What is the spectrum of [clinical features] in this disease?"
 
@@ -1400,13 +1400,13 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Clinical Features"]
         clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_features = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
+            CURRENT_DATADICC, selected_variables_fromData)
         OptionGroup = ["Patient Outcome"]
         outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_outcomes = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
         tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
         selected_question = "What are the [clinical features] occuring in those with [patient outcome]?"
@@ -1418,13 +1418,13 @@ def update_row3_content(selected_value, json_data):
         allRiskVarr = []
         for rv in riskVariables:
             allRiskVarr += list(rv)
-        paralel_elements_risk = paralel_elements(current_datadicc.loc[current_datadicc['Variable'].isin(allRiskVarr)],
-                                                 'risk', current_datadicc, selected_variables_fromData)
+        paralel_elements_risk = paralel_elements(CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(allRiskVarr)],
+                                                 'risk', CURRENT_DATADICC, selected_variables_fromData)
         OptionGroup = ["Patient Outcome"]
         outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_outcomes = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Risk Factors", children=[html.P(" "), paralel_elements_risk]))
         tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
         selected_question = "What are the [risk factors] for [patient outcome]?"
@@ -1434,13 +1434,13 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Treatment/Intevention"]
         TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_treatments = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
+            CURRENT_DATADICC, selected_variables_fromData)
         OptionGroup = ["Patient Outcome"]
         outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_outcomes = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(
             dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
         tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
@@ -1453,14 +1453,14 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Clinical Features"]
         clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_features = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
         OptionGroup = ["Treatment/Intevention"]
         TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_treatments = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(
             dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
 
@@ -1468,16 +1468,16 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Treatment/Intevention"]
         TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_treatments = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(
             dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
 
         OptionGroup = ["Patient Outcome"]
         outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_outcomes = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
 
         selected_question = "What proportion of [patient outcome] recieved [treatment/intervention]?"
@@ -1485,16 +1485,16 @@ def update_row3_content(selected_value, json_data):
         OptionGroup = ["Treatment/Intevention"]
         TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_treatments = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(
             dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
 
         OptionGroup = ["Patient Outcome"]
         outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
         paralel_elements_outcomes = paralel_elements(
-            current_datadicc.loc[current_datadicc['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            current_datadicc, selected_variables_fromData)
+            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
+            CURRENT_DATADICC, selected_variables_fromData)
         tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
         selected_question = "What duration of [treatment/intervention] is being used in [patient outcome]?"
 
@@ -1525,7 +1525,7 @@ def update_Researh_questions_grid(*args):
     for cck_v in checked_values:
         for element in cck_v:
             all_checked.append(element)
-    selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(all_checked)]
+    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
     for sec in selected_features['Section'].unique():
         # Add section title in bold and a new line
         text += f"\n\n**{sec}**\n"
@@ -1547,7 +1547,7 @@ def update_ClenicalFeat_questions_grid(*args):
     for cck_v in checked_values:
         for element in cck_v:
             all_checked.append(element)
-    selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(all_checked)]
+    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
     for sec in selected_features['Section'].unique():
         # Add section title in bold and a new line
         text += f"\n\n**{sec}**\n"
@@ -1569,7 +1569,7 @@ def update_outcome_questions_grid(*args):
     for cck_v in checked_values:
         for element in cck_v:
             all_checked.append(element)
-    selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(all_checked)]
+    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
     for sec in selected_features['Section'].unique():
         # Add section title in bold and a new line
         text += f"\n\n**{sec}**\n"
@@ -1591,7 +1591,7 @@ def update_risk_questions_grid(*args):
     for cck_v in checked_values:
         for element in cck_v:
             all_checked.append(element)
-    selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(all_checked)]
+    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
     for sec in selected_features['Section'].unique():
         # Add section title in bold and a new line
         text += f"\n\n**{sec}**\n"
@@ -1613,7 +1613,7 @@ def update_risk_questions_grid(*args):
     for cck_v in checked_values:
         for element in cck_v:
             all_checked.append(element)
-    selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(all_checked)]
+    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
     for sec in selected_features['Section'].unique():
         # Add section title in bold and a new line
         text += f"\n\n**{sec}**\n"
