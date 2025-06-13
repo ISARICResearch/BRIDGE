@@ -3,7 +3,11 @@ from os import environ
 
 import numpy as np
 import pandas as pd
+
+from logger import setup_logger
 from src.arc_api import ArcApiClient
+
+logger = setup_logger(__name__)
 
 pd.options.mode.copy_on_write = True
 
@@ -141,7 +145,7 @@ def getARCTranslation(language, version, current_datadicc):
         current_datadicc['Branch'] = current_datadicc.apply(lambda row: process_skip_logic(row, current_datadicc),
                                                             axis=1)
     except Exception as e:
-        print(e)
+        logger.error(e)
         raise RuntimeError("Failed to fetch remote file")
 
     return current_datadicc
@@ -190,7 +194,7 @@ def getVariableOrder(current_datadicc):
 
 
 def getARC(version):
-    print(f'In getARC {version}')
+    logger.info(f'version: {version}')
     commit_sha = ''
     if environ.get('ENV') == 'test':
         df_datadicc = ArcApiClient().get_dataframe_arc_version_language('DataPlatform', version, 'English')
@@ -216,7 +220,7 @@ def getARC(version):
         df_datadicc['Question_english'] = df_datadicc['Question']
         return df_datadicc, preset_list, commit_sha
     except Exception as e:
-        print(e)
+        logger.error(e)
         raise RuntimeError("Failed to format ARC data")
 
 
@@ -502,7 +506,7 @@ def getListContent(current_datadicc, version, language):
 
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('List without corresponding repository file')
+            logger.warn('List without corresponding repository file')
 
         else:
             list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
@@ -526,7 +530,7 @@ def getListContent(current_datadicc, version, language):
                     list_variable_choices_aux.append([cont_lo, lo])
                     list_choices += str(cont_lo) + ', ' + lo + ' | '
                 except Exception as e:
-                    print(e)
+                    logger.error(e)
                     raise RuntimeError("Failed to determine list choices")
 
             list_choices = list_choices + '88, ' + other_text
@@ -699,7 +703,7 @@ def getUserListContent(current_datadicc, version, language, user_checked_options
 
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('List without corresponding repository file')
+            logger.warn('List without corresponding repository file')
         else:
             list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
                                                                                   row['List'].replace('_', '/'))
@@ -745,8 +749,7 @@ def getUserListContent(current_datadicc, version, language, user_checked_options
                                 ulist_variable_choices_aux.append([cont_lo, lo, 0])
 
                 except Exception as e:
-                    print(e)
-                    print(row['List'])
+                    logger.error(e)
                     raise RuntimeError("Failed to add to lists of choices")
 
             l2_choices = l2_choices + '88, ' + other_text
@@ -812,7 +815,7 @@ def getMultuListContent(current_datadicc, version, language, user_checked_option
 
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('List without corresponding repository file')
+            logger.warn('List without corresponding repository file')
         else:
             list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
                                                                                   row['List'].replace('_', '/'))
@@ -857,8 +860,8 @@ def getMultuListContent(current_datadicc, version, language, user_checked_option
                                 l2_choices += str(cont_lo) + ', ' + lo + ' | '
                                 ulist_variable_choices_aux.append([cont_lo, lo, 0])
 
-                except Exception:
-                    print(row['List'])
+                except Exception as e:
+                    logger.error(e)
                     raise RuntimeError("Failed to add to lists of choices")
 
             l2_choices = l2_choices + '88, ' + other_text

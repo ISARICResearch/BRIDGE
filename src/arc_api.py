@@ -23,8 +23,8 @@ class ArcApiClient:
 
     @staticmethod
     def _get_api_response(data_url: str) -> Response:
-        logger.info("GITHUB_TOKEN is set." if os.getenv(
-            'GITHUB_TOKEN') else "GITHUB_TOKEN is not set. Making unauthenticated request.")
+        logger.info("GITHUB_TOKEN is set" if getenv(
+            'GITHUB_TOKEN') else "GITHUB_TOKEN is not set. Making unauthenticated request")
 
         # Use GITHUB_TOKEN if it exists; otherwise, make unauthenticated request
         # Unauthenticated requests are limited to 60 requests per hour
@@ -33,11 +33,11 @@ class ArcApiClient:
 
         try:
             if github_token:
-                print("Making authenticated request to GitHub API")
+                logger.info("Making authenticated request to GitHub API")
             response = requests.get(data_url, headers=headers)
             response.raise_for_status()
         except RequestException as e:
-            print(e)
+            logger.error(e)
             raise ArcApiClientError(f"Failed to fetch data: '{data_url}'")
         return response
 
@@ -54,7 +54,7 @@ class ArcApiClient:
             else:
                 df = pd.read_csv(data_path, encoding='latin1')
         except Exception as e:
-            print(e)
+            logger.error(e)
             raise ArcApiClientError(f"Failed to read data: {data_path}")
         return df
 
@@ -80,7 +80,7 @@ class ArcApiClient:
             version_sha = version_dict['commit']['sha']
             return version_sha
         except Exception as e:
-            print(e)
+            logger.error(e)
             raise ArcApiClientError(f"Unable to determine commit for version '{version}'")
 
     def get_dataframe_arc_sha(self, sha):

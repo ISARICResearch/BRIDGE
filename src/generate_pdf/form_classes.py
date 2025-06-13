@@ -776,7 +776,6 @@ class Section:
 
             ### Process subsection logic ###
             if subsection_started:
-                # print('   subsection_started')
                 # Default subsection (no dependencies)
                 if not subsection_dependencies_set:
                     # print ('       NOT subsection_dependencies_set', dependencies, next_dependencies)

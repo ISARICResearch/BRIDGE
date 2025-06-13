@@ -7,15 +7,6 @@ from datetime import datetime
 from os.path import join, abspath, dirname
 from urllib.parse import parse_qs, urlparse
 
-import base64
-import io
-import json
-import re
-import zipfile
-from datetime import datetime
-from os.path import join, abspath, dirname
-from urllib.parse import parse_qs, urlparse
-
 import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
@@ -23,33 +14,10 @@ import dash_treeview_antd
 import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
+from unidecode import unidecode
+
+import src.generate_pdf.form as form
 from logger import setup_logger
-from unidecode import unidecode
-
-import src.generate_pdf.form as form
-from src import arc, bridge_modals, paper_crf, index
-from src.arc_api import ArcApiClient
-from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
-
-pd.options.mode.copy_on_write = True
-
-logger = setup_logger(__name__)
-
-CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
-
-app = dash.Dash(__name__,
-                external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
-                suppress_callback_exceptions=True)
-
-app.title = 'BRIDGE'
-server = app.server
-
-import dash_ag_grid as dag
-import dash_treeview_antd
-from dash import callback_context, dcc, html, Input, Output, State
-from unidecode import unidecode
-
-import src.generate_pdf.form as form
 from src import arc, bridge_modals, paper_crf, index
 from src.arc_api import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
@@ -66,37 +34,6 @@ app = dash.Dash(__name__,
 app.title = 'BRIDGE'
 server = app.server
 
-modified_list = []
-
-logger.info('Starting BRIDGE application')
-
-versions, recentVersion = arc.getARCVersions()
-
-langs = ArcApiClient().get_arc_language_list(recentVersion)
-
-currentVersion = recentVersion
-current_datadicc, presets, commit = arc.getARC(recentVersion)
-current_datadicc = arc.add_required_datadicc_columns(current_datadicc)
-
-tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
-
-# List content Transformation
-ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, 'English')
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
-
-# User List content Transformation
-ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, 'English')
-
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
-ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, 'English')
-
-current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
-initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
-initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
-initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
-
-ARC_VERSIONS = versions
-ARC_LANGUAGES = langs
 logger.info('Starting BRIDGE application')
 
 versions, recentVersion = arc.getARCVersions()
@@ -120,8 +57,10 @@ current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.g
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
+
 ARC_VERSIONS = versions
 ARC_LANGUAGES = langs
+MODIFIED_LIST = []
 
 # Grouping presets by the first column
 grouped_presets = {}
@@ -129,7 +68,7 @@ grouped_presets = {}
 for key, value in presets:
     grouped_presets.setdefault(key, []).append(value)
 
-initial_grouped_presets = json.dumps(grouped_presets)
+INITIAL_GROUPED_PRESETS = json.dumps(grouped_presets)
 
 app.layout = html.Div(
     [
@@ -138,8 +77,8 @@ app.layout = html.Div(
         dcc.Store(id='current_datadicc-store', data=initial_current_datadicc),
         dcc.Store(id='ulist_variable_choices-store', data=initial_ulist_variable_choices),
         dcc.Store(id='multilist_variable_choices-store', data=initial_multilist_variable_choices),
-        dcc.Store(id='grouped_presets-store', data=initial_grouped_presets),
-        dcc.Store(id='tree_items_data-store', data=initial_grouped_presets),
+        dcc.Store(id='grouped_presets-store', data=INITIAL_GROUPED_PRESETS),
+        dcc.Store(id='tree_items_data-store', data=INITIAL_GROUPED_PRESETS),
         dcc.Store(id='checklist-values-store', data={}),
 
         dcc.Store(id='templates_checks_ready', data=False),
@@ -550,7 +489,10 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
         selected_version = ARC_VERSIONS[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
-        selected_language = selected_language_data.get('selected_language')
+        if selected_language_data:
+            selected_language = selected_language_data.get('selected_language')
+        else:
+            selected_language = 'English'
 
     elif button_type == 'dynamic-language':
         selected_language = ARC_LANGUAGES[button_index]
@@ -561,9 +503,9 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
     try:
         df_version, version_commit, version_presets, version_accordion_items = get_version_language_related_data(
             selected_version, selected_language)
-        print(f'store_clicked_item: selected_version: {selected_version}')
-        print(f'store_clicked_item: selected_language: {selected_language}')
-        print(f'store_clicked_item: version_presets: {version_presets}')
+        logger.info(f'selected_version: {selected_version}')
+        logger.info(f'selected_language: {selected_language}')
+        logger.info(f'version_presets: {version_presets}')
 
         return (
             {'selected_version': selected_version},
@@ -699,7 +641,7 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     df_version_language = get_dataframe_arc_language(df_version, current_version, current_language)
 
     tree_items_data = arc.getTreeItems(df_version_language, current_version)
-    print(f'update_output: checked_variables: {checked_variables}')
+    logger.info(f'checked_variables: {checked_variables}')
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
@@ -721,8 +663,8 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     if current_version is None or grouped_presets is None:
         raise PreventUpdate  # Prevent update if data is missing
 
-    print(f'update_output: checked_variables: {checked_variables}')
-    print(f'update_output: grouped_presets: {grouped_presets}')
+    logger.info(f'checked_variables: {checked_variables}')
+    logger.info(f'grouped_presets: {grouped_presets}')
     checked_template_list = get_checked_template_list(grouped_presets, checked_variables)
 
     checked = []
@@ -803,7 +745,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     if button_id == 'modal_submit':
 
         variable_submited = question.split('[')[1][:-1]
-        modified_list.append(variable_submited)
+        MODIFIED_LIST.append(variable_submited)
         ulist_variables = [i[0] for i in ulist_variable_choices]
         multilist_variables = [i[0] for i in multilist_variable_choices]
         if (variable_submited in ulist_variables) | (variable_submited in multilist_variables):
@@ -868,7 +810,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                 position_multi_check += 1
             multilist_variable_choicesSubmit = dict2
 
-            print(list_options_checked)
             checked.append(variable_submited)
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(
@@ -916,12 +857,11 @@ def get_crf_name(crf_name, checked_values):
             crf_name = crf_name[0]
     else:
         extracted_text = [item for sublist in checked_values for item in sublist if item]
-        print(extracted_text)
         if len(extracted_text) > 0:
             crf_name = extracted_text[0]
     if not crf_name:
         crf_name = 'no_name'
-    print('crf_name:', crf_name)
+    logger.info(f'crf_name: {crf_name}')
     return crf_name
 
 
@@ -1097,7 +1037,7 @@ def on_upload_crf(filename, file_contents):
             upload_version = re.search(r'v\d_\d_\d', filename).group(0)
             upload_language = filename.split(f'{upload_version}_')[1].split('_')[0]
         except AttributeError as e:
-            print(e)
+            logger.error(e)
             raise AttributeError(f'Failed to determine ARC version and/or language from file {filename}')
         return (
             {'upload_version': upload_version.replace('_', '.')},
@@ -1144,8 +1084,8 @@ def load_upload_arc_version(upload_version_data, upload_language_data, selected_
     try:
         df_upload_version, version_commit, version_grouped_presets, version_accordion_items = get_version_language_related_data(
             upload_version, upload_language)
-        print(f'load_upload_arc_version: upload_version: {upload_version}')
-        print(f'load_upload_arc_version: upload_language: {upload_language}')
+        logger.info(f'upload_version: {upload_version}')
+        logger.info(f'upload_language: {upload_language}')
         return (
             {'selected_version': upload_version},
             {'selected_language': upload_language},

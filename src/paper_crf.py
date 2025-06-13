@@ -13,6 +13,7 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
+from logger import setup_logger
 from src.arc import ArcApiClient
 from src.generate_pdf.form import generate_form
 from src.generate_pdf.guide import generate_guide_doc
@@ -20,6 +21,8 @@ from src.generate_pdf.header_footer import generate_header_footer
 from src.generate_pdf.opener import generate_opener
 
 pd.options.mode.copy_on_write = True
+
+logger = setup_logger(__name__)
 
 ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
 FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
@@ -76,7 +79,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
             phrase = supplemental_phrases.loc[supplemental_phrases['variable'] == variable, 'text'].values[0]
             return {"error": False, "text": phrase}
         except IndexError:
-            print(f"Variable '{variable}' not found in supplemental phrases.")
+            logger.error(f"Variable '{variable}' not found in supplemental phrases.")
             return {"error": True, "text": ""}
 
     # Define margin widths for the document as a whole
