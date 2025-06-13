@@ -7,6 +7,15 @@ from datetime import datetime
 from os.path import join, abspath, dirname
 from urllib.parse import parse_qs, urlparse
 
+import base64
+import io
+import json
+import re
+import zipfile
+from datetime import datetime
+from os.path import join, abspath, dirname
+from urllib.parse import parse_qs, urlparse
+
 import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
@@ -14,6 +23,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
+from logger import setup_logger
 from unidecode import unidecode
 
 import src.generate_pdf.form as form
@@ -22,6 +32,8 @@ from src.arc_api import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
 
 pd.options.mode.copy_on_write = True
+
+logger = setup_logger(__name__)
 
 CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
 
@@ -32,7 +44,31 @@ app = dash.Dash(__name__,
 app.title = 'BRIDGE'
 server = app.server
 
+import dash_ag_grid as dag
+import dash_treeview_antd
+from dash import callback_context, dcc, html, Input, Output, State
+from unidecode import unidecode
+
+import src.generate_pdf.form as form
+from src import arc, bridge_modals, paper_crf, index
+from src.arc_api import ArcApiClient
+from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
+
+pd.options.mode.copy_on_write = True
+
+logger = setup_logger(__name__)
+
+CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
+
+app = dash.Dash(__name__,
+                external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
+                suppress_callback_exceptions=True)
+app.title = 'BRIDGE'
+server = app.server
+
 modified_list = []
+
+logger.info('Starting BRIDGE application')
 
 versions, recentVersion = arc.getARCVersions()
 
@@ -59,6 +95,31 @@ initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='s
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
 
+ARC_VERSIONS = versions
+ARC_LANGUAGES = langs
+logger.info('Starting BRIDGE application')
+
+versions, recentVersion = arc.getARCVersions()
+langs = ArcApiClient().get_arc_language_list(recentVersion)
+
+currentVersion = recentVersion
+current_datadicc, presets, commit = arc.getARC(recentVersion)
+current_datadicc = arc.add_required_datadicc_columns(current_datadicc)
+
+tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
+
+# List content Transformation
+ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, 'English')
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
+
+# User List content Transformation
+ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, 'English')
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
+ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, 'English')
+current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
+initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
+initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
+initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
 ARC_VERSIONS = versions
 ARC_LANGUAGES = langs
 
@@ -740,6 +801,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
+
         variable_submited = question.split('[')[1][:-1]
         modified_list.append(variable_submited)
         ulist_variables = [i[0] for i in ulist_variable_choices]

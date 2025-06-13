@@ -1,4 +1,6 @@
 *.pem
 .vscode
 __pycache__
+*.pyc
+.env
 .idea/
