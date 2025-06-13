@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import re
+import zipfile
 from datetime import datetime
 from os.path import join, abspath, dirname
 from urllib.parse import parse_qs, urlparse
@@ -13,53 +14,53 @@ import dash_treeview_antd
 import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
+from unidecode import unidecode
 
-from src import generate_form, paper_crf, arc, bridge_modals, index
-from src.arc import ArcApiClient
+import src.generate_pdf.form as form
+from src import arc, bridge_modals, paper_crf, index
+from src.arc_api import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
 
 pd.options.mode.copy_on_write = True
 
 CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
-ASSETS_DIR = 'assets'
-ICONS_DIR = f'{ASSETS_DIR}/icons'
-LOGOS_DIR = f'{ASSETS_DIR}/logos'
-SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://use.fontawesome.com/releases/v5.8.1/css/all.css'],
                 suppress_callback_exceptions=True)
 
 app.title = 'BRIDGE'
+server = app.server
 
 modified_list = []
 
 versions, recentVersion = arc.getARCVersions()
 
+langs = ArcApiClient().get_arc_language_list(recentVersion)
+
 currentVersion = recentVersion
 current_datadicc, presets, commit = arc.getARC(recentVersion)
-print('Beginning')
-
 current_datadicc = arc.add_required_datadicc_columns(current_datadicc)
 
 tree_items_data = arc.getTreeItems(current_datadicc, recentVersion)
 
 # List content Transformation
-ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, commit)
+ARC_lists, list_variable_choices = arc.getListContent(current_datadicc, currentVersion, 'English')
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_lists, arc.getVariableOrder(current_datadicc))
 
 # User List content Transformation
-ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, commit)
+ARC_ulist, ulist_variable_choices = arc.getUserListContent(current_datadicc, currentVersion, 'English')
 
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_ulist, arc.getVariableOrder(current_datadicc))
-ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, commit)
+ARC_multilist, multilist_variable_choices = arc.getMultuListContent(current_datadicc, currentVersion, 'English')
 
 current_datadicc = arc.addTransformedRows(current_datadicc, ARC_multilist, arc.getVariableOrder(current_datadicc))
 initial_current_datadicc = current_datadicc.to_json(date_format='iso', orient='split')
 initial_ulist_variable_choices = json.dumps(ulist_variable_choices)
 initial_multilist_variable_choices = json.dumps(multilist_variable_choices)
 
-ARC_versions = versions
+ARC_VERSIONS = versions
+ARC_LANGUAGES = langs
 
 # Grouping presets by the first column
 grouped_presets = {}
@@ -78,6 +79,7 @@ app.layout = html.Div(
         dcc.Store(id='multilist_variable_choices-store', data=initial_multilist_variable_choices),
         dcc.Store(id='grouped_presets-store', data=initial_grouped_presets),
         dcc.Store(id='tree_items_data-store', data=initial_grouped_presets),
+        dcc.Store(id='checklist-values-store', data={}),
 
         dcc.Store(id='templates_checks_ready', data=False),
 
@@ -102,21 +104,43 @@ app.layout = html.Div(
         dcc.Store(id='commit-store'),
         dcc.Store(id='selected_data-store'),
         dcc.Store(id='upload-version-store'),
+        dcc.Store(id='upload-language-store'),
         dcc.Store(id='upload-crf-ready', data=False),
+        dcc.Store(id="browser-info-store"),
+
+        dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
     ]
 )
 
 app = SideBar.add_sidebar_callbacks(app)
+
+app.clientside_callback(
+    """
+    function(n_intervals) {
+        return navigator.userAgent;
+    }
+    """,
+    Output("browser-info-store", "data"),
+    Input("interval-browser", "n_intervals"),
+    prevent_initial_call=True
+)
 
 
 def main_app():
     return html.Div([
         NavBar.navbar,
         SideBar.sidebar,
-        Settings(ARC_versions).settings_column,
-        Presets.preset_column,
-        TreeItems(tree_items_data).tree_column,
-        MainContent.main_content,
+        dcc.Loading(
+            id="loading-overlay",
+            type="circle",  # Spinner style: 'default', 'circle', 'dot'
+            fullscreen=True,  # Covers the full screen
+            children=[
+                Settings(ARC_VERSIONS, ARC_LANGUAGES, currentVersion, 'English').settings_column,
+                Presets.preset_column,
+                TreeItems(tree_items_data).tree_column,
+                MainContent.main_content,
+            ]
+        ),
     ])
 
 
@@ -146,8 +170,12 @@ def start_app(n_clicks):
         Output('crf_name', 'value'),
         Output({'type': 'template_check', 'index': dash.ALL}, 'value')
     ],
-    [Input('templates_checks_ready', 'data')],
-    [State('url', 'href')],
+    [
+        Input('templates_checks_ready', 'data')
+    ],
+    [
+        State('url', 'href')
+    ],
     prevent_initial_call=True,
 )
 def update_output_based_on_url(template_check_flag, href):
@@ -169,7 +197,7 @@ def update_output_based_on_url(template_check_flag, href):
             'mpox': 'ARChetype Disease CRF_Mpox',
             'dengue': 'ARChetype Disease CRF_Dengue',
             'h5nx': 'ARChetype Disease CRF_H5Nx',
-            'covid':'ARChetype Disease CRF_Covid'
+            'covid': 'ARChetype Disease CRF_Covid',
         }
 
         if param_value in param_map:
@@ -192,12 +220,19 @@ def update_output_based_on_url(template_check_flag, href):
 #################################
 
 
-@app.callback([Output('CRF_representation_grid', 'columnDefs'),
-               Output('CRF_representation_grid', 'rowData'),
-               Output('selected_data-store', 'data')],
-              [Input('input', 'checked')],
-              [State('current_datadicc-store', 'data')],
-              prevent_initial_call=True)
+@app.callback(
+    [
+        Output('CRF_representation_grid', 'columnDefs'),
+        Output('CRF_representation_grid', 'rowData'),
+        Output('selected_data-store', 'data')
+    ],
+    [
+        Input('input', 'checked')
+    ],
+    [
+        State('current_datadicc-store', 'data')
+    ],
+    prevent_initial_call=True)
 def display_checked(checked, current_datadicc_saved):
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
@@ -257,13 +292,13 @@ def display_checked(checked, current_datadicc_saved):
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
 
-                formatted_choices = generate_form.format_choices(row['Answer Options'], row['Type'])
+                formatted_choices = form.format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
             elif row['Validation'] == 'date_dmy':
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
             else:
-                row['Answer Options'] = paper_crf.line_placeholder
+                row['Answer Options'] = form.LINE_PLACEHOLDER
 
             # Add the processed row to new_rows
             new_row = row.to_dict()
@@ -295,26 +330,38 @@ def research_question(n_question):
     Output('modal_title', 'children'),
     Output('definition-text', 'children'),
     Output('completion-guide-text', 'children'),
+    Output('skip-logic-text', 'children'),
     Output('options-checklist', 'style'),
     Output('options-list-group', 'style'),
     Output('options-checklist', 'options'),
     Output('options-checklist', 'value'),
     Output('options-list-group', 'children')],
-    [Input('input', 'selected')],
-    [State('ulist_variable_choices-store', 'data'), State('multilist_variable_choices-store', 'data'),
-     State('modal', 'is_open')])
-def display_selected(selected, ulist_variable_choices_saved, multilist_variable_choices_saved, is_open):
+    [
+        Input('input', 'selected'),
+    ],
+    [
+        State('ulist_variable_choices-store', 'data'),
+        State('multilist_variable_choices-store', 'data'),
+        State('modal', 'is_open'),
+        State('current_datadicc-store', 'data'),
+    ])
+def display_selected(selected, ulist_variable_choices_saved, multilist_variable_choices_saved, is_open,
+                     current_datadicc_saved):
     dict1 = json.loads(ulist_variable_choices_saved)
     dict2 = json.loads(multilist_variable_choices_saved)
     datatatata = dict1 + dict2
-
-    if (selected is not None):
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+    if selected is not None:
         if len(selected) > 0:
             if selected[0] in list(current_datadicc['Variable']):
                 question = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
                 definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
                 completion = \
                     current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
+                skip_logic = current_datadicc['Branch'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
+
+                branch = skip_logic
+
                 ulist_variables = [i[0] for i in datatatata]
                 if selected[0] in ulist_variables:
                     for item in datatatata:
@@ -326,9 +373,8 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                                 if i[2] == 1:
                                     checked_items.append(str(i[0]) + '_' + i[1])
 
-                    return True, question + ' [' + selected[0] + ']', definition, completion, {"padding": "20px",
-                                                                                               "maxHeight": "250px",
-                                                                                               "overflowY": "auto"}, {
+                    return True, question + ' [' + selected[0] + ']', definition, completion, branch, {
+                        "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
                         "display": "none"}, options, checked_items, []
                 else:
                     options = []
@@ -339,10 +385,10 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                             options.append(dbc.ListGroupItem(i))
                     else:
                         options = []
-                    return True, question + ' [' + selected[0] + ']', definition, completion, {"display": "none"}, {
-                        "maxHeight": "250px", "overflowY": "auto"}, [], [], options
+                    return True, question + ' [' + selected[0] + ']', definition, completion, branch, {
+                        "display": "none"}, {"maxHeight": "250px", "overflowY": "auto"}, [], [], options
 
-    return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
+    return False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
 @app.callback(Output('output-expanded', 'children'),
@@ -351,22 +397,40 @@ def display_expanded(expanded):
     return 'You have expanded {}'.format(expanded)
 
 
-def get_version_related_data(selected_version):
-    df_version_datadicc, version_presets, version_commit = arc.getARC(selected_version)
-    df_version_datadicc = arc.add_required_datadicc_columns(df_version_datadicc)
+def get_dataframe_arc_language(df_version, selected_version, selected_language):
+    if selected_language != 'English':
+        df_version_language = arc.getARCTranslation(
+            selected_language,
+            selected_version,
+            df_version
+        )
+    else:
+        df_version_language = df_version.copy()
+    return df_version_language
 
-    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_datadicc, version_commit)
-    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_lists,
-                                                 arc.getVariableOrder(df_version_datadicc))
 
-    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_datadicc, version_commit)
-    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_ulist,
-                                                 arc.getVariableOrder(df_version_datadicc))
+def get_version_language_related_data(selected_version, selected_language):
+    df_version, version_presets, version_commit = arc.getARC(selected_version)
+    df_version = arc.add_required_datadicc_columns(df_version)
+    df_version_language = get_dataframe_arc_language(df_version, selected_version, selected_language)
 
-    version_arc_multilist, version_multilist_variable_choices = arc.getMultuListContent(df_version_datadicc,
-                                                                                        version_commit)
-    df_version_datadicc = arc.addTransformedRows(df_version_datadicc, version_arc_multilist,
-                                                 arc.getVariableOrder(df_version_datadicc))
+    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_language, selected_version,
+                                                                          selected_language)
+    df_version_language = arc.addTransformedRows(df_version_language, version_arc_lists,
+                                                 arc.getVariableOrder(df_version_language))
+
+    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_language, selected_version,
+                                                                               selected_language)
+
+    df_version_language = arc.addTransformedRows(df_version_language, version_arc_ulist,
+                                                 arc.getVariableOrder(df_version_language))
+
+    version_arc_multilist, version_multilist_variable_choices = arc.getMultuListContent(df_version_language,
+                                                                                        selected_version,
+                                                                                        selected_language)
+
+    df_version_language = arc.addTransformedRows(df_version_language, version_arc_multilist,
+                                                 arc.getVariableOrder(df_version_language))
 
     version_grouped_presets = {}
     for section, preset_name in version_presets:
@@ -384,73 +448,112 @@ def get_version_related_data(selected_version):
         )
         for section, preset_names in version_grouped_presets.items()
     ]
-    return df_version_datadicc, version_commit, version_grouped_presets, accordion_items
+    return df_version_language, version_commit, version_grouped_presets, accordion_items
 
 
 @app.callback(
-    [Output('selected-version-store', 'data', allow_duplicate=True),
-     Output('commit-store', 'data', allow_duplicate=True),
-     Output('preset-accordion', 'children', allow_duplicate=True),
-     Output('grouped_presets-store', 'data'),
-     Output('current_datadicc-store', 'data', allow_duplicate=True),
-     Output('templates_checks_ready', 'data')],
-    [Input({'type': 'dynamic-version', 'index': dash.ALL}, 'n_clicks')],
-    [State('selected-version-store', 'data')],  # Obtenemos el valor actual del store
+    [
+        Output('selected-version-store', 'data', allow_duplicate=True),
+        Output('selected-language-store', 'data', allow_duplicate=True),
+        Output('commit-store', 'data', allow_duplicate=True),
+        Output('preset-accordion', 'children', allow_duplicate=True),
+        Output('grouped_presets-store', 'data'),
+        Output('current_datadicc-store', 'data', allow_duplicate=True),
+        Output('templates_checks_ready', 'data')
+    ],
+    [
+        Input({'type': 'dynamic-version', 'index': dash.ALL}, 'n_clicks'),
+        Input({'type': 'dynamic-language', 'index': dash.ALL}, 'n_clicks'),
+    ],
+    [
+        State('selected-version-store', 'data'),
+        State('selected-language-store', 'data'),
+    ],
     prevent_initial_call=True  # Evita que se dispare al inicio
 )
-def store_clicked_item(n_clicks, selected_version_data):
+def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data):
     ctx = dash.callback_context
 
     # Si no hay cambios (es decir, no hay un input activado), no se hace nada
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
 
-    button_id = ctx.triggered[0]['prop_id'].split(".")[0]  # Extraer la ID del botón
+    button_id = ctx.triggered[0]['prop_id'].split(".")[0]
+    button_index = json.loads(button_id)["index"]
+    button_type = json.loads(button_id)["type"]
 
-    # Revisar si el valor ha cambiado antes de ejecutar el callback
-    version_index = json.loads(button_id)["index"]
-    new_selected_version = ARC_versions[version_index]
+    selected_version = None
+    selected_language = None
 
-    if selected_version_data and new_selected_version == selected_version_data.get('selected_version', None):
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+    if button_type == 'dynamic-version':
+        selected_version = ARC_VERSIONS[button_index]
+        if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        selected_language = selected_language_data.get('selected_language')
 
-    # Si hay un cambio, procesamos la lógica
+    elif button_type == 'dynamic-language':
+        selected_language = ARC_LANGUAGES[button_index]
+        if selected_language_data and selected_language == selected_language_data.get('selected_language', None):
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        selected_version = selected_version_data.get('selected_version')
+
     try:
-        selected_version = new_selected_version
-        current_datadicc, commit, grouped_presets, accordion_items = get_version_related_data(selected_version)
-        print('this is the selected version in store click', selected_version)
-        print('presets in store click', grouped_presets)
+        df_version, version_commit, version_presets, version_accordion_items = get_version_language_related_data(
+            selected_version, selected_language)
+        print(f'store_clicked_item: selected_version: {selected_version}')
+        print(f'store_clicked_item: selected_language: {selected_language}')
+        print(f'store_clicked_item: version_presets: {version_presets}')
+
         return (
-            {'selected_version': selected_version},  # Actualizamos el store con la nueva versión
-            {'commit': commit},
-            accordion_items,
-            grouped_presets,
-            current_datadicc.to_json(date_format='iso', orient='split'),
+            {'selected_version': selected_version},
+            {'selected_language': selected_language},  #
+            {'commit': version_commit},
+            version_accordion_items,
+            version_presets,
+            df_version.to_json(date_format='iso', orient='split'),
             True
         )
     except json.JSONDecodeError:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
 
 
 @app.callback(
     Output("dropdown-ARC_version_input", "value"),
-    [Input('selected-version-store', 'data')]
+    [
+        Input('selected-version-store', 'data')
+    ]
 )
-def update_input(data):
+def update_input_version(data):
     if data is None:
         return dash.no_update
     return data.get('selected_version')
 
 
-def update_for_template_options(version_commit, df_current_datadicc, answer_opt_dict1, answer_opt_dict2,
+@app.callback(
+    Output("dropdown-ARC_language_input", "value"),
+    [
+        Input('selected-language-store', 'data')
+    ]
+)
+def update_input_language(data):
+    if data is None:
+        return dash.no_update
+    return data.get('selected_language')
+
+
+def update_for_template_options(version, language, df_current_datadicc, answer_opt_dict1, answer_opt_dict2,
                                 checked_key=None):
+    translations_for_language = arc.get_translations(language)
+    other_text = translations_for_language['other']
+
     template_ulist_var = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]
 
     for index_tem_ul, row_tem_ul in template_ulist_var.iterrows():
         dict1_options = []
         dict2_options = []
         t_u_list = row_tem_ul['List']
-        list_options = ArcApiClient().get_dataframe_list(version_commit, t_u_list.replace('_', '/'))
+        list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+                                                                              t_u_list.replace('_', '/'))
 
         cont_lo = 1
         select_answer_options = ''
@@ -485,10 +588,10 @@ def update_for_template_options(version_commit, df_current_datadicc, answer_opt_
                 NOT_select_answer_options += str(cont_lo) + ', ' + str(row[list_options.columns[0]]) + ' | '
             cont_lo += 1
         df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
-            'Variable'], 'Answer Options'] = select_answer_options + '88, Other'
+            'Variable'], 'Answer Options'] = select_answer_options + '88, ' + other_text
         if row_tem_ul['Variable'] + '_otherl2' in list(df_current_datadicc['Variable']):
             df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
-                'Variable'] + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, Other'
+                'Variable'] + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
 
         if row_tem_ul['Type'] == 'user_list':
             answer_opt_dict1.append([row_tem_ul['Variable'], dict1_options])
@@ -517,23 +620,27 @@ def get_checked_template_list(grouped_presets_dict, checked_values_list):
     [
         State('current_datadicc-store', 'data'),
         State('grouped_presets-store', 'data'),
-        State('selected-version-store', 'data')
+        State('selected-version-store', 'data'),
+        State('selected-language-store', "data")
     ],
     prevent_initial_call=True  # Ensure callback doesn't fire on initialization
 )
-def update_output(values, current_datadicc_saved, grouped_presets, selected_version_data):
-    # Check the context to determine the triggering input
+def update_output(checked_variables, current_datadicc_saved, grouped_presets, selected_version_data,
+                  selected_lang_data):
     ctx = dash.callback_context
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    currentVersion = selected_version_data.get('selected_version', None)
+    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
-    current_datadicc_temp, presets, commit = arc.getARC(currentVersion)
-    current_datadicc_temp = arc.add_required_datadicc_columns(current_datadicc_temp)
+    current_version = selected_version_data.get('selected_version', None)
+    current_language = selected_lang_data.get('selected_language', None)
 
-    tree_items_data = arc.getTreeItems(current_datadicc_temp, currentVersion)
-    print('values en update output', values)
+    df_version, version_presets, version_commit = arc.getARC(current_version)
+    df_version = arc.add_required_datadicc_columns(df_version)
+    df_version_language = get_dataframe_arc_language(df_version, current_version, current_language)
 
-    if (not ctx.triggered) | (all(not sublist for sublist in values)):
+    tree_items_data = arc.getTreeItems(df_version_language, current_version)
+    print(f'update_output: checked_variables: {checked_variables}')
+
+    if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
             dash_treeview_antd.TreeView(
                 id='input',
@@ -545,21 +652,17 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
             id='tree_items_container',
             className='tree-item',
         )
-        return (tree_items,  # Empty content for the tree items container
-                dash.no_update,  # Clear the current datadicc-store
-                dash.no_update,  # Clear ulist_variable_choices-store
-                dash.no_update  # Clear multilist_variable_choices-store
-                )
+        return (tree_items,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update)
 
-    # Identify the specific component that triggered the callback
-    if currentVersion is None or grouped_presets is None:
+    if current_version is None or grouped_presets is None:
         raise PreventUpdate  # Prevent update if data is missing
 
-    # Proceed with your logic
-    checked_values = values
-    print('checked_values', checked_values)
-    print('grouped_presets in update output', grouped_presets)
-    checked_template_list = get_checked_template_list(grouped_presets, checked_values)
+    print(f'update_output: checked_variables: {checked_variables}')
+    print(f'update_output: grouped_presets: {grouped_presets}')
+    checked_template_list = get_checked_template_list(grouped_presets, checked_variables)
 
     checked = []
     templa_answer_opt_dict1 = []
@@ -568,15 +671,18 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
     if len(checked_template_list) > 0:
         for ps in checked_template_list:
             checked_key = 'preset_' + ps[0] + '_' + ps[1]
-            if checked_key in current_datadicc:
-                checked = checked + list(current_datadicc['Variable'].loc[current_datadicc[checked_key].notnull()])
+            if checked_key in df_current_datadicc:
+                checked = checked + list(
+                    df_current_datadicc['Variable'].loc[df_current_datadicc[checked_key].notnull()])
 
-            current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-                commit, current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2, checked_key=checked_key)
+            df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
+                current_version, current_language, df_current_datadicc, templa_answer_opt_dict1,
+                templa_answer_opt_dict2,
+                checked_key=checked_key)
 
     else:
-        current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-            commit, current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2)
+        df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
+            current_version, current_language, df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2)
 
     tree_items = html.Div(
         dash_treeview_antd.TreeView(
@@ -592,7 +698,7 @@ def update_output(values, current_datadicc_saved, grouped_presets, selected_vers
 
     return (
         tree_items,
-        current_datadicc.to_json(date_format='iso', orient='split'),
+        df_current_datadicc.to_json(date_format='iso', orient='split'),
         json.dumps(templa_answer_opt_dict1),
         json.dumps(templa_answer_opt_dict2)
     )
@@ -767,73 +873,88 @@ def get_crf_name(crf_name, checked_values):
     ],
     [
         Input("crf_generate", "n_clicks"),
-        Input("selected_data-store", "data"),
-        Input('selected-version-store', 'data'),
-        Input('commit-store', 'data')
     ],
     [
+        State("selected_data-store", "data"),
+        State('selected-version-store', 'data'),
+        State('selected-language-store', "data"),
         State({'type': 'template_check', 'index': dash.ALL}, "value"),
         State("crf_name", "value"),
-        State("output-files-store", "data")  # Adding the output-files-store as a State
+        State("output-files-store", "data"),
+        State("browser-info-store", "data"),
     ],
     prevent_initial_call=True
 )
-def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, checked_values, crf_name, output_files):
-    print(output_files)
-
+def on_generate_click(n_clicks, json_data, selected_version_data, selected_language_data, checked_variables, crf_name,
+                      output_files, browser_info):
     ctx = dash.callback_context
 
     if not n_clicks:
         # Return empty or initial state if button hasn't been clicked
-        return '', None, None, None, None
+        return "", None, None, None, None
 
     if not any(json.loads(json_data).values()):
         # Nothing ticked
-        return '', None, None, None, None
+        return "", None, None, None, None
 
     trigger_id = get_trigger_id(ctx)
 
     if trigger_id == 'crf_generate':
-        crf_name = get_crf_name(crf_name, checked_values)
+        date = datetime.today().strftime('%Y-%m-%d')
+        crf_name = get_crf_name(crf_name, checked_variables)
 
         selected_variables_fromData = pd.read_json(io.StringIO(json_data), orient='split')
-
-        date = datetime.today().strftime('%Y-%m-%d')
-
-        datadiccDisease = arc.generateCRF(selected_variables_fromData)
-
-        print('#############################')
-        print('#############################')
-        print('#############################')
-        print('#############################')
-        print('#############################')
-        print('#############################')
-        for cosa in datadiccDisease.columns:
-            print(cosa)
-
         currentVersion = selected_version_data.get('selected_version', None)
-        commit = commit_data.get('commit', None)
-        pdf_crf = paper_crf.generate_pdf(datadiccDisease, currentVersion, crf_name, commit)
+        language = selected_language_data.get('selected_language', None)
 
-        df = datadiccDisease.copy()
-        output = io.BytesIO()
-        df.to_csv(output, index=False, encoding='utf8')
-        output.seek(0)
-        pdf_data = paper_crf.generate_completionguide(selected_variables_fromData, currentVersion, crf_name, commit)
+        df = arc.generateCRF(selected_variables_fromData)
+        pdf_crf = paper_crf.generate_pdf(df, currentVersion, crf_name, language)
+        pdf_data = paper_crf.generate_completionguide(selected_variables_fromData, currentVersion, crf_name)
 
-        file_name = 'ISARIC Clinical Characterisation Setup.xml'  # Set the desired download name here
-        file_path = f'{CONFIG_DIR_FULL}/{file_name}'  # Change this for deploy
-        # Open the XML file and read its content
-        with open(file_path, 'rb') as file:  # 'rb' mode to read as binary
-            content = file.read()
+        # CSV
+        csv_buffer = io.BytesIO()
+        df.loc[df['Field Type'] == 'descriptive', 'Field Label'] = df.loc[
+            df['Field Type'] == 'descriptive', 'Field Label'].apply(
+            lambda
+                x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>')
+        if language != 'English':
+            df['Form Name'] = df['Form Name'].apply(lambda x: unidecode(str(x)))
 
-        return "", \
-            dcc.send_bytes(output.getvalue(),
-                           f"{crf_name}_DataDictionary_{date}.csv") if 'redcap_csv' in output_files else None, \
+        df.to_csv(csv_buffer, index=False, encoding='utf8')
+
+        csv_buffer.seek(0)
+
+        # XML
+        xml_file_name = 'ISARIC Clinical Characterisation Setup.xml'
+        xml_file_path = f'{CONFIG_DIR_FULL}/{xml_file_name}'
+        with open(xml_file_path, 'rb') as file:
+            xml_content = file.read()
+
+        # if safari
+        is_safari = browser_info and "Safari" in browser_info and "Chrome" not in browser_info
+
+        if is_safari:
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                if 'redcap_csv' in output_files:
+                    zip_file.writestr(f"{crf_name}_DataDictionary_{date}.csv", csv_buffer.getvalue())
+                if 'paper_like' in output_files:
+                    zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_data)
+                    zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_crf)
+                if 'redcap_xml' in output_files:
+                    zip_file.writestr(xml_file_name, xml_content)
+            zip_buffer.seek(0)
+            return "", dcc.send_bytes(zip_buffer.getvalue(), f"{crf_name}_bundle_{date}.zip"), None, None, None
+
+        return (
+            "",
+            dcc.send_bytes(csv_buffer.getvalue(),
+                           f"{crf_name}_DataDictionary_{date}.csv") if 'redcap_csv' in output_files else None,
             dcc.send_bytes(pdf_data,
-                           f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None, \
-            dcc.send_bytes(content, file_name) if 'redcap_xml' in output_files else None, \
+                           f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None,
+            dcc.send_bytes(xml_content, xml_file_name) if 'redcap_xml' in output_files else None,
             dcc.send_bytes(pdf_crf, f"{crf_name}_paperlike_{date}.pdf") if 'paper_like' in output_files else None
+        )
 
     else:
         return "", None, None, None, None
@@ -853,12 +974,13 @@ def on_generate_click(n_clicks, json_data, selected_version_data, commit_data, c
         State('current_datadicc-store', 'data'),
         State('grouped_presets-store', 'data'),
         State('selected-version-store', 'data'),
+        State('selected-language-store', 'data'),
         State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
 def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, grouped_presets,
-                  selected_version_data, crf_name):
+                  selected_version_data, selected_language_data, crf_name):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
@@ -870,10 +992,11 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, current_
         crf_name = get_crf_name(crf_name, [])
 
         current_version = selected_version_data.get('selected_version', None)
+        current_language = selected_language_data.get('selected_language', None)
         date = datetime.today().strftime('%Y-%m-%d')
         # Naming convention expected when uploading
         version_string = current_version.replace('.', '_')
-        filename_csv = f'template_{crf_name}_{version_string}_{date}.csv'
+        filename_csv = f'template_{crf_name}_{version_string}_{current_language}_{date}.csv'
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
@@ -898,6 +1021,7 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, current_
 @app.callback(
     [
         Output('upload-version-store', 'data', allow_duplicate=True),
+        Output('upload-language-store', 'data', allow_duplicate=True),
     ],
     [
         Input('upload-crf', 'filename'),
@@ -909,11 +1033,13 @@ def on_upload_crf(filename, file_contents):
     if filename:
         try:
             upload_version = re.search(r'v\d_\d_\d', filename).group(0)
-        except AttributeError:
-            raise AttributeError(f'Failed to determine ARC version from file {filename}')
-
+            upload_language = filename.split(f'{upload_version}_')[1].split('_')[0]
+        except AttributeError as e:
+            print(e)
+            raise AttributeError(f'Failed to determine ARC version and/or language from file {filename}')
         return (
             {'upload_version': upload_version.replace('_', '.')},
+            {'upload_language': upload_language},
         )
 
     return dash.no_update
@@ -922,6 +1048,7 @@ def on_upload_crf(filename, file_contents):
 @app.callback(
     [
         Output('selected-version-store', 'data', allow_duplicate=True),
+        Output('selected-language-store', 'data', allow_duplicate=True),
         Output('commit-store', 'data', allow_duplicate=True),
         Output('preset-accordion', 'children', allow_duplicate=True),
         Output('grouped_presets-store', 'data', allow_duplicate=True),
@@ -931,29 +1058,35 @@ def on_upload_crf(filename, file_contents):
     ],
     [
         Input('upload-version-store', 'data'),
+        Input('upload-language-store', 'data'),
     ],
     [
         State('selected-version-store', 'data'),
+        State('selected-language-store', 'data'),
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version(upload_version_data, selected_version_data):
+def load_upload_arc_version(upload_version_data, upload_language_data, selected_version_data, selected_language_data):
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
     upload_version = upload_version_data.get('upload_version', None)
+    upload_language = upload_language_data.get('upload_language', None)
 
-    if selected_version_data and upload_version == selected_version_data.get('selected_version', None):
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+    if ((selected_version_data and upload_version == selected_version_data.get('selected_version', None)) and (
+            selected_language_data and upload_language == selected_language_data.get('selected_language', None))):
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
     try:
-        df_upload_version, version_commit, version_grouped_presets, version_accordion_items = \
-            get_version_related_data(upload_version)
-        print('this is the uploaded version', upload_version)
+        df_upload_version, version_commit, version_grouped_presets, version_accordion_items = get_version_language_related_data(
+            upload_version, upload_language)
+        print(f'load_upload_arc_version: upload_version: {upload_version}')
+        print(f'load_upload_arc_version: upload_language: {upload_language}')
         return (
             {'selected_version': upload_version},
+            {'selected_language': upload_language},
             {'commit': version_commit},
             version_accordion_items,
             version_grouped_presets,
@@ -962,7 +1095,7 @@ def load_upload_arc_version(upload_version_data, selected_version_data):
             None,
         )
     except json.JSONDecodeError:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
 
 @app.callback(
@@ -978,25 +1111,25 @@ def load_upload_arc_version(upload_version_data, selected_version_data):
     ],
     [
         State('upload-version-store', 'data'),
+        State('upload-language-store', 'data'),
         State('upload-crf', 'contents'),
         State('current_datadicc-store', 'data'),
     ],
     prevent_initial_call=True
 )
-def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_contents, current_datadicc_saved):
+def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_language_data, upload_crf_contents,
+                             current_datadicc_saved):
     ctx = dash.callback_context
 
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     upload_version = upload_version_data.get('upload_version', None)
+    upload_language = upload_language_data.get('upload_language', None)
     upload_type, upload_string = upload_crf_contents.split(',')
     upload_decoded = base64.b64decode(upload_string)
     df_upload = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
     checked = list(df_upload['Variable'])
-
-    # Need commit for this ARC version
-    _current_datadicc, version_commit, _grouped_presets, _accordion_items = get_version_related_data(upload_version)
 
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     tree_items_current_datadicc = arc.getTreeItems(df_current_datadicc, upload_version)
@@ -1020,11 +1153,11 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_crf_c
         check_preset_list = checked_presets[0].split('|')
         for checked_key in check_preset_list:
             df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-                version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2,
+                upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2,
                 checked_key=checked_key)
     else:
         df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-            version_commit, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+            upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
 
     return (
         tree_items,
@@ -1512,4 +1645,4 @@ def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
-    #app.run_server(debug=True, host='0.0.0.0', port='8080', use_reloader=False)#change for deploy
+    # app.run_server(debug=True, host='0.0.0.0', port='8080')#change for deploy

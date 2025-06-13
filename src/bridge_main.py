@@ -250,65 +250,47 @@ class SideBar:
 
 
 class Settings:
-    def __init__(self, arc_versions, current_version, arc_languages):
+    def __init__(self, arc_versions, arc_languages, version, language):
+        self.arc_versions = arc_versions
+        self.arc_languages = arc_languages
+
+        self.version = version
+        self.language = language
+
+        self.arc_versions_items = [dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i}) for
+                                   i, version in enumerate(self.arc_versions)]
+        self.arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
+                                   i, language in enumerate(self.arc_languages)]
+
         self.settings_content = html.Div(
             [
                 html.H3("Settings", id="settings-text-2"),
 
-                # VERSION
                 html.Div([
-                    html.Label("Version:", style={"fontWeight": "bold", "fontSize": "16px"}),
-
                     dbc.InputGroup([
-                        dcc.Dropdown(
+                        dbc.DropdownMenu(
+                            label="ARC Version",
+                            children=self.arc_versions_items,
                             id="dropdown-ARC-version-menu",
-                            options=[{"label": version, "value": version} for version in arc_versions],
-                            value=current_version,
-                            clearable=False,
-                            style={
-                                "backgroundColor": "#ffffff",
-                                "borderRadius": "8px",
-
-                                "height": "40px",
-                                "width": "180px",
-                                "fontSize": "18px",
-                            }
                         ),
-                        dbc.Input(id="dropdown-ARC_version_input", value=current_version, disabled=True,
-                                  style={"display": "none"})
+                        dbc.Input(id="dropdown-ARC_version_input", value=self.version)
                     ]),
-                    dcc.Store(id='selected-version-store', data={'selected_version': current_version}),
+                    dcc.Store(id='selected-version-store'),
                     dcc.Store(id='selected_data-store'),
-                ], style={'marginBottom': '20px'}),
+                ], style={'margin-bottom': '20px'}),
 
-                # LANGUAGE
                 html.Div([
-                    html.Label("Language:", style={"fontWeight": "bold", "fontSize": "16px"}),
-
                     dbc.InputGroup([
-                        dcc.Dropdown(
+                        dbc.DropdownMenu(
+                            label="Language",
+                            children=self.arc_language_items,
                             id="dropdown-ARC-language-menu",
-                            options=[{"label": language, "value": language} for language in arc_languages],
-                            value="English",
-                            disabled=True,
-                            clearable=False,
-                            style={
-                                "backgroundColor": "#ffffff",
-                                "borderRadius": "8px",
-
-                                "height": "40px",
-                                "width": "180px",
-                                "fontSize": "18px",
-
-                            }
                         ),
-                        dbc.Input(id="dropdown-ARC_language_input", value="English", disabled=True,
-                                  style={"display": "none"})
+                        dbc.Input(id="dropdown-ARC_language_input", value=self.language)
                     ]),
-                    dcc.Store(id='selected-language-store', data={'selected_language': 'English'})
-                ], style={'marginBottom': '20px'}),
+                    dcc.Store(id='selected-language-store'),
+                ], style={'margin-bottom': '20px'}),
 
-                # OUTPUT FILES
                 html.Div([
                     html.Label("Output Files", htmlFor="output-files-checkboxes"),
                     dbc.Checklist(

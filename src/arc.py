@@ -1,69 +1,11 @@
 import re
-from typing import List
+from os import environ
 
 import numpy as np
 import pandas as pd
-import requests
-from requests.exceptions import RequestException
+from src.arc_api import ArcApiClient
 
 pd.options.mode.copy_on_write = True
-
-
-class ArcApiClientError(Exception):
-    pass
-
-
-class ArcApiClient:
-    BASE_URL_API: str = 'https://api.github.com/repos/ISARICResearch/ARC'
-    BASE_URL_RAW_CONTENT: str = 'https://raw.githubusercontent.com/ISARICResearch/ARC'
-
-    def get_response(self, endpoint: str) -> List[dict]:
-        api_url = f'{self.BASE_URL_API}/{endpoint}'
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status()
-            if response.json():
-                return response.json()
-            else:
-                raise ArcApiClientError(f"No output for endpoint '{endpoint}'")
-        except RequestException as e:
-            raise ArcApiClientError(e)
-
-    def _get_response_tags(self):
-        tag_list = self.get_response('tags')
-        return tag_list
-
-    def _get_raw_data_dataframe(self, endpoint):
-        data_path = '/'.join([self.BASE_URL_RAW_CONTENT, endpoint])
-        try:
-            df = pd.read_csv(data_path, encoding='utf-8')
-        except UnicodeDecodeError:
-            df = pd.read_csv(data_path, encoding='latin1')
-        except Exception as e:
-            print(e)
-            raise ArcApiClientError(f'Unable to read URL {data_path}')
-        return df
-
-    def get_version_sha(self, version):
-        tag_list = self._get_response_tags()
-        try:
-            version_dict = list(filter(lambda x: x['name'] == version, tag_list))[0]
-            version_sha = version_dict['commit']['sha']
-            return version_sha
-        except Exception as e:
-            print(e)
-            raise ArcApiClientError(f"Unable to determine commit for version '{version}'")
-
-    def get_dataframe_arc(self, sha):
-        endpoint = '/'.join([sha, 'ARC.csv'])
-        df = self._get_raw_data_dataframe(endpoint)
-        return df
-
-    def get_dataframe_list(self, sha, list_name):
-        endpoint = '/'.join([sha, 'Lists', f'{list_name}.csv'])
-        df = self._get_raw_data_dataframe(endpoint)
-        df = df.sort_values(by=df.columns[0], ascending=True)
-        return df
 
 
 def add_required_datadicc_columns(df_datadicc):
@@ -92,48 +34,151 @@ def getResearchQuestionTypes(datadicc):
     # Use pd.concat to combine all filtered DataFrames
     caseDefiningData = pd.concat(conditions, ignore_index=True)
 
-    OptionGroup = ["Patient Outcome", "Case Defining Features", "Clinical Features", "Risk Factors: Demographics",
-                   "Risk Factors: Socioeconomic", "Risk Factors: Comorbidities", "Treatment/Intevention"]
-
     return caseDefiningData[['Variable', 'Form', 'Section', 'Question']]
 
 
+def getARCTranslation(language, version, current_datadicc):
+    try:
+        if environ.get('ENV') == 'test':
+            datadicc_english = ArcApiClient().get_dataframe_arc_version_language('DataPlatform', version,
+                                                                                 'English')
+            datadicc_english = datadicc_english[
+                ['Variable', 'Form', 'Section', 'Question', 'Answer Options', 'Definition', 'Completion Guideline']]
+        else:
+            datadicc_english = ArcApiClient().get_dataframe_arc_version_language('ARC-Translations', version,
+                                                                                 'English')
+
+        df_merged_english = current_datadicc[['Variable']].merge(
+            datadicc_english.set_index('Variable'), on='Variable', how='left')
+
+        current_datadicc['Question_english'] = current_datadicc['Variable'].map(
+            df_merged_english.set_index('Variable')['Question'])
+
+        current_datadicc['Question_english'] = current_datadicc['Question_english'].astype(str)
+
+        datadicc_translated = ArcApiClient().get_dataframe_arc_version_language('ARC-Translations', version,
+                                                                                language)
+
+        df_merged = current_datadicc[['Variable']].merge(
+            datadicc_translated.set_index('Variable'), on='Variable', how='left'
+        )
+        columns_to_update = ['Form', 'Section', 'Question', 'Answer Options', 'Definition', 'Completion Guideline']
+
+        for col in columns_to_update:
+            current_datadicc.loc[df_merged[col].notna(), col] = df_merged.loc[df_merged[col].notna(), col]
+
+        def normalize_logic_syntax(skip_logic_column):
+            # Reemplazar patrones del tipo [variable(numero)]='valor' por [variable]='numero'
+            normalized = re.sub(r"\[([a-zA-Z0-9_]+)\((\d+)\)\]='(\d+)'", r"[\1]='\2'", skip_logic_column)
+            return normalized
+
+        def extract_logic_components(skip_logic_column):
+            # Asegurarse de que la entrada es una cadena válida
+            if isinstance(skip_logic_column, str) and pd.notna(skip_logic_column):
+                # Normalizar la sintaxis antes de realizar la extracción
+                normalized_logic = normalize_logic_syntax(skip_logic_column)
+
+                # Extraer variables dentro de corchetes
+                variables = re.findall(r"\[([a-zA-Z0-9_]+)\]", normalized_logic)
+
+                # Extraer valores que están siendo comparados (números o cadenas entre comillas)
+                raw_values = re.findall(r"[=!<>]=?\s*('[^']*'|\d+\.?\d*)", normalized_logic)
+                values = []
+                for val in raw_values:
+                    if val.startswith("'") and val.endswith("'"):
+                        # Si es una cadena (encerrada en comillas), eliminar las comillas
+                        values.append(val.strip("'"))
+                    else:
+                        # Convertir a int o float según corresponda
+                        if '.' in val:
+                            values.append(float(val))  # Convertir a float si contiene un punto decimal
+                        else:
+                            values.append(int(val))  # Convertir a int en caso contrario
+
+                # Extraer operadores de comparación (e.g., =, ==, <, >, <=, >=, <>)
+                comparison_operators = re.findall(r"(<=|>=|<>|[=><!]=?)", normalized_logic)
+
+                # Extraer operadores lógicos (e.g., and, or)
+                logical_operators = re.findall(r"\b(and|or)\b", normalized_logic)
+
+                return variables, values, comparison_operators, logical_operators
+
+            # Devolver listas vacías si la entrada no es válida
+            return [], [], [], []
+
+        def process_skip_logic(row, current_datadicc):
+            skip_logic = row['Skip Logic']
+            extracted_variables, labels, comparison_operators, logical_operators = extract_logic_components(skip_logic)
+            branch = []
+            logical_operators = logical_operators + [' ']
+            for i in range(len(extracted_variables)):
+                # Extraer las opciones de respuesta y mapear valores
+                try:
+                    answers = \
+                        current_datadicc['Answer Options'].loc[
+                            current_datadicc['Variable'] == extracted_variables[i]].iloc[
+                            0]
+                    # Verificar si `answers` es una cadena válida
+                    question = \
+                        current_datadicc['Question'].loc[current_datadicc['Variable'] == extracted_variables[i]].iloc[0]
+                    comp_operators = comparison_operators[i]
+                    if isinstance(answers, str) and pd.notna(answers):
+                        pairs = answers.split(" | ")
+                        dic_answer = {pair.split(", ")[0]: pair.split(", ")[1] for pair in pairs}
+                        answers_label = dic_answer.get(labels[i], "Unknown")
+
+                    else:
+                        answers_label = labels[i]
+                    branch.append(f"({question} {comp_operators} {answers_label}) {logical_operators[i]}")
+
+                except IndexError:
+                    branch.append("Variable not found getARCTranslation")
+                except Exception as e:
+                    branch.append(f"Error getARCTranslation: {str(e)}")
+
+            return "  ".join(branch)
+
+        current_datadicc['Branch'] = current_datadicc.apply(lambda row: process_skip_logic(row, current_datadicc),
+                                                            axis=1)
+    except Exception as e:
+        print(e)
+        raise RuntimeError("Failed to fetch remote file")
+
+    return current_datadicc
+
+
 def getARCVersions():
-    releases = ArcApiClient().get_response('releases')
+    if environ.get('ENV') == 'test':
+        tag_names = ArcApiClient().get_release_tag_name_list('DataPlatform')
+    else:
+        tag_names = ArcApiClient().get_release_tag_name_list('ARC')
 
-    tag_names = [release['tag_name'] for release in releases]
-    print(tag_names)
+    prefix = "v"
 
-    versions = tag_names
-
-    # Parse versions, including handling "-rc"
+    # Procesamiento común de versiones
     parsed_versions = []
     rc_version_str = None
-    for version in versions:
+    for version in tag_names:
         if '-rc' in version:
             base_version = version.split('-rc')[0]
-            parsed_versions.append((tuple(map(int, base_version.split('v')[1].split('.'))), '-rc'))
-            rc_version_str = version  # Store the rc version
+            parsed_versions.append((tuple(map(int, base_version.split(prefix)[1].split('.'))), '-rc'))
+            rc_version_str = version
         else:
-            parsed_versions.append((tuple(map(int, version.split('v')[1].split('.'))), ''))
+            parsed_versions.append((tuple(map(int, version.split(prefix)[1].split('.'))), ''))
 
-    # Filter out "-rc" versions to get the most recent non-rc version
     non_rc_versions = [v for v, suffix in parsed_versions if suffix == '']
     most_recent_version = max(non_rc_versions)
-    most_recent_version_str = 'v' + '.'.join(map(str, most_recent_version))
+    most_recent_version_str = prefix + '.'.join(map(str, most_recent_version))
 
-    # Include all versions back in the list
-    all_versions = list(versions)
-
-    # Reorganize to ensure the first is the most recent version and the second is the "-rc" version
-    all_versions.remove(most_recent_version_str)
+    all_versions = list(tag_names)
+    if most_recent_version_str in all_versions:
+        all_versions.remove(most_recent_version_str)
     all_versions.insert(0, most_recent_version_str)
 
     if rc_version_str in all_versions:
         all_versions.remove(rc_version_str)
         all_versions.insert(1, rc_version_str)
 
-    # Output the result
     return list(all_versions), most_recent_version_str
 
 
@@ -145,9 +190,13 @@ def getVariableOrder(current_datadicc):
 
 
 def getARC(version):
-    print(f'in getARC {version}')
-    commit_sha = ArcApiClient().get_version_sha(version)
-    df_datadicc = ArcApiClient().get_dataframe_arc(commit_sha)
+    print(f'In getARC {version}')
+    commit_sha = ''
+    if environ.get('ENV') == 'test':
+        df_datadicc = ArcApiClient().get_dataframe_arc_version_language('DataPlatform', version, 'English')
+    else:
+        commit_sha = ArcApiClient().get_repo_version_sha('ARC', version)
+        df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha)
 
     try:
         df_dependencies = getDependencies(df_datadicc)
@@ -164,9 +213,11 @@ def getARC(version):
                 del parts[2:]
             preset_list.append(parts)
 
+        df_datadicc['Question_english'] = df_datadicc['Question']
         return df_datadicc, preset_list, commit_sha
     except Exception as e:
-        print(f"Failed to format ARC data: {e}")
+        print(e)
+        raise RuntimeError("Failed to format ARC data")
 
 
 def getDependencies(datadicc):
@@ -204,8 +255,8 @@ def getDependencies(datadicc):
 
 def getTreeItems(datadicc, version):
     version = version.replace('ICC', 'ARC')
-    include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
-                        'units', 'add', 'type', 'vol', 'site', 'txt']
+    include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3', 'units',
+                        'add', 'vol', 'txt', 'calc']
 
     if 'Dependencies' not in datadicc.columns:
         dependencies = getDependencies(datadicc)
@@ -310,7 +361,12 @@ def getIncludeNotShow(selected_variables, current_datadicc):
 
 def getSelectUnits(selected_variables, current_datadicc):
     current_datadicc['select units'] = (
-        current_datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
+        current_datadicc['Question_english'].str.contains('(select units)', case=False, na=False, regex=False))
+
+    current_datadicc_units = current_datadicc.loc[
+        current_datadicc['Question_english'].str.contains('(select units)', regex=False)]
+    units_lang = current_datadicc_units.sample(n=1)['Question'].iloc[0]
+    units_lang = extract_parenthesis_content(units_lang)
     mask_true = current_datadicc['select units'] == True
     for index, row in current_datadicc[mask_true].iterrows():
         mask_sec_vari = (current_datadicc['Sec'] == row['Sec']) & (current_datadicc['vari'] == row['vari'])
@@ -356,7 +412,7 @@ def getSelectUnits(selected_variables, current_datadicc):
             row_units['Type'] = 'radio'
             row_units['Maximum'] = None
             row_units['Minimum'] = None
-            row_units['Question'] = 'Select ' + row['Question'].split('(')[0] + 'units'
+            row_units['Question'] = row['Question'].split('(')[0] + '(' + units_lang + ')'
             row_units['Validation'] = None
 
             if row_value['Variable'] not in seen_variables:
@@ -375,32 +431,105 @@ def getSelectUnits(selected_variables, current_datadicc):
     return None, None
 
 
-def getListContent(current_datadicc, commit):
+def get_translations(language):
+    translations = {
+        'English': {
+            'select': 'Select',
+            'specify': 'Specify',
+            'specify_other': 'Specify other',
+            'specify_other_infection': 'Specify other infection the individual is suspected/confirmed to have',
+            'other_agent': 'other agents administered while hospitalised or at discharge',
+            'select_additional': 'Select additional',
+            'any_additional': 'Any additional',
+            'other': 'Other',
+            'units': 'Units'
+        },
+        'Spanish': {
+            'select': 'Seleccionar',
+            'specify': 'Especifique',
+            'specify_other': 'Especifique otro(a)',
+            'specify_other_infection': 'Especifique otra infección que se sospecha/ha confirmado en el individuo',
+            'other_agent': 'otros medicamentos administrados durante la hospitalización o al alta',
+            'select_additional': 'Seleccionar adicional',
+            'any_additional': 'Cualquier adicional',
+            'other': 'Otro(a)',
+            'units': 'Unidades'
+        },
+        'French': {
+            'select': 'Sélectionnez',
+            'specify': 'Précisez',
+            'specify_other': 'Précisez un(e) autre',
+            'specify_other_infection': 'Précisez une autre infection dont l’individu est suspecté/confirmé avoir',
+            'other_agent': 'autre(s) agent(s) administré(s) lors de l’hospitalisation ou à la sortie',
+            'select_additional': 'Sélectionner supplémentaire',
+            'any_additional': 'Tout supplémentaire',
+            'other': 'Autre',
+            'units': 'Unités'
+        },
+        'Portuguese': {
+            'select': 'Selecionar',
+            'specify': 'Especifique',
+            'specify_other': 'Especifique outro(a)',
+            'specify_other_infection': 'Especifique outra infecção que o indivíduo é suspeito/confirmado ter',
+            'other_agent': 'outros agentes administrados durante a hospitalização ou na alta',
+            'select_additional': 'Selecionar adicional',
+            'any_additional': 'Qualquer adicional',
+            'other': 'Outro(a)',
+            'units': 'Unidades'
+        }
+    }
+
+    # Devuelve las traducciones para el idioma seleccionado
+    if language not in translations:
+        raise ValueError(f"Language '{language}' is not supported.")
+
+    return translations[language]
+
+
+def getListContent(current_datadicc, version, language):
     all_rows_lists = []
+    list_variable_choices = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
 
-    list_variable_choices = []
+    translations_for_language = get_translations(language)
+    select_text = translations_for_language['select']
+    specify_text = translations_for_language['specify']
+    specify_other_text = translations_for_language['specify_other']
+    specify_other_infection_text = translations_for_language['specify_other_infection']
+    select_additional_text = translations_for_language['select_additional']
+    any_additional_text = translations_for_language['any_additional']
+    other_text = translations_for_language['other']
+
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('list witout corresponding repository file')
+            print('List without corresponding repository file')
 
         else:
-            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
-            list_choises = ''
+            list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+                                                                                  row['List'].replace('_', '/'))
+
+            list_choices = ''
             list_variable_choices_aux = []
-            cont_lo = 1
+
             for lo in list_options[list_options.columns[0]]:
+                if 'Value' in list_options.columns:
+                    cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == lo].iloc[0])
+                else:
+                    # fallback to index-based counting
+                    cont_lo = list_options[list_options.columns[0]].tolist().index(lo) + 1
+
                 if cont_lo == 88:
                     cont_lo = 89
                 elif cont_lo == 99:
                     cont_lo = 100
                 try:
                     list_variable_choices_aux.append([cont_lo, lo])
-                    list_choises += str(cont_lo) + ', ' + lo + ' | '
-                except:
-                    print('error')
-                cont_lo += 1
-            list_choises = list_choises + '88, ' + 'Other'
+                    list_choices += str(cont_lo) + ', ' + lo + ' | '
+                except Exception as e:
+                    print(e)
+                    raise RuntimeError("Failed to determine list choices")
+
+            list_choices = list_choices + '88, ' + other_text
             arrows = ['', '>', '->', '>->', '->->', '>->->']
 
             # row['Type']='radio'
@@ -415,36 +544,36 @@ def getListContent(current_datadicc, commit):
                 dropdown_row = row.copy()
                 dropdown_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + str(n) + 'item'
                 # dropdown_row['Answer Options'] = list_choises.replace("| 88, Other","| 88_"+str(n)+", Other")
-                dropdown_row['Answer Options'] = list_choises
+                dropdown_row['Answer Options'] = list_choices
                 dropdown_row['Type'] = "dropdown"
                 dropdown_row['Validation'] = 'autocomplete'
                 dropdown_row['Maximum'] = None
                 dropdown_row['Minimum'] = None
                 dropdown_row['List'] = None
-                if row['Question'] != 'NSAIDs':
+                if row['Question_english'] != 'NSAIDs':
                     if n == 0:
-                        if 'select' in row['Question'].lower():
+                        if 'select' in row['Question_english'].lower():
                             dropdown_row['Question'] = arrows[n] + row['Question']
                         else:
-                            dropdown_row['Question'] = arrows[n] + 'Select ' + row['Question'].lower()
+                            dropdown_row['Question'] = f"{arrows[n]} {select_text} {row['Question'].lower()}"
                     else:
-                        if 'select' in row['Question'].lower():
+                        if 'select' in row['Question_english'].lower():
                             dropdown_row['Question'] = arrows[n] + row['Question'].lower() + ' ' + str(n + 1)
                         else:
-                            dropdown_row['Question'] = arrows[n] + 'Select additional ' + row[
-                                'Question'].lower() + ' ' + str(n + 1)
+                            dropdown_row[
+                                'Question'] = f"{arrows[n]} {select_additional_text} {row['Question'].lower()} {str(n + 1)}"
                 else:
                     if n == 0:
-                        if 'select' in row['Question'].lower():
+                        if 'select' in row['Question_english'].lower():
                             dropdown_row['Question'] = arrows[n] + row['Question']
                         else:
-                            dropdown_row['Question'] = arrows[n] + 'Select ' + row['Question']
+                            dropdown_row['Question'] = f"{arrows[n]} {select_text} {row['Question']}"
                     else:
-                        if 'select' in row['Question'].lower():
+                        if 'select' in row['Question_english'].lower():
                             dropdown_row['Question'] = arrows[n] + row['Question'] + ' ' + str(n + 1)
                         else:
-                            dropdown_row['Question'] = arrows[n] + 'Select additional ' + row['Question'] + ' ' + str(
-                                n + 1)
+                            dropdown_row[
+                                'Question'] = f"{arrows[n]} {select_additional_text} {row['Question']} {str(n + 1)}"
 
                 dropdown_row['mod'] = str(n) + 'item'
                 dropdown_row['vari'] = row['vari']
@@ -462,34 +591,33 @@ def getListContent(current_datadicc, commit):
                 other_row['Minimum'] = None
                 other_row['Skip Logic'] = '[' + dropdown_row['Variable'] + "]='88'"
                 if row['Variable'] == 'inclu_disease':
-                    other_row['Question'] = arrows[
-                                                n] + "Specify other infection the individual is suspected/confirmed to have"
+                    other_row['Question'] = f"{arrows[n]} {specify_other_infection_text}"
                 else:
                     if n == 0:
-                        if row['Question'] != 'NSAIDs':
-                            if 'other' in row['Question'].lower():
-                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'].lower() + ''
+                        if row['Question_english'] != 'NSAIDs':
+                            if 'other' in row['Question_english'].lower():
+                                other_row['Question'] = f"{arrows[n]} {specify_text} {row['Question'].lower()}"
                             else:
-                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question'].lower() + ''
+                                other_row['Question'] = f"{arrows[n]} {specify_other_text} {row['Question'].lower()}"
                         else:
-                            if 'other' in row['Question'].lower():
-                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question']
+                            if 'other' in row['Question_english'].lower():
+                                other_row['Question'] = f"{arrows[n]} {specify_text} {row['Question']}"
                             else:
-                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question']
+                                other_row['Question'] = f"{arrows[n]} {specify_other_text} {row['Question']}"
                     else:
-                        if row['Question'] != 'NSAIDs':
-                            if 'other' in row['Question'].lower():
-                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'].lower() + ' ' + str(
-                                    n + 1)
+                        if row['Question_english'] != 'NSAIDs':
+                            if 'other' in row['Question_english'].lower():
+                                other_row[
+                                    'Question'] = f"{arrows[n]} {specify_text} {row['Question'].lower()} {str(n + 1)}"
                             else:
-                                other_row['Question'] = arrows[n] + 'Specify other ' + row[
-                                    'Question'].lower() + ' ' + str(n + 1)
+                                other_row[
+                                    'Question'] = f"{arrows[n]} {specify_other_text} {row['Question'].lower()} {str(n + 1)}"
                         else:
-                            if 'other' in row['Question'].lower():
-                                other_row['Question'] = arrows[n] + 'Specify ' + row['Question'] + ' ' + str(n + 1)
+                            if 'other' in row['Question_english'].lower():
+                                other_row['Question'] = f"{arrows[n]} {specify_text} {row['Question']} {str(n + 1)}"
                             else:
-                                other_row['Question'] = arrows[n] + 'Specify other ' + row['Question'] + ' ' + str(
-                                    n + 1)
+                                other_row[
+                                    'Question'] = f"{arrows[n]} {specify_other_text} {row['Question']} {str(n + 1)}"
                 other_row['List'] = None
                 other_row['mod'] = str(n) + 'otherl2'
                 other_row['vari'] = row['vari']
@@ -519,10 +647,10 @@ def getListContent(current_datadicc, commit):
                     else:
                         other_info_row['Question'] = arrows[n] + '' + oi['Question'] + ' ' + str(n + 1)
                         other_info_row['Skip Logic'] = '[' + additional_row['Variable'] + "]='1'"
-                    other_info_row['Variable'] = oi['Sec'] + '_' + oi['vari'] + '_' + str(n) + oi['mod']
-                    other_info_row['List'] = None
-                    other_info_row['mod'] = str(n) + oi['mod']
-                    other_info_row['vari'] = oi['vari']
+                        other_info_row['Variable'] = oi['Sec'] + '_' + oi['vari'] + '_' + str(n) + oi['mod']
+                        other_info_row['List'] = None
+                        other_info_row['mod'] = str(n) + oi['mod']
+                        other_info_row['vari'] = oi['vari']
                     questions_for_this_list.append(other_info_row)
 
                 if n < repeat_n - 1:
@@ -533,11 +661,11 @@ def getListContent(current_datadicc, commit):
                     additional_row['Maximum'] = None
                     additional_row['Minimum'] = None
                     additional_row['Skip Logic'] = dropdown_row['Skip Logic']
-                    if additional_row['Question'] != 'NSAIDs':
-                        additional_row['Question'] = arrows[n] + 'Any additional ' + additional_row[
-                            'Question'].lower() + ' ?'
+                    if additional_row['Question_english'] != 'NSAIDs':
+                        additional_row[
+                            'Question'] = f"{arrows[n]} {any_additional_text} {additional_row['Question'].lower()} ?"
                     else:
-                        additional_row['Question'] = arrows[n] + 'Any additional ' + additional_row['Question'] + ' ?'
+                        additional_row['Question'] = f"{arrows[n]} {any_additional_text} {additional_row['Question']} ?"
                     additional_row['List'] = None
                     additional_row['mod'] = str(n) + 'addi'
                     additional_row['vari'] = row['vari']
@@ -557,23 +685,35 @@ def getListContent(current_datadicc, commit):
     return arc_list, list_variable_choices
 
 
-# HERE CHECK already modified variables x182#
-
-def getUserListContent(current_datadicc, commit, user_checked_options=None, ulist_var_name=None):
+def getUserListContent(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
-    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
     ulist_variable_choices = []
+    datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
+
+    translations_for_language = get_translations(language)
+    select_text = translations_for_language['select']
+    specify_text = translations_for_language['specify']
+    specify_other_text = translations_for_language['specify_other']
+    other_agent_text = translations_for_language['other_agent']
+    other_text = translations_for_language['other']
+
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('list without corresponding repository file')
+            print('List without corresponding repository file')
         else:
-            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
+            list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+                                                                                  row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
-            cont_lo = 1
             ulist_variable_choices_aux = []
             for lo in list_options[list_options.columns[0]]:
+                if 'Value' in list_options.columns:
+                    cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == lo].iloc[0])
+                else:
+                    # fallback to index-based counting
+                    cont_lo = list_options[list_options.columns[0]].tolist().index(lo) + 1
+
                 if cont_lo == 88:
                     cont_lo = 89
                 elif cont_lo == 99:
@@ -605,13 +745,15 @@ def getUserListContent(current_datadicc, commit, user_checked_options=None, ulis
                                 ulist_variable_choices_aux.append([cont_lo, lo, 0])
 
                 except Exception as e:
-                    print(row['List'] + f": Failed to add to lists of choices due to {e}.")
-                cont_lo += 1
-            l2_choices = l2_choices + '88, ' + 'Other'
+                    print(e)
+                    print(row['List'])
+                    raise RuntimeError("Failed to add to lists of choices")
+
+            l2_choices = l2_choices + '88, ' + other_text
 
             ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            row['Answer Options'] = l1_choices + '88, ' + 'Other'
+            row['Answer Options'] = l1_choices + '88, ' + other_text
 
             dropdown_row = row.copy()
             other_row = row.copy()
@@ -623,11 +765,11 @@ def getUserListContent(current_datadicc, commit, user_checked_options=None, ulis
             dropdown_row['Minimum'] = None
             dropdown_row['List'] = None
             if row['Variable'] == 'medi_medtype':
-                dropdown_row['Question'] = 'Select other agents administered while hospitalised or at discharge'
-                other_row['Question'] = 'Specify other agents administered while hospitalised or at discharge'
+                dropdown_row['Question'] = f"{select_text} {other_agent_text}"
+                other_row['Question'] = f"{specify_text} {other_agent_text}"
             else:
-                dropdown_row['Question'] = 'Select ' + row['Question'] + ''
-                other_row['Question'] = 'Specify other ' + row['Question'] + ''
+                dropdown_row['Question'] = f"{select_text} {row['Question']}"
+                other_row['Question'] = f"{specify_other_text} {row['Question']}"
             dropdown_row['mod'] = 'otherl2'
             dropdown_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
 
@@ -656,23 +798,34 @@ def getUserListContent(current_datadicc, commit, user_checked_options=None, ulis
     return arc_list, ulist_variable_choices
 
 
-def getMultuListContent(current_datadicc, commit, user_checked_options=None, ulist_var_name=None):
+def getMultuListContent(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
+    ulist_variable_choices = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
 
-    ulist_variable_choices = []
+    translations_for_language = get_translations(language)
+    select_text = translations_for_language['select']
+    specify_text = translations_for_language['specify']
+    specify_other_text = translations_for_language['specify_other']
+    other_agent_text = translations_for_language['other_agent']
+    other_text = translations_for_language['other']
+
     for _, row in datadiccDisease_lists.iterrows():
         if pd.isnull(row['List']):
-            print('list witout corresponding repository file')
-
+            print('List without corresponding repository file')
         else:
-            list_options = ArcApiClient().get_dataframe_list(commit, row['List'].replace('_', '/'))
+            list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+                                                                                  row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
-            cont_lo = 1
             ulist_variable_choices_aux = []
             for lo in list_options[list_options.columns[0]]:
+                if 'Value' in list_options.columns:
+                    cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == lo].iloc[0])
+                else:
+                    # fallback to index-based counting
+                    cont_lo = list_options[list_options.columns[0]].tolist().index(lo) + 1
                 if cont_lo == 88:
                     cont_lo = 89
                 elif cont_lo == 99:
@@ -704,14 +857,15 @@ def getMultuListContent(current_datadicc, commit, user_checked_options=None, uli
                                 l2_choices += str(cont_lo) + ', ' + lo + ' | '
                                 ulist_variable_choices_aux.append([cont_lo, lo, 0])
 
-                except Exception as e:
-                    print(row['List'] + f": Failed to add to lists of choices due to {e}.")
-                cont_lo += 1
-            l2_choices = l2_choices + '88, ' + 'Other'
+                except Exception:
+                    print(row['List'])
+                    raise RuntimeError("Failed to add to lists of choices")
+
+            l2_choices = l2_choices + '88, ' + other_text
 
             ulist_variable_choices.append([row['Variable'], ulist_variable_choices_aux])
 
-            row['Answer Options'] = l1_choices + '88, ' + 'Other'
+            row['Answer Options'] = l1_choices + '88, ' + other_text
 
             dropdown_row = row.copy()
             other_row = row.copy()
@@ -723,11 +877,11 @@ def getMultuListContent(current_datadicc, commit, user_checked_options=None, uli
             dropdown_row['Minimum'] = None
             dropdown_row['List'] = None
             if row['Variable'] == 'medi_medtype':
-                dropdown_row['Question'] = 'Select other agents administered while hospitalised or at discharge'
-                other_row['Question'] = 'Specify other agents administered while hospitalised or at discharge'
+                dropdown_row['Question'] = f"{select_text} {other_agent_text}"
+                other_row['Question'] = f"{specify_text} {other_agent_text}"
             else:
-                dropdown_row['Question'] = 'Select ' + row['Question'] + ''
-                other_row['Question'] = 'Specify other ' + row['Question'] + ''
+                dropdown_row['Question'] = f"{select_text} {row['Question']}"
+                other_row['Question'] = f"{specify_other_text} {row['Question']}"
             dropdown_row['mod'] = 'otherl2'
             dropdown_row['Skip Logic'] = '[' + row['Variable'] + "(88)]='1'"
 
@@ -776,7 +930,6 @@ def generateDailyDataType(current_datadicc):
                         daily_type_options = daily_type_options + daily_type_dicc[daily_type] + '|'
             daily_type_options = daily_type_options[:-1]
 
-            # TODO: This doesn't seem to do anything?
             datadiccDisease.loc[datadiccDisease['Variable'] == 'daily_data_type', 'Answer Options'] = daily_type_options
         return datadiccDisease
     return current_datadicc
@@ -849,6 +1002,41 @@ def customAlignment(datadicc):
 
 
 def generateCRF(datadiccDisease):
+    # Create a new list to build the reordered rows
+    new_rows = []
+    used_indices = set()
+
+    # Function to extract the prefix (e.g., "drug14_antiviral" from "drug14_antiviral_type")
+    def get_prefix(variable):
+        return "_".join(variable.split("_")[:2])
+
+    # Loop through each row in the original dataframe
+    for idx, row in datadiccDisease.iterrows():
+        var = row['Variable']
+        typ = row['Type']
+
+        # Skip rows that have already been added to the new list
+        if idx in used_indices:
+            continue
+
+        # Add the current row to the reordered list
+        new_rows.append(row)
+        used_indices.add(idx)
+
+        # If it's a multi_list or dropdown, check for corresponding _otherl2 and _otherl3
+        if typ in ['multi_list', 'user_list']:
+            prefix = get_prefix(var)
+
+            # Find and add the _otherl2 and _otherl3 rows right after the current one
+            for suffix in ['_otherl2', '_otherl3']:
+                mask = datadiccDisease['Variable'].str.startswith(prefix + suffix)
+                for i in datadiccDisease[mask].index:
+                    new_rows.append(datadiccDisease.loc[i])
+                    used_indices.add(i)
+
+    # Create the final reordered dataframe
+    datadiccDisease = pd.DataFrame(new_rows)
+
     datadiccDisease.loc[datadiccDisease['Type'] == 'user_list', 'Type'] = 'radio'
     datadiccDisease.loc[datadiccDisease['Type'] == 'multi_list', 'Type'] = 'checkbox'
     datadiccDisease.loc[datadiccDisease['Type'] == 'list', 'Type'] = 'radio'
