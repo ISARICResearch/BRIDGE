@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="TEST_CCP_PROJECT" AsOfDateTime="2025-06-23T14:59:05" CreationDateTime="2025-06-23T14:59:05" SourceSystem="REDCap" SourceSystemVersion="14.5.15">
-<Study OID="Project.TESTCCPPROJECT">
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="TEST CCP REDCAP" AsOfDateTime="2025-06-23T15:06:42" CreationDateTime="2025-06-23T15:06:42" SourceSystem="REDCap" SourceSystemVersion="14.5.15">
+<Study OID="Project.TESTCCPREDCAP">
 <GlobalVariables>
-	<StudyName>TEST_CCP_PROJECT</StudyName>
-	<StudyDescription>This file contains the metadata, events, and data for REDCap project "TEST_CCP_PROJECT".</StudyDescription>
-	<ProtocolName>TEST_CCP_PROJECT</ProtocolName>
+	<StudyName>TEST CCP REDCAP</StudyName>
+	<StudyDescription>This file contains the metadata, events, and data for REDCap project "TEST CCP REDCAP".</StudyDescription>
+	<ProtocolName>TEST CCP REDCAP</ProtocolName>
 	<redcap:RecordAutonumberingEnabled>0</redcap:RecordAutonumberingEnabled>
 	<redcap:CustomRecordLabel></redcap:CustomRecordLabel>
 	<redcap:SecondaryUniqueField></redcap:SecondaryUniqueField>
@@ -21,7 +21,7 @@
 	<redcap:MyCapEnabled>0</redcap:MyCapEnabled>
 	<redcap:Purpose>2</redcap:Purpose>
 	<redcap:PurposeOther>1</redcap:PurposeOther>
-	<redcap:ProjectNotes></redcap:ProjectNotes>
+	<redcap:ProjectNotes>ARC V1.1.0</redcap:ProjectNotes>
 	<redcap:HideFilledForms>1</redcap:HideFilledForms>
 	<redcap:HideDisabledForms>1</redcap:HideDisabledForms>
 	<redcap:FormActivationSurveyAutocontinue>0</redcap:FormActivationSurveyAutocontinue>
@@ -40,11 +40,7 @@ NA, Not applicable</redcap:MissingDataCodes>
 			<redcap:RepeatingInstrument redcap:UniqueEventName="summary_medication_arm_1" redcap:RepeatInstrument="research_samples" redcap:CustomLabel=""/>
 			<redcap:RepeatingInstrument redcap:UniqueEventName="summary_medication_arm_1" redcap:RepeatInstrument="medication" redcap:CustomLabel=""/>
 			<redcap:RepeatingInstrument redcap:UniqueEventName="summary_medication_arm_1" redcap:RepeatInstrument="pathogen_testing" redcap:CustomLabel=""/>
-		</redcap:RepeatingInstruments>
-		<redcap:RepeatingInstruments>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="outcome__end_of_st_arm_1" redcap:RepeatInstrument="research_samples" redcap:CustomLabel=""/>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="outcome__end_of_st_arm_1" redcap:RepeatInstrument="medication" redcap:CustomLabel=""/>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="outcome__end_of_st_arm_1" redcap:RepeatInstrument="pathogen_testing" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="summary_medication_arm_1" redcap:RepeatInstrument="photographs" redcap:CustomLabel=""/>
 		</redcap:RepeatingInstruments>
 	</redcap:RepeatingInstrumentsAndEvents>
 	<redcap:UserRolesGroup>
@@ -61,7 +57,7 @@ NA, Not applicable</redcap:MissingDataCodes>
 		<redcap:FormDisplayLogicConditions control_condition="[patient_tier]=&#039;2&#039;" forms_events=":"/>
 	</redcap:FormDisplayLogicConditionsGroup>
 </GlobalVariables>
-<MetaDataVersion OID="Metadata.TESTCCPPROJECT_2025-06-23_1459" Name="TEST_CCP_PROJECT" redcap:RecordIdField="subjid">
+<MetaDataVersion OID="Metadata.TESTCCPREDCAP_2025-06-23_1506" Name="TEST CCP REDCAP" redcap:RecordIdField="subjid">
 	<Protocol>
 		<StudyEventRef StudyEventOID="Event.initial_assessment_arm_1" OrderNumber="1" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.daily_arm_1" OrderNumber="2" Mandatory="No"/>
