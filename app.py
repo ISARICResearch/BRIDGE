@@ -390,12 +390,6 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     return False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
-@app.callback(Output('output-expanded', 'children'),
-              [Input('input', 'expanded')])
-def display_expanded(expanded):
-    return 'You have expanded {}'.format(expanded)
-
-
 def get_dataframe_arc_language(df_version, selected_version, selected_language):
     if selected_language != 'English':
         df_version_language = arc.getARCTranslation(
