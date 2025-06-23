@@ -100,7 +100,6 @@ app.layout = html.Div(
                     type="default",
                     children=html.Div(id="loading-output-save"),
                     ),
-        dcc.Store(id='selected-version-store'),
         dcc.Store(id='commit-store'),
         dcc.Store(id='selected_data-store'),
         dcc.Store(id='upload-version-store'),
@@ -619,7 +618,9 @@ def get_checked_template_list(grouped_presets_dict, checked_values_list):
         Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
         Output('multilist_variable_choices-store', 'data', allow_duplicate=True)
     ],
-    [Input({'type': 'template_check', 'index': dash.ALL}, 'value')],
+    [
+        Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
+    ],
     [
         State('current_datadicc-store', 'data'),
         State('grouped_presets-store', 'data'),
@@ -641,7 +642,6 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     df_version_language = get_dataframe_arc_language(df_version, current_version, current_language)
 
     tree_items_data = arc.getTreeItems(df_version_language, current_version)
-    logger.info(f'checked_variables: {checked_variables}')
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
@@ -718,9 +718,9 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     [
         Input('modal_submit', 'n_clicks'),
         Input('modal_cancel', 'n_clicks'),
-        Input('current_datadicc-store', 'data')
     ],
     [
+        State('current_datadicc-store', 'data'),
         State('modal_title', 'children'),
         State('options-checklist', 'value'),
         State('input', 'checked'),
