@@ -1,3 +1,4 @@
+import logging
 import re
 from os import environ
 
@@ -156,6 +157,8 @@ def getARCVersions():
         tag_names = ArcApiClient().get_release_tag_name_list('DataPlatform')
     else:
         tag_names = ArcApiClient().get_release_tag_name_list('ARC')
+
+    logger.info(f'tag_names: {tag_names}')
 
     prefix = "v"
 
