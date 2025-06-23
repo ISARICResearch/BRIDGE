@@ -25,7 +25,7 @@ class MainContent:
             columnDefs=column_defs,
             rowData=row_data,
             defaultColDef={"sortable": True, "filter": True, 'resizable': True},
-            columnSize="sizeToFit",
+            columnSize="responsiveSizeToFit",
             dashGridOptions={
                 "rowDragManaged": True,
                 "rowDragEntireRow": True,
