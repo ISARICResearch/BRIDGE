@@ -79,7 +79,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
             phrase = supplemental_phrases.loc[supplemental_phrases['variable'] == variable, 'text'].values[0]
             return {"error": False, "text": phrase}
         except IndexError:
-            logger.error(f"Variable '{variable}' not found in supplemental phrases.")
+            logger.warning(f"Variable '{variable}' not found in supplemental phrases.")
             return {"error": True, "text": ""}
 
     # Define margin widths for the document as a whole
