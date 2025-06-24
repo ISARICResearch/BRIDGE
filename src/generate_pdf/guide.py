@@ -46,29 +46,116 @@ class StyleSet:
 style = StyleSet()
 
 
+### TrackingParagraph is an extenstion of the ReportLab Paragraph Class
+# key is the the name of either the form or section
+# kind is whether it is a form or section
+# This lets us go back for each item and get what page it is on
 class TrackingParagraph(Paragraph):
-    def __init__(self, text, style, key, kind):
-        super().__init__(text, style)
+    def __init__(self, text, style, name=None, key=None, kind=None, **kwargs):
+        super().__init__(text, style, **kwargs)
+        self.name = name
         self.key = key  # the form or section name
         self.kind = kind  # either 'form' or 'section'
 
 
+### TrackingDocTemplate is an extension of the ReportLab BaseDocTemplate Class
+# After eacbh Tracking Paragraph is printed, it adds an entry to table of contents entries.
+# Each entry has kind, key, title, and page number.
 class TrackingDocTemplate(BaseDocTemplate):
     def __init__(self, *args, **kwargs):
-        self.toc_entries = []  # Store TOC entries as (kind, title, key, page_number)
+        # Store TOC entries as (kind, title, key, page_number)
+        self.toc_entries = []
         super().__init__(*args, **kwargs)
 
     def afterFlowable(self, flowable):
         if isinstance(flowable, TrackingParagraph):
             page_num = self.page
-            self.toc_entries.append({
-                'kind': flowable.kind,
-                'title': flowable.getPlainText(),
-                'key': flowable.key,
-                'page': page_num
-            })
+            try:
+                # Create a bookmark for this flowable
+                self.canv.bookmarkPage(flowable.key)
+                self.canv.addOutlineEntry(
+                    flowable.getPlainText(), flowable.key)
+
+                self.toc_entries.append({
+                    'kind': flowable.kind,
+                    'title': flowable.getPlainText(),
+                    'key': flowable.key,
+                    'page': page_num
+                })
+            except:
+                # Skip if bookmark creation fails
+                pass
 
 
+### TOCEntry is a ReportLab Flowable to handle the fancy styling of each entry in the table of contents
+# Handles color, width, everything.
+# Most of the complexity comes from finding the width of the line and creating it.
+class TOCEntry(Flowable):
+    def __init__(self, title, page, style, width, key, dot_color=colors.black, line_y=4):
+        Flowable.__init__(self)
+        self.title = title
+        self.page = str(page)
+        self.style = style
+        self.width = width
+        self.key = key
+        self.dot_color = dot_color
+        self.line_y = line_y  # vertical offset of dotted line
+        self.valid_bookmark = True  # Assume valid by default
+
+    def wrap(self, availWidth, availHeight):
+        self.height = self.style.leading
+        return availWidth, self.height
+
+    def draw(self):
+        canvas = self.canv
+        canvas.saveState()
+
+        # Draw title Paragraph
+        text_obj = Paragraph(self.title, self.style)
+        tw, th = text_obj.wrap(self.width - 50, self.height)
+        text_obj.drawOn(canvas, 0, 0)
+
+        def strip_tags(text):
+            return re.sub(r'<[^>]*>', '', text)
+
+        # Accurately measure raw string width (strip HTML if needed)
+        title_plain = self.title.replace('&nbsp;', ' ')
+        title_width = stringWidth(strip_tags(
+            title_plain), self.style.fontName, self.style.fontSize)
+
+        # Page number
+        page_obj = Paragraph(self.page, self.style)
+        pw, ph = page_obj.wrap(50, self.height)
+        page_x = self.width - pw
+
+        # Dotted line between title and page number
+        canvas.setStrokeColor(self.dot_color)
+        canvas.setDash(1, 2)
+        canvas.line(title_width + 10, self.line_y, page_x - 2, self.line_y)
+        canvas.setDash(1, 0)
+
+        # Draw page number
+        page_obj.drawOn(canvas, page_x, 0)
+
+        # Only create link if we believe bookmark exists
+        try:
+            canvas.linkRect(
+                '',  # contents
+                self.key,  # destination
+                (0, 0, self.width, self.height),  # rect
+                relative=1,
+                thickness=0
+            )
+        except:
+            # If linking fails, just continue without the link
+            self.valid_bookmark = False
+            pass
+
+        canvas.restoreState()
+
+
+### generate_guide_doc is our main funciton. Handles input dictionary, doc margins, creating 2 columns and
+# when to use them, generating the doc twice, once to get page numbers and once to add TOC.
 def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     # Define margin widths for the document as a whole
     left_margin = 0.3 * inch
@@ -80,16 +167,20 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
 
     # Two columns: split usable width
     usable_width = page_width - left_margin - right_margin
-    column_width = (usable_width - 0.2 * inch) / 2  # small gutter between columns
+    column_width = (usable_width - 0.2 * inch) / \
+                   2  # small gutter between columns
     column_height = page_height - top_margin - bottom_margin
 
     guide_title = version + ", " + crf_name
 
-    header_footer_partial = partial(generate_guide_header_footer, title=guide_title)
+    header_footer_partial = partial(
+        generate_guide_header_footer, title=guide_title)
 
     # First page: single column, same margins
-    frame_one_col = Frame(left_margin, bottom_margin, usable_width, column_height, id='one_col')
-    template_one_col = PageTemplate(id='OneCol', frames=[frame_one_col], onPage=header_footer_partial)
+    frame_one_col = Frame(left_margin, bottom_margin,
+                          usable_width, column_height, id='one_col')
+    template_one_col = PageTemplate(
+        id='OneCol', frames=[frame_one_col], onPage=header_footer_partial)
 
     # Two-column page (already defined)
     frame1 = Frame(left_margin, bottom_margin, column_width, column_height, id='two_col1')
@@ -130,7 +221,17 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     doc.build(final_elements)
 
 
+### generate_guide_content actually generates the completion guide from a data_dictionary json
 def generate_guide_content(data_dictionary):
+    def sanitize_key(text):
+        if text is None:
+            raise ValueError("Cannot create key from None")
+        # Convert to string if not already
+        text = str(text)
+        # Remove special characters and limit length
+        safe_text = re.sub(r'[^a-zA-Z0-9_]', '_', text)
+        return safe_text[:50]  # Limit key length
+
     elements = []
 
     # Assume 'header_footer' function is defined elsewhere
@@ -142,79 +243,89 @@ def generate_guide_content(data_dictionary):
     current_form = ""
     current_section = ""
 
-    for index, row in data_dictionary.iterrows():
-        if '_oth' in row['Variable']: continue
-        if '_units' in row['Variable']: continue
+    items = []
+    guide_to_omit = ""
 
+    for index, row in data_dictionary.iterrows():
+        form = row['Form']
+        section = row['Section']
+        variable = row['Variable']
+        question = row['Question'].strip(" :")
+        definition = row['Definition']
+        guide = row['Completion Guideline']
+
+        ### Omit needless rows.
+        # No not add others those long >-> additional variables.
+        if '_oth' in variable:                  continue
+        if '_units' in variable:                continue
+        if (question.startswith(('>', '->'))):  continue
+        if (variable.endswith('addi')):         continue
+
+        ### Add Form and Section Headers when needed
+        # we track when needed with current_form and current_section
         # Add a new Form header
-        if type(row['Form']) == str:
-            if row['Form'] != current_form:
-                current_form = row['Form']
+        if type(form) == str:
+            if form != current_form:
+                items = []
+                key = sanitize_key(str(index) + form + current_section)
+                # New Form
+                current_form = form
                 elements.append(Spacer(1, 0.07 * inch))
-                elements.append(TrackingParagraph(row['Form'].upper() + " FORM", style.form, row['Form'],
-                                                  'form'))  # is my tracking paragraph correct?
+                # is my tracking paragraph correct?
+                elements.append(TrackingParagraph(form.upper() + " FORM", style.form, form, key, 'form'))
                 elements.append(Spacer(1, 0.07 * inch))
+
         # Add a new Section header
-        if type(row['Section']) == str:
-            if row['Section'] != current_section:
-                current_section = row['Section']
-                elements.append(TrackingParagraph(row['Section'].title(), style.section, row['Section'],
-                                                  'section'))  # is my tracking paragraph correct?
-        elements.append(
-            Paragraph(("<b>" + row['Question'] + "</b>: " + row['Definition'] + " " + row['Completion Guideline']),
-                      style.normal))
-        elements.append(Spacer(1, 0.07 * inch))
+        if type(section) == str:
+            if section != current_section:
+                if (variable.startswith(('sign_'))):
+                    guides = []
+                    for index, row in data_dictionary.iterrows():
+                        if variable.startswith(('sign_')):
+                            guides.append(row['Completion Guideline'])
+
+                    guide_to_omit = max(set(guides), key=guides.count)
+                elif (variable.startswith(('sympt_'))):
+                    guides = []
+                    for index, row in data_dictionary.iterrows():
+                        if variable.startswith(('sympt_')):
+                            guides.append(row['Completion Guideline'])
+
+                    guide_to_omit = max(set(guides), key=guides.count)
+                else:
+                    guide_to_omit = ""
+
+                items = []
+                key = sanitize_key(str(index) + current_form + section)
+                current_section = section
+                # is my tracking paragraph correct?
+                elements.append(TrackingParagraph(
+                    section.title(), style.section, section, key, 'section'))
+
+        if variable.startswith(('sign_', 'sympt_')):
+            if guide == guide_to_omit:
+                guide = ""
+
+        item = question + definition + guide
+
+        if item in items:
+            # Finally, add the paragraph element for the specific varibale and its guide.
+            elements.append(Paragraph("<b>" + question + ":</b> See Above.", style.normal))
+            elements.append(Spacer(1, 0.07 * inch))
+
+        else:
+            items.append(item)
+
+            # Finally, add the paragraph element for the specific varibale and its guide.
+            elements.append(Paragraph("<b>" + question + ":</b> " +
+                                      definition + " " + guide, style.normal))
+            elements.append(Spacer(1, 0.07 * inch))
 
     return elements
 
 
-class TOCEntry(Flowable):
-    def __init__(self, title, page, style, width, dot_color=colors.black, line_y=4):
-        Flowable.__init__(self)
-        self.title = title
-        self.page = str(page)
-        self.style = style
-        self.width = width
-        self.dot_color = dot_color
-        self.line_y = line_y  # vertical offset of dotted line
-
-    def wrap(self, avail_width, avail_height):
-        self.height = self.style.leading
-        return avail_width, self.height
-
-    def draw(self):
-        canvas = self.canv
-        canvas.saveState()
-
-        # Draw title Paragraph
-        text_obj = Paragraph(self.title, self.style)
-        tw, th = text_obj.wrap(self.width - 50, self.height)
-        text_obj.drawOn(canvas, 0, 0)
-
-        def strip_tags(text):
-            return re.sub(r'<[^>]*>', '', text)
-
-        # Accurately measure raw string width (strip HTML if needed)
-        title_plain = self.title.replace('&nbsp;', ' ')
-        title_width = stringWidth(strip_tags(title_plain), self.style.fontName, self.style.fontSize)
-
-        # Page number
-        page_obj = Paragraph(self.page, self.style)
-        pw, ph = page_obj.wrap(50, self.height)
-        page_x = self.width - pw
-
-        # Dotted line between title and page number
-        canvas.setStrokeColor(self.dot_color)
-        canvas.setDash(1, 2)
-        canvas.line(title_width + 10, self.line_y, page_x - 2, self.line_y)
-        canvas.setDash(1, 0)
-
-        # Draw page number
-        page_obj.drawOn(canvas, page_x, 0)
-
-        canvas.restoreState()
-
-
+### create_table_of_contents generates a table of contents for the completion guide based on the generated
+# toc_entries (a list of dictionaries to hold key information (key, kind, title, page_num))
 def create_table_of_contents(toc_entries, total_width=560):
     styles = getSampleStyleSheet()
     toc_style = styles["Normal"]
@@ -223,15 +334,23 @@ def create_table_of_contents(toc_entries, total_width=560):
     toc_style.leading = 13
     toc_style.leftIndent = 5
 
-    elements = [Paragraph("<b>Table of Contents</b>", styles["Heading1"]), Spacer(1, 0.1 * inch)]
+    elements = [Paragraph("<b>Table of Contents</b>",
+                          styles["Heading1"]), Spacer(1, 0.1 * inch)]
 
     for entry in toc_entries:
-        title = entry["title"].split(':')[0].strip()
-        kind = entry["kind"]
-        indent = "&nbsp;&nbsp;&nbsp;&nbsp;" if kind == "section" else ""
-        entry_text = f"{indent}<font color={style.hex_blue}>{title}</font>"
-        if kind == "form":
-            elements.append(Spacer(1, 0.1 * inch))
-        elements.append(TOCEntry(entry_text, entry["page"], toc_style, total_width))
+        try:
+            if not entry["key"]:
+                continue  # Skip entries with None/empty keys
+            title = entry["title"].split(':')[0].strip()
+            kind = entry["kind"]
+            indent = "&nbsp;&nbsp;&nbsp;&nbsp;" if kind == "section" else ""
+            entry_text = f"{indent}<font color={style.hex_blue}>{title}</font>"
+            if kind == "form":
+                elements.append(Spacer(1, 0.1 * inch))
+            elements.append(
+                TOCEntry(entry_text, entry["page"], toc_style, total_width, entry["key"]))
+        except Exception as e:
+            print(f"Skipping TOC entry due to error: {str(e)}")
+            continue
 
     return elements
