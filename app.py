@@ -138,7 +138,8 @@ def main_app():
                 Presets.preset_column,
                 TreeItems(TREE_ITEMS_DATA).tree_column,
                 MainContent.main_content,
-            ]
+            ],
+            delay_show=500,
         ),
     ])
 
