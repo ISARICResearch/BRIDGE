@@ -1,4 +1,3 @@
-""" External package imports """
 import re
 from typing import List
 
