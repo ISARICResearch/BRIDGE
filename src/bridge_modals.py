@@ -16,7 +16,6 @@ def researchQuestions_modal():
                     {"label": "Risk/Prognosis", "value": "Risk/Prognosis"},
                     {"label": "Clinical Management", "value": "Clinical Management"},
                 ],
-                # value="Characterisation",
             ),
             html.Div(id="rq_themes_div"),
         ],
