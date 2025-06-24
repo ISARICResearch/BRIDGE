@@ -13,7 +13,7 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-from logger import setup_logger
+from src.logger import setup_logger
 from src.arc import ArcApiClient
 from src.generate_pdf.form import generate_form
 from src.generate_pdf.guide import generate_guide_doc

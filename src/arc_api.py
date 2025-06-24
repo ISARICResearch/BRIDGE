@@ -6,7 +6,7 @@ import requests
 from requests import Response
 from requests.exceptions import RequestException
 
-from logger import setup_logger
+from src.logger import setup_logger
 
 logger = setup_logger(__name__)
 

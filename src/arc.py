@@ -1,11 +1,10 @@
-import logging
 import re
 from os import environ
 
 import numpy as np
 import pandas as pd
 
-from logger import setup_logger
+from src.logger import setup_logger
 from src.arc_api import ArcApiClient
 
 logger = setup_logger(__name__)

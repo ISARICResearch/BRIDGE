@@ -17,7 +17,7 @@ from dash.exceptions import PreventUpdate
 from unidecode import unidecode
 
 import src.generate_pdf.form as form
-from logger import setup_logger
+from src.logger import setup_logger
 from src import arc, bridge_modals, paper_crf, index
 from src.arc_api import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
