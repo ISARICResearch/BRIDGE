@@ -32,6 +32,10 @@ license. While contributions are limited to authorized individuals, the app is f
 provided they adhere to the terms of this license, including attribution and the sharing of derivative works under the
 same terms.
 
+BRIDGE enables users to select variables from the ARC versions that are saved in the ARC folder within the
+repository. It also allows the selection of templates included in these versions and supports the generation of the
+following files:
+
 ## Files
 
 - **Clinical Characterization XML:** This XML file provides a recommended configuration and structure for clinical
