@@ -62,7 +62,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
 
     # Set buffer (changes based on production or test)
     if environ.get('ENV') == 'test':
-        buffer = "Tests/" + db_name + ".pdf"  # Use BytesIO object for in-memory PDF generation
+        buffer = "paperlike_tests/results/" + db_name + ".pdf"  # Use BytesIO object for in-memory PDF generation
     else:
         buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
@@ -128,7 +128,7 @@ def generate_completionguide(data_dictionary, version, db_name):
 
     # Set buffer (changes based on production or test)
     if environ.get('ENV') == 'test':
-        buffer = "Tests/" + version + "_completionGuide.pdf"  # Set local test pdf path
+        buffer = "paperlike_tests/results/" + version + "_completionGuide.pdf"  # Set local test pdf path
     else:
         buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
