@@ -1,4 +1,4 @@
-""" This Generate Form script is for defining the classes, properties, and methods needed to create the forms """
+''' This Generate Form script is for defining the classes, properties, and methods needed to create the forms '''
 
 ''' 
 It defines:
@@ -19,7 +19,7 @@ from reportlab.platypus import Paragraph
 
 import src.generate_pdf.styles as style
 
-line_placeholder = '_' * 40
+LINE_PLACEHOLDER = '_' * 40
 
 
 # Custom class to store a dependency
@@ -167,7 +167,7 @@ class Field:
             return
 
         # If a short answer:
-        if self.answer[0].text.startswith(line_placeholder):
+        if self.answer[0].text.startswith(LINE_PLACEHOLDER):
             self.question_width = 1 / 6
             self.answer_width = 2 / 6
             return
@@ -356,7 +356,7 @@ class Row:
     def add_end_columns(self):
         self.columns.insert(0, None)  # Add column before first column
         self.columns.append(None)  # Add column after last column
-        end_width = (1 - self.table_width) / 2  # Get end width
+        end_width = (1 - self.table_width) / 2;  # Get end width
         self.widths.insert(0, end_width)  # Set width first column
         self.widths.append(end_width)  # Set width last column
 
@@ -776,6 +776,7 @@ class Section:
 
             ### Process subsection logic ###
             if subsection_started:
+                # print('   subsection_started')
                 # Default subsection (no dependencies)
                 if not subsection_dependencies_set:
                     # print ('       NOT subsection_dependencies_set', dependencies, next_dependencies)

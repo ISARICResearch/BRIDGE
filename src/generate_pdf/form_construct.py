@@ -9,11 +9,11 @@ from reportlab.platypus import Table, TableStyle, Paragraph, Spacer
 import src.generate_pdf.styles as style
 from src.generate_pdf.form_classes import Field, SubsectionStyle, Row, Subsubsection
 
-grey_70 = colors.hsl2rgb(0, 0, .7)
-grey_80 = colors.hsl2rgb(0, 0, .8)
-grey_90 = colors.hsl2rgb(0, 0, .9)
-grey_95 = colors.hsl2rgb(0, 0, .95)
-grey_97 = colors.hsl2rgb(0, 0, .97)
+GREY_70 = colors.hsl2rgb(0, 0, .7)
+GREY_80 = colors.hsl2rgb(0, 0, .8)
+GREY_90 = colors.hsl2rgb(0, 0, .9)
+GREY_95 = colors.hsl2rgb(0, 0, .95)
+GREY_97 = colors.hsl2rgb(0, 0, .97)
 
 ''' Function to generate each row of the form as a table '''
 
@@ -42,7 +42,7 @@ def construct_standard_row(
             ('LEFTPADDING', (0, 0), (0, -1), 30),
             ('LINEAFTER', (0, 0), (0, -1), line_width, colors.black),
             ('LINEBEFORE', (-1, 0), (-1, -1), line_width, colors.black),
-            ('BACKGROUND', (1, 0), (-2, 0), grey_70),
+            ('BACKGROUND', (1, 0), (-2, 0), GREY_70),
             ('SPAN', (1, 0), (-2, 0)),
             ('LINEBELOW', (1, 0), (-2, -1), line_width, colors.black),
             ('LINEABOVE', (1, 0), (-2, 0), line_width, colors.black),
@@ -64,17 +64,17 @@ def construct_standard_row(
     # If row is shaded, apply the shaded style and add line under it
     if row.shade == "conditional":
         subsectionStyle = SubsectionStyle.QA_BOARDERLESS
-        table_style.add('BACKGROUND', (1, 0), (-2, 0), grey_95)
+        table_style.add('BACKGROUND', (1, 0), (-2, 0), GREY_95)
         if row_index == rows_len - 1 and not subsub_index == subsubs_len - 1:
-            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, grey_80)
+            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
 
     # If row is shaded, apply the shaded style and add line under it
     if row.shade == "descriptive":
         subsectionStyle = SubsectionStyle.QA_BOARDERLESS
-        table_style.add('BACKGROUND', (1, 0), (-2, 0), grey_80)
+        table_style.add('BACKGROUND', (1, 0), (-2, 0), GREY_80)
         table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, colors.black)
         if row_index == rows_len - 1 and not subsub_index == subsubs_len - 1:
-            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, grey_80)
+            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
 
     ''' === Subsubsection Styling ===  handles if row needs internal lines and adding lines above/below it '''
     # If row is a little header, add line above and below if just one line
@@ -82,16 +82,16 @@ def construct_standard_row(
         subsectionStyle = SubsectionStyle.QA_BOARDERLESS
         if row_index == 0 and subsub_index > 1:
             # if not rows[row_index-1].is_shaded:
-            table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, grey_80)
+            table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, GREY_80)
             if row_index == rows_len - 1 and not subsub_index == subsubs_len - 1:
-                table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, grey_80)
+                table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
 
     # if row is part of a condtional group, add line above and/or below if starting or ending row
     if (subsubsection.is_conditional == True):
         subsectionStyle = SubsectionStyle.QA_BOARDERLESS
         if row_index == 0 and subsub_index > 1:
-            table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, grey_80)
-            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, grey_80)
+            table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, GREY_80)
+            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
 
     ''' === Subsection Styling ===  handles drawing internal lines as grey or black'''
     # if style is grey, add grey lines
@@ -101,15 +101,15 @@ def construct_standard_row(
             for i in range(row_length - 2):
                 x = i * 2
                 table_style.add('LINEBEFORE', (x + 1, 0), (x + 1, -1), line_width,
-                                grey_80)  # should depend on row_length
+                                GREY_80)  # should depend on row_length
         elif len(row.fields) == 2:
             table_style.add('LINEBEFORE', (int(row_length / 2), 0), (int(row_length / 2), -1), line_width,
-                            grey_80)  # should depend on row_length
+                            GREY_80)  # should depend on row_length
 
         if not (row_index == rows_len - 1 and subsub_index == subsubs_len - 1):
-            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, grey_80)
+            table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
         if not (row_index == 0 and subsub_index == 0):
-            table_style.add('LINEABOVE', (1, 0), (-2, 0), line_width, grey_80)
+            table_style.add('LINEABOVE', (1, 0), (-2, 0), line_width, GREY_80)
 
     # If style is black, add black lines
     if subsectionStyle == SubsectionStyle.QA_BLACK:
@@ -173,7 +173,7 @@ def construct_medication_form(fields: List[Field]):
         ('LEFTPADDING', (0, 0), (0, -1), 30),
         ('LINEAFTER', (0, 0), (0, -1), line_width, colors.black),
         ('LINEBEFORE', (-1, 0), (-1, -1), line_width, colors.black),
-        ('BACKGROUND', (1, 0), (-2, 0), grey_70),
+        ('BACKGROUND', (1, 0), (-2, 0), GREY_70),
         ('LINEBELOW', (1, 0), (-2, -1), line_width, colors.black),
         ('LINEABOVE', (1, 0), (-2, 0), line_width, colors.black),
     ]))
@@ -299,7 +299,7 @@ def construct_testing_form(fields: List[Field], locate_phrase):
         ('LEFTPADDING', (0, 0), (0, -1), 30),
         ('LINEAFTER', (0, 0), (0, -1), line_width, colors.black),
         ('LINEBEFORE', (-1, 0), (-1, -1), line_width, colors.black),
-        ('BACKGROUND', (1, 0), (-2, 0), grey_70),
+        ('BACKGROUND', (1, 0), (-2, 0), GREY_70),
         ('LINEBELOW', (1, 0), (-2, -1), line_width, colors.black),
         ('LINEABOVE', (1, 0), (-2, 0), line_width, colors.black),
     ]))
