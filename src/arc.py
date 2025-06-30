@@ -43,14 +43,7 @@ def getResearchQuestionTypes(datadicc):
 
 def getARCTranslation(language, version, current_datadicc):
     try:
-        if environ.get('ENV') == 'test':
-            datadicc_english = ArcApiClient().get_dataframe_arc_version_language('DataPlatform', version,
-                                                                                 'English')
-            datadicc_english = datadicc_english[
-                ['Variable', 'Form', 'Section', 'Question', 'Answer Options', 'Definition', 'Completion Guideline']]
-        else:
-            datadicc_english = ArcApiClient().get_dataframe_arc_version_language('ARC-Translations', version,
-                                                                                 'English')
+        datadicc_english = ArcApiClient().get_dataframe_arc_version_language(version, 'English')
 
         df_merged_english = current_datadicc[['Variable']].merge(
             datadicc_english.set_index('Variable'), on='Variable', how='left')
@@ -60,8 +53,7 @@ def getARCTranslation(language, version, current_datadicc):
 
         current_datadicc['Question_english'] = current_datadicc['Question_english'].astype(str)
 
-        datadicc_translated = ArcApiClient().get_dataframe_arc_version_language('ARC-Translations', version,
-                                                                                language)
+        datadicc_translated = ArcApiClient().get_dataframe_arc_version_language(version, language)
 
         df_merged = current_datadicc[['Variable']].merge(
             datadicc_translated.set_index('Variable'), on='Variable', how='left'
@@ -152,40 +144,11 @@ def getARCTranslation(language, version, current_datadicc):
 
 
 def getARCVersions():
-    if environ.get('ENV') == 'test':
-        tag_names = ArcApiClient().get_release_tag_name_list('DataPlatform')
-    else:
-        tag_names = ArcApiClient().get_release_tag_name_list('ARC')
+    version_list = ArcApiClient().get_arc_version_list()
 
-    logger.info(f'tag_names: {tag_names}')
+    logger.info(f'version_list: {version_list}')
 
-    prefix = "v"
-
-    # Procesamiento común de versiones
-    parsed_versions = []
-    rc_version_str = None
-    for version in tag_names:
-        if '-rc' in version:
-            base_version = version.split('-rc')[0]
-            parsed_versions.append((tuple(map(int, base_version.split(prefix)[1].split('.'))), '-rc'))
-            rc_version_str = version
-        else:
-            parsed_versions.append((tuple(map(int, version.split(prefix)[1].split('.'))), ''))
-
-    non_rc_versions = [v for v, suffix in parsed_versions if suffix == '']
-    most_recent_version = max(non_rc_versions)
-    most_recent_version_str = prefix + '.'.join(map(str, most_recent_version))
-
-    all_versions = list(tag_names)
-    if most_recent_version_str in all_versions:
-        all_versions.remove(most_recent_version_str)
-    all_versions.insert(0, most_recent_version_str)
-
-    if rc_version_str in all_versions:
-        all_versions.remove(rc_version_str)
-        all_versions.insert(1, rc_version_str)
-
-    return list(all_versions), most_recent_version_str
+    return version_list, max(version_list)
 
 
 def getVariableOrder(current_datadicc):
@@ -197,12 +160,9 @@ def getVariableOrder(current_datadicc):
 
 def getARC(version):
     logger.info(f'version: {version}')
-    commit_sha = ''
-    if environ.get('ENV') == 'test':
-        df_datadicc = ArcApiClient().get_dataframe_arc_version_language('DataPlatform', version, 'English')
-    else:
-        commit_sha = ArcApiClient().get_repo_version_sha('ARC', version)
-        df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha)
+
+    commit_sha = ArcApiClient().get_arc_version_sha(version)
+    df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha)
 
     try:
         df_dependencies = getDependencies(df_datadicc)

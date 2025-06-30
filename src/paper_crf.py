@@ -60,11 +60,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
     if isinstance(db_name, list):
         db_name = db_name[0]
 
-    # Set buffer (changes based on production or test)
-    if environ.get('ENV') == 'test':
-        buffer = "paperlike_tests/results/" + db_name + ".pdf"  # Use BytesIO object for in-memory PDF generation
-    else:
-        buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
+    buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
     # Remove rows where 'Field Label' starts with '>' or '->'
     data_dictionary = data_dictionary[~data_dictionary['Field Label'].str.startswith(('>', '->'))]
@@ -114,10 +110,6 @@ def generate_pdf(data_dictionary, version, db_name, language):
     header_footer_partial = partial(generate_header_footer, title=db_name)
     doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
 
-    # If production, save the pdf from memory
-    if environ.get('ENV') == 'test':
-        return None
-
     buffer.seek(0)
     return buffer.getvalue()  # Return the PDF data
 
@@ -126,16 +118,10 @@ def generate_pdf(data_dictionary, version, db_name, language):
 def generate_completionguide(data_dictionary, version, db_name):
     data_dictionary = data_dictionary.copy()
 
-    # Set buffer (changes based on production or test)
-    if environ.get('ENV') == 'test':
-        buffer = "paperlike_tests/results/" + version + "_completionGuide.pdf"  # Set local test pdf path
-    else:
-        buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
+    buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
     generate_guide_doc(data_dictionary, version, db_name, buffer)
 
-    if environ.get('ENV') == 'test':
-        return None
     # If production, save the pdf from memory
     buffer.seek(0)  # Move the cursor of the BytesIO object to the beginning
     return buffer.getvalue()  # Return the PDF data

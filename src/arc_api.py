@@ -1,4 +1,3 @@
-from os import environ
 from os import getenv
 
 import pandas as pd
@@ -68,13 +67,13 @@ class ArcApiClient:
         tag_json = self._get_api_response(url).json()
         return tag_json
 
-    def get_release_tag_name_list(self, repository):
-        release_dict_list = self._get_release_json(repository)
-        tag_name_list = [release_dict['tag_name'] for release_dict in release_dict_list]
-        return tag_name_list
+    def get_arc_version_list(self):
+        release_dict_list = self._get_release_json('ARC')
+        version_list = [release_dict['tag_name'] for release_dict in release_dict_list]
+        return version_list
 
-    def get_repo_version_sha(self, repository, version):
-        release_dict_list = self._get_tag_json(repository)
+    def get_arc_version_sha(self, version):
+        release_dict_list = self._get_tag_json('ARC')
         try:
             version_dict = list(filter(lambda x: x['name'] == version, release_dict_list))[0]
             version_sha = version_dict['commit']['sha']
@@ -88,22 +87,14 @@ class ArcApiClient:
         df = self._write_to_dataframe(url)
         return df
 
-    def get_dataframe_arc_list_sha(self, sha, list_name):
-        url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC', sha, 'Lists', f'{list_name}.csv'])
-        df = self._write_to_dataframe(url)
-        df = df.sort_values(by=df.columns[0], ascending=True)
-        return df
-
-    def get_dataframe_arc_version_language(self, repository, version, language):
-        url = '/'.join([self.BASE_URL_RAW_CONTENT, repository, 'main', self.get_arch_version_string(version), language,
-                        'ARCH.csv'])
+    def get_dataframe_arc_version_language(self, version, language):
+        url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language, 'ARCH.csv'])
         df = self._write_to_dataframe(url)
         return df
 
     def get_dataframe_arc_list_version_language(self, version, language, list_name):
         url = '/'.join(
-            [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language,
-             'Lists', f'{list_name}.csv'])
+            [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language, 'Lists', f'{list_name}.csv'])
         df = self._write_to_dataframe(url)
         df = df.sort_values(by=df.columns[0], ascending=True)
         return df
@@ -128,8 +119,4 @@ class ArcApiClient:
 
     @staticmethod
     def get_arch_version_string(version):
-        if environ.get('ENV') == 'test':
-            version_string = version[4:]
-        else:
-            version_string = version[1:]
-        return f'ARCH{str(version_string)}'
+        return f'ARCH{str(version.replace('v', ''))}'
