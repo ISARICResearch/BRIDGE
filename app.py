@@ -484,8 +484,13 @@ def home_page():
             dbc.Row([
                 dbc.Col([
                     html.H4("Accelerating Outbreak Research Response", className="mb-3"),
-                    html.P("BRIDGE automates the creation of Case Report Forms (CRFs) for specific diseases and research contexts. It generates the necessary data dictionary and XML to create a REDCap database for data capture in the ARC structure. Learn more in our ", style={"font-size": "20px", "display": "inline"}),
-                    html.A("guide for getting started.", href="https://ISARICResearch.github.io/Training/bridge_starting.html", target="_blank", style={"font-size": "20px", "display": "inline"})
+                    html.P(["BRIDGE automates the creation of Case Report Forms (CRFs) tailored to specific diseases and research contexts. ",
+                        "You can build your CRF by selecting questions from the ARC library or using ready-made ",
+                        html.A("ARChetype CRF templates", href="https://isaricresearch.github.io/CCP-Study-Documents/ARChetype-CRF-Guidelines", target="_blank"),
+                        ". BRIDGE then generates the required data dictionary and XML to set up a REDCap database, fully aligned with the ARC structure. ",
+                        "Learn more in our ",
+                        html.A("guide for getting started.", href="https://ISARICResearch.github.io/Training/bridge_starting.html", target="_blank")
+                    ], style={"font-size": "20px", "textAlign": "justify"})
                 ], md=9)
             ], className="my-5"),
 
