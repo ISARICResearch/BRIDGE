@@ -170,7 +170,7 @@ def generate_form(data_dictionary, elements, locate_phrase):
                     # if date
                     if validation == 'date_dmy':
                         # Add a date placeholder
-                        date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[_2_][_0_][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
+                        date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
                         new_field.answer = [Paragraph(date_str, style.normal)]
                     # if time
                     elif validation == 'time':

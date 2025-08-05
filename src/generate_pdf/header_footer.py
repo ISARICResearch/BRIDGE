@@ -37,7 +37,7 @@ def generate_header_footer(canvas, doc, title):
     canvas.drawRightString(8 * inch, .4 * inch, page_text)
 
 
-def generate_guide_header_footer(canvas, doc, title):
+def generate_guide_header_footer(canvas, doc, title, toc_pages=0):
     current_date = datetime.now()
     formatted_date = current_date.strftime("%d%b%y").upper()
 
@@ -64,5 +64,22 @@ def generate_guide_header_footer(canvas, doc, title):
 
     # Draw page number on the bottom right
     canvas.setFont("DejaVuSans", 9)
-    page_text = str(doc.page - 1)
+
+    def pageNum():
+        if doc.page <= toc_pages:
+            if doc.page == 1: return "i"
+            if doc.page == 2: return "ii"
+            if doc.page == 3: return "iii"
+            if doc.page == 4: return "iv"
+            if doc.page == 5: return "v"
+            if doc.page == 6: return "vi"
+            if doc.page == 7: return "vii"
+            if doc.page == 8: return "viii"
+            if doc.page == 9: return "ix"
+            if doc.page == 10: return "x"
+            return "_"
+        else:
+            return str(doc.page - toc_pages)
+
+    page_text = pageNum()
     canvas.drawRightString(8 * inch, .4 * inch, page_text)
