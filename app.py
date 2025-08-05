@@ -5,7 +5,6 @@ import re
 import zipfile
 from datetime import datetime
 from os.path import join, abspath, dirname
-from urllib.parse import parse_qs, urlparse
 
 import dash
 import dash_ag_grid as dag
@@ -17,10 +16,10 @@ from dash.exceptions import PreventUpdate
 from unidecode import unidecode
 
 import src.generate_pdf.form as form
-from src.logger import setup_logger
 from src import arc, bridge_modals, paper_crf, index
 from src.arc_api import ArcApiClient
 from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
+from src.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
 
@@ -72,14 +71,11 @@ INITIAL_GROUPED_PRESETS = json.dumps(GROUPED_PRESETS)
 
 app.layout = html.Div(
     [
-        dcc.Store(id='show-Take a Look at Our Other Tools', data=True),  # Store to manage which page to display
-
         dcc.Store(id='current_datadicc-store', data=INITIAL_CURRENT_DATADICC),
         dcc.Store(id='ulist_variable_choices-store', data=INITIAL_ULIST_VARIABLE_CHOICES),
         dcc.Store(id='multilist_variable_choices-store', data=INITIAL_MULTILIST_VARIABLE_CHOICES),
         dcc.Store(id='grouped_presets-store', data=INITIAL_GROUPED_PRESETS),
         dcc.Store(id='tree_items_data-store', data=INITIAL_GROUPED_PRESETS),
-        dcc.Store(id='checklist-values-store', data={}),
 
         dcc.Store(id='templates_checks_ready', data=False),
 
@@ -160,64 +156,6 @@ def start_app(n_clicks):
         return '/'
     else:
         return '/main'
-
-
-####################
-# get URL parameter
-####################
-@app.callback(
-    [
-        Output('crf_name', 'value'),
-        Output({'type': 'template_check', 'index': dash.ALL}, 'value')
-    ],
-    [
-        Input('templates_checks_ready', 'data')
-    ],
-    [
-        State('url', 'href')
-    ],
-    prevent_initial_call=True,
-)
-def update_output_based_on_url(template_check_flag, href):
-    if not template_check_flag:
-        return dash.no_update
-
-    if href is None:
-        return [''] + [[] for _ in GROUPED_PRESETS.keys()]
-
-    if '?param=' in href:
-        # Parse the URL to extract the parameters
-        parsed_url = urlparse(href)
-        params = parse_qs(parsed_url.query)
-
-        # Accessing the 'param' parameter
-        param_value = params.get('param', [''])[0]  # Default to an empty string if the parameter is not present
-        param_map = {
-            'ari': 'ARChetype Syndromic CRF_ARI',
-            'mpox': 'ARChetype Disease CRF_Mpox',
-            'dengue': 'ARChetype Disease CRF_Dengue',
-            'h5nx': 'ARChetype Disease CRF_H5Nx',
-            'covid': 'ARChetype Disease CRF_Covid',
-        }
-
-        if param_value in param_map:
-            param_value = param_map[param_value]
-        # Example: Split param_value by underscore
-        group, value = param_value.split('_') if '_' in param_value else (None, None)
-
-        # Prepare the outputs
-        checklist_values = {key: [] for key in GROUPED_PRESETS.keys()}
-
-        if group in GROUPED_PRESETS and value in GROUPED_PRESETS[group]:
-            checklist_values[group] = [value]
-
-        # Return the value for 'crf_name' and checklist values
-        return [value], [checklist_values[key] for key in GROUPED_PRESETS.keys()]
-    else:
-        return dash.no_update
-
-
-#################################
 
 
 @app.callback(
@@ -503,7 +441,7 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
 
         return (
             {'selected_version': selected_version},
-            {'selected_language': selected_language},  #
+            {'selected_language': selected_language},
             {'commit': version_commit},
             version_accordion_items,
             version_presets,
@@ -598,12 +536,12 @@ def update_for_template_options(version, language, df_current_datadicc, answer_o
 
 
 def get_checked_template_list(grouped_presets_dict, checked_values_list):
-    checked_template_list = []
-    for template_section, template_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
-        if template_checked_list:  # Check if the list of values is not empty
-            for template_checked in template_checked_list:
-                checked_template_list.append([template_section, template_checked.replace(' ', '_')])
-    return checked_template_list
+    output = []
+    for section, item_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
+        if item_checked_list:
+            for item_checked in item_checked_list:
+                output.append([section, item_checked.replace(' ', '_')])
+    return output
 
 
 @app.callback(
@@ -882,7 +820,7 @@ def get_crf_name(crf_name, checked_values):
     ],
     prevent_initial_call=True
 )
-def on_generate_click(n_clicks, json_data, selected_version_data, selected_language_data, checked_variables, crf_name,
+def on_generate_click(n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name,
                       output_files, browser_info):
     ctx = dash.callback_context
 
@@ -898,7 +836,7 @@ def on_generate_click(n_clicks, json_data, selected_version_data, selected_langu
 
     if trigger_id == 'crf_generate':
         date = datetime.today().strftime('%Y-%m-%d')
-        crf_name = get_crf_name(crf_name, checked_variables)
+        crf_name = get_crf_name(crf_name, checked_presets)
 
         selected_variables_fromData = pd.read_json(io.StringIO(json_data), orient='split')
         currentVersion = selected_version_data.get('selected_version', None)
@@ -969,15 +907,14 @@ def on_generate_click(n_clicks, json_data, selected_version_data, selected_langu
     ],
     [
         State('current_datadicc-store', 'data'),
-        State('grouped_presets-store', 'data'),
         State('selected-version-store', 'data'),
         State('selected-language-store', 'data'),
         State('crf_name', 'value'),
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, grouped_presets,
-                  selected_version_data, selected_language_data, crf_name):
+def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, selected_version_data,
+                  selected_language_data, crf_name):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
@@ -997,14 +934,6 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, current_
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
-
-        checked_template_list = get_checked_template_list(grouped_presets, checked_template_values)
-        preset_list = []
-        for ps in checked_template_list:
-            checked_key = 'preset_' + ps[0] + '_' + ps[1]
-            preset_list.append(checked_key)
-        preset_list_output = '|'.join(preset_list)
-        df_save.loc[:, 'Checked Presets'] = preset_list_output
 
         output = io.BytesIO()
         df_save.to_csv(output, index=False, encoding='utf8')
@@ -1145,16 +1074,9 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
 
     upload_answer_opt_dict1 = []
     upload_answer_opt_dict2 = []
-    checked_presets = [x for x in df_upload['Checked Presets'].drop_duplicates() if pd.notnull(x)]
-    if checked_presets:
-        check_preset_list = checked_presets[0].split('|')
-        for checked_key in check_preset_list:
-            df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-                upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2,
-                checked_key=checked_key)
-    else:
-        df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-            upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+
+    df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
+        upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
 
     return (
         tree_items,
