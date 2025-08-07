@@ -88,20 +88,24 @@ class ArcApiClient:
         return df
 
     def get_dataframe_arc_version_language(self, version, language):
-        url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language, 'ARCH.csv'])
+        url = '/'.join(
+            [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language,
+             'ARCH.csv'])
         df = self._write_to_dataframe(url)
         return df
 
     def get_dataframe_arc_list_version_language(self, version, language, list_name):
         url = '/'.join(
-            [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language, 'Lists', f'{list_name}.csv'])
+            [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language,
+             'Lists', f'{list_name}.csv'])
         df = self._write_to_dataframe(url)
         df = df.sort_values(by=df.columns[0], ascending=True)
         return df
 
-    def get_arc_language_list(self, version):
+    def get_arc_language_list_version(self, version):
         url = '/'.join([self.BASE_URL_API, 'ARC-Translations', 'contents', self.get_arch_version_string(version)])
-        df = self._write_to_dataframe(url, json=True)
+        language_json = self._get_api_response(url).json()
+        df = pd.DataFrame.from_dict(language_json)
         language_list = df['name'].to_list()
         return language_list
 
