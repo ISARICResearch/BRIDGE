@@ -485,14 +485,15 @@ def update_input_language(data):
     Output("dropdown-ARC-language-menu", "children"),
     Output("language-list-store", "data"),
     [
-        Input("dropdown-ARC_version_input", "value")
+        Input('selected-version-store', 'data'),
     ],
-    [
-        State("language-list-store", "data"),
-    ]
 )
-def update_language_dropdown(version, language_list_data):
-    arc_languages = ArcApiClient().get_arc_language_list_version(version)
+def update_language_dropdown(selected_version_data):
+    if not selected_version_data:
+        return dash.no_update, dash.no_update
+
+    current_version = selected_version_data.get('selected_version', None)
+    arc_languages = ArcApiClient().get_arc_language_list_version(current_version)
     arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
                           i, language in enumerate(arc_languages)]
     return arc_language_items, arc_languages
