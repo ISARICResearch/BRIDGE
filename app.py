@@ -422,10 +422,8 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
         selected_version = ARC_VERSION_LIST[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
-        if selected_language_data:
-            selected_language = selected_language_data.get('selected_language')
-        else:
-            selected_language = 'English'
+        # Reset to English to ensure the data is present
+        selected_language = 'English'
 
     elif button_type == 'dynamic-language':
         selected_language = language_list_data[button_index]
