@@ -310,8 +310,8 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                                 if i[2] == 1:
                                     checked_items.append(str(i[0]) + '_' + i[1])
 
-                    return True, question + ' [' + selected[0] + ']', definition, completion, {
-                        "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
+                    return True, question + ' [' + selected[0] + ']', definition, completion, {"maxHeight": "250px",
+                                                                                               "overflowY": "auto"}, {
                         "display": "none"}, options, checked_items, []
                 else:
                     options = []

@@ -87,7 +87,6 @@ def variableInformation_modal():
                         ],
                         id='options-checklist',
                         value=[1],
-                        style={"padding": "20px"}
                     ),
                     dbc.ListGroup(
                         [
@@ -97,7 +96,7 @@ def variableInformation_modal():
                         id='options-list-group',
                         style={"display": "none"}
                     ),
-
+                    html.Br(),
                     html.H5("Completion Guide:"),
                     html.P("Completion guide text here", id='completion-guide-text')
                 ]
