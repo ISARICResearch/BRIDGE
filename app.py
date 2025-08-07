@@ -292,38 +292,43 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     dict2 = json.loads(multilist_variable_choices_saved)
     datatatata = dict1 + dict2
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    if selected is not None:
-        if len(selected) > 0:
-            if selected[0] in list(current_datadicc['Variable']):
-                question = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                completion = \
-                    current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                ulist_variables = [i[0] for i in datatatata]
-                if selected[0] in ulist_variables:
-                    for item in datatatata:
-                        if item[0] == selected[0]:
-                            options = []
-                            checked_items = []
-                            for i in item[1]:
-                                options.append({"label": str(i[0]) + ', ' + i[1], "value": str(i[0]) + '_' + i[1]})
-                                if i[2] == 1:
-                                    checked_items.append(str(i[0]) + '_' + i[1])
 
-                    return True, question + ' [' + selected[0] + ']', definition, completion, {"maxHeight": "250px",
-                                                                                               "overflowY": "auto"}, {
-                        "display": "none"}, options, checked_items, []
+    if selected:
+        selected_variable = selected[0]
+        if selected_variable in list(current_datadicc['Variable']):
+            question = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+            definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+            completion = \
+                current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+            ulist_variables = [i[0] for i in datatatata]
+            if selected_variable in ulist_variables:
+                for item in datatatata:
+                    if item[0] == selected_variable:
+                        options = []
+                        checked_items = []
+                        for i in item[1]:
+                            options.append({"number": int(i[0]), "label": str(i[0]) + ', ' + i[1], "value": str(i[0]) + '_' + i[1]})
+                            if i[2] == 1:
+                                checked_items.append(str(i[0]) + '_' + i[1])
+
+                sorted_options = sorted(options, key=lambda x: x['number'])
+                for option in sorted_options:
+                    del option['number']
+
+                return True, question + ' [' + selected_variable + ']', definition, completion, {"maxHeight": "250px",
+                                                                                           "overflowY": "auto"}, {
+                    "display": "none"}, sorted_options, checked_items, []
+            else:
+                options = []
+                answ_options = \
+                    current_datadicc['Answer Options'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+                if isinstance(answ_options, str):
+                    for i in answ_options.split('|'):
+                        options.append(dbc.ListGroupItem(i))
                 else:
                     options = []
-                    answ_options = \
-                        current_datadicc['Answer Options'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                    if isinstance(answ_options, str):
-                        for i in answ_options.split('|'):
-                            options.append(dbc.ListGroupItem(i))
-                    else:
-                        options = []
-                    return True, question + ' [' + selected[0] + ']', definition, completion, {"display": "none"}, {
-                        "maxHeight": "250px", "overflowY": "auto"}, [], [], options
+                return True, question + ' [' + selected_variable + ']', definition, completion, {"display": "none"}, {
+                    "maxHeight": "250px", "overflowY": "auto"}, [], [], options
 
     return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
@@ -379,7 +384,8 @@ def get_version_language_related_data(selected_version, selected_language):
         )
         for section, preset_names in version_grouped_presets.items()
     ]
-    return df_version_language, version_commit, version_grouped_presets, accordion_items
+    return (df_version_language, version_commit, version_grouped_presets, accordion_items,
+            json.dumps(version_ulist_variable_choices), json.dumps(version_multilist_variable_choices))
 
 
 @app.callback(
@@ -390,7 +396,9 @@ def get_version_language_related_data(selected_version, selected_language):
         Output('preset-accordion', 'children', allow_duplicate=True),
         Output('grouped_presets-store', 'data'),
         Output('current_datadicc-store', 'data', allow_duplicate=True),
-        Output('templates_checks_ready', 'data')
+        Output('templates_checks_ready', 'data'),
+        Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
+        Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
     ],
     [
         Input({'type': 'dynamic-version', 'index': dash.ALL}, 'n_clicks'),
@@ -409,7 +417,8 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
 
     # Si no hay cambios (es decir, no hay un input activado), no se hace nada
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
+                dash.no_update, dash.no_update)
 
     button_id = ctx.triggered[0]['prop_id'].split(".")[0]
     button_index = json.loads(button_id)["index"]
@@ -421,19 +430,27 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
     if button_type == 'dynamic-version':
         selected_version = ARC_VERSION_LIST[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                    False, dash.no_update, dash.no_update)
         # Reset to English to ensure the data is present
         selected_language = 'English'
 
     elif button_type == 'dynamic-language':
         selected_language = language_list_data[button_index]
         if selected_language_data and selected_language == selected_language_data.get('selected_language', None):
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                    False, dash.no_update, dash.no_update)
         selected_version = selected_version_data.get('selected_version')
 
     try:
-        df_version, version_commit, version_presets, version_accordion_items = get_version_language_related_data(
-            selected_version, selected_language)
+        (
+            df_version,
+            version_commit,
+            version_presets,
+            version_accordion_items,
+            version_ulist_variable_choices,
+            version_multilist_variable_choices
+        ) = get_version_language_related_data(selected_version, selected_language)
         logger.info(f'selected_version: {selected_version}')
         logger.info(f'selected_language: {selected_language}')
         logger.info(f'version_presets: {version_presets}')
@@ -445,10 +462,13 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
             version_accordion_items,
             version_presets,
             df_version.to_json(date_format='iso', orient='split'),
-            True
+            True,
+            version_ulist_variable_choices,
+            version_multilist_variable_choices
         )
     except json.JSONDecodeError:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
+                dash.no_update, dash.no_update)
 
 
 @app.callback(
@@ -1023,7 +1043,8 @@ def load_upload_arc_version(upload_version_data, upload_language_data, selected_
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
     try:
-        df_upload_version, version_commit, version_grouped_presets, version_accordion_items = get_version_language_related_data(
+        (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
+         version_ulist_variable_choices, version_multilist_variable_choices) = get_version_language_related_data(
             upload_version, upload_language)
         logger.info(f'upload_version: {upload_version}')
         logger.info(f'upload_language: {upload_language}')
