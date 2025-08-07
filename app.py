@@ -36,23 +36,25 @@ logger.info('Starting BRIDGE application')
 # Global variables
 CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
 
-ARC_VERSIONS, CURRENT_VERSION = arc.getARCVersions()
-ARC_LANGUAGES = ArcApiClient().get_arc_language_list(CURRENT_VERSION)
+ARC_VERSION_LIST, ARC_VERSION_INITIAL = arc.getARCVersions()
+ARC_LANGUAGE_LIST_INITIAL = ArcApiClient().get_arc_language_list_version(ARC_VERSION_INITIAL)
+ARC_LANGUAGE_INITIAL = 'English'
 
-CURRENT_DATADICC, PRESETS, COMMIT = arc.getARC(CURRENT_VERSION)
+CURRENT_DATADICC, PRESETS, COMMIT = arc.getARC(ARC_VERSION_INITIAL)
 CURRENT_DATADICC = arc.add_required_datadicc_columns(CURRENT_DATADICC)
 
-TREE_ITEMS_DATA = arc.getTreeItems(CURRENT_DATADICC, CURRENT_VERSION)
+TREE_ITEMS_DATA = arc.getTreeItems(CURRENT_DATADICC, ARC_VERSION_INITIAL)
 
 # List content Transformation
-ARC_LISTS, LIST_VARIABLE_CHOICES = arc.getListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+ARC_LISTS, LIST_VARIABLE_CHOICES = arc.getListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
 CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_LISTS, arc.getVariableOrder(CURRENT_DATADICC))
 
 # User List content Transformation
-ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.getUserListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.getUserListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
 CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_ULIST, arc.getVariableOrder(CURRENT_DATADICC))
 
-ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.getMultuListContent(CURRENT_DATADICC, CURRENT_VERSION, 'English')
+ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.getMultuListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL,
+                                                                    ARC_LANGUAGE_INITIAL)
 CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_MULTILIST, arc.getVariableOrder(CURRENT_DATADICC))
 
 INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='split')
@@ -98,6 +100,7 @@ app.layout = html.Div(
                     ),
         dcc.Store(id='commit-store'),
         dcc.Store(id='selected_data-store'),
+        dcc.Store(id='language-list-store', data=ARC_LANGUAGE_LIST_INITIAL),
         dcc.Store(id='upload-version-store'),
         dcc.Store(id='upload-language-store'),
         dcc.Store(id='upload-crf-ready', data=False),
@@ -130,7 +133,8 @@ def main_app():
             type="circle",  # Spinner style: 'default', 'circle', 'dot'
             fullscreen=True,  # Covers the full screen
             children=[
-                Settings(ARC_VERSIONS, ARC_LANGUAGES, CURRENT_VERSION, 'English').settings_column,
+                Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST_INITIAL, ARC_VERSION_INITIAL,
+                         ARC_LANGUAGE_INITIAL).settings_column,
                 Presets.preset_column,
                 TreeItems(TREE_ITEMS_DATA).tree_column,
                 MainContent.main_content,
@@ -400,10 +404,11 @@ def get_version_language_related_data(selected_version, selected_language):
     [
         State('selected-version-store', 'data'),
         State('selected-language-store', 'data'),
+        State('language-list-store', 'data'),
     ],
     prevent_initial_call=True  # Evita que se dispare al inicio
 )
-def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data):
+def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data, language_list_data):
     ctx = dash.callback_context
 
     # Si no hay cambios (es decir, no hay un input activado), no se hace nada
@@ -418,7 +423,7 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
     selected_language = None
 
     if button_type == 'dynamic-version':
-        selected_version = ARC_VERSIONS[button_index]
+        selected_version = ARC_VERSION_LIST[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
         if selected_language_data:
@@ -427,7 +432,7 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
             selected_language = 'English'
 
     elif button_type == 'dynamic-language':
-        selected_language = ARC_LANGUAGES[button_index]
+        selected_language = language_list_data[button_index]
         if selected_language_data and selected_language == selected_language_data.get('selected_language', None):
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False
         selected_version = selected_version_data.get('selected_version')
@@ -474,6 +479,23 @@ def update_input_language(data):
     if data is None:
         return dash.no_update
     return data.get('selected_language')
+
+
+@app.callback(
+    Output("dropdown-ARC-language-menu", "children"),
+    Output("language-list-store", "data"),
+    [
+        Input("dropdown-ARC_version_input", "value")
+    ],
+    [
+        State("language-list-store", "data"),
+    ]
+)
+def update_language_dropdown(version, language_list_data):
+    arc_languages = ArcApiClient().get_arc_language_list_version(version)
+    arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
+                          i, language in enumerate(arc_languages)]
+    return arc_language_items, arc_languages
 
 
 def update_for_template_options(version, language, df_current_datadicc, answer_opt_dict1, answer_opt_dict2,
