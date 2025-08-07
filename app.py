@@ -272,7 +272,6 @@ def research_question(n_question):
     Output('modal_title', 'children'),
     Output('definition-text', 'children'),
     Output('completion-guide-text', 'children'),
-    Output('skip-logic-text', 'children'),
     Output('options-checklist', 'style'),
     Output('options-list-group', 'style'),
     Output('options-checklist', 'options'),
@@ -300,10 +299,6 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                 definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
                 completion = \
                     current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-                skip_logic = current_datadicc['Branch'].loc[current_datadicc['Variable'] == selected[0]].iloc[0]
-
-                branch = skip_logic
-
                 ulist_variables = [i[0] for i in datatatata]
                 if selected[0] in ulist_variables:
                     for item in datatatata:
@@ -315,7 +310,7 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                                 if i[2] == 1:
                                     checked_items.append(str(i[0]) + '_' + i[1])
 
-                    return True, question + ' [' + selected[0] + ']', definition, completion, branch, {
+                    return True, question + ' [' + selected[0] + ']', definition, completion, {
                         "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
                         "display": "none"}, options, checked_items, []
                 else:
@@ -327,10 +322,10 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                             options.append(dbc.ListGroupItem(i))
                     else:
                         options = []
-                    return True, question + ' [' + selected[0] + ']', definition, completion, branch, {
-                        "display": "none"}, {"maxHeight": "250px", "overflowY": "auto"}, [], [], options
+                    return True, question + ' [' + selected[0] + ']', definition, completion, {"display": "none"}, {
+                        "maxHeight": "250px", "overflowY": "auto"}, [], [], options
 
-    return False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
+    return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
 def get_dataframe_arc_language(df_version, selected_version, selected_language):
@@ -408,7 +403,8 @@ def get_version_language_related_data(selected_version, selected_language):
     ],
     prevent_initial_call=True  # Evita que se dispare al inicio
 )
-def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data, language_list_data):
+def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data,
+                       language_list_data):
     ctx = dash.callback_context
 
     # Si no hay cambios (es decir, no hay un input activado), no se hace nada
