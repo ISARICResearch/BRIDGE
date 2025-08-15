@@ -486,7 +486,7 @@ def home_page():
                     html.H4("Accelerating Outbreak Research Response", className="mb-3"),
                     html.P(["BRIDGE automates the creation of Case Report Forms (CRFs) tailored to specific diseases and research contexts. ",
                         "You can build your CRF by selecting questions from the ARC library or using ready-made ",
-                        html.A("ARChetype CRF templates", href="https://isaricresearch.github.io/CCP-Study-Documents/ARChetype-CRF-Guidelines", target="_blank"),
+                        html.A("ARChetype CRF templates", href="https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines", target="_blank"),
                         ". BRIDGE then generates the required data dictionary and XML to set up a REDCap database, fully aligned with the ARC structure. ",
                         "Learn more in our ",
                         html.A("guide for getting started.", href="https://ISARICResearch.github.io/Training/bridge_starting.html", target="_blank")
