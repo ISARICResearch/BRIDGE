@@ -46,21 +46,41 @@ jobs:
 
       - name: SSH into EC2 and Deploy Container
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-          export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-          export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-          export AWS_SESSION_TOKEN=$(aws configure get aws_session_token)
-          # Authenticate to ECR
-          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
-
-          # Stop and remove the existing container if running
-          docker stop isaric-bridge || true
-          docker rm isaric-bridge || true
-
-          # Pull the latest Docker image from ECR
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} <<'EOF'
+          set -Eeuo pipefail
+          trap 'echo "Error on line \$LINENO"; exit 1' ERR
+          
+          AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+          AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+          AWS_SESSION_TOKEN=$(aws configure get aws_session_token)
+          export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+          
+          # ECR login
+          aws ecr get-login-password --region eu-west-2 \
+          | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+          
+          # Stop & remove previous container
+          docker stop isaric-bridge 2>/dev/null || true
+          docker rm -v isaric-bridge 2>/dev/null || true
+          
+          # Pull and start
           docker pull ${{ secrets.ECR_REPOSITORY }}:latest
-          docker run -d --restart unless-stopped --name isaric-bridge -p 8050:8050 ${{ secrets.ECR_REPOSITORY }}:latest
-
+          docker run -d --restart unless-stopped --name isaric-bridge \
+            --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
+            -p 8050:8050 \
+            ${{ secrets.ECR_REPOSITORY }}:latest
+          
+          # verify it's up
+          sleep 3
+          if ! docker ps --filter "name=^/isaric-bridge$" --format '{{.Status}}' | grep -q .; then
+            echo "Container failed to start"
+            docker logs --tail 200 isaric-bridge || true
+            exit 1
+          fi
+          
+          # Clean up
+          docker image prune -f
+          docker volume prune -f
           EOF
 
       - name: Cleanup private key
