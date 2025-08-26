@@ -706,11 +706,12 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
         State('input', 'checked'),
         State('ulist_variable_choices-store', 'data'),
         State('multilist_variable_choices-store', 'data'),
+        State('selected-language-store', "data"),
     ],
     prevent_initial_call=True
 )
 def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
-                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved):
+                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_language):
     ctx = callback_context
 
     if not ctx.triggered:
@@ -720,6 +721,9 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
+
+        translations_for_language = arc.get_translations(selected_language)
+        other_text = translations_for_language['other']
 
         variable_submitted = modal_title.split('[')[1][:-1]
 
@@ -755,10 +759,10 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     new_submited_line.append([var_select, new_submited_options])
                     ulist_variable_choices_dict[position][1] = new_submited_line[0][1]
                     current_datadicc.loc[current_datadicc[
-                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, Other'
+                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
                     if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
                         current_datadicc.loc[current_datadicc[
-                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, Other'
+                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
 
                 position += 1
             ulist_variable_choicesSubmit = ulist_variable_choices_dict
@@ -784,10 +788,10 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     new_submited_line_multi_check.append([var_select_multi_check, new_submited_options_multi_check])
                     multilist_variable_choices_dict[position_multi_check][1] = new_submited_line_multi_check[0][1]
                     current_datadicc.loc[current_datadicc[
-                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, Other'
+                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, ' + other_text
                     if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
                         current_datadicc.loc[current_datadicc[
-                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, Other'
+                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, ' + other_text
                 position_multi_check += 1
             multilist_variable_choicesSubmit = multilist_variable_choices_dict
 
