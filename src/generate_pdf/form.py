@@ -53,6 +53,8 @@ def format_choices(choices_str, field_type, threshold=65, is_units=False):
         symbol = "○ "
     elif field_type == 'user_list':
         symbol = "○ "
+    elif field_type == 'multi_list':
+        symbol = "□ "
     elif field_type == 'checkbox':
         symbol = "□ "
     elif field_type == 'dropdown':
