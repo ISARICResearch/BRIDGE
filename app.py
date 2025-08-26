@@ -102,7 +102,6 @@ app.layout = html.Div(
         dcc.Store(id='upload-version-store'),
         dcc.Store(id='upload-language-store'),
         dcc.Store(id='upload-crf-ready', data=False),
-        dcc.Store(id='upload-list-store'),
         dcc.Store(id="browser-info-store"),
 
         dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
@@ -712,13 +711,12 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
 )
 def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
                           checked, ulist_variable_choices_saved, multilist_variable_choices_saved):
-
     ctx = callback_context
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
+    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
@@ -813,7 +811,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     elif button_id == 'modal_cancel':
         # Just close the modal without doing anything else
         return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
 
     return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
@@ -1064,6 +1061,8 @@ def on_upload_crf(filename, file_contents):
         Output('current_datadicc-store', 'data', allow_duplicate=True),
         Output('upload-crf-ready', 'data'),
         Output('crf_name', 'value', allow_duplicate=True),
+        Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
+        Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
     ],
     [
         Input('upload-version-store', 'data'),
@@ -1080,14 +1079,16 @@ def load_upload_arc_version_language(upload_version_data, upload_language_data, 
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
+                None, dash.no_update, dash.no_update)
 
     upload_version = upload_version_data.get('upload_version', None)
     upload_language = upload_language_data.get('upload_language', None)
 
     if ((selected_version_data and upload_version == selected_version_data.get('selected_version', None)) and (
             selected_language_data and upload_language == selected_language_data.get('selected_language', None))):
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True, None
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True,
+                None, dash.no_update, dash.no_update)
 
     try:
         (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
@@ -1104,15 +1105,18 @@ def load_upload_arc_version_language(upload_version_data, upload_language_data, 
             df_upload_version.to_json(date_format='iso', orient='split'),
             True,
             None,
+            version_ulist_variable_choices,
+            version_multilist_variable_choices,
         )
     except json.JSONDecodeError:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
+                None, dash.no_update, dash.no_update)
 
 
-def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_type):
+def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_choices, list_type):
     selected_column = f'{list_type} Selected'
     # Use a dataframe to make replacing values easier
-    df_list_all = pd.DataFrame(list_variable_choices, columns=['Variable', selected_column])
+    df_list_all = pd.DataFrame(json.loads(list_variable_choices), columns=['Variable', selected_column])
     df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
 
     for index, row in df_list_upload.iterrows():
@@ -1123,6 +1127,10 @@ def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_
             list_index = df_list_all[df_list_all['Variable'] == list_name].index
             list_values = df_list_all.loc[list_index, selected_column].values[0]
             list_values_updated = []
+
+            datadicc_index = df_datadicc.loc[df_datadicc['Variable'] == list_name].index
+            datadicc_values_updated = []
+
             for list_value in list_values:
                 list_value_name = list_value[1]
                 if list_value_name not in boxes_checked_list:
@@ -1130,12 +1138,14 @@ def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_
                 else:
                     list_value_number = list_value[0]
                     list_values_updated.append([list_value_number, list_value_name, 1])
+                    datadicc_values_updated.append(f'{list_value_number}, {list_value_name}')
 
             df_list_all.loc[list_index, selected_column] = pd.Series([list_values_updated])
+            df_datadicc.loc[datadicc_index, 'Answer Options'] = ' | '.join(datadicc_values_updated)
 
     list_variable_choices_updated = df_list_all.values.tolist()
 
-    return list_variable_choices_updated
+    return df_datadicc, list_variable_choices_updated
 
 
 @app.callback(
@@ -1145,8 +1155,6 @@ def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_
         Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
         Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
         Output('upload-crf', 'contents'),
-        Output('modal_submit', 'n_clicks'),
-        Output('upload-list-store', 'data'),
     ],
     [
         Input('upload-crf-ready', 'data'),
@@ -1156,25 +1164,27 @@ def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_
         State('upload-language-store', 'data'),
         State('upload-crf', 'contents'),
         State('current_datadicc-store', 'data'),
+        State('ulist_variable_choices-store', 'data'),
+        State('multilist_variable_choices-store', 'data'),
     ],
     prevent_initial_call=True
 )
 def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_language_data, upload_crf_contents,
-                             current_datadicc_saved):
+                             upload_version_lang_datadicc_saved, upload_version_lang_ulist_saved,
+                             upload_version_lang_multilist_saved):
     ctx = dash.callback_context
 
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     upload_version = upload_version_data.get('upload_version', None)
-    upload_language = upload_language_data.get('upload_language', None)
     upload_type, upload_string = upload_crf_contents.split(',')
     upload_decoded = base64.b64decode(upload_string)
-    df_upload = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
-    checked = list(df_upload['Variable'])
+    df_upload_csv = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
+    checked = list(df_upload_csv['Variable'])
 
-    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    tree_items_current_datadicc = arc.getTreeItems(df_current_datadicc, upload_version)
+    df_version_lang_datadicc = pd.read_json(io.StringIO(upload_version_lang_datadicc_saved), orient='split')
+    tree_items_current_datadicc = arc.getTreeItems(df_version_lang_datadicc, upload_version)
 
     tree_items = html.Div(
         dash_treeview_antd.TreeView(
@@ -1188,30 +1198,24 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
         className='tree-item',
     )
 
-    df_upload_ulist = df_upload[['Variable', 'Ulist Selected']]
-    df_upload_multilist = df_upload[['Variable', 'Multilist Selected']]
+    df_upload_ulist = df_upload_csv[['Variable', 'Ulist Selected']]
+    df_upload_multilist = df_upload_csv[['Variable', 'Multilist Selected']]
 
-    ulist_variable_choices = []
-    multilist_variable_choices = []
-    df_current_datadicc, ulist_variable_choices, multilist_variable_choices = update_for_template_options(
-        upload_version, upload_language, df_current_datadicc, ulist_variable_choices, multilist_variable_choices)
-
-    ulist_variable_choices = update_list_for_upload_selected(df_upload_ulist, ulist_variable_choices, 'Ulist')
-    multilist_variable_choices = update_list_for_upload_selected(df_upload_multilist, multilist_variable_choices,
-                                                                 'Multilist')
-
-    upload_list_ulist = list(df_upload_ulist[df_upload_ulist['Ulist Selected'].notnull()]['Variable'])
-    upload_list_multilist = list(df_upload_multilist[df_upload_multilist['Multilist Selected'].notnull()]['Variable'])
-    upload_list = upload_list_ulist + upload_list_multilist
+    df_datadicc_selected, ulist_variables_selected = update_for_upload_list_selected(df_version_lang_datadicc,
+                                                                                     df_upload_ulist,
+                                                                                     upload_version_lang_ulist_saved,
+                                                                                     'Ulist')
+    df_datadicc_selected, multilist_variables_selected = update_for_upload_list_selected(df_datadicc_selected,
+                                                                                         df_upload_multilist,
+                                                                                         upload_version_lang_multilist_saved,
+                                                                                         'Multilist')
 
     return (
         tree_items,
-        df_current_datadicc.to_json(date_format='iso', orient='split'),
-        json.dumps(ulist_variable_choices),
-        json.dumps(multilist_variable_choices),
+        df_datadicc_selected.to_json(date_format='iso', orient='split'),
+        json.dumps(ulist_variables_selected),
+        json.dumps(multilist_variables_selected),
         None,
-        1,
-        upload_list,
     )
 
 
