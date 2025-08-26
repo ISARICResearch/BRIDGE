@@ -61,8 +61,6 @@ INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='s
 INITIAL_ULIST_VARIABLE_CHOICES = json.dumps(ULIST_VARIABLE_CHOICES)
 INITIAL_MULTILIST_VARIABLE_CHOICES = json.dumps(MULTILIST_VARIABLE_CHOICES)
 
-MODIFIED_LIST = []
-
 # Grouping presets by the first column
 GROUPED_PRESETS = {}
 
@@ -104,6 +102,7 @@ app.layout = html.Div(
         dcc.Store(id='upload-version-store'),
         dcc.Store(id='upload-language-store'),
         dcc.Store(id='upload-crf-ready', data=False),
+        dcc.Store(id='upload-list-store'),
         dcc.Store(id="browser-info-store"),
 
         dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
@@ -307,7 +306,8 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                         options = []
                         checked_items = []
                         for i in item[1]:
-                            options.append({"number": int(i[0]), "label": str(i[0]) + ', ' + i[1], "value": str(i[0]) + '_' + i[1]})
+                            options.append({"number": int(i[0]), "label": str(i[0]) + ', ' + i[1],
+                                            "value": str(i[0]) + '_' + i[1]})
                             if i[2] == 1:
                                 checked_items.append(str(i[0]) + '_' + i[1])
 
@@ -316,7 +316,7 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                     del option['number']
 
                 return True, question + ' [' + selected_variable + ']', definition, completion, {"maxHeight": "250px",
-                                                                                           "overflowY": "auto"}, {
+                                                                                                 "overflowY": "auto"}, {
                     "display": "none"}, sorted_options, checked_items, []
             else:
                 options = []
@@ -389,6 +389,15 @@ def get_version_language_related_data(selected_version, selected_language):
 
 
 @app.callback(
+    Output('output-expanded', 'children'),
+    [
+        Input('input', 'expanded'),
+    ])
+def display_expanded(expanded):
+    return 'You have expanded {}'.format(expanded)
+
+
+@app.callback(
     [
         Output('selected-version-store', 'data', allow_duplicate=True),
         Output('selected-language-store', 'data', allow_duplicate=True),
@@ -408,11 +417,12 @@ def get_version_language_related_data(selected_version, selected_language):
         State('selected-version-store', 'data'),
         State('selected-language-store', 'data'),
         State('language-list-store', 'data'),
+        State('upload-crf-ready', 'data'),
     ],
     prevent_initial_call=True  # Evita que se dispare al inicio
 )
 def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_data, selected_language_data,
-                       language_list_data):
+                       language_list_data, upload_crf_ready):
     ctx = dash.callback_context
 
     # Si no hay cambios (es decir, no hay un input activado), no se hace nada
@@ -436,10 +446,11 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
         selected_language = 'English'
 
     elif button_type == 'dynamic-language':
-        selected_language = language_list_data[button_index]
-        if selected_language_data and selected_language == selected_language_data.get('selected_language', None):
-            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                    False, dash.no_update, dash.no_update)
+        if not upload_crf_ready:
+            selected_language = language_list_data[button_index]
+        else:
+            # We don't have the button_index if loading from file
+            selected_language = selected_language_data.get('selected_language', None)
         selected_version = selected_version_data.get('selected_version')
 
     try:
@@ -513,8 +524,8 @@ def update_language_dropdown(selected_version_data):
     return arc_language_items, arc_languages
 
 
-def update_for_template_options(version, language, df_current_datadicc, answer_opt_dict1, answer_opt_dict2,
-                                checked_key=None):
+def update_for_template_options(version, language, df_current_datadicc, ulist_variable_choices,
+                                multilist_variable_choices, checked_key=None):
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
@@ -566,10 +577,10 @@ def update_for_template_options(version, language, df_current_datadicc, answer_o
                 'Variable'] + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
 
         if row_tem_ul['Type'] == 'user_list':
-            answer_opt_dict1.append([row_tem_ul['Variable'], dict1_options])
+            ulist_variable_choices.append([row_tem_ul['Variable'], dict1_options])
         elif row_tem_ul['Type'] == 'multi_list':
-            answer_opt_dict2.append([row_tem_ul['Variable'], dict2_options])
-    return df_current_datadicc, answer_opt_dict1, answer_opt_dict2
+            multilist_variable_choices.append([row_tem_ul['Variable'], dict2_options])
+    return df_current_datadicc, ulist_variable_choices, multilist_variable_choices
 
 
 def get_checked_template_list(grouped_presets_dict, checked_values_list):
@@ -638,8 +649,8 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     checked_template_list = get_checked_template_list(grouped_presets, checked_variables)
 
     checked = []
-    templa_answer_opt_dict1 = []
-    templa_answer_opt_dict2 = []
+    ulist_variable_choices = []
+    multilist_variable_choices = []
 
     if len(checked_template_list) > 0:
         for ps in checked_template_list:
@@ -648,14 +659,14 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
                 checked = checked + list(
                     df_current_datadicc['Variable'].loc[df_current_datadicc[checked_key].notnull()])
 
-            df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-                current_version, current_language, df_current_datadicc, templa_answer_opt_dict1,
-                templa_answer_opt_dict2,
+            df_current_datadicc, ulist_variable_choices, multilist_variable_choices = update_for_template_options(
+                current_version, current_language, df_current_datadicc, ulist_variable_choices,
+                multilist_variable_choices,
                 checked_key=checked_key)
 
     else:
-        df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2 = update_for_template_options(
-            current_version, current_language, df_current_datadicc, templa_answer_opt_dict1, templa_answer_opt_dict2)
+        df_current_datadicc, ulist_variable_choices, multilist_variable_choices = update_for_template_options(
+            current_version, current_language, df_current_datadicc, ulist_variable_choices, multilist_variable_choices)
 
     tree_items = html.Div(
         dash_treeview_antd.TreeView(
@@ -672,8 +683,8 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     return (
         tree_items,
         df_current_datadicc.to_json(date_format='iso', orient='split'),
-        json.dumps(templa_answer_opt_dict1),
-        json.dumps(templa_answer_opt_dict2)
+        json.dumps(ulist_variable_choices),
+        json.dumps(multilist_variable_choices)
     )
 
 
@@ -695,30 +706,32 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
         State('options-checklist', 'value'),
         State('input', 'checked'),
         State('ulist_variable_choices-store', 'data'),
-        State('multilist_variable_choices-store', 'data')
+        State('multilist_variable_choices-store', 'data'),
     ],
     prevent_initial_call=True
 )
-def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, question, checked_options, checked,
-                          ulist_variable_choices_saved, multilist_variable_choices_saved):
-    dict1 = json.loads(ulist_variable_choices_saved)
-    dict2 = json.loads(multilist_variable_choices_saved)
+def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
+                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved):
 
     ctx = callback_context
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     if not ctx.triggered:
-        return dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
 
-        variable_submited = question.split('[')[1][:-1]
-        MODIFIED_LIST.append(variable_submited)
-        ulist_variables = [i[0] for i in ULIST_VARIABLE_CHOICES]
-        multilist_variables = [i[0] for i in MULTILIST_VARIABLE_CHOICES]
-        if (variable_submited in ulist_variables) | (variable_submited in multilist_variables):
+        variable_submitted = modal_title.split('[')[1][:-1]
+
+        ulist_variable_choices_dict = json.loads(ulist_variable_choices_saved)
+        multilist_variable_choices_dict = json.loads(multilist_variable_choices_saved)
+
+        ulist_variables = [i[0] for i in json.loads(ulist_variable_choices_saved)]
+        multilist_variables = [i[0] for i in json.loads(multilist_variable_choices_saved)]
+
+        if (variable_submitted in ulist_variables) | (variable_submitted in multilist_variables):
             list_options_checked = []
             for lo in checked_options:
                 list_options_checked.append(lo.split('_'))
@@ -728,8 +741,8 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
             new_submited_options = []
             new_submited_line = []
             position = 0
-            for var_select in dict1:
-                if (var_select[0] == variable_submited):
+            for var_select in ulist_variable_choices_dict:
+                if (var_select[0] == variable_submitted):
                     select_answer_options = ''
                     NOT_select_answer_options = ''
                     for option_var_select in (var_select[1]):
@@ -742,21 +755,21 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                             NOT_select_answer_options += str(option_var_select[0]) + ', ' + str(
                                 option_var_select[1]) + ' | '
                     new_submited_line.append([var_select, new_submited_options])
-                    dict1[position][1] = new_submited_line[0][1]
+                    ulist_variable_choices_dict[position][1] = new_submited_line[0][1]
                     current_datadicc.loc[current_datadicc[
-                                             'Variable'] == variable_submited, 'Answer Options'] = select_answer_options + '88, Other'
-                    if variable_submited + '_otherl2' in list(current_datadicc['Variable']):
+                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, Other'
+                    if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
                         current_datadicc.loc[current_datadicc[
-                                                 'Variable'] == variable_submited + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, Other'
+                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, Other'
 
                 position += 1
-            ulist_variable_choicesSubmit = dict1
+            ulist_variable_choicesSubmit = ulist_variable_choices_dict
 
             new_submited_options_multi_check = []
             new_submited_line_multi_check = []
             position_multi_check = 0
-            for var_select_multi_check in dict2:
-                if (var_select_multi_check[0] == variable_submited):
+            for var_select_multi_check in multilist_variable_choices_dict:
+                if (var_select_multi_check[0] == variable_submitted):
                     select_answer_options_multi_check = ''
                     NOT_select_answer_options_multi_check = ''
                     for option_var_select_multi_check in (var_select_multi_check[1]):
@@ -771,16 +784,16 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                             NOT_select_answer_options_multi_check += str(option_var_select_multi_check[0]) + ', ' + str(
                                 option_var_select_multi_check[1]) + ' | '
                     new_submited_line_multi_check.append([var_select_multi_check, new_submited_options_multi_check])
-                    dict2[position_multi_check][1] = new_submited_line_multi_check[0][1]
+                    multilist_variable_choices_dict[position_multi_check][1] = new_submited_line_multi_check[0][1]
                     current_datadicc.loc[current_datadicc[
-                                             'Variable'] == variable_submited, 'Answer Options'] = select_answer_options_multi_check + '88, Other'
-                    if variable_submited + '_otherl2' in list(current_datadicc['Variable']):
+                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, Other'
+                    if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
                         current_datadicc.loc[current_datadicc[
-                                                 'Variable'] == variable_submited + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, Other'
+                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, Other'
                 position_multi_check += 1
-            multilist_variable_choicesSubmit = dict2
+            multilist_variable_choicesSubmit = multilist_variable_choices_dict
 
-            checked.append(variable_submited)
+            checked.append(variable_submitted)
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(
                     id='input',
@@ -800,6 +813,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
     elif button_id == 'modal_cancel':
         # Just close the modal without doing anything else
         return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
 
     return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
@@ -932,6 +946,27 @@ def on_generate_click(n_clicks, json_data, selected_version_data, selected_langu
         return "", None, None, None, None
 
 
+def get_checked_data_for_list(df_list, checked_variables, list_type) -> pd.DataFrame:
+    column_list = ['Variable', f'{list_type} Selected']
+    df_out = pd.DataFrame(columns=column_list)
+    df_list_checked = df_list[df_list['Variable'].isin(checked_variables)]
+    if not df_list_checked.empty:
+        for index, row in df_list_checked.iterrows():
+            list_name = row['Variable']
+            list_values = row[list_type]
+            selected_list = []
+            df_selected = pd.DataFrame(columns=column_list)
+            for list_value in list_values:
+                list_value_name = list_value[1]
+                list_value_checked = int(list_value[2])
+                if list_value_checked == 1:
+                    selected_list.append(list_value_name)
+            df_selected.loc[index, 'Variable'] = str(list_name)
+            df_selected.loc[index, f'{list_type} Selected'] = '|'.join(selected_list)
+            df_out = pd.concat([df_out, df_selected], ignore_index=True)
+    return df_out
+
+
 @app.callback(
     [
         Output('loading-output-save', 'children'),
@@ -947,11 +982,13 @@ def on_generate_click(n_clicks, json_data, selected_version_data, selected_langu
         State('selected-version-store', 'data'),
         State('selected-language-store', 'data'),
         State('crf_name', 'value'),
+        State('ulist_variable_choices-store', 'data'),
+        State('multilist_variable_choices-store', 'data'),
     ],
     prevent_initial_call=True
 )
 def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, selected_version_data,
-                  selected_language_data, crf_name):
+                  selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
@@ -971,6 +1008,15 @@ def on_save_click(n_clicks, checked_template_values, checked_variables, current_
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
+
+        df_ulist_all = pd.DataFrame(json.loads(ulist_variable_choices_saved), columns=['Variable', 'Ulist'])
+        df_multilist_all = pd.DataFrame(json.loads(multilist_variable_choices_saved), columns=['Variable', 'Multilist'])
+
+        df_ulist_out = get_checked_data_for_list(df_ulist_all, checked_variables, 'Ulist')
+        df_multilist_out = get_checked_data_for_list(df_multilist_all, checked_variables, 'Multilist')
+
+        df_save = pd.merge(df_save, df_ulist_out, how='left', on='Variable')
+        df_save = pd.merge(df_save, df_multilist_out, how='left', on='Variable')
 
         output = io.BytesIO()
         df_save.to_csv(output, index=False, encoding='utf8')
@@ -1029,7 +1075,8 @@ def on_upload_crf(filename, file_contents):
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version(upload_version_data, upload_language_data, selected_version_data, selected_language_data):
+def load_upload_arc_version_language(upload_version_data, upload_language_data, selected_version_data,
+                                     selected_language_data):
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -1040,7 +1087,7 @@ def load_upload_arc_version(upload_version_data, upload_language_data, selected_
 
     if ((selected_version_data and upload_version == selected_version_data.get('selected_version', None)) and (
             selected_language_data and upload_language == selected_language_data.get('selected_language', None))):
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True, None
 
     try:
         (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
@@ -1062,6 +1109,35 @@ def load_upload_arc_version(upload_version_data, upload_language_data, selected_
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False, None
 
 
+def update_list_for_upload_selected(df_list_upload, list_variable_choices, list_type):
+    selected_column = f'{list_type} Selected'
+    # Use a dataframe to make replacing values easier
+    df_list_all = pd.DataFrame(list_variable_choices, columns=['Variable', selected_column])
+    df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
+
+    for index, row in df_list_upload.iterrows():
+        list_name = row['Variable']
+        boxes_checked = row[selected_column]
+        if pd.notnull(boxes_checked):
+            boxes_checked_list = boxes_checked.split('|')
+            list_index = df_list_all[df_list_all['Variable'] == list_name].index
+            list_values = df_list_all.loc[list_index, selected_column].values[0]
+            list_values_updated = []
+            for list_value in list_values:
+                list_value_name = list_value[1]
+                if list_value_name not in boxes_checked_list:
+                    list_values_updated.append(list_value)
+                else:
+                    list_value_number = list_value[0]
+                    list_values_updated.append([list_value_number, list_value_name, 1])
+
+            df_list_all.loc[list_index, selected_column] = pd.Series([list_values_updated])
+
+    list_variable_choices_updated = df_list_all.values.tolist()
+
+    return list_variable_choices_updated
+
+
 @app.callback(
     [
         Output('tree_items_container', 'children', allow_duplicate=True),
@@ -1069,6 +1145,8 @@ def load_upload_arc_version(upload_version_data, upload_language_data, selected_
         Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
         Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
         Output('upload-crf', 'contents'),
+        Output('modal_submit', 'n_clicks'),
+        Output('upload-list-store', 'data'),
     ],
     [
         Input('upload-crf-ready', 'data'),
@@ -1110,18 +1188,30 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
         className='tree-item',
     )
 
-    upload_answer_opt_dict1 = []
-    upload_answer_opt_dict2 = []
+    df_upload_ulist = df_upload[['Variable', 'Ulist Selected']]
+    df_upload_multilist = df_upload[['Variable', 'Multilist Selected']]
 
-    df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2 = update_for_template_options(
-        upload_version, upload_language, df_current_datadicc, upload_answer_opt_dict1, upload_answer_opt_dict2)
+    ulist_variable_choices = []
+    multilist_variable_choices = []
+    df_current_datadicc, ulist_variable_choices, multilist_variable_choices = update_for_template_options(
+        upload_version, upload_language, df_current_datadicc, ulist_variable_choices, multilist_variable_choices)
+
+    ulist_variable_choices = update_list_for_upload_selected(df_upload_ulist, ulist_variable_choices, 'Ulist')
+    multilist_variable_choices = update_list_for_upload_selected(df_upload_multilist, multilist_variable_choices,
+                                                                 'Multilist')
+
+    upload_list_ulist = list(df_upload_ulist[df_upload_ulist['Ulist Selected'].notnull()]['Variable'])
+    upload_list_multilist = list(df_upload_multilist[df_upload_multilist['Multilist Selected'].notnull()]['Variable'])
+    upload_list = upload_list_ulist + upload_list_multilist
 
     return (
         tree_items,
         df_current_datadicc.to_json(date_format='iso', orient='split'),
-        json.dumps(upload_answer_opt_dict1),
-        json.dumps(upload_answer_opt_dict2),
+        json.dumps(ulist_variable_choices),
+        json.dumps(multilist_variable_choices),
         None,
+        1,
+        upload_list,
     )
 
 
