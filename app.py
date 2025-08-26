@@ -706,22 +706,24 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
         State('input', 'checked'),
         State('ulist_variable_choices-store', 'data'),
         State('multilist_variable_choices-store', 'data'),
+        State('selected-version-store', "data"),
         State('selected-language-store', "data"),
     ],
     prevent_initial_call=True
 )
 def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
-                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_language_data):
+                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_version_data, selected_language_data):
     ctx = callback_context
 
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     if button_id == 'modal_submit':
 
+        selected_version = selected_version_data.get('selected_version', None)
         selected_language = selected_language_data.get('selected_language', None)
         translations_for_language = arc.get_translations(selected_language)
         other_text = translations_for_language['other']
@@ -759,10 +761,10 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                                 option_var_select[1]) + ' | '
                     new_submited_line.append([var_select, new_submited_options])
                     ulist_variable_choices_dict[position][1] = new_submited_line[0][1]
-                    current_datadicc.loc[current_datadicc[
+                    df_current_datadicc.loc[df_current_datadicc[
                                              'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
-                    if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
-                        current_datadicc.loc[current_datadicc[
+                    if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
+                        df_current_datadicc.loc[df_current_datadicc[
                                                  'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
 
                 position += 1
@@ -788,27 +790,30 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                                 option_var_select_multi_check[1]) + ' | '
                     new_submited_line_multi_check.append([var_select_multi_check, new_submited_options_multi_check])
                     multilist_variable_choices_dict[position_multi_check][1] = new_submited_line_multi_check[0][1]
-                    current_datadicc.loc[current_datadicc[
+                    df_current_datadicc.loc[df_current_datadicc[
                                              'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, ' + other_text
-                    if variable_submitted + '_otherl2' in list(current_datadicc['Variable']):
-                        current_datadicc.loc[current_datadicc[
+                    if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
+                        df_current_datadicc.loc[df_current_datadicc[
                                                  'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, ' + other_text
                 position_multi_check += 1
             multilist_variable_choicesSubmit = multilist_variable_choices_dict
 
             checked.append(variable_submitted)
+
+            tree_items_data = arc.getTreeItems(df_current_datadicc, selected_version)
+
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(
                     id='input',
                     multiple=False,
                     checkable=True,
-                    checked=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
-                    expanded=current_datadicc['Variable'].loc[current_datadicc['Variable'].isin(checked)],
-                    data=TREE_ITEMS_DATA),
+                    checked=df_current_datadicc['Variable'].loc[df_current_datadicc['Variable'].isin(checked)],
+                    expanded=df_current_datadicc['Variable'].loc[df_current_datadicc['Variable'].isin(checked)],
+                    data=tree_items_data),
                 id='tree_items_container',
                 className='tree-item',
             )
-            return False, current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
+            return False, df_current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
                 ulist_variable_choicesSubmit), json.dumps(multilist_variable_choicesSubmit), tree_items
         else:
             return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
