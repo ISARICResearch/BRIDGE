@@ -711,7 +711,7 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     prevent_initial_call=True
 )
 def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
-                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_language):
+                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_language_data):
     ctx = callback_context
 
     if not ctx.triggered:
@@ -722,6 +722,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
 
     if button_id == 'modal_submit':
 
+        selected_language = selected_language_data.get('selected_language', None)
         translations_for_language = arc.get_translations(selected_language)
         other_text = translations_for_language['other']
 
@@ -1117,7 +1118,10 @@ def load_upload_arc_version_language(upload_version_data, upload_language_data, 
                 None, dash.no_update, dash.no_update)
 
 
-def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_choices, list_type):
+def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_choices, list_type, language):
+    translations_for_language = arc.get_translations(language)
+    other_text = translations_for_language['other']
+
     selected_column = f'{list_type} Selected'
     # Use a dataframe to make replacing values easier
     df_list_all = pd.DataFrame(json.loads(list_variable_choices), columns=['Variable', selected_column])
@@ -1143,6 +1147,9 @@ def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_c
                     list_value_number = list_value[0]
                     list_values_updated.append([list_value_number, list_value_name, 1])
                     datadicc_values_updated.append(f'{list_value_number}, {list_value_name}')
+
+            list_values_updated.append(f'88, {other_text}')
+            datadicc_values_updated.append(f'88, {other_text}')
 
             df_list_all.loc[list_index, selected_column] = pd.Series([list_values_updated])
             df_datadicc.loc[datadicc_index, 'Answer Options'] = ' | '.join(datadicc_values_updated)
@@ -1182,6 +1189,7 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     upload_version = upload_version_data.get('upload_version', None)
+    upload_language = upload_language_data.get('upload_language', None)
     upload_type, upload_string = upload_crf_contents.split(',')
     upload_decoded = base64.b64decode(upload_string)
     df_upload_csv = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
@@ -1208,11 +1216,13 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
     df_datadicc_selected, ulist_variables_selected = update_for_upload_list_selected(df_version_lang_datadicc,
                                                                                      df_upload_ulist,
                                                                                      upload_version_lang_ulist_saved,
-                                                                                     'Ulist')
+                                                                                     'Ulist',
+                                                                                     upload_language)
     df_datadicc_selected, multilist_variables_selected = update_for_upload_list_selected(df_datadicc_selected,
                                                                                          df_upload_multilist,
                                                                                          upload_version_lang_multilist_saved,
-                                                                                         'Multilist')
+                                                                                         'Multilist',
+                                                                                         upload_language)
 
     return (
         tree_items,
