@@ -258,13 +258,6 @@ def display_checked(checked, current_datadicc_saved):
     return column_defs, row_data, selected_variables.to_json(date_format='iso', orient='split')
 
 
-@app.callback(Output('rq_modal', 'is_open'),
-              [Input("toggle-question", "n_clicks")],
-              prevent_initial_call=True)
-def research_question(n_question):
-    return True
-
-
 @app.callback([
     Output('modal', 'is_open'),
     Output('modal_title', 'children'),
@@ -712,7 +705,8 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     prevent_initial_call=True
 )
 def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title, checked_options,
-                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved, selected_version_data, selected_language_data):
+                          checked, ulist_variable_choices_saved, multilist_variable_choices_saved,
+                          selected_version_data, selected_language_data):
     ctx = callback_context
 
     if not ctx.triggered:
@@ -762,10 +756,10 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     new_submited_line.append([var_select, new_submited_options])
                     ulist_variable_choices_dict[position][1] = new_submited_line[0][1]
                     df_current_datadicc.loc[df_current_datadicc[
-                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
+                                                'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
                     if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
                         df_current_datadicc.loc[df_current_datadicc[
-                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
+                                                    'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
 
                 position += 1
             ulist_variable_choicesSubmit = ulist_variable_choices_dict
@@ -791,10 +785,10 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
                     new_submited_line_multi_check.append([var_select_multi_check, new_submited_options_multi_check])
                     multilist_variable_choices_dict[position_multi_check][1] = new_submited_line_multi_check[0][1]
                     df_current_datadicc.loc[df_current_datadicc[
-                                             'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, ' + other_text
+                                                'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, ' + other_text
                     if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
                         df_current_datadicc.loc[df_current_datadicc[
-                                                 'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, ' + other_text
+                                                    'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, ' + other_text
                 position_multi_check += 1
             multilist_variable_choicesSubmit = multilist_variable_choices_dict
 
@@ -1579,116 +1573,6 @@ def update_row3_content(selected_value, json_data):
     # Add more conditions as necessary for other options
 
     return tabs_content, styled_parts
-
-
-@app.callback(
-    Output('case_feat_text-content', 'children'),
-    [Input(f'case_feat_checklist-{key}', 'value') for key in range(4)],
-    prevent_initial_call=True
-)
-def update_Researh_questions_grid(*args):
-    checked_values = args
-    text = ''
-    all_checked = []
-    for cck_v in checked_values:
-        for element in cck_v:
-            all_checked.append(element)
-    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
-    for sec in selected_features['Section'].unique():
-        # Add section title in bold and a new line
-        text += f"\n\n**{sec}**\n"
-        for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-            # Add each label as a bullet point with a new line
-            text += f"  - {label}\n"
-    return text
-
-
-@app.callback(
-    Output('clinic_feat_text-content', 'children'),
-    [Input(f'clinic_feat_checklist-{key}', 'value') for key in range(8)],
-    prevent_initial_call=True
-)
-def update_ClenicalFeat_questions_grid(*args):
-    checked_values = args
-    text = ''
-    all_checked = []
-    for cck_v in checked_values:
-        for element in cck_v:
-            all_checked.append(element)
-    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
-    for sec in selected_features['Section'].unique():
-        # Add section title in bold and a new line
-        text += f"\n\n**{sec}**\n"
-        for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-            # Add each label as a bullet point with a new line
-            text += f"  - {label}\n"
-    return text
-
-
-@app.callback(
-    Output('outcome_text-content', 'children'),
-    [Input(f'outcome_checklist-{key}', 'value') for key in range(4)],
-    prevent_initial_call=True
-)
-def update_outcome_questions_grid(*args):
-    checked_values = args
-    text = ''
-    all_checked = []
-    for cck_v in checked_values:
-        for element in cck_v:
-            all_checked.append(element)
-    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
-    for sec in selected_features['Section'].unique():
-        # Add section title in bold and a new line
-        text += f"\n\n**{sec}**\n"
-        for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-            # Add each label as a bullet point with a new line
-            text += f"  - {label}\n"
-    return text
-
-
-@app.callback(
-    Output('risk_text-content', 'children'),
-    [Input(f'risk_checklist-{key}', 'value') for key in range(7)],
-    prevent_initial_call=True
-)
-def update_risk_questions_grid(*args):
-    checked_values = args
-    text = ''
-    all_checked = []
-    for cck_v in checked_values:
-        for element in cck_v:
-            all_checked.append(element)
-    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
-    for sec in selected_features['Section'].unique():
-        # Add section title in bold and a new line
-        text += f"\n\n**{sec}**\n"
-        for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-            # Add each label as a bullet point with a new line
-            text += f"  - {label}\n"
-    return text
-
-
-@app.callback(
-    Output('treatment_text-content', 'children'),
-    [Input(f'treatment_checklist-{key}', 'value') for key in range(2)],
-    prevent_initial_call=True
-)
-def update_risk_questions_grid(*args):
-    checked_values = args
-    text = ''
-    all_checked = []
-    for cck_v in checked_values:
-        for element in cck_v:
-            all_checked.append(element)
-    selected_features = CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(all_checked)]
-    for sec in selected_features['Section'].unique():
-        # Add section title in bold and a new line
-        text += f"\n\n**{sec}**\n"
-        for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-            # Add each label as a bullet point with a new line
-            text += f"  - {label}\n"
-    return text
 
 
 @app.callback(
