@@ -7,7 +7,7 @@ from dash import dcc, html, Input, Output, State
 
 pd.options.mode.copy_on_write = True
 
-ASSETS_DIR = '../assets'
+ASSETS_DIR = '../../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
 
@@ -190,7 +190,8 @@ class SideBar:
     )
 
     @staticmethod
-    def add_sidebar_callbacks(app):
+    def add_callbacks(app):
+
         @app.callback(
             [Output("presets-column", "is_in"),
              Output("settings-column", "is_in"),
@@ -203,7 +204,7 @@ class SideBar:
              State("settings-column", "is_in")],
             prevent_initial_call=True
         )
-        def toggle_columns(n_presets, n_settings, is_in_presets, is_in_settings):
+        def toggle_columns(_n_presets, _n_settings, is_in_presets, is_in_settings):
             ctx = dash.callback_context
             button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 

@@ -1,9 +1,6 @@
-import base64
 import io
 import json
 import re
-import zipfile
-from datetime import datetime
 from os.path import join, abspath, dirname
 
 import dash
@@ -13,13 +10,16 @@ import dash_treeview_antd
 import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
-from unidecode import unidecode
 
 import src.generate_pdf.form as form
-from src import arc, bridge_modals, paper_crf, index
+from src import arc, bridge_modals, index
 from src.arc_api import ArcApiClient
-from src.bridge_main import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
+from src.layout.app_layout import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
 from src.logger import setup_logger
+from src.create_outputs.generate import Generate
+from src.create_outputs.save import Save
+from src.create_outputs.upload import Upload
+from src.create_outputs.language import Language
 
 pd.options.mode.copy_on_write = True
 
@@ -108,7 +108,10 @@ app.layout = html.Div(
     ]
 )
 
-app = SideBar.add_sidebar_callbacks(app)
+app = SideBar.add_callbacks(app)
+app = Save.add_callbacks(app)
+app = Generate().add_callbacks(app)
+app = Upload.add_callbacks(app)
 
 app.clientside_callback(
     """
@@ -325,61 +328,6 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
-def get_dataframe_arc_language(df_version, selected_version, selected_language):
-    if selected_language != 'English':
-        df_version_language = arc.getARCTranslation(
-            selected_language,
-            selected_version,
-            df_version
-        )
-    else:
-        df_version_language = df_version.copy()
-    return df_version_language
-
-
-def get_version_language_related_data(selected_version, selected_language):
-    df_version, version_presets, version_commit = arc.getARC(selected_version)
-    df_version = arc.add_required_datadicc_columns(df_version)
-    df_version_language = get_dataframe_arc_language(df_version, selected_version, selected_language)
-
-    version_arc_lists, version_list_variable_choices = arc.getListContent(df_version_language, selected_version,
-                                                                          selected_language)
-    df_version_language = arc.addTransformedRows(df_version_language, version_arc_lists,
-                                                 arc.getVariableOrder(df_version_language))
-
-    version_arc_ulist, version_ulist_variable_choices = arc.getUserListContent(df_version_language, selected_version,
-                                                                               selected_language)
-
-    df_version_language = arc.addTransformedRows(df_version_language, version_arc_ulist,
-                                                 arc.getVariableOrder(df_version_language))
-
-    version_arc_multilist, version_multilist_variable_choices = arc.getMultuListContent(df_version_language,
-                                                                                        selected_version,
-                                                                                        selected_language)
-
-    df_version_language = arc.addTransformedRows(df_version_language, version_arc_multilist,
-                                                 arc.getVariableOrder(df_version_language))
-
-    version_grouped_presets = {}
-    for section, preset_name in version_presets:
-        version_grouped_presets.setdefault(section, []).append(preset_name)
-
-    accordion_items = [
-        dbc.AccordionItem(
-            title=section,
-            children=dbc.Checklist(
-                options=[{"label": preset_name, "value": preset_name} for preset_name in preset_names],
-                value=[],
-                id={'type': 'template_check', 'index': section},
-                switch=True,
-            )
-        )
-        for section, preset_names in version_grouped_presets.items()
-    ]
-    return (df_version_language, version_commit, version_grouped_presets, accordion_items,
-            json.dumps(version_ulist_variable_choices), json.dumps(version_multilist_variable_choices))
-
-
 @app.callback(
     Output('output-expanded', 'children'),
     [
@@ -453,7 +401,7 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
             version_accordion_items,
             version_ulist_variable_choices,
             version_multilist_variable_choices
-        ) = get_version_language_related_data(selected_version, selected_language)
+        ) = Language(selected_version, selected_language).get_version_language_related_data()
         logger.info(f'selected_version: {selected_version}')
         logger.info(f'selected_language: {selected_language}')
         logger.info(f'version_presets: {version_presets}')
@@ -612,7 +560,7 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
 
     df_version, version_presets, version_commit = arc.getARC(current_version)
     df_version = arc.add_required_datadicc_columns(df_version)
-    df_version_language = get_dataframe_arc_language(df_version, current_version, current_language)
+    df_version_language = Language(current_version, current_language).get_dataframe_arc_language(df_version)
 
     tree_items_data = arc.getTreeItems(df_version_language, current_version)
 
@@ -825,411 +773,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
 )
 def update_store(checked_values):
     return checked_values
-
-
-def get_trigger_id(ctx):
-    # Check which input triggered the callback
-    if not ctx.triggered:
-        trigger_id = 'No clicks yet'
-    else:
-        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    return trigger_id
-
-
-def get_crf_name(crf_name, checked_values):
-    if crf_name is not None:
-        if isinstance(crf_name, list):
-            crf_name = crf_name[0]
-    else:
-        extracted_text = [item for sublist in checked_values for item in sublist if item]
-        if len(extracted_text) > 0:
-            crf_name = extracted_text[0]
-    if not crf_name:
-        crf_name = 'no_name'
-    logger.info(f'crf_name: {crf_name}')
-    return crf_name
-
-
-@app.callback(
-    [
-        Output("loading-output-generate", "children"),
-        Output("download-dataframe-csv", "data"),
-        Output("download-compGuide-pdf", "data"),
-        Output("download-projectxml-pdf", "data"),
-        Output("download-paperlike-pdf", "data")
-    ],
-    [
-        Input("crf_generate", "n_clicks"),
-    ],
-    [
-        State("selected_data-store", "data"),
-        State('selected-version-store', 'data'),
-        State('selected-language-store', "data"),
-        State({'type': 'template_check', 'index': dash.ALL}, "value"),
-        State("crf_name", "value"),
-        State("output-files-store", "data"),
-        State("browser-info-store", "data"),
-    ],
-    prevent_initial_call=True
-)
-def on_generate_click(n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name,
-                      output_files, browser_info):
-    ctx = dash.callback_context
-
-    if not n_clicks:
-        # Return empty or initial state if button hasn't been clicked
-        return "", None, None, None, None
-
-    if not any(json.loads(json_data).values()):
-        # Nothing ticked
-        return "", None, None, None, None
-
-    trigger_id = get_trigger_id(ctx)
-
-    if trigger_id == 'crf_generate':
-        date = datetime.today().strftime('%Y-%m-%d')
-        crf_name = get_crf_name(crf_name, checked_presets)
-
-        selected_variables_fromData = pd.read_json(io.StringIO(json_data), orient='split')
-        currentVersion = selected_version_data.get('selected_version', None)
-        language = selected_language_data.get('selected_language', None)
-
-        df = arc.generateCRF(selected_variables_fromData)
-        pdf_crf = paper_crf.generate_pdf(df, currentVersion, crf_name, language)
-        pdf_data = paper_crf.generate_completionguide(selected_variables_fromData, currentVersion, crf_name)
-
-        # CSV
-        csv_buffer = io.BytesIO()
-        df.loc[df['Field Type'] == 'descriptive', 'Field Label'] = df.loc[
-            df['Field Type'] == 'descriptive', 'Field Label'].apply(
-            lambda
-                x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>')
-        if language != 'English':
-            df['Form Name'] = df['Form Name'].apply(lambda x: unidecode(str(x)))
-
-        df.to_csv(csv_buffer, index=False, encoding='utf8')
-
-        csv_buffer.seek(0)
-
-        # XML
-        xml_file_name = 'ISARIC Clinical Characterisation Setup.xml'
-        xml_file_path = f'{CONFIG_DIR_FULL}/{xml_file_name}'
-        with open(xml_file_path, 'rb') as file:
-            xml_content = file.read()
-
-        # if safari
-        is_safari = browser_info and "Safari" in browser_info and "Chrome" not in browser_info
-
-        if is_safari:
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                if 'redcap_csv' in output_files:
-                    zip_file.writestr(f"{crf_name}_DataDictionary_{date}.csv", csv_buffer.getvalue())
-                if 'paper_like' in output_files:
-                    zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_data)
-                    zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_crf)
-                if 'redcap_xml' in output_files:
-                    zip_file.writestr(xml_file_name, xml_content)
-            zip_buffer.seek(0)
-            return "", dcc.send_bytes(zip_buffer.getvalue(), f"{crf_name}_bundle_{date}.zip"), None, None, None
-
-        return (
-            "",
-            dcc.send_bytes(csv_buffer.getvalue(),
-                           f"{crf_name}_DataDictionary_{date}.csv") if 'redcap_csv' in output_files else None,
-            dcc.send_bytes(pdf_data,
-                           f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None,
-            dcc.send_bytes(xml_content, xml_file_name) if 'redcap_xml' in output_files else None,
-            dcc.send_bytes(pdf_crf, f"{crf_name}_paperlike_{date}.pdf") if 'paper_like' in output_files else None
-        )
-
-    else:
-        return "", None, None, None, None
-
-
-def get_checked_data_for_list(df_list, checked_variables, list_type) -> pd.DataFrame:
-    column_list = ['Variable', f'{list_type} Selected']
-    df_out = pd.DataFrame(columns=column_list)
-    df_list_checked = df_list[df_list['Variable'].isin(checked_variables)]
-    if not df_list_checked.empty:
-        for index, row in df_list_checked.iterrows():
-            list_name = row['Variable']
-            list_values = row[list_type]
-            selected_list = []
-            df_selected = pd.DataFrame(columns=column_list)
-            for list_value in list_values:
-                list_value_name = list_value[1]
-                list_value_checked = int(list_value[2])
-                if list_value_checked == 1:
-                    selected_list.append(list_value_name)
-            df_selected.loc[index, 'Variable'] = str(list_name)
-            df_selected.loc[index, f'{list_type} Selected'] = '|'.join(selected_list)
-            df_out = pd.concat([df_out, df_selected], ignore_index=True)
-    return df_out
-
-
-@app.callback(
-    [
-        Output('loading-output-save', 'children'),
-        Output('save-crf', 'data'),
-    ],
-    [
-        Input('crf_save', 'n_clicks'),
-        Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
-        Input('input', 'checked'),
-    ],
-    [
-        State('current_datadicc-store', 'data'),
-        State('selected-version-store', 'data'),
-        State('selected-language-store', 'data'),
-        State('crf_name', 'value'),
-        State('ulist_variable_choices-store', 'data'),
-        State('multilist_variable_choices-store', 'data'),
-    ],
-    prevent_initial_call=True
-)
-def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved, selected_version_data,
-                  selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
-    ctx = dash.callback_context
-
-    if not n_clicks or not checked_variables:
-        return '', None
-
-    trigger_id = get_trigger_id(ctx)
-
-    if trigger_id == 'crf_save':
-        crf_name = get_crf_name(crf_name, [])
-
-        current_version = selected_version_data.get('selected_version', None)
-        current_language = selected_language_data.get('selected_language', None)
-        date = datetime.today().strftime('%Y-%m-%d')
-        # Naming convention expected when uploading
-        version_string = current_version.replace('.', '_')
-        filename_csv = f'template_{crf_name}_{version_string}_{current_language}_{date}.csv'
-
-        df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-        df_save = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(checked_variables)][['Variable']]
-
-        df_ulist_all = pd.DataFrame(json.loads(ulist_variable_choices_saved), columns=['Variable', 'Ulist'])
-        df_multilist_all = pd.DataFrame(json.loads(multilist_variable_choices_saved), columns=['Variable', 'Multilist'])
-
-        df_ulist_out = get_checked_data_for_list(df_ulist_all, checked_variables, 'Ulist')
-        df_multilist_out = get_checked_data_for_list(df_multilist_all, checked_variables, 'Multilist')
-
-        df_save = pd.merge(df_save, df_ulist_out, how='left', on='Variable')
-        df_save = pd.merge(df_save, df_multilist_out, how='left', on='Variable')
-
-        output = io.BytesIO()
-        df_save.to_csv(output, index=False, encoding='utf8')
-        output.seek(0)
-
-        return '', dcc.send_bytes(output.getvalue(), filename_csv)
-    else:
-        return '', None
-
-
-@app.callback(
-    [
-        Output('upload-version-store', 'data', allow_duplicate=True),
-        Output('upload-language-store', 'data', allow_duplicate=True),
-    ],
-    [
-        Input('upload-crf', 'filename'),
-        Input('upload-crf', 'contents'),
-    ],
-    prevent_initial_call=True
-)
-def on_upload_crf(filename, file_contents):
-    if filename:
-        try:
-            upload_version = re.search(r'v\d_\d_\d', filename).group(0)
-            upload_language = filename.split(f'{upload_version}_')[1].split('_')[0]
-        except AttributeError as e:
-            logger.error(e)
-            raise AttributeError(f'Failed to determine ARC version and/or language from file {filename}')
-        return (
-            {'upload_version': upload_version.replace('_', '.')},
-            {'upload_language': upload_language},
-        )
-
-    return dash.no_update
-
-
-@app.callback(
-    [
-        Output('selected-version-store', 'data', allow_duplicate=True),
-        Output('selected-language-store', 'data', allow_duplicate=True),
-        Output('commit-store', 'data', allow_duplicate=True),
-        Output('preset-accordion', 'children', allow_duplicate=True),
-        Output('grouped_presets-store', 'data', allow_duplicate=True),
-        Output('current_datadicc-store', 'data', allow_duplicate=True),
-        Output('upload-crf-ready', 'data'),
-        Output('crf_name', 'value', allow_duplicate=True),
-        Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
-        Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
-    ],
-    [
-        Input('upload-version-store', 'data'),
-        Input('upload-language-store', 'data'),
-    ],
-    [
-        State('selected-version-store', 'data'),
-        State('selected-language-store', 'data'),
-    ],
-    prevent_initial_call=True
-)
-def load_upload_arc_version_language(upload_version_data, upload_language_data, selected_version_data,
-                                     selected_language_data):
-    ctx = dash.callback_context
-
-    if not ctx.triggered:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
-                None, dash.no_update, dash.no_update)
-
-    upload_version = upload_version_data.get('upload_version', None)
-    upload_language = upload_language_data.get('upload_language', None)
-
-    if ((selected_version_data and upload_version == selected_version_data.get('selected_version', None)) and (
-            selected_language_data and upload_language == selected_language_data.get('selected_language', None))):
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True,
-                None, dash.no_update, dash.no_update)
-
-    try:
-        (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
-         version_ulist_variable_choices, version_multilist_variable_choices) = get_version_language_related_data(
-            upload_version, upload_language)
-        logger.info(f'upload_version: {upload_version}')
-        logger.info(f'upload_language: {upload_language}')
-        return (
-            {'selected_version': upload_version},
-            {'selected_language': upload_language},
-            {'commit': version_commit},
-            version_accordion_items,
-            version_grouped_presets,
-            df_upload_version.to_json(date_format='iso', orient='split'),
-            True,
-            None,
-            version_ulist_variable_choices,
-            version_multilist_variable_choices,
-        )
-    except json.JSONDecodeError:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
-                None, dash.no_update, dash.no_update)
-
-
-def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_choices, list_type, language):
-    translations_for_language = arc.get_translations(language)
-    other_text = translations_for_language['other']
-
-    selected_column = f'{list_type} Selected'
-    # Use a dataframe to make replacing values easier
-    df_list_all = pd.DataFrame(json.loads(list_variable_choices), columns=['Variable', selected_column])
-    df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
-
-    for index, row in df_list_upload.iterrows():
-        list_name = row['Variable']
-        boxes_checked = row[selected_column]
-        if pd.notnull(boxes_checked):
-            boxes_checked_list = boxes_checked.split('|')
-            list_index = df_list_all[df_list_all['Variable'] == list_name].index
-            list_values = df_list_all.loc[list_index, selected_column].values[0]
-            list_values_updated = []
-
-            datadicc_index = df_datadicc.loc[df_datadicc['Variable'] == list_name].index
-            datadicc_values_updated = []
-
-            for list_value in list_values:
-                list_value_name = list_value[1]
-                if list_value_name not in boxes_checked_list:
-                    list_values_updated.append(list_value)
-                else:
-                    list_value_number = list_value[0]
-                    list_values_updated.append([list_value_number, list_value_name, 1])
-                    datadicc_values_updated.append(f'{list_value_number}, {list_value_name}')
-
-            list_values_updated.append(f'88, {other_text}')
-            datadicc_values_updated.append(f'88, {other_text}')
-
-            df_list_all.loc[list_index, selected_column] = pd.Series([list_values_updated])
-            df_datadicc.loc[datadicc_index, 'Answer Options'] = ' | '.join(datadicc_values_updated)
-
-    list_variable_choices_updated = df_list_all.values.tolist()
-
-    return df_datadicc, list_variable_choices_updated
-
-
-@app.callback(
-    [
-        Output('tree_items_container', 'children', allow_duplicate=True),
-        Output('current_datadicc-store', 'data', allow_duplicate=True),
-        Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
-        Output('multilist_variable_choices-store', 'data', allow_duplicate=True),
-        Output('upload-crf', 'contents'),
-    ],
-    [
-        Input('upload-crf-ready', 'data'),
-    ],
-    [
-        State('upload-version-store', 'data'),
-        State('upload-language-store', 'data'),
-        State('upload-crf', 'contents'),
-        State('current_datadicc-store', 'data'),
-        State('ulist_variable_choices-store', 'data'),
-        State('multilist_variable_choices-store', 'data'),
-    ],
-    prevent_initial_call=True
-)
-def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_language_data, upload_crf_contents,
-                             upload_version_lang_datadicc_saved, upload_version_lang_ulist_saved,
-                             upload_version_lang_multilist_saved):
-    ctx = dash.callback_context
-
-    if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-    upload_version = upload_version_data.get('upload_version', None)
-    upload_language = upload_language_data.get('upload_language', None)
-    upload_type, upload_string = upload_crf_contents.split(',')
-    upload_decoded = base64.b64decode(upload_string)
-    df_upload_csv = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
-    checked = list(df_upload_csv['Variable'])
-
-    df_version_lang_datadicc = pd.read_json(io.StringIO(upload_version_lang_datadicc_saved), orient='split')
-    tree_items_current_datadicc = arc.getTreeItems(df_version_lang_datadicc, upload_version)
-
-    tree_items = html.Div(
-        dash_treeview_antd.TreeView(
-            id='input',
-            multiple=False,
-            checkable=True,
-            checked=checked,
-            expanded=checked,
-            data=tree_items_current_datadicc),
-        id='tree_items_container',
-        className='tree-item',
-    )
-
-    df_upload_ulist = df_upload_csv[['Variable', 'Ulist Selected']]
-    df_upload_multilist = df_upload_csv[['Variable', 'Multilist Selected']]
-
-    df_datadicc_selected, ulist_variables_selected = update_for_upload_list_selected(df_version_lang_datadicc,
-                                                                                     df_upload_ulist,
-                                                                                     upload_version_lang_ulist_saved,
-                                                                                     'Ulist',
-                                                                                     upload_language)
-    df_datadicc_selected, multilist_variables_selected = update_for_upload_list_selected(df_datadicc_selected,
-                                                                                         df_upload_multilist,
-                                                                                         upload_version_lang_multilist_saved,
-                                                                                         'Multilist',
-                                                                                         upload_language)
-
-    return (
-        tree_items,
-        df_datadicc_selected.to_json(date_format='iso', orient='split'),
-        json.dumps(ulist_variables_selected),
-        json.dumps(multilist_variables_selected),
-        None,
-    )
 
 
 @app.callback(
