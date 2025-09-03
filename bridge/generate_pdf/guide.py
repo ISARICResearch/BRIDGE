@@ -12,7 +12,7 @@ from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, \
     PageTemplate, Frame, Flowable
 from reportlab.platypus import Spacer, NextPageTemplate
 
-from src.generate_pdf.header_footer import generate_guide_header_footer
+from bridge.generate_pdf.header_footer import generate_guide_header_footer
 
 
 class StyleSet:

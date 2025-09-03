@@ -9,8 +9,9 @@ import pandas as pd
 from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
-from src import arc, paper_crf
-from src.create_outputs.utils import get_crf_name, get_trigger_id
+from bridge.arc import arc
+from bridge.generate_pdf import paper_crf
+from bridge.create_outputs.utils import get_crf_name, get_trigger_id
 
 pd.options.mode.copy_on_write = True
 
@@ -67,9 +68,9 @@ class Generate:
                 current_version = selected_version_data.get('selected_version', None)
                 language = selected_language_data.get('selected_language', None)
 
-                df = arc.generateCRF(selected_variables_from_data)
+                df = arc.generate_crf(selected_variables_from_data)
                 pdf_crf = paper_crf.generate_pdf(df, current_version, crf_name, language)
-                pdf_data = paper_crf.generate_completionguide(selected_variables_from_data, current_version, crf_name)
+                pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
 
                 # CSV
                 csv_buffer = io.BytesIO()

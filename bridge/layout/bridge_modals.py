@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 
 
-def researchQuestions_modal():
+def research_questions_modal():
     questions_themes_group = html.Div(
         [
             dbc.RadioItems(
@@ -71,7 +71,7 @@ def researchQuestions_modal():
     )
 
 
-def variableInformation_modal():
+def variable_information_modal():
     return dbc.Modal(
         [
             dbc.ModalHeader(dbc.ModalTitle("Row Details", id='modal_title')),

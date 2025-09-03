@@ -5,7 +5,7 @@ import requests
 from requests import Response
 from requests.exceptions import RequestException
 
-from src.logger import setup_logger
+from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
 

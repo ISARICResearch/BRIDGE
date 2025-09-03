@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import html
 
-ASSETS_DIR = '../assets'
+ASSETS_DIR = '../../assets'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
 SCREENSHOTS_DIR = f'{ASSETS_DIR}/screenshots'
 

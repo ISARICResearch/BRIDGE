@@ -11,15 +11,16 @@ import pandas as pd
 from dash import callback_context, dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
 
-import src.generate_pdf.form as form
-from src import arc, bridge_modals, index
-from src.arc_api import ArcApiClient
-from src.layout.app_layout import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
-from src.logger import setup_logger
-from src.create_outputs.generate import Generate
-from src.create_outputs.save import Save
-from src.create_outputs.upload import Upload
-from src.create_outputs.language import Language
+import bridge.generate_pdf.form as form
+from bridge.arc import arc
+from bridge.layout import index, bridge_modals
+from bridge.arc.arc_api import ArcApiClient
+from bridge.layout.app_layout import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
+from bridge.logging.logger import setup_logger
+from bridge.create_outputs.generate import Generate
+from bridge.create_outputs.save import Save
+from bridge.create_outputs.upload import Upload
+from bridge.create_outputs.arc_data import ARCData
 
 pd.options.mode.copy_on_write = True
 
@@ -36,26 +37,26 @@ logger.info('Starting BRIDGE application')
 # Global variables
 CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
 
-ARC_VERSION_LIST, ARC_VERSION_INITIAL = arc.getARCVersions()
+ARC_VERSION_LIST, ARC_VERSION_INITIAL = arc.get_arc_versions()
 ARC_LANGUAGE_LIST_INITIAL = ArcApiClient().get_arc_language_list_version(ARC_VERSION_INITIAL)
 ARC_LANGUAGE_INITIAL = 'English'
 
-CURRENT_DATADICC, PRESETS, COMMIT = arc.getARC(ARC_VERSION_INITIAL)
+CURRENT_DATADICC, PRESETS, COMMIT = arc.get_arc(ARC_VERSION_INITIAL)
 CURRENT_DATADICC = arc.add_required_datadicc_columns(CURRENT_DATADICC)
 
-TREE_ITEMS_DATA = arc.getTreeItems(CURRENT_DATADICC, ARC_VERSION_INITIAL)
+TREE_ITEMS_DATA = arc.get_tree_items(CURRENT_DATADICC, ARC_VERSION_INITIAL)
 
 # List content Transformation
-ARC_LISTS, LIST_VARIABLE_CHOICES = arc.getListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_LISTS, arc.getVariableOrder(CURRENT_DATADICC))
+ARC_LISTS, LIST_VARIABLE_CHOICES = arc.get_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_LISTS, arc.get_variable_order(CURRENT_DATADICC))
 
 # User List content Transformation
-ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.getUserListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_ULIST, arc.getVariableOrder(CURRENT_DATADICC))
+ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.get_user_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_ULIST, arc.get_variable_order(CURRENT_DATADICC))
 
-ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.getMultuListContent(CURRENT_DATADICC, ARC_VERSION_INITIAL,
-                                                                    ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.addTransformedRows(CURRENT_DATADICC, ARC_MULTILIST, arc.getVariableOrder(CURRENT_DATADICC))
+ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.get_multu_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL,
+                                                                       ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_MULTILIST, arc.get_variable_order(CURRENT_DATADICC))
 
 INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='split')
 INITIAL_ULIST_VARIABLE_CHOICES = json.dumps(ULIST_VARIABLE_CHOICES)
@@ -86,8 +87,8 @@ app.layout = html.Div(
         dcc.Download(id='download-projectxml-pdf'),
         dcc.Download(id='download-paperlike-pdf'),
         dcc.Download(id='save-crf'),
-        bridge_modals.variableInformation_modal(),
-        bridge_modals.researchQuestions_modal(),
+        bridge_modals.variable_information_modal(),
+        bridge_modals.research_questions_modal(),
         dcc.Loading(id="loading-generate",
                     type="default",
                     children=html.Div(id="loading-output-generate"),
@@ -199,19 +200,19 @@ def display_checked(checked, current_datadicc_saved):
         #############################################################
         #############################################################
         ## REDCAP Pipeline
-        selected_variables = arc.getIncludeNotShow(selected_variables['Variable'], current_datadicc)
+        selected_variables = arc.get_include_not_show(selected_variables['Variable'], current_datadicc)
 
         # Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units = arc.getSelectUnits(selected_variables['Variable'],
-                                                                                      current_datadicc)
+        arc_var_units_selected, delete_this_variables_with_units = arc.get_select_units(selected_variables['Variable'],
+                                                                                        current_datadicc)
         if arc_var_units_selected is not None:
-            selected_variables = arc.addTransformedRows(selected_variables, arc_var_units_selected,
-                                                        arc.getVariableOrder(current_datadicc))
+            selected_variables = arc.add_transformed_rows(selected_variables, arc_var_units_selected,
+                                                          arc.get_variable_order(current_datadicc))
             if len(delete_this_variables_with_units) > 0:  # This remove all the unit variables that were included in a select unit type question
                 selected_variables = selected_variables.loc[
                     ~selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
-        selected_variables = arc.generateDailyDataType(selected_variables)
+        selected_variables = arc.generate_daily_data_type(selected_variables)
 
         #############################################################
         #############################################################
@@ -401,7 +402,7 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
             version_accordion_items,
             version_ulist_variable_choices,
             version_multilist_variable_choices
-        ) = Language(selected_version, selected_language).get_version_language_related_data()
+        ) = ARCData(selected_version, selected_language).get_version_language_related_data()
         logger.info(f'selected_version: {selected_version}')
         logger.info(f'selected_language: {selected_language}')
         logger.info(f'version_presets: {version_presets}')
@@ -558,11 +559,11 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     current_version = selected_version_data.get('selected_version', None)
     current_language = selected_lang_data.get('selected_language', None)
 
-    df_version, version_presets, version_commit = arc.getARC(current_version)
+    df_version, version_presets, version_commit = arc.get_arc(current_version)
     df_version = arc.add_required_datadicc_columns(df_version)
-    df_version_language = Language(current_version, current_language).get_dataframe_arc_language(df_version)
+    df_version_language = ARCData(current_version, current_language).get_dataframe_arc_language(df_version)
 
-    tree_items_data = arc.getTreeItems(df_version_language, current_version)
+    tree_items_data = arc.get_tree_items(df_version_language, current_version)
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
@@ -742,7 +743,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
 
             checked.append(variable_submitted)
 
-            tree_items_data = arc.getTreeItems(df_current_datadicc, selected_version)
+            tree_items_data = arc.get_tree_items(df_current_datadicc, selected_version)
 
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(

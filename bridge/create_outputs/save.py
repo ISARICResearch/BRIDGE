@@ -6,7 +6,7 @@ import dash
 import pandas as pd
 from dash import dcc, Input, Output, State
 
-from src.create_outputs.utils import get_crf_name, get_trigger_id
+from bridge.create_outputs.utils import get_crf_name, get_trigger_id
 
 pd.options.mode.copy_on_write = True
 

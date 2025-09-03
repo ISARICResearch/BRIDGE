@@ -1,6 +1,5 @@
 from functools import partial
 from io import BytesIO
-from os import environ
 from os.path import join, dirname, abspath
 
 import numpy as np
@@ -13,18 +12,18 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-from src.logger import setup_logger
-from src.arc import ArcApiClient
-from src.generate_pdf.form import generate_form
-from src.generate_pdf.guide import generate_guide_doc
-from src.generate_pdf.header_footer import generate_header_footer
-from src.generate_pdf.opener import generate_opener
+from bridge.arc.arc import ArcApiClient
+from bridge.generate_pdf.form import generate_form
+from bridge.generate_pdf.guide import generate_guide_doc
+from bridge.generate_pdf.header_footer import generate_header_footer
+from bridge.generate_pdf.opener import generate_opener
+from bridge.logging.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
 
 logger = setup_logger(__name__)
 
-ASSETS_DIR_FULL = join(dirname(dirname(abspath(__file__))), 'assets')
+ASSETS_DIR_FULL = join(dirname(dirname(dirname(abspath(__file__)))), 'assets')
 FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
 
 pdfmetrics.registerFont(TTFont('DejaVuSans', join(FONTS_DIR_FULL, 'DejaVuSans.ttf')))
@@ -115,7 +114,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
 
 
 # Function to generate separate completion guide pdf document.
-def generate_completionguide(data_dictionary, version, db_name):
+def generate_completion_guide(data_dictionary, version, db_name):
     data_dictionary = data_dictionary.copy()
 
     buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation

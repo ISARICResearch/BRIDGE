@@ -1,11 +1,10 @@
 import re
-from os import environ
 
 import numpy as np
 import pandas as pd
 
-from src.logger import setup_logger
-from src.arc_api import ArcApiClient
+from bridge.arc.arc_api import ArcApiClient
+from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -18,30 +17,7 @@ def add_required_datadicc_columns(df_datadicc):
     return df_datadicc
 
 
-def getResearchQuestionTypes(datadicc):
-    caseDefiningFeatures = [["presentation",
-                             "SIGNS AND SYMPTOMS ON ADMISSION: first data, from onset of this acute illness to day of presentation or admission"],
-                            ["daily", "ASSESSMENT"],
-                            ["daily",
-                             "SIGNS AND SYMPTOMS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment"],
-                            ["daily",
-                             "VITAL SIGNS & ASSESSMENTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment."],
-                            ["daily",
-                             "LABORATORY RESULTS: Record the value furthest from normal range between 00:00 to 24:00 on day of assessment. In general, do not report results that have been rejected by the clinical team (e.g. haemolysed sample). Unless otherwise specified, if there are multiple measurements please report the measure furthest from from the normal physiological or laboratory range between 00:00 and 24:00 hours on day of assessment. If any individual test was not performed indicate 'No' or if the result is unavailable, please leave the data field blank."]
-                            ]
-
-    conditions = []
-    for form, section in caseDefiningFeatures:
-        condition = (datadicc['Form'] == form) & (datadicc['Section'] == section)
-        conditions.append(datadicc.loc[condition])
-
-    # Use pd.concat to combine all filtered DataFrames
-    caseDefiningData = pd.concat(conditions, ignore_index=True)
-
-    return caseDefiningData[['Variable', 'Form', 'Section', 'Question']]
-
-
-def getARCTranslation(language, version, current_datadicc):
+def get_arc_translation(language, version, current_datadicc):
     try:
         datadicc_english = ArcApiClient().get_dataframe_arc_version_language(version, 'English')
 
@@ -143,7 +119,7 @@ def getARCTranslation(language, version, current_datadicc):
     return current_datadicc
 
 
-def getARCVersions():
+def get_arc_versions():
     version_list = ArcApiClient().get_arc_version_list()
 
     logger.info(f'version_list: {version_list}')
@@ -151,21 +127,21 @@ def getARCVersions():
     return version_list, max(version_list)
 
 
-def getVariableOrder(current_datadicc):
+def get_variable_order(current_datadicc):
     current_datadicc['Sec_vari'] = current_datadicc['Sec'] + '_' + current_datadicc['vari']
     order = current_datadicc[['Sec_vari']]
     order = order.drop_duplicates().reset_index()
     return list(order['Sec_vari'])
 
 
-def getARC(version):
+def get_arc(version):
     logger.info(f'version: {version}')
 
     commit_sha = ArcApiClient().get_arc_version_sha(version)
     df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha)
 
     try:
-        df_dependencies = getDependencies(df_datadicc)
+        df_dependencies = get_dependencies(df_datadicc)
         df_datadicc = pd.merge(df_datadicc, df_dependencies[['Variable', 'Dependencies']], on='Variable')
 
         # Find preset columns
@@ -186,7 +162,7 @@ def getARC(version):
         raise RuntimeError("Failed to format ARC data")
 
 
-def getDependencies(datadicc):
+def get_dependencies(datadicc):
     mandatory = ['subjid']
 
     dependencies = datadicc[['Variable', 'Skip Logic']]
@@ -219,13 +195,13 @@ def getDependencies(datadicc):
     return dependencies
 
 
-def getTreeItems(datadicc, version):
+def get_tree_items(datadicc, version):
     version = version.replace('ICC', 'ARC')
     include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3', 'units',
                         'add', 'vol', 'txt', 'calc']
 
     if 'Dependencies' not in datadicc.columns:
-        dependencies = getDependencies(datadicc)
+        dependencies = get_dependencies(datadicc)
         datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
 
     datadicc = add_required_datadicc_columns(datadicc)
@@ -315,7 +291,7 @@ def extract_parenthesis_content(text):
     return match.group(1) if match else text
 
 
-def getIncludeNotShow(selected_variables, current_datadicc):
+def get_include_not_show(selected_variables, current_datadicc):
     # Get the include not show for the selecte variables
     possible_vars_to_include = [f"{var}_{suffix}" for var in selected_variables for suffix in include_not_show]
     actual_vars_to_include = [var for var in possible_vars_to_include if var in current_datadicc['Variable'].values]
@@ -325,7 +301,7 @@ def getIncludeNotShow(selected_variables, current_datadicc):
     return current_datadicc.loc[current_datadicc['Variable'].isin(selected_variables)]
 
 
-def getSelectUnits(selected_variables, current_datadicc):
+def get_select_units(selected_variables, current_datadicc):
     current_datadicc['select units'] = (
         current_datadicc['Question_english'].str.contains('(select units)', case=False, na=False, regex=False))
 
@@ -452,7 +428,7 @@ def get_translations(language):
     return translations[language]
 
 
-def getListContent(current_datadicc, version, language):
+def get_list_content(current_datadicc, version, language):
     all_rows_lists = []
     list_variable_choices = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
@@ -651,7 +627,7 @@ def getListContent(current_datadicc, version, language):
     return arc_list, list_variable_choices
 
 
-def getUserListContent(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
+def get_user_list_content(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
     ulist_variable_choices = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'user_list']
@@ -763,7 +739,7 @@ def getUserListContent(current_datadicc, version, language, user_checked_options
     return arc_list, ulist_variable_choices
 
 
-def getMultuListContent(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
+def get_multu_list_content(current_datadicc, version, language, user_checked_options=None, ulist_var_name=None):
     all_rows_lists = []
     ulist_variable_choices = []
     datadiccDisease_lists = current_datadicc.loc[current_datadicc['Type'] == 'multi_list']
@@ -875,7 +851,7 @@ def getMultuListContent(current_datadicc, version, language, user_checked_option
     return arc_list, ulist_variable_choices
 
 
-def generateDailyDataType(current_datadicc):
+def generate_daily_data_type(current_datadicc):
     datadiccDisease = current_datadicc.copy()
     daily_sections = list(datadiccDisease['Section'].loc[datadiccDisease['Form'] == 'daily'].unique())
     if len(daily_sections) > 0:
@@ -900,7 +876,7 @@ def generateDailyDataType(current_datadicc):
     return current_datadicc
 
 
-def addTransformedRows(selected_variables, arc_var_units_selected, order):
+def add_transformed_rows(selected_variables, arc_var_units_selected, order):
     arc_var_units_selected['Sec_vari'] = arc_var_units_selected['Sec'] + '_' + arc_var_units_selected['vari']
     result = selected_variables.copy().reset_index(drop=True)
     arc_var_units_selected = arc_var_units_selected[result.columns]
@@ -958,7 +934,7 @@ def addTransformedRows(selected_variables, arc_var_units_selected, order):
     return result
 
 
-def customAlignment(datadicc):
+def custom_alignment(datadicc):
     mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
             (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
             (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
@@ -966,7 +942,7 @@ def customAlignment(datadicc):
     return datadicc
 
 
-def generateCRF(datadiccDisease):
+def generate_crf(datadiccDisease):
     # Create a new list to build the reordered rows
     new_rows = []
     used_indices = set()
@@ -1035,6 +1011,6 @@ def generateCRF(datadiccDisease):
     datadiccDisease = datadiccDisease.fillna('')
 
     datadiccDisease['Section Header'] = datadiccDisease['Section Header'].replace({'': np.nan})
-    datadiccDisease = customAlignment(datadiccDisease)
+    datadiccDisease = custom_alignment(datadiccDisease)
 
     return datadiccDisease

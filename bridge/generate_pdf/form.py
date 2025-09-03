@@ -4,9 +4,9 @@ from typing import List
 import pandas as pd
 from reportlab.platypus import Paragraph, PageBreak, Spacer
 
-import src.generate_pdf.form_classes as cl
-import src.generate_pdf.styles as style
-from src.generate_pdf.form_construct import construct_medication_form, construct_standard_row, construct_testing_form
+import bridge.generate_pdf.form_classes as cl
+import bridge.generate_pdf.styles as style
+from bridge.generate_pdf.form_construct import construct_medication_form, construct_standard_row, construct_testing_form
 
 LINE_PLACEHOLDER = '_' * 40
 

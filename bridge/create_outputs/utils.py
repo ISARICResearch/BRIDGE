@@ -1,4 +1,4 @@
-from src.logger import setup_logger
+from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
 
