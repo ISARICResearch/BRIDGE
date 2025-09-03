@@ -1,3 +1,5 @@
+import json
+
 import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
@@ -5,13 +7,117 @@ import dash_treeview_antd
 import pandas as pd
 from dash import dcc, html, Input, Output, State
 
+from bridge.arc import arc
+from bridge.arc.arc_api import ArcApiClient
+from bridge.layout import modals
+
 pd.options.mode.copy_on_write = True
 
 ASSETS_DIR = '../../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 LOGOS_DIR = f'{ASSETS_DIR}/logos'
 
+# TODO: Should these be global vars?
+# Global variables
+ARC_VERSION_LIST, ARC_VERSION_LATEST = arc.get_arc_versions()
+ARC_LANGUAGE_LIST_INITIAL = ArcApiClient().get_arc_language_list_version(ARC_VERSION_LATEST)
+ARC_LANGUAGE_INITIAL = 'English'
 
+CURRENT_DATADICC, PRESETS, COMMIT = arc.get_arc(ARC_VERSION_LATEST)
+CURRENT_DATADICC = arc.add_required_datadicc_columns(CURRENT_DATADICC)
+
+TREE_ITEMS_DATA = arc.get_tree_items(CURRENT_DATADICC, ARC_VERSION_LATEST)
+
+# List content Transformation
+ARC_LISTS, LIST_VARIABLE_CHOICES = arc.get_list_content(CURRENT_DATADICC, ARC_VERSION_LATEST, ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_LISTS, arc.get_variable_order(CURRENT_DATADICC))
+
+# User List content Transformation
+ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.get_user_list_content(CURRENT_DATADICC, ARC_VERSION_LATEST,
+                                                              ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_ULIST, arc.get_variable_order(CURRENT_DATADICC))
+
+ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.get_multu_list_content(CURRENT_DATADICC, ARC_VERSION_LATEST,
+                                                                       ARC_LANGUAGE_INITIAL)
+CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_MULTILIST,
+                                            arc.get_variable_order(CURRENT_DATADICC))
+
+INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='split')
+INITIAL_ULIST_VARIABLE_CHOICES = json.dumps(ULIST_VARIABLE_CHOICES)
+INITIAL_MULTILIST_VARIABLE_CHOICES = json.dumps(MULTILIST_VARIABLE_CHOICES)
+
+# Grouping presets by the first column
+GROUPED_PRESETS = {}
+
+for key, value in PRESETS:
+    GROUPED_PRESETS.setdefault(key, []).append(value)
+
+INITIAL_GROUPED_PRESETS = json.dumps(GROUPED_PRESETS)
+
+
+def define_app_layout():
+    app_layout = html.Div(
+        [
+            dcc.Store(id='current_datadicc-store', data=INITIAL_CURRENT_DATADICC),
+            dcc.Store(id='ulist_variable_choices-store', data=INITIAL_ULIST_VARIABLE_CHOICES),
+            dcc.Store(id='multilist_variable_choices-store', data=INITIAL_MULTILIST_VARIABLE_CHOICES),
+            dcc.Store(id='grouped_presets-store', data=INITIAL_GROUPED_PRESETS),
+            dcc.Store(id='tree_items_data-store', data=INITIAL_GROUPED_PRESETS),
+
+            dcc.Store(id='templates_checks_ready', data=False),
+
+            dcc.Location(id='url', refresh=False),
+            html.Div(id='page-content'),
+            dcc.Download(id="download-dataframe-csv"),
+            dcc.Download(id='download-compGuide-pdf'),
+            dcc.Download(id='download-projectxml-pdf'),
+            dcc.Download(id='download-paperlike-pdf'),
+            dcc.Download(id='save-crf'),
+            modals.variable_information_modal(),
+            modals.research_questions_modal(),
+            dcc.Loading(id="loading-generate",
+                        type="default",
+                        children=html.Div(id="loading-output-generate"),
+                        ),
+            dcc.Loading(id="loading-save",
+                        type="default",
+                        children=html.Div(id="loading-output-save"),
+                        ),
+            dcc.Store(id='commit-store'),
+            dcc.Store(id='selected_data-store'),
+            dcc.Store(id='language-list-store', data=ARC_LANGUAGE_LIST_INITIAL),
+            dcc.Store(id='upload-version-store'),
+            dcc.Store(id='upload-language-store'),
+            dcc.Store(id='upload-crf-ready', data=False),
+            dcc.Store(id="browser-info-store"),
+
+            dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
+        ]
+    )
+    return app_layout
+
+
+def main_app():
+    return html.Div([
+        NavBar.navbar,
+        SideBar.sidebar,
+        dcc.Loading(
+            id="loading-overlay",
+            type="circle",  # Spinner style: 'default', 'circle', 'dot'
+            fullscreen=True,  # Covers the full screen
+            children=[
+                Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST_INITIAL, ARC_VERSION_LATEST,
+                         ARC_LANGUAGE_INITIAL).settings_column,
+                Presets.preset_column,
+                TreeItems(TREE_ITEMS_DATA).tree_column,
+                MainContent.main_content,
+            ],
+            delay_show=1200,
+        ),
+    ])
+
+
+# TODO: Put these in different files?
 class MainContent:
     column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
                    {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
@@ -190,7 +296,7 @@ class SideBar:
     )
 
     @staticmethod
-    def add_callbacks(app):
+    def register_callbacks(app):
 
         @app.callback(
             [Output("presets-column", "is_in"),

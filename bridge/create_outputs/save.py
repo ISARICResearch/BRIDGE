@@ -14,7 +14,7 @@ pd.options.mode.copy_on_write = True
 class Save:
 
     @staticmethod
-    def add_callbacks(app):
+    def register_callbacks(app):
 
         @app.callback(
             [

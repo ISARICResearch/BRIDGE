@@ -22,7 +22,7 @@ class Generate:
         self.config_dir = join(dirname(dirname(dirname(abspath(__file__)))), 'assets', 'config_files')
         self.xml_file_name = 'ISARIC Clinical Characterisation Setup.xml'
 
-    def add_callbacks(self, app):
+    def register_callbacks(self, app):
 
         @app.callback(
             [

@@ -20,7 +20,7 @@ pd.options.mode.copy_on_write = True
 class Upload:
 
     @staticmethod
-    def add_callbacks(app):
+    def register_callbacks(app):
 
         @app.callback(
             [

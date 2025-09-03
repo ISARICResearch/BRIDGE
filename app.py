@@ -1,26 +1,25 @@
 import io
 import json
-import re
-from os.path import join, abspath, dirname
 
 import dash
-import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
-from dash import callback_context, dcc, html, Input, Output, State
+from dash import callback_context, html, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 import bridge.generate_pdf.form as form
 from bridge.arc import arc
-from bridge.layout import index, bridge_modals
 from bridge.arc.arc_api import ArcApiClient
-from bridge.layout.app_layout import MainContent, NavBar, SideBar, Settings, Presets, TreeItems
-from bridge.logging.logger import setup_logger
+from bridge.create_outputs.arc_data import ARCData
 from bridge.create_outputs.generate import Generate
 from bridge.create_outputs.save import Save
 from bridge.create_outputs.upload import Upload
-from bridge.create_outputs.arc_data import ARCData
+from bridge.layout import index
+from bridge.layout.app_layout import define_app_layout, main_app, SideBar
+from bridge.layout.dropdowns import Dropdowns
+from bridge.layout.radios import Radios
+from bridge.logging.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
 
@@ -34,85 +33,13 @@ server = app.server
 
 logger.info('Starting BRIDGE application')
 
-# Global variables
-CONFIG_DIR_FULL = join(dirname(abspath(__file__)), 'assets', 'config_files')
-
-ARC_VERSION_LIST, ARC_VERSION_INITIAL = arc.get_arc_versions()
-ARC_LANGUAGE_LIST_INITIAL = ArcApiClient().get_arc_language_list_version(ARC_VERSION_INITIAL)
-ARC_LANGUAGE_INITIAL = 'English'
-
-CURRENT_DATADICC, PRESETS, COMMIT = arc.get_arc(ARC_VERSION_INITIAL)
-CURRENT_DATADICC = arc.add_required_datadicc_columns(CURRENT_DATADICC)
-
-TREE_ITEMS_DATA = arc.get_tree_items(CURRENT_DATADICC, ARC_VERSION_INITIAL)
-
-# List content Transformation
-ARC_LISTS, LIST_VARIABLE_CHOICES = arc.get_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_LISTS, arc.get_variable_order(CURRENT_DATADICC))
-
-# User List content Transformation
-ARC_ULIST, ULIST_VARIABLE_CHOICES = arc.get_user_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL, ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_ULIST, arc.get_variable_order(CURRENT_DATADICC))
-
-ARC_MULTILIST, MULTILIST_VARIABLE_CHOICES = arc.get_multu_list_content(CURRENT_DATADICC, ARC_VERSION_INITIAL,
-                                                                       ARC_LANGUAGE_INITIAL)
-CURRENT_DATADICC = arc.add_transformed_rows(CURRENT_DATADICC, ARC_MULTILIST, arc.get_variable_order(CURRENT_DATADICC))
-
-INITIAL_CURRENT_DATADICC = CURRENT_DATADICC.to_json(date_format='iso', orient='split')
-INITIAL_ULIST_VARIABLE_CHOICES = json.dumps(ULIST_VARIABLE_CHOICES)
-INITIAL_MULTILIST_VARIABLE_CHOICES = json.dumps(MULTILIST_VARIABLE_CHOICES)
-
-# Grouping presets by the first column
-GROUPED_PRESETS = {}
-
-for key, value in PRESETS:
-    GROUPED_PRESETS.setdefault(key, []).append(value)
-
-INITIAL_GROUPED_PRESETS = json.dumps(GROUPED_PRESETS)
-
-app.layout = html.Div(
-    [
-        dcc.Store(id='current_datadicc-store', data=INITIAL_CURRENT_DATADICC),
-        dcc.Store(id='ulist_variable_choices-store', data=INITIAL_ULIST_VARIABLE_CHOICES),
-        dcc.Store(id='multilist_variable_choices-store', data=INITIAL_MULTILIST_VARIABLE_CHOICES),
-        dcc.Store(id='grouped_presets-store', data=INITIAL_GROUPED_PRESETS),
-        dcc.Store(id='tree_items_data-store', data=INITIAL_GROUPED_PRESETS),
-
-        dcc.Store(id='templates_checks_ready', data=False),
-
-        dcc.Location(id='url', refresh=False),
-        html.Div(id='page-content'),
-        dcc.Download(id="download-dataframe-csv"),
-        dcc.Download(id='download-compGuide-pdf'),
-        dcc.Download(id='download-projectxml-pdf'),
-        dcc.Download(id='download-paperlike-pdf'),
-        dcc.Download(id='save-crf'),
-        bridge_modals.variable_information_modal(),
-        bridge_modals.research_questions_modal(),
-        dcc.Loading(id="loading-generate",
-                    type="default",
-                    children=html.Div(id="loading-output-generate"),
-                    ),
-        dcc.Loading(id="loading-save",
-                    type="default",
-                    children=html.Div(id="loading-output-save"),
-                    ),
-        dcc.Store(id='commit-store'),
-        dcc.Store(id='selected_data-store'),
-        dcc.Store(id='language-list-store', data=ARC_LANGUAGE_LIST_INITIAL),
-        dcc.Store(id='upload-version-store'),
-        dcc.Store(id='upload-language-store'),
-        dcc.Store(id='upload-crf-ready', data=False),
-        dcc.Store(id="browser-info-store"),
-
-        dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
-    ]
-)
-
-app = SideBar.add_callbacks(app)
-app = Save.add_callbacks(app)
-app = Generate().add_callbacks(app)
-app = Upload.add_callbacks(app)
+app.layout = define_app_layout()
+app = Dropdowns.register_callbacks(app)
+app = Generate().register_callbacks(app)
+app = Radios.register_callbacks(app)
+app = Save.register_callbacks(app)
+app = SideBar.register_callbacks(app)
+app = Upload.register_callbacks(app)
 
 app.clientside_callback(
     """
@@ -124,26 +51,6 @@ app.clientside_callback(
     Input("interval-browser", "n_intervals"),
     prevent_initial_call=True
 )
-
-
-def main_app():
-    return html.Div([
-        NavBar.navbar,
-        SideBar.sidebar,
-        dcc.Loading(
-            id="loading-overlay",
-            type="circle",  # Spinner style: 'default', 'circle', 'dot'
-            fullscreen=True,  # Covers the full screen
-            children=[
-                Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST_INITIAL, ARC_VERSION_INITIAL,
-                         ARC_LANGUAGE_INITIAL).settings_column,
-                Presets.preset_column,
-                TreeItems(TREE_ITEMS_DATA).tree_column,
-                MainContent.main_content,
-            ],
-            delay_show=1200,
-        ),
-    ])
 
 
 @app.callback(Output('page-content', 'children'),
@@ -262,6 +169,7 @@ def display_checked(checked, current_datadicc_saved):
     return column_defs, row_data, selected_variables.to_json(date_format='iso', orient='split')
 
 
+# TODO: This displays the modal popup
 @app.callback([
     Output('modal', 'is_open'),
     Output('modal_title', 'children'),
@@ -283,21 +191,21 @@ def display_checked(checked, current_datadicc_saved):
     ])
 def display_selected(selected, ulist_variable_choices_saved, multilist_variable_choices_saved, is_open,
                      current_datadicc_saved):
-    dict1 = json.loads(ulist_variable_choices_saved)
-    dict2 = json.loads(multilist_variable_choices_saved)
-    datatatata = dict1 + dict2
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+    dict_ulist = json.loads(ulist_variable_choices_saved)
+    dict_multilist = json.loads(multilist_variable_choices_saved)
+    dict_lists = dict_ulist + dict_multilist
+    df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     if selected:
         selected_variable = selected[0]
-        if selected_variable in list(current_datadicc['Variable']):
-            question = current_datadicc['Question'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
-            definition = current_datadicc['Definition'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+        if selected_variable in list(df_datadicc['Variable']):
+            question = df_datadicc['Question'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
+            definition = df_datadicc['Definition'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
             completion = \
-                current_datadicc['Completion Guideline'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
-            ulist_variables = [i[0] for i in datatatata]
+                df_datadicc['Completion Guideline'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
+            ulist_variables = [i[0] for i in dict_lists]
             if selected_variable in ulist_variables:
-                for item in datatatata:
+                for item in dict_lists:
                     if item[0] == selected_variable:
                         options = []
                         checked_items = []
@@ -317,7 +225,7 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
             else:
                 options = []
                 answ_options = \
-                    current_datadicc['Answer Options'].loc[current_datadicc['Variable'] == selected_variable].iloc[0]
+                    df_datadicc['Answer Options'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
                 if isinstance(answ_options, str):
                     for i in answ_options.split('|'):
                         options.append(dbc.ListGroupItem(i))
@@ -329,6 +237,7 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
+# TODO: This says what has been expanded on the LHS
 @app.callback(
     Output('output-expanded', 'children'),
     [
@@ -379,7 +288,8 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
     selected_language = None
 
     if button_type == 'dynamic-version':
-        selected_version = ARC_VERSION_LIST[button_index]
+        arc_version_list, _arc_version_latest = arc.get_arc_versions()
+        selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
                     False, dash.no_update, dash.no_update)
@@ -421,48 +331,6 @@ def store_clicked_item(n_clicks_version, n_clicks_language, selected_version_dat
     except json.JSONDecodeError:
         return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, False,
                 dash.no_update, dash.no_update)
-
-
-@app.callback(
-    Output("dropdown-ARC_version_input", "value"),
-    [
-        Input('selected-version-store', 'data')
-    ]
-)
-def update_input_version(data):
-    if data is None:
-        return dash.no_update
-    return data.get('selected_version')
-
-
-@app.callback(
-    Output("dropdown-ARC_language_input", "value"),
-    [
-        Input('selected-language-store', 'data')
-    ]
-)
-def update_input_language(data):
-    if data is None:
-        return dash.no_update
-    return data.get('selected_language')
-
-
-@app.callback(
-    Output("dropdown-ARC-language-menu", "children"),
-    Output("language-list-store", "data"),
-    [
-        Input('selected-version-store', 'data'),
-    ],
-)
-def update_language_dropdown(selected_version_data):
-    if not selected_version_data:
-        return dash.no_update, dash.no_update
-
-    current_version = selected_version_data.get('selected_version', None)
-    arc_languages = ArcApiClient().get_arc_language_list_version(current_version)
-    arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
-                          i, language in enumerate(arc_languages)]
-    return arc_language_items, arc_languages
 
 
 def update_for_template_options(version, language, df_current_datadicc, ulist_variable_choices,
@@ -629,6 +497,7 @@ def update_output(checked_variables, current_datadicc_saved, grouped_presets, se
     )
 
 
+# TODO: Modal submit
 @app.callback(
     [
         Output('modal', 'is_open', allow_duplicate=True),
@@ -774,371 +643,6 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
 )
 def update_store(checked_values):
     return checked_values
-
-
-@app.callback(
-    Output('row2_options', 'children'),
-    [Input('row1_radios', 'value')]
-)
-def update_row2_options(selected_value):
-    if selected_value == "Characterisation":
-        options = [
-            {"label": "What are the case defining features?", "value": "CD_Features"},
-            {"label": "What is the spectrum of clinical features in this disease?",
-             "value": "Spectrum_Clinical_Features"},
-        ]
-    elif selected_value == "Risk/Prognosis":
-        options = [
-            {"label": "What are the clinical features occurring in those with patient outcome?",
-             "value": "Clinical_Features_Patient_Outcome"},
-            {"label": "What are the risk factors for patient outcome?", "value": "Risk_Factors_Patient_Outcome"},
-        ]
-    elif selected_value == "Clinical Management":
-        options = [
-            {"label": "What treatment/intervention are received by those with patient outcome?",
-             "value": "Treatment_Intervention_Patient_Outcome"},
-            {"label": "What proportion of patients with clinical feature are receiving treatment/intervention?",
-             "value": "Clinical_Features_Treatment_Intervention"},
-            {"label": "What proportion of patient outcome recieved treatment/intervention?",
-             "value": "Patient_Outcome_Treatment_Intervention"},
-            {"label": "What duration of treatment/intervention is being used in patient outcome?",
-             "value": "Duration_Treatment_Intervention_Patient_Outcome"},
-
-        ]
-    else:
-        options = []
-
-    question_options = html.Div(
-        [
-            dbc.RadioItems(
-                id="row2_radios",
-                className="btn-group",
-                inputClassName="btn-check",
-                labelClassName="btn btn-outline-primary",
-                labelCheckedClassName="active",
-                options=options,
-            ),
-            html.Div(id="rq_questions_div"),
-        ],
-        className="radio-group",
-    )
-
-    return question_options
-
-
-def init_grid(dataframe, id_grid):
-    # Define the new column definitions
-    columnDefs = [
-        {'field': 'Form'},
-        {'field': 'Section'},
-        {'field': 'Question'},
-    ]
-
-    # Convert the DataFrame to a dictionary in a format suitable for Dash AgGrid
-    # Use `records` to get a list of dict, each representing a row in the DataFrame
-    rowData = dataframe.to_dict('records')
-
-    return dag.AgGrid(
-        id=id_grid,
-        rowData=rowData,
-        columnDefs=columnDefs,
-        defaultColDef={'resizable': True},
-        columnSize="sizeToFit",
-        dashGridOptions={
-            "rowDragManaged": True,
-            "rowDragEntireRow": True,
-            "rowDragMultiRow": True,
-            "rowSelection": "multiple",
-            "suppressMoveWhenRowDragging": True
-        },
-        # Since the rowClassRules were based on color, you might want to remove or modify this part
-        # You can define new rules based on 'form', 'section', or 'label' if needed
-        rowClassRules={},
-        getRowId="params.data.id",  # Ensure your DataFrame includes an 'id' column for this to work
-    )
-
-
-def createFeatureSelection(id_so, title, feat_options):
-    # This function creates a feature selection component with dynamic IDs.
-    return html.Div([
-        html.Div(id={'type': 'feature_title', 'index': id_so}, children=title, style={"cursor": "pointer"}),
-        dbc.Fade(
-            html.Div([
-                dcc.Checklist(
-                    id={'type': 'feature_selectall', 'index': id_so},
-                    options=[{'label': 'Select all', 'value': 'all'}],
-                    value=['all']
-                ),
-                dcc.Checklist(
-                    id={'type': 'feature_checkboxes', 'index': id_so},
-                    options=feat_options,
-                    value=[option['value'] for option in feat_options],
-                    style={'overflowY': 'auto', 'maxHeight': '100px'}
-                )
-            ]),
-            id={'type': 'feature_fade', 'index': id_so},
-            is_in=False,
-            appear=False,
-        )
-    ])
-
-
-def feature_text(current_datadicc, selected_variables, features):
-    selected_variables = selected_variables.copy()
-    selected_variables = selected_variables.loc[selected_variables['Variable'].isin(features['Variable'])]
-    if (selected_variables is None):
-        return ''
-    else:
-        text = ''
-        selected_features = current_datadicc.loc[current_datadicc['Variable'].isin(selected_variables['Variable'])]
-        for sec in selected_features['Section'].unique():
-            # Add section title in bold and a new line
-            text += f"\n\n**{sec}**\n"
-            for label in selected_features['Question'].loc[selected_features['Section'] == sec]:
-                # Add each label as a bullet point with a new line
-                text += f"  - {label}\n"
-        return text
-
-
-def feature_accordion(features, id_feat, selected):
-    feat_accordion_items = []
-    cont = 0
-
-    for sec in features['Section'].unique():
-        if selected is None:
-            selection = []
-        else:
-            selection = selected['Variable'].loc[selected['Section'] == sec]
-            # For each group, create a checklist
-        checklist = dbc.Checklist(
-            options=[{"label": row['Question'], "value": row['Variable']} for _, row in
-                     features.loc[features['Section'] == sec].iterrows()],
-            value=selection,
-            id=id_feat + '_' + f'checklist-{str(cont)}',
-            switch=True,
-        )
-        cont += 1
-        # Create an accordion item with the checklist
-        feat_accordion_items.append(
-            dbc.AccordionItem(
-                title=sec.split(":")[0],
-                children=html.Div(checklist, style={'height': '100px', 'overflowY': 'auto'})
-            )
-        )
-    return dbc.Accordion(feat_accordion_items)
-
-
-def paralel_elements(features, id_feat, current_datadicc, selected_variables):
-    text = feature_text(current_datadicc, selected_variables, features)
-    accord = feature_accordion(features, id_feat, selected=selected_variables)
-
-    pararel_features = html.Div([
-        # First column with the title and the Available Columns table
-        html.Div([
-            html.H5('Available Features', style={'textAlign': 'center'}),
-            accord
-
-        ], style={'width': '49%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-
-        # Second column with the buttons
-        html.Div(style={'width': '1%', 'display': 'inline-block', 'textAlign': 'center'}),
-
-        # Third column with the title and the Display Columns table
-        html.Div([
-            html.H5('Selected Features', style={'textAlign': 'center'}),
-            dcc.Markdown(id=id_feat + '_text-content', children=text,
-                         style={'height': '300px', 'overflowY': 'scroll', 'border': '1px solid #ddd', 'padding': '10px',
-                                'color': 'black'}),
-
-        ], style={'width': '50%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-    ], style={'width': '100%', 'display': 'flex'})
-    return pararel_features
-
-
-@app.callback(
-    [Output('row3_tabs', 'children'), Output('selected_question', 'children')],
-    [Input('row2_radios', 'value')],
-    [State('selected_data-store', 'data')],
-)
-def update_row3_content(selected_value, json_data):
-    research_question_elements = pd.read_csv(join(CONFIG_DIR_FULL, 'researchQuestions.csv'))
-
-    group_elements = []
-    for tq_opGroup in research_question_elements['Option Group'].unique():
-        all_elements = []
-        for rq_element in research_question_elements['Relavent variable names on ARC'].loc[
-            research_question_elements['Option Group'] == tq_opGroup]:
-            if type(rq_element) == str:
-                for rq_aux in rq_element.split(';'):
-                    all_elements.append(rq_aux.strip())
-        group_elements.append([tq_opGroup, all_elements])
-
-    group_elements = pd.DataFrame(data=group_elements, columns=['Group Option', 'Variables'])
-
-    if json_data is None:
-        selected_variables_fromData = None
-    else:
-        selected_variables_fromData = pd.read_json(json_data, orient='split')
-        selected_variables_fromData = selected_variables_fromData[['Variable', 'Form', 'Section', 'Question']]
-
-    tabs_content = []
-    selected_question = ''
-
-    if selected_value == "CD_Features":
-        OptionGroup = ["Case Defining Features"]
-        caseDefiningVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_features = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(caseDefiningVariables.iloc[0]))], 'case_feat',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Features", children=[html.P(" "), paralel_elements_features]))
-        selected_question = "What are the [case defining features]?"
-
-    elif selected_value == "Spectrum_Clinical_Features":
-        OptionGroup = ["Clinical Features"]
-        clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_features = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
-        selected_question = "What is the spectrum of [clinical features] in this disease?"
-
-    elif selected_value == "Clinical_Features_Patient_Outcome":
-        OptionGroup = ["Clinical Features"]
-        clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_features = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            CURRENT_DATADICC, selected_variables_fromData)
-        OptionGroup = ["Patient Outcome"]
-        outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_outcomes = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
-        tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
-        selected_question = "What are the [clinical features] occuring in those with [patient outcome]?"
-
-    elif selected_value == "Risk_Factors_Patient_Outcome":
-        OptionGroup = ["Risk Factors: Demographics",
-                       "Risk Factors: Socioeconomic", "Risk Factors: Comorbidities"]
-        riskVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        allRiskVarr = []
-        for rv in riskVariables:
-            allRiskVarr += list(rv)
-        paralel_elements_risk = paralel_elements(CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(allRiskVarr)],
-                                                 'risk', CURRENT_DATADICC, selected_variables_fromData)
-        OptionGroup = ["Patient Outcome"]
-        outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_outcomes = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Risk Factors", children=[html.P(" "), paralel_elements_risk]))
-        tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
-        selected_question = "What are the [risk factors] for [patient outcome]?"
-
-    elif selected_value == "Treatment_Intervention_Patient_Outcome":
-
-        OptionGroup = ["Treatment/Intevention"]
-        TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_treatments = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            CURRENT_DATADICC, selected_variables_fromData)
-        OptionGroup = ["Patient Outcome"]
-        outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_outcomes = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(
-            dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
-        tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
-
-        selected_question = "What [treatment/intervention] are received by those with  [patient outcome]?"
-    elif selected_value == "Clinical_Features_Treatment_Intervention":
-
-        selected_question = "What proportion of patients with [clinical feature] are receiving [treatment/intervention]?"
-
-        OptionGroup = ["Clinical Features"]
-        clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_features = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))], 'clinic_feat',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
-        OptionGroup = ["Treatment/Intevention"]
-        TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_treatments = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(
-            dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
-
-    elif selected_value == "Patient_Outcome_Treatment_Intervention":
-        OptionGroup = ["Treatment/Intevention"]
-        TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_treatments = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(
-            dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
-
-        OptionGroup = ["Patient Outcome"]
-        outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_outcomes = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
-
-        selected_question = "What proportion of [patient outcome] recieved [treatment/intervention]?"
-    elif selected_value == "Duration_Treatment_Intervention_Patient_Outcome":
-        OptionGroup = ["Treatment/Intevention"]
-        TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_treatments = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))], 'treatment',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(
-            dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
-
-        OptionGroup = ["Patient Outcome"]
-        outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-        paralel_elements_outcomes = paralel_elements(
-            CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-            CURRENT_DATADICC, selected_variables_fromData)
-        tabs_content.append(dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
-        selected_question = "What duration of [treatment/intervention] is being used in [patient outcome]?"
-
-    parts = re.split(r'(\[.*?\])', selected_question)  # Split by text inside brackets, keeping the brackets
-
-    styled_parts = []
-    for part in parts:
-        if part.startswith('[') and part.endswith(']'):
-            # Text inside brackets, apply red color
-            styled_parts.append(html.Span(part, style={'color': '#BA0225'}))
-        else:
-            # Regular text, no additional styling needed
-            styled_parts.append(html.Span(part))
-    # Add more conditions as necessary for other options
-
-    return tabs_content, styled_parts
-
-
-@app.callback(
-    [Output('rq_modal', 'is_open', allow_duplicate=True), Output('row3_tabs', 'children', allow_duplicate=True),
-     Output('row1_radios', 'value'), Output('row2_radios', 'value')],
-    [Input('rq_modal_submit', 'n_clicks'), Input('rq_modal_cancel', 'n_clicks')],
-    prevent_initial_call=True
-)
-def on_rq_modal_button_click(submit_n_clicks, cancel_n_clicks):
-    ctx = callback_context
-    if not ctx.triggered:
-        return dash.no_update
-
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    if button_id == 'rq_modal_submit':
-        return False, [], [], []
-    elif button_id == 'rq_modal_cancel':
-        # Close the modal and clear its content
-        return False, [], [], []
-    else:
-        return dash.no_update
 
 
 if __name__ == "__main__":
