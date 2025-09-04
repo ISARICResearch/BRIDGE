@@ -9,7 +9,7 @@ from dash import dcc, html, Input, Output, State
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.layout import modals
+from bridge.layout.modals import Modals
 
 pd.options.mode.copy_on_write = True
 
@@ -73,8 +73,8 @@ def define_app_layout():
             dcc.Download(id='download-projectxml-pdf'),
             dcc.Download(id='download-paperlike-pdf'),
             dcc.Download(id='save-crf'),
-            modals.variable_information_modal(),
-            modals.research_questions_modal(),
+            Modals.variable_information_modal(),
+            Modals.research_questions_modal(),
             dcc.Loading(id="loading-generate",
                         type="default",
                         children=html.Div(id="loading-output-generate"),

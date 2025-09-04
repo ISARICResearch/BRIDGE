@@ -9,7 +9,7 @@ import pandas as pd
 from dash import html, Input, Output, State
 
 from bridge.arc import arc
-from bridge.create_outputs.arc_data import ARCData
+from bridge.buttons.arc_data import ARCData
 from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)

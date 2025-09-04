@@ -11,7 +11,7 @@ from unidecode import unidecode
 
 from bridge.arc import arc
 from bridge.generate_pdf import paper_crf
-from bridge.create_outputs.utils import get_crf_name, get_trigger_id
+from bridge.buttons.utils import get_crf_name, get_trigger_id
 
 pd.options.mode.copy_on_write = True
 
