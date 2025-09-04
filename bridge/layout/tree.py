@@ -2,6 +2,7 @@ import io
 import json
 
 import dash
+import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
@@ -18,6 +19,32 @@ logger = setup_logger(__name__)
 
 
 class Tree:
+
+    def __init__(self, tree_items_data):
+        self.tree_items_data = tree_items_data
+
+        self.tree_items = html.Div(
+            dash_treeview_antd.TreeView(
+                id='input',
+                multiple=False,
+                checkable=True,
+                checked=[],
+                data=self.tree_items_data),
+            id='tree_items_container',
+            className='tree-item',
+        )
+
+        self.tree_column = dbc.Fade(
+            self.tree_items,
+            id="tree-column",
+            is_in=True,  # Initially show
+            style={
+                "position": "fixed",
+                "left": "4rem",
+                "width": "33rem",
+                "height": "90%",
+            }
+        )
 
     @staticmethod
     def register_callbacks(app):
@@ -39,8 +66,7 @@ class Tree:
             prevent_initial_call=True
         )
         def update_tree_items_and_stores(checked_variables, current_datadicc_saved, grouped_presets,
-                                         selected_version_data,
-                                         selected_lang_data):
+                                         selected_version_data, selected_lang_data):
             ctx = dash.callback_context
             df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
@@ -142,7 +168,7 @@ class Tree:
                 cont_lo = 1
                 select_answer_options = ''
 
-                NOT_select_answer_options = ''
+                not_select_answer_options = ''
                 for index, row in list_options.iterrows():
                     if cont_lo == 88:
                         cont_lo = 89
@@ -169,13 +195,13 @@ class Tree:
                             dict1_options.append([str(cont_lo), str(row[list_options.columns[0]]), 0])
                         elif row_tem_ul['Type'] == 'multi_list':
                             dict2_options.append([str(cont_lo), str(row[list_options.columns[0]]), 0])
-                        NOT_select_answer_options += str(cont_lo) + ', ' + str(row[list_options.columns[0]]) + ' | '
+                        not_select_answer_options += str(cont_lo) + ', ' + str(row[list_options.columns[0]]) + ' | '
                     cont_lo += 1
                 df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
                     'Variable'], 'Answer Options'] = select_answer_options + '88, ' + other_text
                 if row_tem_ul['Variable'] + '_otherl2' in list(df_current_datadicc['Variable']):
                     df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
-                        'Variable'] + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
+                        'Variable'] + '_otherl2', 'Answer Options'] = not_select_answer_options + '88, ' + other_text
 
                 if row_tem_ul['Type'] == 'user_list':
                     ulist_variable_choices.append([row_tem_ul['Variable'], dict1_options])

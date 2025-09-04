@@ -2,26 +2,69 @@ import io
 import re
 from os.path import join, abspath, dirname
 
+import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import dcc, html, Input, Output, State
 
 from bridge.arc import arc
 from bridge.generate_pdf import form
-# TODO: Not sure why using this
-from bridge.layout.app_layout import CURRENT_DATADICC
 
 
-# TODO: Rename functions
-# TODO: snakecase
-# TODO: Can this be simplified?
+# TODO: Is some of this obsolete?
 
 class Grid:
 
-    @staticmethod
-    def register_callbacks(app):
+    def __init__(self, df_arc):
+        # TODO: Not sure why using this
+        self.df_arc = df_arc
 
-        # TODO: This updates RHS
+        self.column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
+                            {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
+
+        self.row_data = [{'question': "", 'options': ""},
+                         {'question': "", 'options': ""}]
+
+        self.grid = html.Div(
+            dag.AgGrid(
+                id='CRF_representation_grid',
+                columnDefs=self.column_defs,
+                rowData=self.row_data,
+                defaultColDef={"sortable": True, "filter": True, 'resizable': True},
+                columnSize="responsiveSizeToFit",
+                dashGridOptions={
+                    "rowDragManaged": True,
+                    "rowDragEntireRow": True,
+                    "rowDragMultiRow": True,
+                    "rowSelection": "multiple",
+                    "suppressMoveWhenRowDragging": True,
+                    "autoHeight": True
+                },
+                rowClassRules={
+                    "form-separator-row ": 'params.data.SeparatorType == "form"',
+                    'section-separator-row': 'params.data.SeparatorType == "section"',
+                },
+                style={
+                    'overflow-y': 'auto',
+                    'height': '99%',
+                    'width': '100%',
+                    'white-space': 'normal',
+                    'overflow-x': 'hidden',
+                }
+
+            ),
+            style={
+                'overflow-y': 'auto',
+                'height': '67vh',
+                'width': '100%',
+                'white-space': 'normal',
+                'overflow-x': 'hidden',
+                'text-overflow': 'ellipsis',
+            }
+        )
+
+    def register_callbacks(self, app):
+
         @app.callback(
             [
                 Output('CRF_representation_grid', 'columnDefs'),
@@ -193,150 +236,154 @@ class Grid:
             group_elements = pd.DataFrame(data=group_elements, columns=['Group Option', 'Variables'])
 
             if json_data is None:
-                selected_variables_fromData = None
+                selected_variables_from_data = None
             else:
-                selected_variables_fromData = pd.read_json(json_data, orient='split')
-                selected_variables_fromData = selected_variables_fromData[['Variable', 'Form', 'Section', 'Question']]
+                selected_variables_from_data = pd.read_json(json_data, orient='split')
+                selected_variables_from_data = selected_variables_from_data[['Variable', 'Form', 'Section', 'Question']]
 
             tabs_content = []
             selected_question = ''
 
             if selected_value == "CD_Features":
-                OptionGroup = ["Case Defining Features"]
-                caseDefiningVariables = group_elements['Variables'].loc[
-                    group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_features = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(caseDefiningVariables.iloc[0]))],
+                option_group = ["Case Defining Features"]
+                case_defining_variables = group_elements['Variables'].loc[
+                    group_elements['Group Option'].isin(option_group)]
+                parallel_elements_features = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(case_defining_variables.iloc[0]))],
                     'case_feat',
-                    CURRENT_DATADICC, selected_variables_fromData)
-                tabs_content.append(dbc.Tab(label="Features", children=[html.P(" "), paralel_elements_features]))
+                    self.df_arc, selected_variables_from_data)
+                tabs_content.append(dbc.Tab(label="Features", children=[html.P(" "), parallel_elements_features]))
                 selected_question = "What are the [case defining features]?"
 
             elif selected_value == "Spectrum_Clinical_Features":
-                OptionGroup = ["Clinical Features"]
-                clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_features = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))],
+                option_group = ["Clinical Features"]
+                clinical_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_features = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(clinical_variables.iloc[0]))],
                     'clinic_feat',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
+                    dbc.Tab(label="Clinical Features", children=[html.P(" "), parallel_elements_features]))
                 selected_question = "What is the spectrum of [clinical features] in this disease?"
 
             elif selected_value == "Clinical_Features_Patient_Outcome":
-                OptionGroup = ["Clinical Features"]
-                clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_features = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))],
+                option_group = ["Clinical Features"]
+                clinical_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_features = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(clinical_variables.iloc[0]))],
                     'clinic_feat',
-                    CURRENT_DATADICC, selected_variables_fromData)
-                OptionGroup = ["Patient Outcome"]
-                outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_outcomes = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
+                option_group = ["Patient Outcome"]
+                outcome_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_outcomes = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(outcome_variables.iloc[0]))], 'outcome',
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
+                    dbc.Tab(label="Clinical Features", children=[html.P(" "), parallel_elements_features]))
                 tabs_content.append(
-                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
+                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), parallel_elements_outcomes]))
                 selected_question = "What are the [clinical features] occuring in those with [patient outcome]?"
 
             elif selected_value == "Risk_Factors_Patient_Outcome":
-                OptionGroup = ["Risk Factors: Demographics",
-                               "Risk Factors: Socioeconomic", "Risk Factors: Comorbidities"]
-                riskVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                allRiskVarr = []
-                for rv in riskVariables:
-                    allRiskVarr += list(rv)
-                paralel_elements_risk = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(allRiskVarr)],
-                    'risk', CURRENT_DATADICC, selected_variables_fromData)
-                OptionGroup = ["Patient Outcome"]
-                outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_outcomes = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-                    CURRENT_DATADICC, selected_variables_fromData)
-                tabs_content.append(dbc.Tab(label="Risk Factors", children=[html.P(" "), paralel_elements_risk]))
+                option_group = ["Risk Factors: Demographics",
+                                "Risk Factors: Socioeconomic", "Risk Factors: Comorbidities"]
+                risk_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                all_risk_varr = []
+                for rv in risk_variables:
+                    all_risk_varr += list(rv)
+                parallel_elements_risk = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(all_risk_varr)],
+                    'risk', self.df_arc, selected_variables_from_data)
+                option_group = ["Patient Outcome"]
+                outcome_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_outcomes = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(outcome_variables.iloc[0]))], 'outcome',
+                    self.df_arc, selected_variables_from_data)
+                tabs_content.append(dbc.Tab(label="Risk Factors", children=[html.P(" "), parallel_elements_risk]))
                 tabs_content.append(
-                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
+                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), parallel_elements_outcomes]))
                 selected_question = "What are the [risk factors] for [patient outcome]?"
 
             elif selected_value == "Treatment_Intervention_Patient_Outcome":
 
-                OptionGroup = ["Treatment/Intevention"]
-                TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_treatments = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))],
+                option_group = ["Treatment/Intevention"]
+                treatments_variables = group_elements['Variables'].loc[
+                    group_elements['Group Option'].isin(option_group)]
+                parallel_elements_treatments = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(treatments_variables.iloc[0]))],
                     'treatment',
-                    CURRENT_DATADICC, selected_variables_fromData)
-                OptionGroup = ["Patient Outcome"]
-                outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_outcomes = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
+                option_group = ["Patient Outcome"]
+                outcome_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_outcomes = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(outcome_variables.iloc[0]))], 'outcome',
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
+                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), parallel_elements_treatments]))
                 tabs_content.append(
-                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
+                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), parallel_elements_outcomes]))
 
                 selected_question = "What [treatment/intervention] are received by those with  [patient outcome]?"
             elif selected_value == "Clinical_Features_Treatment_Intervention":
 
                 selected_question = "What proportion of patients with [clinical feature] are receiving [treatment/intervention]?"
 
-                OptionGroup = ["Clinical Features"]
-                clinicalVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_features = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(clinicalVariables.iloc[0]))],
+                option_group = ["Clinical Features"]
+                clinical_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_features = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(clinical_variables.iloc[0]))],
                     'clinic_feat',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Clinical Features", children=[html.P(" "), paralel_elements_features]))
-                OptionGroup = ["Treatment/Intevention"]
-                TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_treatments = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))],
+                    dbc.Tab(label="Clinical Features", children=[html.P(" "), parallel_elements_features]))
+                option_group = ["Treatment/Intevention"]
+                treatments_variables = group_elements['Variables'].loc[
+                    group_elements['Group Option'].isin(option_group)]
+                parallel_elements_treatments = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(treatments_variables.iloc[0]))],
                     'treatment',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
+                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), parallel_elements_treatments]))
 
             elif selected_value == "Patient_Outcome_Treatment_Intervention":
-                OptionGroup = ["Treatment/Intevention"]
-                TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_treatments = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))],
+                option_group = ["Treatment/Intevention"]
+                treatments_variables = group_elements['Variables'].loc[
+                    group_elements['Group Option'].isin(option_group)]
+                parallel_elements_treatments = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(treatments_variables.iloc[0]))],
                     'treatment',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
+                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), parallel_elements_treatments]))
 
-                OptionGroup = ["Patient Outcome"]
-                outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_outcomes = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                option_group = ["Patient Outcome"]
+                outcome_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_outcomes = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(outcome_variables.iloc[0]))], 'outcome',
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
+                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), parallel_elements_outcomes]))
 
                 selected_question = "What proportion of [patient outcome] recieved [treatment/intervention]?"
             elif selected_value == "Duration_Treatment_Intervention_Patient_Outcome":
-                OptionGroup = ["Treatment/Intevention"]
-                TreatmentsVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_treatments = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(TreatmentsVariables.iloc[0]))],
+                option_group = ["Treatment/Intevention"]
+                treatments_variables = group_elements['Variables'].loc[
+                    group_elements['Group Option'].isin(option_group)]
+                parallel_elements_treatments = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(treatments_variables.iloc[0]))],
                     'treatment',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), paralel_elements_treatments]))
+                    dbc.Tab(label="Treatments/Interventions", children=[html.P(" "), parallel_elements_treatments]))
 
-                OptionGroup = ["Patient Outcome"]
-                outcomeVariables = group_elements['Variables'].loc[group_elements['Group Option'].isin(OptionGroup)]
-                paralel_elements_outcomes = parallel_elements(
-                    CURRENT_DATADICC.loc[CURRENT_DATADICC['Variable'].isin(list(outcomeVariables.iloc[0]))], 'outcome',
-                    CURRENT_DATADICC, selected_variables_fromData)
+                option_group = ["Patient Outcome"]
+                outcome_variables = group_elements['Variables'].loc[group_elements['Group Option'].isin(option_group)]
+                parallel_elements_outcomes = parallel_elements(
+                    self.df_arc.loc[self.df_arc['Variable'].isin(list(outcome_variables.iloc[0]))], 'outcome',
+                    self.df_arc, selected_variables_from_data)
                 tabs_content.append(
-                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), paralel_elements_outcomes]))
+                    dbc.Tab(label="Patient Outcomes", children=[html.P(" "), parallel_elements_outcomes]))
                 selected_question = "What duration of [treatment/intervention] is being used in [patient outcome]?"
 
             parts = re.split(r'(\[.*?\])', selected_question)  # Split by text inside brackets, keeping the brackets
@@ -357,7 +404,7 @@ class Grid:
             text = feature_text(current_datadicc, selected_variables, features)
             accord = feature_accordion(features, id_feat, selected=selected_variables)
 
-            pararel_features = html.Div([
+            parallel_features = html.Div([
                 # First column with the title and the Available Columns table
                 html.Div([
                     html.H5('Available Features', style={'textAlign': 'center'}),
@@ -378,12 +425,12 @@ class Grid:
 
                 ], style={'width': '50%', 'display': 'inline-block', 'verticalAlign': 'top'}),
             ], style={'width': '100%', 'display': 'flex'})
-            return pararel_features
+            return parallel_features
 
         def feature_text(current_datadicc, selected_variables, features):
             selected_variables = selected_variables.copy()
             selected_variables = selected_variables.loc[selected_variables['Variable'].isin(features['Variable'])]
-            if (selected_variables is None):
+            if not selected_variables:
                 return ''
             else:
                 text = ''

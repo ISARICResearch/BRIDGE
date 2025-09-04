@@ -1,20 +1,23 @@
+import json
+
 import dash
 import dash_bootstrap_components as dbc
-import pandas as pd
-from dash import Input, Output
+from dash import dcc, html, Input, Output
 
+from bridge.arc import arc
+from bridge.arc.arc_api import ArcApiClient
 from bridge.buttons.generate import Generate
 from bridge.buttons.save import Save
 from bridge.buttons.upload import Upload
-from bridge.layout import index
-from bridge.layout.app_layout import define_app_layout, main_app, SideBar
+from bridge.layout.app_layout import MainContent
 from bridge.layout.grid import Grid
+from bridge.layout.index import Index
 from bridge.layout.modals import Modals
+from bridge.layout.navbar import NavBar
 from bridge.layout.settings import Settings
+from bridge.layout.sidebar import SideBar
 from bridge.layout.tree import Tree
 from bridge.logging.logger import setup_logger
-
-pd.options.mode.copy_on_write = True
 
 logger = setup_logger(__name__)
 
@@ -26,13 +29,47 @@ server = app.server
 
 logger.info('Starting BRIDGE application')
 
-app.layout = define_app_layout()
+# Get initial data from ARC
+ARC_VERSION_LIST, ARC_VERSION_LATEST = arc.get_arc_versions()
+ARC_LANGUAGE_LIST = ArcApiClient().get_arc_language_list_version(ARC_VERSION_LATEST)
+ARC_LANGUAGE_DEFAULT = 'English'
+
+DF_ARC, PRESETS, _COMMIT = arc.get_arc(ARC_VERSION_LATEST)
+DF_ARC = arc.add_required_datadicc_columns(DF_ARC)
+
+TREE_ITEMS_DATA = arc.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
+
+# List content Transformation
+DF_LISTS, LIST_VARIABLE_LIST = arc.get_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc.add_transformed_rows(DF_ARC, DF_LISTS, arc.get_variable_order(DF_ARC))
+
+# User List content Transformation
+DF_ULIST, ULIST_VARIABLE_LIST = arc.get_user_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc.add_transformed_rows(DF_ARC, DF_ULIST, arc.get_variable_order(DF_ARC))
+
+# Multi List content Transformation
+DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc.get_multu_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc.add_transformed_rows(DF_ARC, DF_MULTILIST, arc.get_variable_order(DF_ARC))
+
+ARC_JSON = DF_ARC.to_json(date_format='iso', orient='split')
+ULIST_VARIABLE_JSON = json.dumps(ULIST_VARIABLE_LIST)
+MULTILIST_VARIABLE_JSON = json.dumps(MULTILIST_VARIABLE_LIST)
+
+# Grouping presets by the first column
+GROUPED_PRESETS = {}
+for key, value in PRESETS:
+    GROUPED_PRESETS.setdefault(key, []).append(value)
+GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
+
+app.layout = MainContent(DF_ARC).define_app_layout(ARC_JSON, ULIST_VARIABLE_JSON, MULTILIST_VARIABLE_JSON,
+                                                   GROUPED_PRESETS_JSON, ARC_LANGUAGE_LIST)
+
 app = Generate().register_callbacks(app)
-app = Grid.register_callbacks(app)
+app = Grid(DF_ARC).register_callbacks(app)
 app = Modals.register_callbacks(app)
 app = Save.register_callbacks(app)
 app = Settings.register_callbacks(app)
-app = SideBar.register_callbacks(app)
+app = SideBar().register_callbacks(app)
 app = Tree.register_callbacks(app)
 app = Upload.register_callbacks(app)
 
@@ -52,7 +89,7 @@ app.clientside_callback(
               Input('url', 'pathname'))
 def display_page(pathname):
     if pathname == '/':
-        return index.home_page()
+        return Index().home_page()
     else:
         return main_app()
 
@@ -64,6 +101,25 @@ def start_app(n_clicks):
         return '/'
     else:
         return '/main'
+
+
+def main_app():
+    return html.Div([
+        NavBar().navbar,
+        SideBar().sidebar,
+        dcc.Loading(
+            id="loading-overlay",
+            type="circle",
+            fullscreen=True,
+            children=[
+                Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT).settings_column,
+                SideBar().preset_column,
+                Tree(TREE_ITEMS_DATA).tree_column,
+                MainContent(DF_ARC).main_content,
+            ],
+            delay_show=1200,
+        ),
+    ])
 
 
 if __name__ == "__main__":

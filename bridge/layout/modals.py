@@ -10,7 +10,6 @@ from dash import html, Input, Output, State
 from bridge.arc import arc
 
 
-#  TODO: Go through this
 class Modals:
 
     @staticmethod
@@ -129,19 +128,19 @@ class Modals:
     @staticmethod
     def register_callbacks(app):
 
-        @app.callback([
-            Output('modal', 'is_open'),
-            Output('modal_title', 'children'),
-            Output('definition-text', 'children'),
-            Output('completion-guide-text', 'children'),
-            Output('options-checklist', 'style'),
-            Output('options-list-group', 'style'),
-            Output('options-checklist', 'options'),
-            Output('options-checklist', 'value'),
-            Output('options-list-group', 'children')],
+        @app.callback(
             [
-                Input('input', 'selected'),
+                Output('modal', 'is_open'),
+                Output('modal_title', 'children'),
+                Output('definition-text', 'children'),
+                Output('completion-guide-text', 'children'),
+                Output('options-checklist', 'style'),
+                Output('options-list-group', 'style'),
+                Output('options-checklist', 'options'),
+                Output('options-checklist', 'value'),
+                Output('options-list-group', 'children')
             ],
+            Input('input', 'selected'),
             [
                 State('ulist_variable_choices-store', 'data'),
                 State('multilist_variable_choices-store', 'data'),
