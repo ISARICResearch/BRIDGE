@@ -13,64 +13,6 @@ from bridge.arc import arc
 class Modals:
 
     @staticmethod
-    def research_questions_modal():
-        questions_themes_group = html.Div(
-            [
-                dbc.RadioItems(
-                    id="row1_radios",
-                    className="btn-group",
-                    inputClassName="btn-check",
-                    labelClassName="btn btn-outline-primary",
-                    labelCheckedClassName="active",
-                    options=[
-                        {"label": "Characterisation", "value": "Characterisation"},
-                        {"label": "Risk/Prognosis", "value": "Risk/Prognosis"},
-                        {"label": "Clinical Management", "value": "Clinical Management"},
-                    ],
-                ),
-                html.Div(id="rq_themes_div"),
-            ],
-            className="radio-group",
-        )
-
-        return dbc.Modal(
-            [
-                dbc.ModalHeader(dbc.ModalTitle("Research Question", id='rq_modal_title')),
-                dbc.ModalBody(
-                    [
-                        dbc.Row(
-                            dbc.Col(
-                                questions_themes_group,
-                                width=6,
-                            ),
-                            justify="center"
-                        ),
-                        dbc.Row(dbc.Col(id="row2_options", width=10), justify="center"),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    html.H4("Your Selection:", id='selected_question', className="text-center mt-4"),
-                                    width=12),
-                                dbc.Col(dbc.Tabs(id="row3_tabs"), width=12, className="mt-3")
-
-                            ],
-                            justify="center"
-                        ),
-                    ]
-                ),
-                dbc.ModalFooter(
-                    html.Div(
-                        [dbc.Button("Submit", id='rq_modal_submit', className="me-1", n_clicks=0),
-                         dbc.Button("Cancel", id='rq_modal_cancel', className="me-1", n_clicks=0)]
-                    )
-                ),
-            ],
-            id='rq_modal',
-            is_open=False,
-            size="xl"
-        )
-
-    @staticmethod
     def variable_information_modal():
         return dbc.Modal(
             [

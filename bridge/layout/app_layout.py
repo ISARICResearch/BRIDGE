@@ -97,7 +97,6 @@ class MainContent:
                 dcc.Download(id='download-paperlike-pdf'),
                 dcc.Download(id='save-crf'),
                 Modals.variable_information_modal(),
-                Modals.research_questions_modal(),
                 dcc.Loading(id="loading-generate",
                             type="default",
                             children=html.Div(id="loading-output-generate"),
