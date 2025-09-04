@@ -7,10 +7,7 @@ from bridge.layout.modals import Modals
 
 class MainContent:
 
-    # TODO
-    def __init__(self, df_arc):
-        self.df_arc = df_arc
-
+    def __init__(self):
         self.main_content = dbc.Container(
             [
                 dbc.Row(
@@ -20,7 +17,7 @@ class MainContent:
                         dbc.Col(
                             [
                                 dbc.Row([html.Div(),
-                                         Grid(self.df_arc).grid]),
+                                         Grid().grid]),
                                 html.Br(),
                                 dbc.Row(
                                     [

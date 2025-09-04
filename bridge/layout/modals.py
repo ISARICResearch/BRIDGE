@@ -33,18 +33,6 @@ class Modals:
             className="radio-group",
         )
 
-        tabs_content = []
-        tabs_content.append(
-            dbc.Tab(id='tab_features', label="Features", children=[html.P("Content for Clinical Features")]))
-        tabs_content.append(
-            dbc.Tab(id='tab_clinifeat', label="Clinical Features", children=[html.P("Content for Features")]))
-        tabs_content.append(
-            dbc.Tab(id='tab_riskfac', label="Risk Factors", children=[html.P("Content for Risk Factors")]))
-        tabs_content.append(dbc.Tab(id='tab_treatment', label="Treatments/Interventions",
-                                    children=[html.P("Content for Treatments/Intervention")]))
-        tabs_content.append(
-            dbc.Tab(id='tab_outcomes', label="Patient Outcome", children=[html.P("Content for Patient Outcome")]))
-
         return dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Research Question", id='rq_modal_title')),

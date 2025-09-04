@@ -61,11 +61,11 @@ for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 
-app.layout = MainContent(DF_ARC).define_app_layout(ARC_JSON, ULIST_VARIABLE_JSON, MULTILIST_VARIABLE_JSON,
+app.layout = MainContent().define_app_layout(ARC_JSON, ULIST_VARIABLE_JSON, MULTILIST_VARIABLE_JSON,
                                                    GROUPED_PRESETS_JSON, ARC_LANGUAGE_LIST)
 
 app = Generate().register_callbacks(app)
-app = Grid(DF_ARC).register_callbacks(app)
+app = Grid().register_callbacks(app)
 app = Modals.register_callbacks(app)
 app = Save.register_callbacks(app)
 app = Settings.register_callbacks(app)
@@ -115,7 +115,7 @@ def main_app():
                 Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT).settings_column,
                 SideBar().preset_column,
                 Tree(TREE_ITEMS_DATA).tree_column,
-                MainContent(DF_ARC).main_content,
+                MainContent().main_content,
             ],
             delay_show=1200,
         ),
