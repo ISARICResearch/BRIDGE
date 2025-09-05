@@ -56,7 +56,10 @@ class Tree:
                 Output('ulist_variable_choices-store', 'data', allow_duplicate=True),
                 Output('multilist_variable_choices-store', 'data', allow_duplicate=True)
             ],
-            Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
+            [
+                Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
+                Input('upload-crf-ready', 'data'),
+            ],
             [
                 State('current_datadicc-store', 'data'),
                 State('grouped_presets-store', 'data'),
@@ -65,8 +68,14 @@ class Tree:
             ],
             prevent_initial_call=True
         )
-        def update_tree_items_and_stores(checked_variables, current_datadicc_saved, grouped_presets,
+        def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_datadicc_saved, grouped_presets,
                                          selected_version_data, selected_lang_data):
+            if  upload_crf_ready:
+                return (dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update)
+
             ctx = dash.callback_context
             df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
