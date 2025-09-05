@@ -48,7 +48,7 @@ DF_ULIST, ULIST_VARIABLE_LIST = arc.get_user_list_content(DF_ARC, ARC_VERSION_LA
 DF_ARC = arc.add_transformed_rows(DF_ARC, DF_ULIST, arc.get_variable_order(DF_ARC))
 
 # Multi List content Transformation
-DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc.get_multu_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc.get_multi_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
 DF_ARC = arc.add_transformed_rows(DF_ARC, DF_MULTILIST, arc.get_variable_order(DF_ARC))
 
 ARC_JSON = DF_ARC.to_json(date_format='iso', orient='split')

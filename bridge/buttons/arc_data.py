@@ -40,7 +40,7 @@ class ARCData:
         df_version_language = arc.add_transformed_rows(df_version_language, version_arc_ulist,
                                                        arc.get_variable_order(df_version_language))
 
-        version_arc_multilist, version_multilist_variable_choices = arc.get_multu_list_content(df_version_language,
+        version_arc_multilist, version_multilist_variable_choices = arc.get_multi_list_content(df_version_language,
                                                                                                self.selected_version,
                                                                                                self.selected_language)
 
