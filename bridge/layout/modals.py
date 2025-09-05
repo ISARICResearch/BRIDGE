@@ -151,9 +151,8 @@ class Modals:
             prevent_initial_call=True
         )
         def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_saved, modal_title,
-                                  checked_options,
-                                  checked, ulist_variable_choices_saved, multilist_variable_choices_saved,
-                                  selected_version_data, selected_language_data):
+                                  checked_options, checked, ulist_variable_choices_saved,
+                                  multilist_variable_choices_saved, selected_version_data, selected_language_data):
             ctx = dash.callback_context
 
             if not ctx.triggered:
@@ -179,69 +178,16 @@ class Modals:
 
                 if (variable_submitted in ulist_variables) | (variable_submitted in multilist_variables):
                     list_options_checked = []
-                    for lo in checked_options:
-                        list_options_checked.append(lo.split('_'))
+                    for checked_option in checked_options:
+                        list_options_checked.append(checked_option.split('_'))
 
                     list_options_checked = pd.DataFrame(data=list_options_checked, columns=['cod', 'Option'])
 
-                    new_submited_options = []
-                    new_submited_line = []
-                    position = 0
-                    for var_select in ulist_variable_choices_dict:
-                        if (var_select[0] == variable_submitted):
-                            select_answer_options = ''
-                            NOT_select_answer_options = ''
-                            for option_var_select in (var_select[1]):
-                                if (option_var_select[1] in (list(list_options_checked['Option']))):
-                                    new_submited_options.append([option_var_select[0], option_var_select[1], 1])
-                                    select_answer_options += str(option_var_select[0]) + ', ' + str(
-                                        option_var_select[1]) + ' | '
-                                else:
-                                    new_submited_options.append([option_var_select[0], option_var_select[1], 0])
-                                    NOT_select_answer_options += str(option_var_select[0]) + ', ' + str(
-                                        option_var_select[1]) + ' | '
-                            new_submited_line.append([var_select, new_submited_options])
-                            ulist_variable_choices_dict[position][1] = new_submited_line[0][1]
-                            df_current_datadicc.loc[df_current_datadicc[
-                                                        'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
-                            if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
-                                df_current_datadicc.loc[df_current_datadicc[
-                                                            'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options + '88, ' + other_text
+                    ulist_variable_choices_submit = determine_list_variable_choices(ulist_variable_choices_dict, variable_submitted, list_options_checked,
+                                            df_current_datadicc, other_text)
 
-                        position += 1
-                    ulist_variable_choicesSubmit = ulist_variable_choices_dict
-
-                    new_submited_options_multi_check = []
-                    new_submited_line_multi_check = []
-                    position_multi_check = 0
-                    for var_select_multi_check in multilist_variable_choices_dict:
-                        if (var_select_multi_check[0] == variable_submitted):
-                            select_answer_options_multi_check = ''
-                            NOT_select_answer_options_multi_check = ''
-                            for option_var_select_multi_check in (var_select_multi_check[1]):
-                                if (option_var_select_multi_check[1] in (list(list_options_checked['Option']))):
-                                    new_submited_options_multi_check.append(
-                                        [option_var_select_multi_check[0], option_var_select_multi_check[1], 1])
-                                    select_answer_options_multi_check += str(
-                                        option_var_select_multi_check[0]) + ', ' + str(
-                                        option_var_select_multi_check[1]) + ' | '
-                                else:
-                                    new_submited_options_multi_check.append(
-                                        [option_var_select_multi_check[0], option_var_select_multi_check[1], 0])
-                                    NOT_select_answer_options_multi_check += str(
-                                        option_var_select_multi_check[0]) + ', ' + str(
-                                        option_var_select_multi_check[1]) + ' | '
-                            new_submited_line_multi_check.append(
-                                [var_select_multi_check, new_submited_options_multi_check])
-                            multilist_variable_choices_dict[position_multi_check][1] = new_submited_line_multi_check[0][
-                                1]
-                            df_current_datadicc.loc[df_current_datadicc[
-                                                        'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options_multi_check + '88, ' + other_text
-                            if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
-                                df_current_datadicc.loc[df_current_datadicc[
-                                                            'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = NOT_select_answer_options_multi_check + '88, ' + other_text
-                        position_multi_check += 1
-                    multilist_variable_choicesSubmit = multilist_variable_choices_dict
+                    multilist_variable_choices_submit = determine_list_variable_choices(multilist_variable_choices_dict, variable_submitted, list_options_checked,
+                                            df_current_datadicc, other_text)
 
                     checked.append(variable_submitted)
 
@@ -259,7 +205,7 @@ class Modals:
                         className='tree-item',
                     )
                     return False, df_current_datadicc.to_json(date_format='iso', orient='split'), json.dumps(
-                        ulist_variable_choicesSubmit), json.dumps(multilist_variable_choicesSubmit), tree_items
+                        ulist_variable_choices_submit), json.dumps(multilist_variable_choices_submit), tree_items
                 else:
                     return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
@@ -268,5 +214,34 @@ class Modals:
                 return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+        def determine_list_variable_choices(variable_choices_dict, variable_submitted, list_options_checked,
+                                            df_current_datadicc, other_text):
+            new_submitted_options = []
+            new_submitted_line = []
+            position = 0
+            for var_select in variable_choices_dict:
+                if var_select[0] == variable_submitted:
+                    select_answer_options = ''
+                    not_select_answer_options = ''
+                    for option_var_select in (var_select[1]):
+                        if option_var_select[1] in (list(list_options_checked['Option'])):
+                            new_submitted_options.append([option_var_select[0], option_var_select[1], 1])
+                            select_answer_options += str(option_var_select[0]) + ', ' + str(
+                                option_var_select[1]) + ' | '
+                        else:
+                            new_submitted_options.append([option_var_select[0], option_var_select[1], 0])
+                            not_select_answer_options += str(option_var_select[0]) + ', ' + str(
+                                option_var_select[1]) + ' | '
+                    new_submitted_line.append([var_select, new_submitted_options])
+                    variable_choices_dict[position][1] = new_submitted_line[0][1]
+                    df_current_datadicc.loc[df_current_datadicc[
+                                                'Variable'] == variable_submitted, 'Answer Options'] = select_answer_options + '88, ' + other_text
+                    if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
+                        df_current_datadicc.loc[df_current_datadicc[
+                                                    'Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = not_select_answer_options + '88, ' + other_text
+
+                position += 1
+            return variable_choices_dict
 
         return app
