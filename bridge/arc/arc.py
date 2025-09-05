@@ -121,9 +121,7 @@ def get_arc_translation(language, version, current_datadicc):
 
 def get_arc_versions():
     version_list = ArcApiClient().get_arc_version_list()
-
     logger.info(f'version_list: {version_list}')
-
     return version_list, max(version_list)
 
 

@@ -6,9 +6,9 @@ from dash import dcc, html, Input, Output
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.buttons.generate import Generate
-from bridge.buttons.save import Save
-from bridge.buttons.upload import Upload
+from bridge.layout.generate import Generate
+from bridge.layout.save import Save
+from bridge.layout.upload import Upload
 from bridge.layout.app_layout import MainContent
 from bridge.layout.grid import Grid
 from bridge.layout.index import Index

@@ -10,7 +10,7 @@ from dash.exceptions import PreventUpdate
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.buttons.arc_data import ARCData
+from bridge.layout.language import Language
 from bridge.logging.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
@@ -75,7 +75,7 @@ class Tree:
 
             df_version, version_presets, version_commit = arc.get_arc(current_version)
             df_version = arc.add_required_datadicc_columns(df_version)
-            df_version_language = ARCData(current_version, current_language).get_dataframe_arc_language(df_version)
+            df_version_language = Language(current_version, current_language).get_dataframe_arc_language(df_version)
 
             tree_items_data = arc.get_tree_items(df_version_language, current_version)
 

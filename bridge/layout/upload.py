@@ -9,7 +9,7 @@ import pandas as pd
 from dash import html, Input, Output, State
 
 from bridge.arc import arc
-from bridge.buttons.arc_data import ARCData
+from bridge.layout.language import Language
 from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -91,8 +91,8 @@ class Upload:
 
             try:
                 (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
-                 version_ulist_variable_choices, version_multilist_variable_choices) = ARCData(upload_version,
-                                                                                               upload_language).get_version_language_related_data()
+                 version_ulist_variable_choices, version_multilist_variable_choices) = Language(upload_version,
+                                                                                                upload_language).get_version_language_related_data()
                 logger.info(f'upload_version: {upload_version}')
                 logger.info(f'upload_language: {upload_language}')
                 return (

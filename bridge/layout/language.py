@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 from bridge.arc import arc
 
 
-class ARCData:
+class Language:
 
     def __init__(self, selected_version, selected_language):
         self.selected_version = selected_version

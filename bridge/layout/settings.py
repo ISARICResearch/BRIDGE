@@ -6,7 +6,7 @@ from dash import dcc, html, Input, Output, State
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.buttons.arc_data import ARCData
+from bridge.layout.language import Language
 from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -162,7 +162,6 @@ class Settings:
                                                      selected_language_data, language_list_data, upload_crf_ready):
             ctx = dash.callback_context
 
-            # Si no hay cambios (es decir, no hay un input activado), no se hace nada
             if not ctx.triggered:
                 return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
                         False, dash.no_update, dash.no_update)
@@ -200,7 +199,7 @@ class Settings:
                     version_accordion_items,
                     version_ulist_variable_choices,
                     version_multilist_variable_choices
-                ) = ARCData(selected_version, selected_language).get_version_language_related_data()
+                ) = Language(selected_version, selected_language).get_version_language_related_data()
                 logger.info(f'selected_version: {selected_version}')
                 logger.info(f'selected_language: {selected_language}')
                 logger.info(f'version_presets: {version_presets}')
@@ -218,7 +217,6 @@ class Settings:
                 )
             except json.JSONDecodeError:
                 return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                        False,
-                        dash.no_update, dash.no_update)
+                        False, dash.no_update, dash.no_update)
 
         return app
