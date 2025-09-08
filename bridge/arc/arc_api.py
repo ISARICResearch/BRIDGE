@@ -41,7 +41,7 @@ class ArcApiClient:
         return response
 
     @staticmethod
-    def _write_to_dataframe(data_path, json=False):
+    def _write_to_dataframe(data_path: str, json: bool = False) -> pd.DataFrame:
         try:
             if json:
                 df = pd.read_json(data_path, encoding='utf-8')
@@ -57,22 +57,22 @@ class ArcApiClient:
             raise ArcApiClientError(f"Failed to read data: {data_path}")
         return df
 
-    def _get_release_json(self, repository):
+    def _get_release_json(self, repository: str) -> dict:
         url = '/'.join([self.BASE_URL_API, repository, 'releases'])
         release_json = self._get_api_response(url).json()
         return release_json
 
-    def _get_tag_json(self, repository):
+    def _get_tag_json(self, repository: str) -> dict:
         url = '/'.join([self.BASE_URL_API, repository, 'tags'])
         tag_json = self._get_api_response(url).json()
         return tag_json
 
-    def get_arc_version_list(self):
+    def get_arc_version_list(self) -> list:
         release_dict_list = self._get_release_json('ARC')
         version_list = [release_dict['tag_name'] for release_dict in release_dict_list]
         return version_list
 
-    def get_arc_version_sha(self, version):
+    def get_arc_version_sha(self, version: str) -> str:
         release_dict_list = self._get_tag_json('ARC')
         try:
             version_dict = list(filter(lambda x: x['name'] == version, release_dict_list))[0]
@@ -82,19 +82,19 @@ class ArcApiClient:
             logger.error(e)
             raise ArcApiClientError(f"Unable to determine commit for version '{version}'")
 
-    def get_dataframe_arc_sha(self, sha):
+    def get_dataframe_arc_sha(self, sha: str) -> pd.DataFrame:
         url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC', sha, 'ARC.csv'])
         df = self._write_to_dataframe(url)
         return df
 
-    def get_dataframe_arc_version_language(self, version, language):
+    def get_dataframe_arc_version_language(self, version: str, language: str) -> pd.DataFrame:
         url = '/'.join(
             [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language,
              'ARCH.csv'])
         df = self._write_to_dataframe(url)
         return df
 
-    def get_dataframe_arc_list_version_language(self, version, language, list_name):
+    def get_dataframe_arc_list_version_language(self, version: str, language: str, list_name: str) -> pd.DataFrame:
         url = '/'.join(
             [self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version), language,
              'Lists', f'{list_name}.csv'])
@@ -102,25 +102,25 @@ class ArcApiClient:
         df = df.sort_values(by=df.columns[0], ascending=True)
         return df
 
-    def get_arc_language_list_version(self, version):
+    def get_arc_language_list_version(self, version: str) -> list:
         url = '/'.join([self.BASE_URL_API, 'ARC-Translations', 'contents', self.get_arch_version_string(version)])
         language_json = self._get_api_response(url).json()
         df = pd.DataFrame.from_dict(language_json)
         language_list = df['name'].to_list()
         return language_list
 
-    def get_dataframe_paper_like_details(self, version, language):
+    def get_dataframe_paper_like_details(self, version: str, language: str) -> pd.DataFrame:
         url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version),
                         language, 'paper_like_details.csv'])
         df = self._write_to_dataframe(url)
         return df
 
-    def get_dataframe_supplemental_phrases(self, version, language):
+    def get_dataframe_supplemental_phrases(self, version: str, language: str) -> pd.DataFrame:
         url = '/'.join([self.BASE_URL_RAW_CONTENT, 'ARC-Translations', 'main', self.get_arch_version_string(version),
                         language, 'supplemental_phrases.csv'])
         df = self._write_to_dataframe(url)
         return df
 
     @staticmethod
-    def get_arch_version_string(version):
+    def get_arch_version_string(version: str) -> str:
         return f'ARCH{str(version.replace('v', ''))}'
