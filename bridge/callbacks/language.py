@@ -1,17 +1,18 @@
 import json
 
 import dash_bootstrap_components as dbc
+import pandas as pd
 
 from bridge.arc import arc
 
 
 class Language:
 
-    def __init__(self, selected_version, selected_language):
+    def __init__(self, selected_version: str, selected_language: str):
         self.selected_version = selected_version
         self.selected_language = selected_language
 
-    def get_dataframe_arc_language(self, df_version):
+    def get_dataframe_arc_language(self, df_version: pd.DataFrame) -> pd.DataFrame:
         if self.selected_language == 'English':
             return df_version
         else:
