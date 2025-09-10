@@ -468,7 +468,7 @@ def home_page():
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.H1("BRIDGE: Tailoring Case Reports for Every Outbreak", className="display-4", style={'font-weight': 'bold', 'color': 'white'}),
+                        html.H1("BRIDGE: Tailoring Case Report Forms for Every Outbreak", className="display-4", style={'font-weight': 'bold', 'color': 'white'}),
                         html.P("ISARIC BRIDGE streamlines the CRF creation process, generating data dictionaries and XML for REDCap, along with paper-like CRFs and completion guides.", style={'color': 'white'}),
                         dbc.Button("Create a CRF",  className="home-button", id='start-button'),
                         html.A("Visit GitHub",  target="_blank",href="https://github.com/ISARICResearch", style={'display': 'block', 'margin-top': '10px', 'color': 'white'})
