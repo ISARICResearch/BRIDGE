@@ -6,20 +6,13 @@ from dash import dcc, html, Input, Output
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.callbacks.generate import Generate
-from bridge.callbacks.grid import Grid
-from bridge.callbacks.modals import Modals
-from bridge.callbacks.save import Save
-from bridge.callbacks.settings import Settings
-from bridge.callbacks.sidebar import SideBar
-from bridge.callbacks.tree import Tree
-from bridge.callbacks.upload import Upload
+import bridge.callbacks
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
-from bridge.layout.settings import Settings as SettingsLayout
-from bridge.layout.sidebar import SideBar as SideBarLayout
-from bridge.layout.tree import Tree as TreeLayout
+from bridge.layout.settings import Settings
+from bridge.layout.sidebar import SideBar
+from bridge.layout.tree import Tree
 from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -67,15 +60,6 @@ GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 app.layout = MainContent().define_app_layout(ARC_JSON, ULIST_VARIABLE_JSON, MULTILIST_VARIABLE_JSON,
                                              GROUPED_PRESETS_JSON, ARC_LANGUAGE_LIST)
 
-app = Generate().register_callbacks(app)
-app = Grid().register_callbacks(app)
-app = Modals.register_callbacks(app)
-app = Save.register_callbacks(app)
-app = Settings.register_callbacks(app)
-app = SideBar().register_callbacks(app)
-app = Tree.register_callbacks(app)
-app = Upload.register_callbacks(app)
-
 app.clientside_callback(
     """
     function(n_intervals) {
@@ -109,16 +93,16 @@ def start_app(n_clicks):
 def main_app():
     return html.Div([
         NavBar().navbar,
-        SideBarLayout().sidebar,
+        SideBar().sidebar,
         dcc.Loading(
             id="loading-overlay",
             type="circle",
             fullscreen=True,
             children=[
-                SettingsLayout(ARC_VERSION_LIST, ARC_LANGUAGE_LIST, ARC_VERSION_LATEST,
-                               ARC_LANGUAGE_DEFAULT).settings_column,
-                SideBarLayout().preset_column,
-                TreeLayout(TREE_ITEMS_DATA).tree_column,
+                Settings(ARC_VERSION_LIST, ARC_LANGUAGE_LIST, ARC_VERSION_LATEST,
+                         ARC_LANGUAGE_DEFAULT).settings_column,
+                SideBar().preset_column,
+                Tree(TREE_ITEMS_DATA).tree_column,
                 MainContent().main_content,
             ],
             delay_show=1200,
