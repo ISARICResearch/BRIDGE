@@ -6,8 +6,6 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from dash._callback_context import context_value
-from dash._utils import AttributeDict
 from pandas.testing import assert_frame_equal
 
 import bridge.callbacks.save as save
@@ -40,9 +38,9 @@ def test_get_checked_data_for_list(df_list):
 @pytest.mark.parametrize(
     "n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
     [
-        (None, None, pd.DataFrame(), None, None, None, None, None, ('', None)),
-        (None, ['inclu_disease', 'demog_country'], pd.DataFrame(), None, None, None, None, None, ('', None)),
-        (1, None, pd.DataFrame(), None, None, None, None, None, ('', None)),
+        (None, None, None, None, None, None, None, None, ('', None)),
+        (None, ['inclu_disease', 'demog_country'], None, None, None, None, None, None, ('', None)),
+        (1, None, None, None, None, None, None, None, ('', None)),
     ]
 )
 def test_on_save_click_no_action(n_clicks,
@@ -82,7 +80,6 @@ def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
     mock_date.today.return_value = datetime(2025, 9, 30)
     mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
 
-    trigger = {"prop_id": "crf_save.n_clicks"}
     n_clicks = 1
     checked_variables = ['inclu_disease']
     current_datadicc_saved = '{"columns":["Form","Section","Variable"], "index":[0,1,2], "data":[["presentation",null,"subjid"],["presentation","INCLUSION CRITERIA","inclu_disease"],["presentation","ONSET & PRESENTATION","pres_firstsym"]]}'
@@ -92,9 +89,8 @@ def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
     ulist_variable_choices_saved = '[["inclu_disease", [[1, "Adenovirus", 1], [2, "Andes virus infection (hantavirus)", 0]]]]'
     multilist_variable_choices_saved = '[["pres_firstsym", [[1, "Abdominal pain", 1], [2, "Abnormal weight loss", 0]]]]'
 
-    def run_callback(trigger, n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
-                     selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
-        context_value.set(AttributeDict(**{"triggered_inputs": [trigger]}))
+    def run_callback(n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data,
+                     crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
         return save.on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
                                   selected_language_data, crf_name, ulist_variable_choices_saved,
                                   multilist_variable_choices_saved)
@@ -102,7 +98,6 @@ def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
     ctx = copy_context()
     output = ctx.run(
         run_callback,
-        trigger,
         n_clicks,
         checked_variables,
         current_datadicc_saved,
@@ -115,3 +110,35 @@ def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
     assert output[1][
                'content'] == 'VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWQsTXVsdGlsaXN0IFNlbGVjdGVkCmluY2x1X2Rpc2Vhc2UsQWRlbm92aXJ1cywK'
     assert output[1]['filename'] == f'template_{crf_name}_v1_1_2_English_2025-09-30.csv'
+
+
+@mock.patch('bridge.callbacks.save.get_trigger_id', return_value='crf_not_save')
+def test_on_save_click_wrong_trigger_id(mock_trigger_id):
+    n_clicks = 1
+    checked_variables = ['inclu_disease']
+    current_datadicc_saved = None
+    selected_version_data = None
+    selected_language_data = None
+    crf_name = None
+    ulist_variable_choices_saved = None
+    multilist_variable_choices_saved = None
+
+    def run_callback(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
+                     selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
+        return save.on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
+                                  selected_language_data, crf_name, ulist_variable_choices_saved,
+                                  multilist_variable_choices_saved)
+
+    ctx = copy_context()
+    output = ctx.run(
+        run_callback,
+        n_clicks,
+        checked_variables,
+        current_datadicc_saved,
+        selected_version_data,
+        selected_language_data,
+        crf_name,
+        ulist_variable_choices_saved,
+        multilist_variable_choices_saved,
+    )
+    assert output == ('', None)
