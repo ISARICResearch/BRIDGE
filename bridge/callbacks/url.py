@@ -38,4 +38,4 @@ def update_output_based_on_url(template_check_flag, grouped_presets, href):
         # Return the value for 'crf_name' and checklist values
         return [value], [checklist_values[key] for key in grouped_presets.keys()]
     else:
-        return dash.no_update, dash.no_update
+        return dash.no_update
