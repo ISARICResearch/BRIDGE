@@ -19,7 +19,6 @@ pd.options.mode.copy_on_write = True
     ],
     [
         Input('crf_save', 'n_clicks'),
-        Input({'type': 'template_check', 'index': dash.ALL}, 'value'),
         Input('input', 'checked'),
     ],
     [
@@ -32,10 +31,8 @@ pd.options.mode.copy_on_write = True
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, checked_template_values, checked_variables, current_datadicc_saved,
-                  selected_version_data,
-                  selected_language_data, crf_name, ulist_variable_choices_saved,
-                  multilist_variable_choices_saved):
+def on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data,
+                  crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
