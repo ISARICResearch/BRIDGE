@@ -76,7 +76,14 @@ def test_on_save_click_no_action(n_clicks,
 @mock.patch('bridge.callbacks.save.datetime')
 @mock.patch('bridge.callbacks.save.get_trigger_id', return_value='crf_save')
 @mock.patch('bridge.callbacks.save.get_crf_name', return_value='test_crf')
-def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
+@mock.patch('bridge.callbacks.save.get_checked_data_for_list')
+def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
+    data = {
+        'Variable': ['inclu_disease'],
+        'Ulist Selected': ['Adenovirus'],
+    }
+    df_mock = pd.DataFrame.from_dict(data)
+    mock_checked.return_value = df_mock
     mock_date.today.return_value = datetime(2025, 9, 30)
     mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
 
@@ -108,7 +115,7 @@ def test_on_save_click(mock_crf_name, mock_trigger_id, mock_date):
         multilist_variable_choices_saved,
     )
     assert output[1][
-               'content'] == 'VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWQsTXVsdGlsaXN0IFNlbGVjdGVkCmluY2x1X2Rpc2Vhc2UsQWRlbm92aXJ1cywK'
+               'content'] == 'VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWRfeCxVbGlzdCBTZWxlY3RlZF95CmluY2x1X2Rpc2Vhc2UsQWRlbm92aXJ1cyxBZGVub3ZpcnVzCg=='
     assert output[1]['filename'] == f'template_{crf_name}_v1_1_2_English_2025-09-30.csv'
 
 
