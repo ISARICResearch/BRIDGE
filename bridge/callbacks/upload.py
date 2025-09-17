@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import re
+from typing import Tuple
 
 import dash
 import dash_treeview_antd
@@ -107,14 +108,17 @@ def load_upload_arc_version_language(upload_version_data, upload_language_data, 
                 False, None, dash.no_update, dash.no_update)
 
 
-def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_choices, list_type, language):
+def update_for_upload_list_selected(df_datadicc: pd.DataFrame(), df_list_upload: pd.DataFrame(), variable_choices: str,
+                                    list_type: str, language: str) -> Tuple[pd.DataFrame, str]:
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
     selected_column = f'{list_type} Selected'
     # Use a dataframe to make replacing values easier
-    df_list_all = pd.DataFrame(json.loads(list_variable_choices), columns=['Variable', selected_column])
+    df_list_all = pd.DataFrame(json.loads(variable_choices), columns=['Variable', selected_column])
     df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
+
+    variable_choices_updated_list = []
 
     for index, row in df_list_upload.iterrows():
         list_name = row['Variable']
@@ -123,11 +127,10 @@ def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_c
             boxes_checked_list = boxes_checked.split('|')
             list_index = df_list_all[df_list_all['Variable'] == list_name].index
             list_values = df_list_all.loc[list_index, selected_column].values[0]
-            list_values_updated = []
-
             datadicc_index = df_datadicc.loc[df_datadicc['Variable'] == list_name].index
-            datadicc_values_updated = []
 
+            datadicc_values_updated = []
+            list_values_updated = []
             for list_value in list_values:
                 list_value_name = list_value[1]
                 if list_value_name not in boxes_checked_list:
@@ -140,10 +143,10 @@ def update_for_upload_list_selected(df_datadicc, df_list_upload, list_variable_c
             list_values_updated.append(f'88, {other_text}')
             datadicc_values_updated.append(f'88, {other_text}')
 
-            df_list_all.loc[list_index, selected_column] = pd.Series([list_values_updated])
+            variable_choices_updated_list.append([list_name, list_values_updated])
             df_datadicc.loc[datadicc_index, 'Answer Options'] = ' | '.join(datadicc_values_updated)
 
-    list_variable_choices_updated = df_list_all.values.tolist()
+    list_variable_choices_updated = json.dumps(variable_choices_updated_list)
 
     return df_datadicc, list_variable_choices_updated
 
@@ -216,7 +219,7 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
     return (
         tree_items,
         df_datadicc_selected.to_json(date_format='iso', orient='split'),
-        json.dumps(ulist_variables_selected),
-        json.dumps(multilist_variables_selected),
+        ulist_variables_selected,
+        multilist_variables_selected,
         None,
     )
