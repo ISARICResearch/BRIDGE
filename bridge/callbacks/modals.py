@@ -16,6 +16,7 @@ from bridge.arc import arc
         Output('modal_title', 'children'),
         Output('definition-text', 'children'),
         Output('completion-guide-text', 'children'),
+        Output('skip-logic-text', 'children'),
         Output('options-checklist', 'style'),
         Output('options-list-group', 'style'),
         Output('options-checklist', 'options'),
@@ -39,10 +40,12 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
     if selected:
         selected_variable = selected[0]
         if selected_variable in list(df_datadicc['Variable']):
-            question = df_datadicc['Question'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
-            definition = df_datadicc['Definition'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
+            question = df_datadicc['Question'].loc[df_datadicc['Variable'] == selected[0]].iloc[0]
+            definition = df_datadicc['Definition'].loc[df_datadicc['Variable'] == selected[0]].iloc[0]
             completion = \
-                df_datadicc['Completion Guideline'].loc[df_datadicc['Variable'] == selected_variable].iloc[0]
+                df_datadicc['Completion Guideline'].loc[df_datadicc['Variable'] == selected[0]].iloc[0]
+            skip_logic = df_datadicc['Branch'].loc[df_datadicc['Variable'] == selected[0]].iloc[0]
+
             ulist_variables = [i[0] for i in dict_lists]
             if selected_variable in ulist_variables:
                 for item in dict_lists:
@@ -50,19 +53,13 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                         options = []
                         checked_items = []
                         for i in item[1]:
-                            options.append({"number": int(i[0]), "label": str(i[0]) + ', ' + i[1],
-                                            "value": str(i[0]) + '_' + i[1]})
+                            options.append({"label": str(i[0]) + ', ' + i[1], "value": str(i[0]) + '_' + i[1]})
                             if i[2] == 1:
                                 checked_items.append(str(i[0]) + '_' + i[1])
 
-                sorted_options = sorted(options, key=lambda x: x['number'])
-                for option in sorted_options:
-                    del option['number']
-
-                return True, question + ' [' + selected_variable + ']', definition, completion, {
-                    "maxHeight": "250px",
-                    "overflowY": "auto"}, {
-                    "display": "none"}, sorted_options, checked_items, []
+                return True, question + ' [' + selected_variable + ']', definition, completion, skip_logic, {
+                    "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
+                    "display": "none"}, options, checked_items, []
             else:
                 options = []
                 answ_options = \
@@ -72,11 +69,10 @@ def display_selected(selected, ulist_variable_choices_saved, multilist_variable_
                         options.append(dbc.ListGroupItem(i))
                 else:
                     options = []
-                return True, question + ' [' + selected_variable + ']', definition, completion, {
-                    "display": "none"}, {
-                    "maxHeight": "250px", "overflowY": "auto"}, [], [], options
+                return True, question + ' [' + selected_variable + ']', definition, completion, skip_logic, {
+                    "display": "none"}, {"maxHeight": "250px", "overflowY": "auto"}, [], [], options
 
-    return False, '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
+    return False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], []
 
 
 @dash.callback(

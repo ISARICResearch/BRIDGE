@@ -13,15 +13,12 @@ class Language:
         self.selected_language = selected_language
 
     def get_dataframe_arc_language(self, df_version: pd.DataFrame) -> pd.DataFrame:
-        if self.selected_language == 'English':
-            return df_version
-        else:
-            df_version_language = arc.get_arc_translation(
-                self.selected_language,
-                self.selected_version,
-                df_version
-            )
-            return df_version_language
+        df_version_language = arc.get_arc_translation(
+            self.selected_language,
+            self.selected_version,
+            df_version
+        )
+        return df_version_language
 
     def get_version_language_related_data(self):
         df_version, version_presets, version_commit = arc.get_arc(self.selected_version)

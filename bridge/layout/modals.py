@@ -32,7 +32,9 @@ class Modals:
                         ),
                         html.Br(),
                         html.H5("Completion Guide:"),
-                        html.P("Completion guide text here", id='completion-guide-text')
+                        html.P("Completion guide text here", id='completion-guide-text'),
+                        html.H5("Skip logic:"),
+                        html.P("Skip logic here", id='skip-logic-text'),
                     ]
                 ),
                 dbc.ModalFooter(
