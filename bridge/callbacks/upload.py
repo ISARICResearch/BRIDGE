@@ -119,7 +119,6 @@ def update_for_upload_list_selected(df_datadicc: pd.DataFrame(), df_list_upload:
     df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
 
     variable_choices_updated_list = []
-    df_datadicc.loc[:, 'Answer Options'] = None
 
     for index, row in df_list_upload.iterrows():
         list_name = row['Variable']
