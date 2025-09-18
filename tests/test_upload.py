@@ -176,19 +176,109 @@ def test_load_upload_arc_version_language(mock_error, mock_logger, triggered_tri
     )
 
 
-def get_output_load_upload_arc_version_language(trigger, upload_version_dict, upload_language_dict,
-                                                selected_version_dict, selected_language_dict):
-    def run_callback(upload_version_data, upload_language_data, selected_version_data, selected_language_data):
+def get_output_load_upload_arc_version_language(trigger,
+                                                upload_version_data,
+                                                upload_language_data,
+                                                selected_version_data,
+                                                selected_language_data):
+    def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
-        return upload.load_upload_arc_version_language(upload_version_data, upload_language_data, selected_version_data,
+        return upload.load_upload_arc_version_language(upload_version_data,
+                                                       upload_language_data,
+                                                       selected_version_data,
                                                        selected_language_data)
 
     ctx = copy_context()
-    output = ctx.run(
-        run_callback,
-        upload_version_dict,
-        upload_language_dict,
-        selected_version_dict,
-        selected_language_dict
+    output = ctx.run(run_callback)
+    return output
+
+
+def test_update_output_upload_crf_not_triggered():
+    trigger = None
+    upload_crf_ready = None
+    upload_version_data = None
+    upload_language_data = None
+    upload_crf_contents = None
+    upload_version_lang_datadicc_saved = None
+    upload_version_lang_ulist_saved = None
+    upload_version_lang_multilist_saved = None
+
+    output = get_output_update_output_upload_crf(trigger,
+                                                 upload_crf_ready,
+                                                 upload_version_data,
+                                                 upload_language_data,
+                                                 upload_crf_contents,
+                                                 upload_version_lang_datadicc_saved,
+                                                 upload_version_lang_ulist_saved,
+                                                 upload_version_lang_multilist_saved)
+
+    assert output == (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+
+
+@mock.patch('bridge.callbacks.upload.html.Div', return_value=None)
+@mock.patch('bridge.callbacks.upload.update_for_upload_list_selected')
+@mock.patch('bridge.callbacks.upload.arc.get_tree_items', return_value={})
+def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_list, mock_html_div):
+    data = {
+        'Form': ['here is some mock output'],
+        'Answer Options': ['because it is tested elsewhere'],
+    }
+    df_mock = pd.DataFrame.from_dict(data)
+    list_mock = ['Some', ['mock', 'output', 'list']]
+    mock_update_for_upload_list.return_value = (df_mock, list_mock)
+
+    trigger = [{'prop_id': 'upload-crf-ready.data', 'value': True}]
+    upload_crf_ready = True
+    upload_version_data = {'upload_version': 'v1.1.2'}
+    upload_language_data = {'upload_language': 'English'}
+    upload_crf_contents = 'data:text/csv;base64,VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWQsTXVsdGlsaXN0IFNlbGVjdGVkCmRlbW9nX2NvdW50cnksQWZnaGFuaXN0YW58QWxhbmQgSXNsYW5kc3xBbGJhbmlhLAo='
+    upload_version_lang_datadicc_saved = '{"columns":["Form","Section","Variable"], "index":[0], "data":[["presentation", "DEMOGRAPHICS", "demog_country"]]}'
+    upload_version_lang_ulist_saved = None
+    upload_version_lang_multilist_saved = None
+
+    output = get_output_update_output_upload_crf(trigger,
+                                                 upload_crf_ready,
+                                                 upload_version_data,
+                                                 upload_language_data,
+                                                 upload_crf_contents,
+                                                 upload_version_lang_datadicc_saved,
+                                                 upload_version_lang_ulist_saved,
+                                                 upload_version_lang_multilist_saved)
+
+    expected = (
+        None,
+        df_mock.to_json(date_format='iso', orient='split'),
+        list_mock,
+        list_mock,
+        None,
     )
+    assert output == (
+        None,
+        df_mock.to_json(date_format='iso', orient='split'),
+        list_mock,
+        list_mock,
+        None,
+    )
+
+
+def get_output_update_output_upload_crf(trigger,
+                                        upload_crf_ready,
+                                        upload_version_data,
+                                        upload_language_data,
+                                        upload_crf_contents,
+                                        upload_version_lang_datadicc_saved,
+                                        upload_version_lang_ulist_saved,
+                                        upload_version_lang_multilist_saved):
+    def run_callback():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
+        return upload.update_output_upload_crf(upload_crf_ready,
+                                               upload_version_data,
+                                               upload_language_data,
+                                               upload_crf_contents,
+                                               upload_version_lang_datadicc_saved,
+                                               upload_version_lang_ulist_saved,
+                                               upload_version_lang_multilist_saved)
+
+    ctx = copy_context()
+    output = ctx.run(run_callback)
     return output

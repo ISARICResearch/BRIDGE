@@ -1,6 +1,6 @@
 import json
 from contextvars import copy_context
-from datetime import date,datetime
+from datetime import date, datetime
 from unittest import mock
 
 import pandas as pd
@@ -51,24 +51,18 @@ def test_on_save_click_no_action(n_clicks,
                                  ulist_variable_choices_saved,
                                  multilist_variable_choices_saved,
                                  expected_output):
-    def run_callback(n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data,
-                     crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
-        return save.on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
-                                  selected_language_data, crf_name, ulist_variable_choices_saved,
+    def run_callback():
+        return save.on_save_click(n_clicks,
+                                  checked_variables,
+                                  current_datadicc_saved,
+                                  selected_version_data,
+                                  selected_language_data,
+                                  crf_name,
+                                  ulist_variable_choices_saved,
                                   multilist_variable_choices_saved)
 
     ctx = copy_context()
-    output = ctx.run(
-        run_callback,
-        n_clicks,
-        checked_variables,
-        current_datadicc_saved,
-        selected_version_data,
-        selected_language_data,
-        crf_name,
-        ulist_variable_choices_saved,
-        multilist_variable_choices_saved
-    )
+    output = ctx.run(run_callback)
     assert output == expected_output
 
 
@@ -95,24 +89,17 @@ def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
     ulist_variable_choices_saved = '[["inclu_disease", [[1, "Adenovirus", 1], [2, "Andes virus infection (hantavirus)", 0]]]]'
     multilist_variable_choices_saved = '[["pres_firstsym", [[1, "Abdominal pain", 1], [2, "Abnormal weight loss", 0]]]]'
 
-    def run_callback(n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data,
-                     crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
-        return save.on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
-                                  selected_language_data, crf_name, ulist_variable_choices_saved,
+    def run_callback():
+        return save.on_save_click(n_clicks, checked_variables,
+                                  current_datadicc_saved,
+                                  selected_version_data,
+                                  selected_language_data,
+                                  crf_name,
+                                  ulist_variable_choices_saved,
                                   multilist_variable_choices_saved)
 
     ctx = copy_context()
-    output = ctx.run(
-        run_callback,
-        n_clicks,
-        checked_variables,
-        current_datadicc_saved,
-        selected_version_data,
-        selected_language_data,
-        crf_name,
-        ulist_variable_choices_saved,
-        multilist_variable_choices_saved,
-    )
+    output = ctx.run(run_callback)
     assert output[1][
                'content'] == 'VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWRfeCxVbGlzdCBTZWxlY3RlZF95CmluY2x1X2Rpc2Vhc2UsQWRlbm92aXJ1cyxBZGVub3ZpcnVzCg=='
     assert output[1]['filename'] == f'template_{crf_name}_v1_1_2_English_2025-09-30.csv'
@@ -129,22 +116,16 @@ def test_on_save_click_wrong_trigger_id(mock_trigger_id):
     ulist_variable_choices_saved = None
     multilist_variable_choices_saved = None
 
-    def run_callback(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
-                     selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
-        return save.on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data,
-                                  selected_language_data, crf_name, ulist_variable_choices_saved,
+    def run_callback():
+        return save.on_save_click(n_clicks,
+                                  checked_variables,
+                                  current_datadicc_saved,
+                                  selected_version_data,
+                                  selected_language_data,
+                                  crf_name,
+                                  ulist_variable_choices_saved,
                                   multilist_variable_choices_saved)
 
     ctx = copy_context()
-    output = ctx.run(
-        run_callback,
-        n_clicks,
-        checked_variables,
-        current_datadicc_saved,
-        selected_version_data,
-        selected_language_data,
-        crf_name,
-        ulist_variable_choices_saved,
-        multilist_variable_choices_saved,
-    )
+    output = ctx.run(run_callback)
     assert output == ('', None)
