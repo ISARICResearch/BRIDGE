@@ -91,7 +91,7 @@ navbar = dbc.Navbar(
                     "BRIDGE - BioResearch Integrated Data tool GEnerator",
                     className="mx-auto"
                 ),
-                href="https://isaric-bridge.replit.app/",
+                href="https://bridge.isaric.org/",
                 style={"textDecoration": "none", "color": "white"},
             ),
 
