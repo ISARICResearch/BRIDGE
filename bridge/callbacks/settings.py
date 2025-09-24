@@ -73,17 +73,21 @@ def update_output_files_store(checked_values):
     [
         Input({'type': 'dynamic-version', 'index': dash.ALL}, 'n_clicks'),
         Input({'type': 'dynamic-language', 'index': dash.ALL}, 'n_clicks'),
+        Input('upload-crf-ready', 'data'),
     ],
     [
         State('selected-version-store', 'data'),
         State('selected-language-store', 'data'),
         State('language-list-store', 'data'),
-        State('upload-crf-ready', 'data'),
     ],
     prevent_initial_call=True
 )
-def store_data_for_selected_version_language(n_clicks_version, n_clicks_language, selected_version_data,
-                                             selected_language_data, language_list_data, upload_crf_ready):
+def store_data_for_selected_version_language(n_clicks_version, n_clicks_language, upload_crf_ready,
+                                             selected_version_data, selected_language_data, language_list_data):
+    if upload_crf_ready:
+        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
+                dash.no_update, dash.no_update, dash.no_update)
+
     ctx = dash.callback_context
 
     if not ctx.triggered:

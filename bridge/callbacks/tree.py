@@ -50,11 +50,7 @@ def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_da
     current_version = selected_version_data.get('selected_version', None)
     current_language = selected_lang_data.get('selected_language', None)
 
-    df_version, version_presets, version_commit = arc.get_arc(current_version)
-    df_version = arc.add_required_datadicc_columns(df_version)
-    df_version_language = Language(current_version, current_language).get_dataframe_arc_language(df_version)
-
-    tree_items_data = arc.get_tree_items(df_version_language, current_version)
+    tree_items_data = arc.get_tree_items(df_current_datadicc, current_version)
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
