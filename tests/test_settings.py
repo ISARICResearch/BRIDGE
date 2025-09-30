@@ -159,8 +159,6 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
     assert output == expected_output
 
 
-
-# TODO
 @pytest.mark.parametrize(
     "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
     [
@@ -186,16 +184,16 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
 @mock.patch('bridge.callbacks.settings.get_trigger_id', return_value='{"index":1,"type":"dynamic-language"}')
 @mock.patch('bridge.callbacks.settings.logger')
 def test_store_data_for_selected_version_language_dynamic_language(mock_logger,
-                                                                  mock_trigger_id,
-                                                                  mock_versions,
-                                                                  mock_language_data,
-                                                                  clicks_version,
-                                                                  clicks_language,
-                                                                  crf_ready,
-                                                                  selected_version,
-                                                                  selected_language,
-                                                                  language_list,
-                                                                  expected_output):
+                                                                   mock_trigger_id,
+                                                                   mock_versions,
+                                                                   mock_language_data,
+                                                                   clicks_version,
+                                                                   clicks_language,
+                                                                   crf_ready,
+                                                                   selected_version,
+                                                                   selected_language,
+                                                                   language_list,
+                                                                   expected_output):
     data = {
         'Form': ['presentation', 'presentation'],
         'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
@@ -218,8 +216,6 @@ def test_store_data_for_selected_version_language_dynamic_language(mock_logger,
                                                                  selected_language,
                                                                  language_list)
     assert output == expected_output
-
-
 
 
 def get_output_store_data_for_selected_version_language(trigger,
