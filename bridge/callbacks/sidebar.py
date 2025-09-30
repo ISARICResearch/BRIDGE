@@ -1,11 +1,12 @@
 import dash
 from dash import Input, Output, State
 
+from bridge.utils.trigger_id import get_trigger_id
 
 ASSETS_DIR = '../../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 SETTINGS_ON = f"{ICONS_DIR}/settings_on.png"
-SETTINGS_OFF = f"{ICONS_DIR}/SETTINGS_OFF.png"
+SETTINGS_OFF = f"{ICONS_DIR}/settings_off.png"
 PRESET_ON = f"{ICONS_DIR}/preset_on.png"
 PRESET_OFF = f"{ICONS_DIR}/preset_off.png"
 
@@ -30,14 +31,15 @@ PRESET_OFF = f"{ICONS_DIR}/preset_off.png"
 )
 def toggle_columns(_n_presets, _n_settings, is_in_presets, is_in_settings):
     ctx = dash.callback_context
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    trigger_id = get_trigger_id(ctx)
 
     # Initialize the state of icons
     preset_icon_img = PRESET_OFF
     settings_icon_img = SETTINGS_OFF
 
     # Toggle logic
-    if button_id == "toggle-settings-2":
+    if trigger_id == "toggle-settings-2":
         # If settings is open, close it and open presets
         if is_in_settings:
             new_is_in_presets = True
@@ -49,7 +51,7 @@ def toggle_columns(_n_presets, _n_settings, is_in_presets, is_in_settings):
 
         preset_icon_img = PRESET_ON if new_is_in_presets else PRESET_OFF
 
-    elif button_id == "toggle-settings-1":
+    elif trigger_id == "toggle-settings-1":
         # If presets is open, close it and open settings
         if is_in_presets:
             new_is_in_settings = True

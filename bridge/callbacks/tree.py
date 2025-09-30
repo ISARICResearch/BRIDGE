@@ -9,7 +9,6 @@ from dash.exceptions import PreventUpdate
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
-from bridge.callbacks.language import Language
 from bridge.logging.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
