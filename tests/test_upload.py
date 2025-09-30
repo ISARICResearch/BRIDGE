@@ -45,6 +45,7 @@ def test_update_for_upload_list_selected(mock_get_translations):
         'Form': ['presentation', 'presentation'],
         'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
         'Variable': ['inclu_disease', 'demog_country'],
+        'Answer Options': [None, None]
     }
     df_datadicc = pd.DataFrame.from_dict(data)
     data = {
