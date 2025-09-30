@@ -20,9 +20,6 @@ def update_output_based_on_url(template_check_flag, grouped_presets, href):
     if not template_check_flag:
         return dash.no_update
 
-    if href is None:
-        return [''] + [[] for _ in grouped_presets.keys()]
-
     if '?param=' in href:
         parsed_url = urlparse(href)
         params = parse_qs(parsed_url.query)
