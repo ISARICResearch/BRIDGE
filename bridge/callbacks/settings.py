@@ -8,6 +8,7 @@ from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
 from bridge.callbacks.language import Language
 from bridge.logging.logger import setup_logger
+from bridge.utils.trigger_id import get_trigger_id
 
 logger = setup_logger(__name__)
 
@@ -94,9 +95,9 @@ def store_data_for_selected_version_language(n_clicks_version, n_clicks_language
         return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
                 False, dash.no_update, dash.no_update)
 
-    button_id = ctx.triggered[0]['prop_id'].split(".")[0]
-    button_index = json.loads(button_id)["index"]
-    button_type = json.loads(button_id)["type"]
+    trigger_id = get_trigger_id(ctx)
+    button_index = json.loads(trigger_id)["index"]
+    button_type = json.loads(trigger_id)["type"]
 
     selected_version = None
     selected_language = None
@@ -106,17 +107,12 @@ def store_data_for_selected_version_language(n_clicks_version, n_clicks_language
         selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                    dash.no_update,
-                    False, dash.no_update, dash.no_update)
+                    dash.no_update, False, dash.no_update, dash.no_update)
         # Reset to English to ensure the data is present
         selected_language = 'English'
 
     elif button_type == 'dynamic-language':
-        if not upload_crf_ready:
-            selected_language = language_list_data[button_index]
-        else:
-            # We don't have the button_index if loading from file
-            selected_language = selected_language_data.get('selected_language', None)
+        selected_language = language_list_data[button_index]
         selected_version = selected_version_data.get('selected_version')
 
     try:
