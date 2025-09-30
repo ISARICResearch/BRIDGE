@@ -8,6 +8,7 @@ import pandas as pd
 from dash import html, Input, Output, State
 
 from bridge.arc import arc
+from bridge.utils.trigger_id import get_trigger_id
 
 
 @dash.callback(
@@ -108,7 +109,7 @@ def on_modal_button_click(submit_n_clicks, cancel_n_clicks, current_datadicc_sav
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    button_id = get_trigger_id(ctx)
 
     if button_id == 'modal_submit':
 
