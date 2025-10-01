@@ -120,8 +120,6 @@ def update_for_upload_list_selected(df_datadicc: pd.DataFrame(), df_list_upload:
 
     variable_choices_updated_list = []
 
-    df_datadicc.loc[:, 'Answer Options'].astype(str)
-
     for index, row in df_list_upload.iterrows():
         list_name = row['Variable']
         boxes_checked = row[selected_column]

@@ -1,5 +1,5 @@
 import io
-
+from typing import Tuple
 import dash
 import pandas as pd
 from dash import Input, Output, State
@@ -17,7 +17,7 @@ from bridge.generate_pdf import form
     Input('input', 'checked'),
     State('current_datadicc-store', 'data'),
     prevent_initial_call=True)
-def display_checked(checked, current_datadicc_saved):
+def display_checked(checked: list, current_datadicc_saved: str) -> Tuple[list, list, str]:
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
@@ -26,42 +26,42 @@ def display_checked(checked, current_datadicc_saved):
     row_data = [{'question': "", 'options': ""},
                 {'question': "", 'options': ""}]
 
-    selected_variables = pd.DataFrame()
-    if checked and len(checked) > 0:
-        # global selected_variables
+    df_selected_variables = pd.DataFrame()
+    if checked:
+        # global df_selected_variables
         selected_dependency_lists = current_datadicc['Dependencies'].loc[
             current_datadicc['Variable'].isin(checked)].tolist()
         flat_selected_dependency = set()
         for sublist in selected_dependency_lists:
             flat_selected_dependency.update(sublist)
         all_selected = set(checked).union(flat_selected_dependency)
-        selected_variables = current_datadicc.loc[current_datadicc['Variable'].isin(all_selected)]
+        df_selected_variables = current_datadicc.loc[current_datadicc['Variable'].isin(all_selected)]
 
         #############################################################
         #############################################################
         ## REDCAP Pipeline
-        selected_variables = arc.get_include_not_show(selected_variables['Variable'], current_datadicc)
+        df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], current_datadicc)
 
         # Select Units Transformation
         arc_var_units_selected, delete_this_variables_with_units = arc.get_select_units(
-            selected_variables['Variable'],
+            df_selected_variables['Variable'],
             current_datadicc)
         if arc_var_units_selected is not None:
-            selected_variables = arc.add_transformed_rows(selected_variables, arc_var_units_selected,
+            df_selected_variables = arc.add_transformed_rows(df_selected_variables, arc_var_units_selected,
                                                           arc.get_variable_order(current_datadicc))
             if len(delete_this_variables_with_units) > 0:  # This remove all the unit variables that were included in a select unit type question
-                selected_variables = selected_variables.loc[
-                    ~selected_variables['Variable'].isin(delete_this_variables_with_units)]
+                df_selected_variables = df_selected_variables.loc[
+                    ~df_selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
-        selected_variables = arc.generate_daily_data_type(selected_variables)
+        df_selected_variables = arc.generate_daily_data_type(df_selected_variables)
 
         #############################################################
         #############################################################
 
         last_form, last_section = None, None
         new_rows = []
-        selected_variables = selected_variables.fillna('')
-        for index, row in selected_variables.iterrows():
+        df_selected_variables = df_selected_variables.fillna('')
+        for index, row in df_selected_variables.iterrows():
             # Add form separator
             if row['Form'] != last_form:
                 new_rows.append(
@@ -92,7 +92,7 @@ def display_checked(checked, current_datadicc_saved):
             new_row['IsSeparator'] = False
             new_rows.append(new_row)
 
-        # Update selected_variables with new rows including separators
+        # Update df_selected_variables with new rows including separators
         selected_variables_for_table_visualization = pd.DataFrame(new_rows)
         selected_variables_for_table_visualization = selected_variables_for_table_visualization.loc[
             selected_variables_for_table_visualization['Type'] != 'group']
@@ -102,4 +102,4 @@ def display_checked(checked, current_datadicc_saved):
         column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
                        {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
-    return column_defs, row_data, selected_variables.to_json(date_format='iso', orient='split')
+    return column_defs, row_data, df_selected_variables.to_json(date_format='iso', orient='split')
