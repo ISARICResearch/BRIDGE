@@ -253,13 +253,7 @@ def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_li
         list_mock,
         None,
     )
-    assert output == (
-        None,
-        df_mock.to_json(date_format='iso', orient='split'),
-        list_mock,
-        list_mock,
-        None,
-    )
+    assert output == expected
 
 
 def get_output_update_output_upload_crf(trigger,

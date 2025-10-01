@@ -1,7 +1,6 @@
 from contextvars import copy_context
 from unittest import mock
 
-import dash
 import pytest
 
 from bridge.utils.crf_name import get_crf_name
