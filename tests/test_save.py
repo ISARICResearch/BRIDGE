@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-import bridge.callbacks.save as save
+from bridge.callbacks import save
 
 
 @pytest.fixture

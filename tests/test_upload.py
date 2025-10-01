@@ -9,7 +9,7 @@ from dash._callback_context import context_value
 from dash._utils import AttributeDict
 from pandas.testing import assert_frame_equal
 
-import bridge.callbacks.upload as upload
+from bridge.callbacks import upload
 
 
 @pytest.mark.parametrize(

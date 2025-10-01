@@ -7,7 +7,7 @@ import pytest
 from dash._callback_context import context_value
 from dash._utils import AttributeDict
 
-from bridge.callbacks import settings as settings
+from bridge.callbacks import settings
 
 
 @pytest.mark.parametrize(

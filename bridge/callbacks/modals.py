@@ -121,11 +121,11 @@ def on_modal_button_click(submit_n_clicks: int,
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-    button_id = get_trigger_id(ctx)
+    trigger_id = get_trigger_id(ctx)
 
-    if button_id == 'modal_submit':
-
+    if trigger_id == 'modal_submit':
+        
+        df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         selected_version = selected_version_data.get('selected_version')
         selected_language = selected_language_data.get('selected_language')
         translations_for_language = arc.get_translations(selected_language)
@@ -180,7 +180,7 @@ def on_modal_button_click(submit_n_clicks: int,
         else:
             return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    elif button_id == 'modal_cancel':
+    elif trigger_id == 'modal_cancel':
         # Just close the modal without doing anything else
         return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 

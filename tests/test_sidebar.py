@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from bridge.callbacks import sidebar as sidebar
+from bridge.callbacks import sidebar
 
 ASSETS_DIR = '../../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'

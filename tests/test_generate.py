@@ -5,7 +5,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-import bridge.callbacks.generate as generate
+from bridge.callbacks import generate
 
 
 @pytest.mark.parametrize(

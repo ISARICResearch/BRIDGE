@@ -3,7 +3,7 @@ from contextvars import copy_context
 import dash
 import pytest
 
-import bridge.callbacks.url as url
+from bridge.callbacks import url
 
 
 @pytest.mark.parametrize(
