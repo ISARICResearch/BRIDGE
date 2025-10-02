@@ -246,3 +246,104 @@ def get_output_on_modal_button_click(trigger,
     ctx = copy_context()
     output = ctx.run(run_callback)
     return output
+
+
+@pytest.mark.parametrize(
+    "selected, ulist_variable_choices_saved, multilist_variable_choices_saved, is_open, current_datadicc_saved, expected_output",
+    [
+        ([], None, None, False, None,
+         (False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], [])),
+    ]
+)
+def test_display_selected_nothing_selected(selected,
+                                           ulist_variable_choices_saved,
+                                           multilist_variable_choices_saved,
+                                           is_open,
+                                           current_datadicc_saved,
+                                           expected_output):
+    output = get_output_display_selected(selected,
+                                         ulist_variable_choices_saved,
+                                         multilist_variable_choices_saved,
+                                         is_open,
+                                         current_datadicc_saved)
+    assert output == expected_output
+
+
+@mock.patch('bridge.callbacks.modals.dbc.ListGroupItem', return_value=['List group item'])
+@pytest.mark.parametrize(
+    "selected, ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
+    [
+        (['inclu_disease'],
+         '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
+         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+         (True,
+          'This is the question [inclu_disease]',
+          'This is the definition',
+          'This is the completion guideline',
+          'This is the branch',
+          {'maxHeight': '250px', 'overflowY': 'auto', 'padding': '20px'},
+          {'display': 'none'},
+          [{'label': '1, Adenovirus', 'value': '1_Adenovirus'},
+           {'label': '2, Andes virus', 'value': '2_Andes virus'},
+           {'label': '10, Dengue', 'value': '10_Dengue'},
+           {'label': '33, Mpox ', 'value': '33_Mpox '}],
+          ['10_Dengue', '33_Mpox '],
+          [])
+         ),
+        (['inclu_disease'],
+         '[["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 0]]]]',
+         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+         (True,
+          'This is the question [inclu_disease]',
+          'This is the definition',
+          'This is the completion guideline',
+          'This is the branch',
+          {'display': 'none'},
+          {'maxHeight': '250px', 'overflowY': 'auto'},
+          [],
+          [],
+          [['List group item']])
+         ),
+    ]
+)
+def test_display_selected(mock_list_group_item,
+                          selected,
+                          ulist_variable_choices_saved,
+                          multilist_variable_choices_saved,
+                          expected_output):
+    is_open = False
+    current_datadicc_saved = (
+        '{"columns":["Form", "Variable", "Question", "Definition", "Completion Guideline", "Branch", "Answer Options"],'
+        '"index":[0, 1, 2, 3, 4, 5, 6],'
+        '"data":['
+        '["presentation",'
+        '"inclu_disease",'
+        '"This is the question",'
+        '"This is the definition",'
+        '"This is the completion guideline",'
+        '"This is the branch",'
+        '"These are the answer options"]]}')
+
+    output = get_output_display_selected(selected,
+                                         ulist_variable_choices_saved,
+                                         multilist_variable_choices_saved,
+                                         is_open,
+                                         current_datadicc_saved)
+    assert output == expected_output
+
+
+def get_output_display_selected(selected,
+                                ulist_variable_choices_saved,
+                                multilist_variable_choices_saved,
+                                is_open,
+                                current_datadicc_saved):
+    def run_callback():
+        return modals.display_selected_in_modal(selected,
+                                                ulist_variable_choices_saved,
+                                                multilist_variable_choices_saved,
+                                                is_open,
+                                                current_datadicc_saved)
+
+    ctx = copy_context()
+    output = ctx.run(run_callback)
+    return output

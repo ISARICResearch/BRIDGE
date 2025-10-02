@@ -32,18 +32,17 @@ from bridge.utils.trigger_id import get_trigger_id
         State('modal', 'is_open'),
         State('current_datadicc-store', 'data'),
     ])
-def display_selected(selected: list,
-                     ulist_variable_choices_saved: str,
-                     multilist_variable_choices_saved: str,
-                     is_open: bool,
-                     current_datadicc_saved: str) -> (
+def display_selected_in_modal(selected: list,
+                              ulist_variable_choices_saved: str,
+                              multilist_variable_choices_saved: str,
+                              is_open: bool,
+                              current_datadicc_saved: str) -> (
         Tuple)[bool, str, str, str, str, dict, dict, list, list, list]:
-    ulist = json.loads(ulist_variable_choices_saved)
-    multilist = json.loads(multilist_variable_choices_saved)
-    ulist_multilist = ulist + multilist
-    df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-
     if selected:
+        ulist = json.loads(ulist_variable_choices_saved)
+        multilist = json.loads(multilist_variable_choices_saved)
+        ulist_multilist = ulist + multilist
+        df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         selected_variable = selected[0]
         if selected_variable in list(df_datadicc['Variable']):
             question = df_datadicc['Question'].loc[df_datadicc['Variable'] == selected[0]].iloc[0]
@@ -60,9 +59,12 @@ def display_selected(selected: list,
                     checked_items = []
                     if ulist_multilist_name == selected_variable:
                         for ulist_multilist_variable in ulist_multilist_item[1]:
-                            options.append({"label": str(ulist_multilist_variable[0]) + ', ' + ulist_multilist_variable[1], "value": str(ulist_multilist_variable[0]) + '_' + ulist_multilist_variable[1]})
+                            options.append(
+                                {"label": str(ulist_multilist_variable[0]) + ', ' + ulist_multilist_variable[1],
+                                 "value": str(ulist_multilist_variable[0]) + '_' + ulist_multilist_variable[1]})
                             if ulist_multilist_variable[2] == 1:
-                                checked_items.append(str(ulist_multilist_variable[0]) + '_' + ulist_multilist_variable[1])
+                                checked_items.append(
+                                    str(ulist_multilist_variable[0]) + '_' + ulist_multilist_variable[1])
 
                     return True, question + ' [' + selected_variable + ']', definition, completion, skip_logic, {
                         "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
@@ -124,7 +126,7 @@ def on_modal_button_click(submit_n_clicks: int,
     trigger_id = get_trigger_id(ctx)
 
     if trigger_id == 'modal_submit':
-        
+
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
         selected_version = selected_version_data.get('selected_version')
         selected_language = selected_language_data.get('selected_language')
@@ -214,7 +216,8 @@ def determine_list_variable_choices(variable_choices_list: list,
             df_current_datadicc.loc[df_current_datadicc['Variable'] == variable_submitted, 'Answer Options'] = (
                     select_answer_options + '88, ' + other_text)
             if variable_submitted + '_otherl2' in list(df_current_datadicc['Variable']):
-                df_current_datadicc.loc[df_current_datadicc['Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = (
+                df_current_datadicc.loc[
+                    df_current_datadicc['Variable'] == variable_submitted + '_otherl2', 'Answer Options'] = (
                         not_select_answer_options + '88, ' + other_text)
 
         position += 1
