@@ -194,7 +194,6 @@ def determine_list_variable_choices(variable_choices_list: list,
                                     df_list_options_checked: pd.DataFrame,
                                     df_current_datadicc: pd.DataFrame,
                                     other_text: str) -> Tuple[pd.DataFrame, list]:
-    df_current_datadicc.loc[:, 'Answer Options'].astype(str)
     new_submitted_options = []
     new_submitted_line = []
     position = 0

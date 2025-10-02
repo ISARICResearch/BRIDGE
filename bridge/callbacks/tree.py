@@ -127,29 +127,31 @@ def get_checked_template_list(grouped_presets_dict, checked_values_list):
 
 def update_for_template_options(version, language, df_current_datadicc, ulist_variable_choices,
                                 multilist_variable_choices, checked_key=None):
+    df_current_datadicc.loc[:, 'Answer Options'] = ''
+
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
-    template_ulist_var = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]
+    df_datadicc_u_multilists = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]
 
-    for index_tem_ul, row_tem_ul in template_ulist_var.iterrows():
-        dict1_options = []
-        dict2_options = []
-        t_u_list = row_tem_ul['List']
-        list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
-                                                                              t_u_list.replace('_', '/'))
+    for list_data_index, list_data in df_datadicc_u_multilists.iterrows():
+        ulist_options = []
+        multilist_options = []
+        list_name = list_data['List']
+        df_list_data = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+                                                                              list_name.replace('_', '/'))
 
-        cont_lo = 1
         select_answer_options = ''
-
         not_select_answer_options = ''
-        for index, row in list_options.iterrows():
-            if cont_lo == 88:
-                cont_lo = 89
-            elif cont_lo == 99:
-                cont_lo = 100
 
-            if checked_key and checked_key in list_options.columns:
+        list_index = 1
+        for index, row in df_list_data.iterrows():
+            if list_index == 88:
+                list_index = 89
+            elif list_index == 99:
+                list_index = 100
+
+            if checked_key and checked_key in df_list_data.columns:
                 selected_column = checked_key
             else:
                 selected_column = 'Selected'
@@ -159,28 +161,32 @@ def update_for_template_options(version, language, df_current_datadicc, ulist_va
                 selected_value = float(1) if selected_value.replace(' ', '') == '1' else None
 
             if pd.notnull(selected_value) and int(selected_value) == 1:
-                if row_tem_ul['Type'] == 'user_list':
-                    dict1_options.append([str(cont_lo), str(row[list_options.columns[0]]), 1])
-                elif row_tem_ul['Type'] == 'multi_list':
-                    dict2_options.append([str(cont_lo), str(row[list_options.columns[0]]), 1])
-                select_answer_options += str(cont_lo) + ', ' + str(row[list_options.columns[0]]) + ' | '
+                if list_data['Type'] == 'user_list':
+                    ulist_options.append([str(list_index), str(row[df_list_data.columns[0]]), 1])
+                elif list_data['Type'] == 'multi_list':
+                    multilist_options.append([str(list_index), str(row[df_list_data.columns[0]]), 1])
+                select_answer_options += f'{str(list_index)}, {str(row[df_list_data.columns[0]])} | '
             else:
-                if row_tem_ul['Type'] == 'user_list':
-                    dict1_options.append([str(cont_lo), str(row[list_options.columns[0]]), 0])
-                elif row_tem_ul['Type'] == 'multi_list':
-                    dict2_options.append([str(cont_lo), str(row[list_options.columns[0]]), 0])
-                not_select_answer_options += str(cont_lo) + ', ' + str(row[list_options.columns[0]]) + ' | '
-            cont_lo += 1
-        df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
-            'Variable'], 'Answer Options'] = select_answer_options + '88, ' + other_text
-        if row_tem_ul['Variable'] + '_otherl2' in list(df_current_datadicc['Variable']):
-            df_current_datadicc.loc[df_current_datadicc['Variable'] == row_tem_ul[
-                'Variable'] + '_otherl2', 'Answer Options'] = not_select_answer_options + '88, ' + other_text
+                if list_data['Type'] == 'user_list':
+                    ulist_options.append([str(list_index), str(row[df_list_data.columns[0]]), 0])
+                elif list_data['Type'] == 'multi_list':
+                    multilist_options.append([str(list_index), str(row[df_list_data.columns[0]]), 0])
+                not_select_answer_options += f'{str(list_index)}, {str(row[df_list_data.columns[0]])} | '
+            list_index += 1
 
-        if row_tem_ul['Type'] == 'user_list':
-            ulist_variable_choices.append([row_tem_ul['Variable'], dict1_options])
-        elif row_tem_ul['Type'] == 'multi_list':
-            multilist_variable_choices.append([row_tem_ul['Variable'], dict2_options])
+        df_current_datadicc.loc[df_current_datadicc['Variable'] == list_data[
+            'Variable'], 'Answer Options'] = f'{select_answer_options} 88, {other_text}'
+
+        if list_data['Variable'] + '_otherl2' in list(df_current_datadicc['Variable']):
+            df_current_datadicc.loc[df_current_datadicc['Variable'] == list_data[
+                'Variable'] + '_otherl2', 'Answer Options'] = f'{not_select_answer_options} 88, {other_text}'
+
+        if list_data['Type'] == 'user_list':
+            ulist_variable_choices.append([list_data['Variable'], ulist_options])
+
+        elif list_data['Type'] == 'multi_list':
+            multilist_variable_choices.append([list_data['Variable'], multilist_options])
+
     return df_current_datadicc, ulist_variable_choices, multilist_variable_choices
 
 
