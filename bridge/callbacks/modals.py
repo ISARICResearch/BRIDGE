@@ -110,7 +110,7 @@ def on_modal_button_click(submit_n_clicks: int,
                           cancel_n_clicks: int,
                           current_datadicc_saved: str,
                           modal_title: str,
-                          checked_options: list,
+                          modal_options_checked: list,
                           checked: list,
                           ulist_variable_choices_saved: str,
                           multilist_variable_choices_saved: str,
@@ -141,7 +141,7 @@ def on_modal_button_click(submit_n_clicks: int,
 
         if (variable_submitted in ulist_variables) | (variable_submitted in multilist_variables):
             list_options_checked = []
-            for checked_option in checked_options:
+            for checked_option in modal_options_checked:
                 list_options_checked.append(checked_option.split('_'))
 
             list_options_checked = pd.DataFrame(data=list_options_checked, columns=['cod', 'Option'])

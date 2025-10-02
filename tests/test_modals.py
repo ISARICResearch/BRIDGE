@@ -1,13 +1,27 @@
+import io
+import json
 from contextvars import copy_context
 from unittest import mock
 
 import dash
 import pandas as pd
+import pytest
 from dash._callback_context import context_value
 from dash._utils import AttributeDict
 from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import modals
+
+SUBMIT_N_CLICKS_NONE = None
+CANCEL_N_CLICKS_NONE = None
+CURRENT_DATADICC_SAVED_NONE = None
+MODAL_TITLE_NONE = None
+MODAL_OPTIONS_CHECKED_NONE = None
+CHECKED_NONE = None
+ULIST_VARIABLE_CHOICES_SAVED_NONE = None
+MULTILIST_VARIABLE_CHOICES_SAVED_NONE = None
+SELECTED_VERSION_DATA_NONE = None
+SELECTED_LANGUAGE_DATA_NONE = None
 
 
 def test_determine_list_variable_choices():
@@ -97,83 +111,112 @@ def test_determine_list_variable_choices():
 
 def test_on_modal_button_click_not_triggered():
     trigger = None
-    submit_n_clicks = None
-    cancel_n_clicks = None
-    current_datadicc_saved = None
-    modal_title = None
-    checked_options = None
-    checked = None
-    ulist_variable_choices_saved = None
-    multilist_variable_choices_saved = None
-    selected_version_data = None
-    selected_language_data = None
     output = get_output_on_modal_button_click(trigger,
-                                              submit_n_clicks,
-                                              cancel_n_clicks,
-                                              current_datadicc_saved,
-                                              modal_title,
-                                              checked_options,
-                                              checked,
-                                              ulist_variable_choices_saved,
-                                              multilist_variable_choices_saved,
-                                              selected_version_data,
-                                              selected_language_data)
+                                              SUBMIT_N_CLICKS_NONE,
+                                              CANCEL_N_CLICKS_NONE,
+                                              CURRENT_DATADICC_SAVED_NONE,
+                                              MODAL_TITLE_NONE,
+                                              MODAL_OPTIONS_CHECKED_NONE,
+                                              CHECKED_NONE,
+                                              ULIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              SELECTED_VERSION_DATA_NONE,
+                                              SELECTED_LANGUAGE_DATA_NONE)
     expected = (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
     assert output == expected
 
 
 @mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='nothing_modal')
 def test_on_modal_button_click_wrong_trigger(mock_trigger_id):
-    submit_n_clicks = None
-    cancel_n_clicks = None
-    current_datadicc_saved = None
-    modal_title = None
-    checked_options = None
-    checked = None
-    ulist_variable_choices_saved = None
-    multilist_variable_choices_saved = None
-    selected_version_data = None
-    selected_language_data = None
     output = get_output_on_modal_button_click(mock_trigger_id,
-                                              submit_n_clicks,
-                                              cancel_n_clicks,
-                                              current_datadicc_saved,
-                                              modal_title,
-                                              checked_options,
-                                              checked,
-                                              ulist_variable_choices_saved,
-                                              multilist_variable_choices_saved,
-                                              selected_version_data,
-                                              selected_language_data)
+                                              SUBMIT_N_CLICKS_NONE,
+                                              CANCEL_N_CLICKS_NONE,
+                                              CURRENT_DATADICC_SAVED_NONE,
+                                              MODAL_TITLE_NONE,
+                                              MODAL_OPTIONS_CHECKED_NONE,
+                                              CHECKED_NONE,
+                                              ULIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              SELECTED_VERSION_DATA_NONE,
+                                              SELECTED_LANGUAGE_DATA_NONE)
     expected = (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
     assert output == expected
 
 
 @mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='modal_cancel')
 def test_on_modal_button_click_modal_cancel(mock_trigger_id):
+    output = get_output_on_modal_button_click(mock_trigger_id,
+                                              SUBMIT_N_CLICKS_NONE,
+                                              CANCEL_N_CLICKS_NONE,
+                                              CURRENT_DATADICC_SAVED_NONE,
+                                              MODAL_TITLE_NONE,
+                                              MODAL_OPTIONS_CHECKED_NONE,
+                                              CHECKED_NONE,
+                                              ULIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
+                                              SELECTED_VERSION_DATA_NONE,
+                                              SELECTED_LANGUAGE_DATA_NONE)
+    expected = (False, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+    assert output == expected
+
+
+@pytest.mark.parametrize(
+    "ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
+    [
+        ('[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
+         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+         (False,
+          '{"columns":["Form","Variable"],"index":[0,1],"data":[["presentation","inclu_disease"],["presentation","inclu_disease"]]}',
+          '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
+          '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
+          ['Just for checking'])),
+        ('[["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]]]',
+         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+         (False,
+          dash.no_update,
+          dash.no_update,
+          dash.no_update,
+          dash.no_update)),
+    ]
+)
+@mock.patch('bridge.callbacks.modals.html.Div', return_value=['Just for checking'])
+@mock.patch('bridge.callbacks.modals.arc.get_tree_items', return_value={})
+@mock.patch('bridge.callbacks.modals.determine_list_variable_choices')
+@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='modal_submit')
+def test_on_modal_button_click_modal_submit(mock_trigger_id,
+                                            mock_get_translations,
+                                            mock_list_choices,
+                                            mock_get_tree_items,
+                                            mock_html_div,
+                                            ulist_variable_choices_saved,
+                                            multilist_variable_choices_saved,
+                                            expected_output):
     submit_n_clicks = None
     cancel_n_clicks = None
-    current_datadicc_saved = None
-    modal_title = None
-    checked_options = None
-    checked = None
-    ulist_variable_choices_saved = None
-    multilist_variable_choices_saved = None
-    selected_version_data = None
-    selected_language_data = None
+    current_datadicc_saved = '{"columns":["Form", "Variable"], "index":[0, 1], "data":[["presentation", "inclu_disease"]]}'
+    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+    modal_title = 'Suspected or confirmed infection [inclu_disease]'
+    modal_options_checked = ['33_Mpox ', '1_Adenovirus', '10_Dengue ']
+    checked = []
+    selected_version_data = {'selected_version': 'v1.1.1'}
+    selected_language_data = {'selected_language': 'English'}
+
+    mock_list_choices.return_value = (df_current_datadicc, json.loads(ulist_variable_choices_saved))
+
     output = get_output_on_modal_button_click(mock_trigger_id,
                                               submit_n_clicks,
                                               cancel_n_clicks,
                                               current_datadicc_saved,
                                               modal_title,
-                                              checked_options,
+                                              modal_options_checked,
                                               checked,
                                               ulist_variable_choices_saved,
                                               multilist_variable_choices_saved,
                                               selected_version_data,
                                               selected_language_data)
-    expected = (False, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
-    assert output == expected
+
+    assert output == expected_output
 
 
 def get_output_on_modal_button_click(trigger,
@@ -181,7 +224,7 @@ def get_output_on_modal_button_click(trigger,
                                      cancel_n_clicks,
                                      current_datadicc_saved,
                                      modal_title,
-                                     checked_options,
+                                     modal_options_checked,
                                      checked,
                                      ulist_variable_choices_saved,
                                      multilist_variable_choices_saved,
@@ -193,7 +236,7 @@ def get_output_on_modal_button_click(trigger,
                                             cancel_n_clicks,
                                             current_datadicc_saved,
                                             modal_title,
-                                            checked_options,
+                                            modal_options_checked,
                                             checked,
                                             ulist_variable_choices_saved,
                                             multilist_variable_choices_saved,
