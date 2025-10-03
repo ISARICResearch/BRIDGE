@@ -34,12 +34,12 @@ logger = setup_logger(__name__)
     ],
     prevent_initial_call=True
 )
-def update_tree_items_and_stores(checked_variables,
-                                 upload_crf_ready,
-                                 current_datadicc_saved,
-                                 grouped_presets_dict,
-                                 selected_version_data,
-                                 selected_language_data):
+def update_tree_items_and_stores(checked_variables: list,
+                                 upload_crf_ready: bool,
+                                 current_datadicc_saved: str,
+                                 grouped_presets_dict: dict,
+                                 selected_version_data: dict,
+                                 selected_language_data: dict):
     if upload_crf_ready:
         return (dash.no_update,
                 dash.no_update,
@@ -116,8 +116,8 @@ def update_tree_items_and_stores(checked_variables,
     )
 
 
-def get_checked_template_list(grouped_presets_dict,
-                              checked_values_list):
+def get_checked_template_list(grouped_presets_dict: dict,
+                              checked_values_list: list) -> list:
     output = []
     for section, item_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
         if item_checked_list:
@@ -126,12 +126,12 @@ def get_checked_template_list(grouped_presets_dict,
     return output
 
 
-def update_for_template_options(version,
-                                language,
-                                df_current_datadicc,
-                                ulist_variable_choices,
-                                multilist_variable_choices,
-                                checked_key=None):
+def update_for_template_options(version: str,
+                                language: str,
+                                df_current_datadicc: pd.DataFrame,
+                                ulist_variable_choices: list,
+                                multilist_variable_choices: list,
+                                checked_key: str = None):
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
@@ -197,5 +197,5 @@ def update_for_template_options(version,
     Output('output-expanded', 'children'),
     Input('input', 'expanded')
 )
-def display_expanded_tree_items(expanded):
+def display_expanded_tree_items(expanded: str) -> str:
     return 'You have expanded {}'.format(expanded)

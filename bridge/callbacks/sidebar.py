@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import dash
 from dash import Input, Output, State
 
@@ -29,7 +31,10 @@ PRESET_OFF = f"{ICONS_DIR}/preset_off.png"
     ],
     prevent_initial_call=True
 )
-def toggle_columns(_n_presets, _n_settings, is_in_presets, is_in_settings):
+def toggle_columns(_n_presets: int,
+                   _n_settings: int,
+                   is_in_presets: bool,
+                   is_in_settings: bool) -> Tuple[bool, bool, bool, str, str]:
     ctx = dash.callback_context
 
     trigger_id = get_trigger_id(ctx)
@@ -71,5 +76,8 @@ def toggle_columns(_n_presets, _n_settings, is_in_presets, is_in_settings):
     # Determine tree-column visibility
     is_in_tree = not (new_is_in_presets or new_is_in_settings)
 
-    return new_is_in_presets, new_is_in_settings, is_in_tree, settings_icon_img, preset_icon_img
-
+    return (new_is_in_presets,
+            new_is_in_settings,
+            is_in_tree,
+            settings_icon_img,
+            preset_icon_img)

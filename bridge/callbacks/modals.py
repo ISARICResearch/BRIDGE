@@ -25,7 +25,9 @@ from bridge.utils.trigger_id import get_trigger_id
         Output('options-checklist', 'value'),
         Output('options-list-group', 'children')
     ],
-    Input('input', 'selected'),
+    [
+        Input('input', 'selected'),
+    ],
     [
         State('ulist_variable_choices-store', 'data'),
         State('multilist_variable_choices-store', 'data'),
@@ -128,8 +130,8 @@ def on_modal_button_click(submit_n_clicks: int,
     if trigger_id == 'modal_submit':
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-        selected_version = selected_version_data.get('selected_version')
-        selected_language = selected_language_data.get('selected_language')
+        selected_version = selected_version_data.get('selected_version', None)
+        selected_language = selected_language_data.get('selected_language', None)
         translations_for_language = arc.get_translations(selected_language)
         other_text = translations_for_language['other']
 

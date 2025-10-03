@@ -6,6 +6,7 @@ from dash import dcc, html, Input, Output
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
+import bridge.callbacks
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar

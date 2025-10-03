@@ -42,8 +42,14 @@ XML_FILE_NAME = 'ISARIC Clinical Characterisation Setup.xml'
     ],
     prevent_initial_call=True
 )
-def on_generate_click(n_clicks, json_data, selected_version_data, selected_language_data,
-                      checked_presets, crf_name, output_files, browser_info):
+def on_generate_click(n_clicks: int,
+                      json_data: str,
+                      selected_version_data: dict,
+                      selected_language_data: dict,
+                      checked_presets: list,
+                      crf_name: str,
+                      output_files: list,
+                      browser_info: str):
     ctx = dash.callback_context
 
     if not n_clicks:

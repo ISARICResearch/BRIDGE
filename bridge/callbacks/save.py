@@ -31,8 +31,14 @@ pd.options.mode.copy_on_write = True
     ],
     prevent_initial_call=True
 )
-def on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data,
-                  crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved):
+def on_save_click(n_clicks: int,
+                  checked_variables: list,
+                  current_datadicc_saved: str,
+                  selected_version_data: dict,
+                  selected_language_data: dict,
+                  crf_name: str,
+                  ulist_variable_choices_saved: list,
+                  multilist_variable_choices_saved: list):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
@@ -72,7 +78,9 @@ def on_save_click(n_clicks, checked_variables, current_datadicc_saved, selected_
         return '', None
 
 
-def get_checked_data_for_list(df_list, checked_variables, list_type) -> pd.DataFrame:
+def get_checked_data_for_list(df_list: pd.DataFrame,
+                              checked_variables: list,
+                              list_type: str) -> pd.DataFrame:
     column_list = ['Variable', f'{list_type} Selected']
     df_out = pd.DataFrame(columns=column_list)
     df_list_checked = df_list[df_list['Variable'].isin(checked_variables)]

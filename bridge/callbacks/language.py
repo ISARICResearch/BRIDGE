@@ -8,11 +8,14 @@ from bridge.arc import arc
 
 class Language:
 
-    def __init__(self, selected_version: str, selected_language: str):
+    def __init__(self,
+                 selected_version: str,
+                 selected_language: str):
         self.selected_version = selected_version
         self.selected_language = selected_language
 
-    def get_dataframe_arc_language(self, df_version: pd.DataFrame) -> pd.DataFrame:
+    def get_dataframe_arc_language(self,
+                                   df_version: pd.DataFrame) -> pd.DataFrame:
         df_version_language = arc.get_arc_translation(
             self.selected_language,
             self.selected_version,

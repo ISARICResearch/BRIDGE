@@ -17,20 +17,20 @@ logger = setup_logger(__name__)
     Output("dropdown-ARC_version_input", "value"),
     Input('selected-version-store', 'data'),
 )
-def update_input_version(data):
+def update_input_version(data: dict) -> str | None:
     if data is None:
         return dash.no_update
-    return data.get('selected_version')
+    return data.get('selected_version', None)
 
 
 @dash.callback(
     Output("dropdown-ARC_language_input", "value"),
     Input('selected-language-store', 'data'),
 )
-def update_input_language(data):
+def update_input_language(data: dict) -> str | None:
     if data is None:
         return dash.no_update
-    return data.get('selected_language')
+    return data.get('selected_language', None)
 
 
 @dash.callback(
@@ -38,9 +38,11 @@ def update_input_language(data):
         Output("dropdown-ARC-language-menu", "children"),
         Output("language-list-store", "data"),
     ],
-    Input('selected-version-store', 'data'),
+    [
+        Input('selected-version-store', 'data'),
+    ],
 )
-def update_language_available_for_version(selected_version_data):
+def update_language_available_for_version(selected_version_data: dict):
     if not selected_version_data:
         return dash.no_update, dash.no_update
 
@@ -55,7 +57,7 @@ def update_language_available_for_version(selected_version_data):
     Output("output-files-store", "data"),
     Input("output-files-checkboxes", "value")
 )
-def update_output_files_store(checked_values):
+def update_output_files_store(checked_values: list) -> list:
     return checked_values
 
 
@@ -83,17 +85,35 @@ def update_output_files_store(checked_values):
     ],
     prevent_initial_call=True
 )
-def store_data_for_selected_version_language(n_clicks_version, n_clicks_language, upload_crf_ready,
-                                             selected_version_data, selected_language_data, language_list_data):
+def store_data_for_selected_version_language(n_clicks_version: int,
+                                             n_clicks_language: int,
+                                             upload_crf_ready: bool,
+                                             selected_version_data: dict,
+                                             selected_language_data: dict,
+                                             language_list_data: list):
     if upload_crf_ready:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                dash.no_update, dash.no_update, dash.no_update)
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update)
 
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                False, dash.no_update, dash.no_update)
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                False,
+                dash.no_update,
+                dash.no_update)
 
     trigger_id = get_trigger_id(ctx)
     button_index = json.loads(trigger_id)["index"]
@@ -106,14 +126,21 @@ def store_data_for_selected_version_language(n_clicks_version, n_clicks_language
         arc_version_list, _arc_version_latest = arc.get_arc_versions()
         selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
-            return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                    dash.no_update, False, dash.no_update, dash.no_update)
+            return (dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    False,
+                    dash.no_update,
+                    dash.no_update)
         # Reset to English to ensure the data is present
         selected_language = 'English'
 
     elif button_type == 'dynamic-language':
         selected_language = language_list_data[button_index]
-        selected_version = selected_version_data.get('selected_version')
+        selected_version = selected_version_data.get('selected_version', None)
 
     try:
         (
@@ -140,5 +167,12 @@ def store_data_for_selected_version_language(n_clicks_version, n_clicks_language
             version_multilist_variable_choices
         )
     except json.JSONDecodeError:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                False, dash.no_update, dash.no_update)
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                False,
+                dash.no_update,
+                dash.no_update)

@@ -13,10 +13,14 @@ from dash import Input, Output, State
         Input('templates_checks_ready', 'data'),
         Input('grouped_presets-store', 'data'),
     ],
-    State('url', 'href'),
+    [
+        State('url', 'href'),
+    ],
     prevent_initial_call=True,
 )
-def update_output_based_on_url(template_check_flag, grouped_presets, href):
+def update_output_based_on_url(template_check_flag: bool,
+                               grouped_presets: dict,
+                               href: str):
     if not template_check_flag:
         return dash.no_update
 

@@ -29,7 +29,8 @@ pd.options.mode.copy_on_write = True
     ],
     prevent_initial_call=True
 )
-def on_upload_crf(filename, contents):
+def on_upload_crf(filename: str,
+                  contents: str):
     if filename:
         try:
             upload_version = re.search(r'v\d_\d_\d', filename).group(0)
@@ -68,27 +69,50 @@ def on_upload_crf(filename, contents):
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version_language(upload_version_data, upload_language_data, selected_version_data,
-                                     selected_language_data):
+def load_upload_arc_version_language(upload_version_data: str,
+                                     upload_language_data: str,
+                                     selected_version_data: dict,
+                                     selected_language_data: dict):
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                False, None, dash.no_update, dash.no_update)
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                False,
+                None,
+                dash.no_update,
+                dash.no_update)
 
     upload_version = upload_version_data.get('upload_version', None)
     upload_language = upload_language_data.get('upload_language', None)
 
-    if ((selected_version_data and upload_version == selected_version_data.get('selected_version', None)) and (
-            selected_language_data and upload_language == selected_language_data.get('selected_language',
-                                                                                     None))):
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                True, None, dash.no_update, dash.no_update)
+    if ((selected_version_data
+         and upload_version == selected_version_data.get('selected_version', None))
+            and (selected_language_data
+                 and upload_language == selected_language_data.get('selected_language', None))):
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                True,
+                None,
+                dash.no_update,
+                dash.no_update)
 
     try:
-        (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
-         version_ulist_variable_choices, version_multilist_variable_choices) = Language(upload_version,
-                                                                                        upload_language).get_version_language_related_data()
+        (df_upload_version,
+         version_commit,
+         version_grouped_presets,
+         version_accordion_items,
+         version_ulist_variable_choices,
+         version_multilist_variable_choices) = Language(upload_version,
+                                                        upload_language).get_version_language_related_data()
         logger.info(f'upload_version: {upload_version}')
         logger.info(f'upload_language: {upload_language}')
         return (
@@ -104,12 +128,23 @@ def load_upload_arc_version_language(upload_version_data, upload_language_data, 
             version_multilist_variable_choices,
         )
     except json.JSONDecodeError:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-                False, None, dash.no_update, dash.no_update)
+        return (dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
+                False,
+                None,
+                dash.no_update,
+                dash.no_update)
 
 
-def update_for_upload_list_selected(df_datadicc: pd.DataFrame(), df_list_upload: pd.DataFrame(), variable_choices: str,
-                                    list_type: str, language: str) -> Tuple[pd.DataFrame, str]:
+def update_for_upload_list_selected(df_datadicc: pd.DataFrame(),
+                                    df_list_upload: pd.DataFrame(),
+                                    variable_choices: str,
+                                    list_type: str,
+                                    language: str) -> Tuple[pd.DataFrame, str]:
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
@@ -172,16 +207,20 @@ def update_for_upload_list_selected(df_datadicc: pd.DataFrame(), df_list_upload:
     ],
     prevent_initial_call=True
 )
-def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_language_data, upload_crf_contents,
-                             upload_version_lang_datadicc_saved, upload_version_lang_ulist_saved,
-                             upload_version_lang_multilist_saved):
+def update_output_upload_crf(upload_crf_ready: bool,
+                             upload_version_data: dict,
+                             upload_language_data: dict,
+                             upload_crf_contents: str,
+                             upload_version_lang_datadicc_saved: str,
+                             upload_version_lang_ulist_saved: str,
+                             upload_version_lang_multilist_saved: str):
     ctx = dash.callback_context
 
     if not ctx.triggered:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    upload_version = upload_version_data.get('upload_version', None)
-    upload_language = upload_language_data.get('upload_language', None)
+    upload_version = upload_version_data.get('upload_version')
+    upload_language = upload_language_data.get('upload_language')
     upload_type, upload_string = upload_crf_contents.split(',')
     upload_decoded = base64.b64decode(upload_string)
     df_upload_csv = pd.read_csv(io.StringIO(upload_decoded.decode('utf-8')))
@@ -205,16 +244,18 @@ def update_output_upload_crf(upload_crf_ready, upload_version_data, upload_langu
     df_upload_ulist = df_upload_csv[['Variable', 'Ulist Selected']]
     df_upload_multilist = df_upload_csv[['Variable', 'Multilist Selected']]
 
-    df_datadicc_selected, ulist_variables_selected = update_for_upload_list_selected(df_version_lang_datadicc,
-                                                                                     df_upload_ulist,
-                                                                                     upload_version_lang_ulist_saved,
-                                                                                     'Ulist',
-                                                                                     upload_language)
-    df_datadicc_selected, multilist_variables_selected = update_for_upload_list_selected(df_datadicc_selected,
-                                                                                         df_upload_multilist,
-                                                                                         upload_version_lang_multilist_saved,
-                                                                                         'Multilist',
-                                                                                         upload_language)
+    (df_datadicc_selected,
+     ulist_variables_selected) = update_for_upload_list_selected(df_version_lang_datadicc,
+                                                                 df_upload_ulist,
+                                                                 upload_version_lang_ulist_saved,
+                                                                 'Ulist',
+                                                                 upload_language)
+    (df_datadicc_selected,
+     multilist_variables_selected) = update_for_upload_list_selected(df_datadicc_selected,
+                                                                     df_upload_multilist,
+                                                                     upload_version_lang_multilist_saved,
+                                                                     'Multilist',
+                                                                     upload_language)
 
     return (
         tree_items,

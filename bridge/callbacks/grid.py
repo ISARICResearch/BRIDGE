@@ -1,5 +1,6 @@
 import io
 from typing import Tuple
+
 import dash
 import pandas as pd
 from dash import Input, Output, State
@@ -14,10 +15,15 @@ from bridge.generate_pdf import form
         Output('CRF_representation_grid', 'rowData'),
         Output('selected_data-store', 'data')
     ],
-    Input('input', 'checked'),
-    State('current_datadicc-store', 'data'),
+    [
+        Input('input', 'checked'),
+    ],
+    [
+        State('current_datadicc-store', 'data'),
+    ],
     prevent_initial_call=True)
-def display_checked(checked: list, current_datadicc_saved: str) -> Tuple[list, list, str]:
+def display_checked(checked: list,
+                    current_datadicc_saved: str) -> Tuple[list, list, str]:
     current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
@@ -28,7 +34,6 @@ def display_checked(checked: list, current_datadicc_saved: str) -> Tuple[list, l
 
     df_selected_variables = pd.DataFrame()
     if checked:
-        # global df_selected_variables
         selected_dependency_lists = current_datadicc['Dependencies'].loc[
             current_datadicc['Variable'].isin(checked)].tolist()
         flat_selected_dependency = set()
@@ -37,8 +42,6 @@ def display_checked(checked: list, current_datadicc_saved: str) -> Tuple[list, l
         all_selected = set(checked).union(flat_selected_dependency)
         df_selected_variables = current_datadicc.loc[current_datadicc['Variable'].isin(all_selected)]
 
-        #############################################################
-        #############################################################
         ## REDCAP Pipeline
         df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], current_datadicc)
 
@@ -48,15 +51,13 @@ def display_checked(checked: list, current_datadicc_saved: str) -> Tuple[list, l
             current_datadicc)
         if arc_var_units_selected is not None:
             df_selected_variables = arc.add_transformed_rows(df_selected_variables, arc_var_units_selected,
-                                                          arc.get_variable_order(current_datadicc))
-            if len(delete_this_variables_with_units) > 0:  # This remove all the unit variables that were included in a select unit type question
+                                                             arc.get_variable_order(current_datadicc))
+            if len(delete_this_variables_with_units) > 0:
+                # This remove all the unit variables that were included in a select unit type question
                 df_selected_variables = df_selected_variables.loc[
                     ~df_selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
         df_selected_variables = arc.generate_daily_data_type(df_selected_variables)
-
-        #############################################################
-        #############################################################
 
         last_form, last_section = None, None
         new_rows = []
