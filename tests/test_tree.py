@@ -24,12 +24,16 @@ def test_get_checked_template_list():
         'ARChetype Disease CRF': ['Covid', 'Dengue', 'Mpox', 'H5Nx'],
         'ARChetype Syndromic CRF': ['ARI'],
         'Recommended Outcomes': ['Dengue'],
-        'Score': ['CharlsonCI'], 'UserGenerated': ['Oropouche']
+        'Score': ['CharlsonCI'],
+        'UserGenerated': ['Oropouche']
     }
     checked_values_list = [['Covid'], ['ARI'], [], [], []]
     output = tree.get_checked_template_list(grouped_presets_dict,
                                             checked_values_list)
-    expected = [['ARChetype Disease CRF', 'Covid'], ['ARChetype Syndromic CRF', 'ARI']]
+    expected = [
+        ['ARChetype Disease CRF', 'Covid'],
+        ['ARChetype Syndromic CRF', 'ARI']
+    ]
     assert output == expected
 
 
@@ -96,7 +100,8 @@ def test_update_for_template_options_ulist_checked_otherl2(mock_list,
         ['7', 'Measles', 0],
         ['8', 'Mpox', 1],
         ['9', 'Nipah', 0],
-        ['10', 'Oropouche', 0]]]]
+        ['10', 'Oropouche', 0],
+    ]]]
     multilist_expected = []
     data = {
         'Variable': ['inclu_disease', 'inclu_disease_otherl2'],
@@ -148,12 +153,103 @@ def test_update_for_template_options_multilist_selected(mock_list,
             ['7', 'Measles', 0],
             ['8', 'Mpox', 0],
             ['9', 'Nipah', 0],
-            ['10', 'Oropouche', 1]]]]
+            ['10', 'Oropouche', 1],
+        ]]]
     data = {
         'Variable': ['inclu_disease'],
         'Type': ['multi_list'],
         'List': ['inclusion_Diseases'],
         'Answer Options': ['1, Adenovirus | 3, Dengue | 4, Enterovirus | 5, HSV | 10, Oropouche |  88, Other'],
+    }
+    df_expected = pd.DataFrame.from_dict(data)
+
+    assert_frame_equal(df_output, df_expected)
+    assert ulist_output == ulist_expected
+    assert multilist_output == multilist_expected
+
+
+@pytest.fixture
+def df_mock_list_multilist():
+    data = {
+        'Race':
+            [
+                'Aboriginal/First Nations/Indigenous',
+                'Arab',
+                'Black or African Descent',
+                'Brown (Mixed/Multiracial)',
+                'East Asian (incl. Brazilian Yellow/Amarelo)',
+                'Latin American or Hispanic',
+                'South Asian',
+                'South-East Asian',
+                'West Asian',
+                'White',
+            ],
+        'Selected':
+            [
+                0, 1, 0, 1, 0, 1, 1, 0, 0, 1,
+            ],
+    }
+    df_mock_list = pd.DataFrame.from_dict(data)
+    return df_mock_list
+
+
+@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.tree.ArcApiClient.get_dataframe_arc_list_version_language', return_value=[])
+def test_update_for_template_options_ulist_multilist(mock_list,
+                                                     mock_get_translations,
+                                                     df_mock_list,
+                                                     df_mock_list_multilist):
+    mock_list.side_effect = [df_mock_list, df_mock_list_multilist]
+    version = 'v1.1.2'
+    language = 'English'
+    ulist_variable_choices = []
+    multilist_variable_choices = []
+    data = {
+        'Variable': ['inclu_disease', 'demog_race'],
+        'Type': ['user_list', 'multi_list'],
+        'List': ['inclusion_Diseases', 'demographics_Race'],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    df_output, ulist_output, multilist_output = tree.update_for_template_options(version,
+                                                                                 language,
+                                                                                 df_current_datadicc,
+                                                                                 ulist_variable_choices,
+                                                                                 multilist_variable_choices)
+    ulist_expected = [
+        ['inclu_disease', [
+            ['1', 'Adenovirus', 1],
+            ['2', 'Bacterial infection', 0],
+            ['3', 'Dengue', 1],
+            ['4', 'Enterovirus', 1],
+            ['5', 'HSV', 1],
+            ['6', 'Lassa fever', 0],
+            ['7', 'Measles', 0],
+            ['8', 'Mpox', 0],
+            ['9', 'Nipah', 0],
+            ['10', 'Oropouche', 1],
+        ]]]
+    multilist_expected = [
+        ['demog_race',
+         [['1', 'Aboriginal/First Nations/Indigenous', 0],
+          ['2', 'Arab', 1],
+          ['3', 'Black or African Descent', 0],
+          ['4', 'Brown (Mixed/Multiracial)', 1],
+          ['5', 'East Asian (incl. Brazilian Yellow/Amarelo)', 0],
+          ['6', 'Latin American or Hispanic', 1],
+          ['7', 'South Asian', 1],
+          ['8', 'South-East Asian', 0],
+          ['9', 'West Asian', 0],
+          ['10', 'White', 1],
+          ]]]
+    data = {
+        'Variable': ['inclu_disease', 'demog_race'],
+        'Type': ['user_list', 'multi_list'],
+        'List': ['inclusion_Diseases', 'demographics_Race'],
+        'Answer Options': [
+            '1, Adenovirus | 3, Dengue | 4, Enterovirus | 5, HSV | 10, Oropouche |  88, Other',
+            '2, Arab | 4, Brown (Mixed/Multiracial) | 6, Latin American or Hispanic | 7, South Asian | 10, White |  88, Other'
+        ],
     }
     df_expected = pd.DataFrame.from_dict(data)
 

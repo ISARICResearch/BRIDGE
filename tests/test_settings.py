@@ -48,15 +48,40 @@ def test_update_input_language(language, expected_output):
     assert output == expected_output
 
 
+def test_update_output_files_store():
+    def run_callback(data):
+        return settings.update_output_files_store(data)
+
+    checked_values = [
+        'redcap_xml',
+        'redcap_csv',
+        'paper_like'
+    ]
+
+    ctx = copy_context()
+    output = ctx.run(
+        run_callback,
+        checked_values,
+    )
+    assert output == checked_values
+
+
 @pytest.mark.parametrize(
     "version_data, expected_output",
     [
-        (None, (dash.no_update, dash.no_update)),
+        (None,
+         (dash.no_update, dash.no_update)),
+        ({'selected_version': 'v1.1.1'},
+         (['Mock DropdownMenuItem', 'Mock DropdownMenuItem'], ['English', 'French'])),
     ]
 )
+@mock.patch('bridge.callbacks.settings.dbc.DropdownMenuItem', return_value='Mock DropdownMenuItem')
 @mock.patch('bridge.callbacks.settings.ArcApiClient.get_arc_language_list_version',
             return_value=['English', 'French'])
-def test_update_language_available_for_version(mock_language_list, version_data, expected_output):
+def test_update_language_available_for_version(mock_language_list,
+                                               mock_dropdown,
+                                               version_data,
+                                               expected_output):
     def run_callback(selected_version_data):
         return settings.update_language_available_for_version(selected_version_data)
 
@@ -97,6 +122,24 @@ def test_store_data_for_selected_version_language_no_action(trigger,
     assert output == expected_output
 
 
+@pytest.fixture
+def mock_language_data_return_value():
+    data = {
+        'Form': ['presentation', 'presentation'],
+        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
+        'Variable': ['inclu_disease', 'demog_country'],
+    }
+    df = pd.DataFrame.from_dict(data)
+    return (
+        df,
+        'sha1234',
+        [{'version': 'presets'}],
+        ['version', 'accordion', 'items'],
+        ['version', 'ulist', 'variable', 'choices'],
+        ['version', 'multilist', 'variable', 'choices'],
+    )
+
+
 @pytest.mark.parametrize(
     "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
     [
@@ -115,8 +158,15 @@ def test_store_data_for_selected_version_language_no_action(trigger,
                  ['version', 'multilist', 'variable', 'choices']
          )),
         (None, None, False, {'selected_version': 'v1.1.0'}, {'selected_language': 'English'}, ['English', 'French'],
-         (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
-          dash.no_update, False, dash.no_update, dash.no_update)),
+         (dash.no_update,
+          dash.no_update,
+          dash.no_update,
+          dash.no_update,
+          dash.no_update,
+          dash.no_update,
+          False,
+          dash.no_update,
+          dash.no_update)),
     ]
 )
 @mock.patch('bridge.callbacks.settings.Language.get_version_language_related_data')
@@ -134,21 +184,10 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
                                                                   selected_version,
                                                                   selected_language,
                                                                   language_list,
-                                                                  expected_output):
-    data = {
-        'Form': ['presentation', 'presentation'],
-        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
-        'Variable': ['inclu_disease', 'demog_country'],
-    }
-    df = pd.DataFrame.from_dict(data)
-    mock_language_data.return_value = (
-        df,
-        'sha1234',
-        [{'version': 'presets'}],
-        ['version', 'accordion', 'items'],
-        ['version', 'ulist', 'variable', 'choices'],
-        ['version', 'multilist', 'variable', 'choices'],
-    )
+                                                                  expected_output,
+                                                                  mock_language_data_return_value):
+    mock_language_data.return_value = mock_language_data_return_value
+
     output = get_output_store_data_for_selected_version_language(mock_trigger_id,
                                                                  clicks_version,
                                                                  clicks_language,
@@ -193,21 +232,10 @@ def test_store_data_for_selected_version_language_dynamic_language(mock_logger,
                                                                    selected_version,
                                                                    selected_language,
                                                                    language_list,
-                                                                   expected_output):
-    data = {
-        'Form': ['presentation', 'presentation'],
-        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
-        'Variable': ['inclu_disease', 'demog_country'],
-    }
-    df = pd.DataFrame.from_dict(data)
-    mock_language_data.return_value = (
-        df,
-        'sha1234',
-        [{'version': 'presets'}],
-        ['version', 'accordion', 'items'],
-        ['version', 'ulist', 'variable', 'choices'],
-        ['version', 'multilist', 'variable', 'choices'],
-    )
+                                                                   expected_output,
+                                                                   mock_language_data_return_value):
+    mock_language_data.return_value = mock_language_data_return_value
+
     output = get_output_store_data_for_selected_version_language(mock_trigger_id,
                                                                  clicks_version,
                                                                  clicks_language,

@@ -30,7 +30,10 @@ def df_output():
     return df
 
 
-def test_get_dataframe_arc_language(mocker, version, df_input, df_output):
+def test_get_dataframe_arc_language(mocker,
+                                    version,
+                                    df_input,
+                                    df_output):
     language = 'Finnish'
     mocker.patch('bridge.arc.arc.get_arc_translation', return_value=df_output)
     result = Language(version, language).get_dataframe_arc_language(df_input)

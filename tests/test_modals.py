@@ -168,7 +168,7 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
          (False,
           '{"columns":["Form","Variable"],"index":[0,1],"data":[["presentation","inclu_disease"],["presentation","inclu_disease"]]}',
           '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
-          '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
+         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
           ['Just for checking'])),
         ('[["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]]]',
          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
@@ -202,7 +202,10 @@ def test_on_modal_button_click_modal_submit(mock_trigger_id,
     selected_version_data = {'selected_version': 'v1.1.1'}
     selected_language_data = {'selected_language': 'English'}
 
-    mock_list_choices.return_value = (df_current_datadicc, json.loads(ulist_variable_choices_saved))
+    mock_list_choices.side_effect = [
+        (df_current_datadicc, json.loads(ulist_variable_choices_saved)),
+        (df_current_datadicc, json.loads(multilist_variable_choices_saved)),
+    ]
 
     output = get_output_on_modal_button_click(mock_trigger_id,
                                               submit_n_clicks,
@@ -255,17 +258,17 @@ def get_output_on_modal_button_click(trigger,
          (False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], [])),
     ]
 )
-def test_display_selected_nothing_selected(selected,
-                                           ulist_variable_choices_saved,
-                                           multilist_variable_choices_saved,
-                                           is_open,
-                                           current_datadicc_saved,
-                                           expected_output):
-    output = get_output_display_selected(selected,
-                                         ulist_variable_choices_saved,
-                                         multilist_variable_choices_saved,
-                                         is_open,
-                                         current_datadicc_saved)
+def test_display_selected_in_modal_nothing_selected(selected,
+                                                    ulist_variable_choices_saved,
+                                                    multilist_variable_choices_saved,
+                                                    is_open,
+                                                    current_datadicc_saved,
+                                                    expected_output):
+    output = get_output_display_selected_in_modal(selected,
+                                                  ulist_variable_choices_saved,
+                                                  multilist_variable_choices_saved,
+                                                  is_open,
+                                                  current_datadicc_saved)
     assert output == expected_output
 
 
@@ -306,11 +309,11 @@ def test_display_selected_nothing_selected(selected,
          ),
     ]
 )
-def test_display_selected(mock_list_group_item,
-                          selected,
-                          ulist_variable_choices_saved,
-                          multilist_variable_choices_saved,
-                          expected_output):
+def test_display_selected_in_modal(mock_list_group_item,
+                                   selected,
+                                   ulist_variable_choices_saved,
+                                   multilist_variable_choices_saved,
+                                   expected_output):
     is_open = False
     current_datadicc_saved = (
         '{"columns":["Form", "Variable", "Question", "Definition", "Completion Guideline", "Branch", "Answer Options"],'
@@ -324,19 +327,19 @@ def test_display_selected(mock_list_group_item,
         '"This is the branch",'
         '"These are the answer options"]]}')
 
-    output = get_output_display_selected(selected,
-                                         ulist_variable_choices_saved,
-                                         multilist_variable_choices_saved,
-                                         is_open,
-                                         current_datadicc_saved)
+    output = get_output_display_selected_in_modal(selected,
+                                                  ulist_variable_choices_saved,
+                                                  multilist_variable_choices_saved,
+                                                  is_open,
+                                                  current_datadicc_saved)
     assert output == expected_output
 
 
-def get_output_display_selected(selected,
-                                ulist_variable_choices_saved,
-                                multilist_variable_choices_saved,
-                                is_open,
-                                current_datadicc_saved):
+def get_output_display_selected_in_modal(selected,
+                                         ulist_variable_choices_saved,
+                                         multilist_variable_choices_saved,
+                                         is_open,
+                                         current_datadicc_saved):
     def run_callback():
         return modals.display_selected_in_modal(selected,
                                                 ulist_variable_choices_saved,

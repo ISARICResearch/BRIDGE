@@ -55,9 +55,12 @@ def test_update_for_upload_list_selected(mock_get_translations):
     }
     df_list_upload = pd.DataFrame.from_dict(data)
     list_variable_choices = ('[["inclu_disease", '
-                             '[[1, "Adenovirus", 0],[2, "Andes virus infection (hantavirus)", 0],[3, "Argentine haemorrhagic fever (Junin virus)", 0]]], '
+                             '[[1, "Adenovirus", 0],'
+                             '[2, "Andes virus infection (hantavirus)", 0],'
+                             '[3, "Argentine haemorrhagic fever (Junin virus)", 0]]], '
                              '["demog_country", '
-                             '[[1, "Afghanistan", 0],[2, "Aland Islands", 0]]]]')
+                             '[[1, "Afghanistan", 0],'
+                             '[2, "Aland Islands", 0]]]]')
     list_type = 'Ulist'
     language = 'English'
     (df_datadicc, list_variable_choices_updated) = upload.update_for_upload_list_selected(df_datadicc, df_list_upload,
@@ -76,9 +79,14 @@ def test_update_for_upload_list_selected(mock_get_translations):
 
     list_variable_choices_expected = (
         '[["inclu_disease", '
-        '[[1, "Adenovirus", 1], [2, "Andes virus infection (hantavirus)", 1], [3, "Argentine haemorrhagic fever (Junin virus)", 0], "88, Other"]], '
+        '[[1, "Adenovirus", 1], '
+        '[2, "Andes virus infection (hantavirus)", 1], '
+        '[3, "Argentine haemorrhagic fever (Junin virus)", 0], '
+        '"88, Other"]], '
         '["demog_country", '
-        '[[1, "Afghanistan", 0], [2, "Aland Islands", 1], "88, Other"]]]')
+        '[[1, "Afghanistan", 0], '
+        '[2, "Aland Islands", 1], '
+        '"88, Other"]]]')
 
     assert list_variable_choices_updated == list_variable_choices_expected
 
@@ -146,22 +154,31 @@ def test_load_upload_arc_version_language(mock_error, mock_logger, triggered_tri
     df_upload_version = pd.DataFrame.from_dict(data)
     version_commit = 'abc123'
     version_grouped_presets = {'ARChetype Disease CRF': ['Covid', 'Dengue', 'Mpox', 'H5Nx'],
-                               'ARChetype Syndromic CRF': ['ARI'], 'Recommended Outcomes': ['Dengue'],
-                               'Score': ['CharlsonCI'], 'UserGenerated': ['Oropouche']}
+                               'ARChetype Syndromic CRF': ['ARI'],
+                               'Recommended Outcomes': ['Dengue'],
+                               'Score': ['CharlsonCI'],
+                               'UserGenerated': ['Oropouche']}
     version_accordion_items = ['Some accordian items']
     version_ulist_variable_choices = 'Some ulist variable choices'
     version_multilist_variable_choices = 'Some multilist variable choices'
 
-    mock_error.return_value = (df_upload_version, version_commit, version_grouped_presets, version_accordion_items,
-                               version_ulist_variable_choices, version_multilist_variable_choices)
+    mock_error.return_value = (df_upload_version,
+                               version_commit,
+                               version_grouped_presets,
+                               version_accordion_items,
+                               version_ulist_variable_choices,
+                               version_multilist_variable_choices)
 
     upload_version_data = {'upload_version': 'v1.1.2'}
     upload_language_data = {'upload_language': 'Finnish'}
     selected_version_data = {'selected_version': 'v1.1.3'}
     selected_language_data = {'selected_language': 'English'}
 
-    output = get_output_load_upload_arc_version_language(triggered_trigger, upload_version_data, upload_language_data,
-                                                         selected_version_data, selected_language_data)
+    output = get_output_load_upload_arc_version_language(triggered_trigger,
+                                                         upload_version_data,
+                                                         upload_language_data,
+                                                         selected_version_data,
+                                                         selected_language_data)
 
     assert output == (
         {'selected_version': 'v1.1.2'},
@@ -216,7 +233,7 @@ def test_update_output_upload_crf_not_triggered():
     assert output == (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
 
 
-@mock.patch('bridge.callbacks.upload.html.Div', return_value=None)
+@mock.patch('bridge.callbacks.upload.html.Div', return_value=['Just for checking'])
 @mock.patch('bridge.callbacks.upload.update_for_upload_list_selected')
 @mock.patch('bridge.callbacks.upload.arc.get_tree_items')
 def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_list, mock_html_div):
@@ -232,8 +249,11 @@ def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_li
     upload_crf_ready = True
     upload_version_data = {'upload_version': 'v1.1.2'}
     upload_language_data = {'upload_language': 'English'}
-    upload_crf_contents = 'data:text/csv;base64,VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWQsTXVsdGlsaXN0IFNlbGVjdGVkCmRlbW9nX2NvdW50cnksQWZnaGFuaXN0YW58QWxhbmQgSXNsYW5kc3xBbGJhbmlhLAo='
-    upload_version_lang_datadicc_saved = '{"columns":["Form","Section","Variable"], "index":[0], "data":[["presentation", "DEMOGRAPHICS", "demog_country"]]}'
+    upload_crf_contents = ('data:text/csv;base64,VmFyaWFibGUsVWxpc3QgU2VsZWN0ZWQsTXVsdGlsaXN0IFNlbGVjdGVkCmRlbW9nX2Nvd'
+                           'W50cnksQWZnaGFuaXN0YW58QWxhbmQgSXNsYW5kc3xBbGJhbmlhLAo=')
+    upload_version_lang_datadicc_saved = ('{"columns":["Form","Section","Variable"], '
+                                          '"index":[0], '
+                                          '"data":[["presentation", "DEMOGRAPHICS", "demog_country"]]}')
     upload_version_lang_ulist_saved = None
     upload_version_lang_multilist_saved = None
 
@@ -247,7 +267,7 @@ def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_li
                                                  upload_version_lang_multilist_saved)
 
     expected = (
-        None,
+        ['Just for checking'],
         df_mock.to_json(date_format='iso', orient='split'),
         list_mock,
         list_mock,

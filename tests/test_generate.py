@@ -9,10 +9,13 @@ from bridge.callbacks import generate
 
 
 @pytest.mark.parametrize(
-    "n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name, output_files, browser_info, expected_output",
+    "n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name, output_files,"
+    "browser_info, expected_output",
     [
-        (None, None, None, None, None, None, None, None, ("", None, None, None, None)),
-        (1, '{}', None, None, None, None, None, None, ("", None, None, None, None)),
+        (None, None, None, None, None, None, None, None,
+         ("", None, None, None, None)),
+        (1, '{}', None, None, None, None, None, None,
+         ("", None, None, None, None)),
     ]
 )
 def test_on_generate_click_no_action(n_clicks,
@@ -78,12 +81,18 @@ def test_on_generate_click(
     mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
 
     n_clicks = 1
-    json_data = '{"columns":["Form"], "index":[0], "data":[["presentation"]]}'  # This isn't being used, but needs to be readable
+    json_data = ('{'
+                 '"columns":["Form"],'
+                 '"index":[0],'
+                 '"data":[["presentation"]]'
+                 '}')  # This isn't being used, but needs to be readable
     selected_version_data = {'selected_version': 'v1.1.2'}
     checked_presets = [[], [], [], [], []]
     crf_name = 'test'
-    output_files = ['redcap_xml', 'redcap_csv', 'paper_like']
-    mock_pdf = b'%PDF-1.4\n%\x93\x8c\x8b\x9e ReportLab Generated PDF document http://www.reportlab.com\n'
+    output_files = ['redcap_xml',
+                    'redcap_csv',
+                    'paper_like']
+    mock_pdf = b'%PDF-1.4\n%\x93\x8c\x8b\x9e ReportLab Generated PDF document https://www.reportlab.com\n'
     data = {
         'Variable / Field Name': ['subjid',
                                   'inclu_disease',
@@ -117,7 +126,8 @@ def test_on_generate_click(
 
 
 @pytest.mark.parametrize(
-    "n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name, output_files, browser_info, expected_output",
+    "n_clicks, json_data, selected_version_data, selected_language_data, checked_presets, crf_name, output_files,"
+    "browser_info, expected_output",
     [
         (1, '{"columns":["Form"], "index":[0], "data":[["presentation"]]}', None, None, None, None, None, None,
          ("", None, None, None, None)),

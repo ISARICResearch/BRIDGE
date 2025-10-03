@@ -13,9 +13,12 @@ from bridge.callbacks import save
 @pytest.fixture
 def df_list():
     data = (
-        '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Alice in Wonderland Syndrome", 1], [3, "Mpox", 0]]], '
-        '["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]], '
-        '["medi_antifungagent", [[1, "Amphotericin", 0], [2, "Clotrimazole", 0]]]]'
+        '[["inclu_disease", '
+        '[[1, "Adenovirus", 0], [2, "Alice in Wonderland Syndrome", 1], [3, "Mpox", 0]]], '
+        '["demog_country", '
+        '[[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]], '
+        '["medi_antifungagent", '
+        '[[1, "Amphotericin", 0], [2, "Clotrimazole", 0]]]]'
     )
     df = pd.DataFrame(json.loads(data), columns=['Variable', 'Ulist'])
     return df
@@ -23,7 +26,10 @@ def df_list():
 
 def test_get_checked_data_for_list(df_list):
     list_type = 'Ulist'
-    checked_variables = ['inclu_disease', 'demog_country']
+    checked_variables = [
+        'inclu_disease',
+        'demog_country'
+    ]
     data_expected = {
         'inclu_disease': 'Alice in Wonderland Syndrome',
         'demog_country': 'Estonia|Finland',
@@ -35,11 +41,15 @@ def test_get_checked_data_for_list(df_list):
 
 
 @pytest.mark.parametrize(
-    "n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data, crf_name, ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
+    "n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data, crf_name, "
+    "ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
     [
-        (None, None, None, None, None, None, None, None, ('', None)),
-        (None, ['inclu_disease', 'demog_country'], None, None, None, None, None, None, ('', None)),
-        (1, None, None, None, None, None, None, None, ('', None)),
+        (None, None, None, None, None, None, None, None,
+         ('', None)),
+        (None, ['inclu_disease', 'demog_country'], None, None, None, None, None, None,
+         ('', None)),
+        (1, None, None, None, None, None, None, None,
+         ('', None)),
     ]
 )
 def test_on_save_click_no_action(n_clicks,
@@ -82,12 +92,21 @@ def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
 
     n_clicks = 1
     checked_variables = ['inclu_disease']
-    current_datadicc_saved = '{"columns":["Form","Section","Variable"], "index":[0,1,2], "data":[["presentation",null,"subjid"],["presentation","INCLUSION CRITERIA","inclu_disease"],["presentation","ONSET & PRESENTATION","pres_firstsym"]]}'
+    current_datadicc_saved = ('{'
+                              '"columns":["Form","Section","Variable"], '
+                              '"index":[0,1,2], '
+                              '"data":['
+                              '["presentation",null,"subjid"],'
+                              '["presentation","INCLUSION CRITERIA","inclu_disease"],'
+                              '["presentation","ONSET & PRESENTATION","pres_firstsym"]]'
+                              '}')
     selected_version_data = {'selected_version': 'v1.1.2'}
     selected_language_data = {'selected_language': 'English'}
     crf_name = 'test_crf'
-    ulist_variable_choices_saved = '[["inclu_disease", [[1, "Adenovirus", 1], [2, "Andes virus infection (hantavirus)", 0]]]]'
-    multilist_variable_choices_saved = '[["pres_firstsym", [[1, "Abdominal pain", 1], [2, "Abnormal weight loss", 0]]]]'
+    ulist_variable_choices_saved = ('[["inclu_disease", '
+                                    '[[1, "Adenovirus", 1], [2, "Andes virus infection (hantavirus)", 0]]]]')
+    multilist_variable_choices_saved = ('[["pres_firstsym", '
+                                        '[[1, "Abdominal pain", 1], [2, "Abnormal weight loss", 0]]]]')
 
     def run_callback():
         return save.on_save_click(n_clicks, checked_variables,
