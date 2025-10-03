@@ -218,7 +218,7 @@ def test_update_output_upload_crf_not_triggered():
 
 @mock.patch('bridge.callbacks.upload.html.Div', return_value=None)
 @mock.patch('bridge.callbacks.upload.update_for_upload_list_selected')
-@mock.patch('bridge.callbacks.upload.arc.get_tree_items', return_value={})
+@mock.patch('bridge.callbacks.upload.arc.get_tree_items')
 def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_list, mock_html_div):
     data = {
         'Form': ['here is some mock output'],

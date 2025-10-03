@@ -180,7 +180,7 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
     ]
 )
 @mock.patch('bridge.callbacks.modals.html.Div', return_value=['Just for checking'])
-@mock.patch('bridge.callbacks.modals.arc.get_tree_items', return_value={})
+@mock.patch('bridge.callbacks.modals.arc.get_tree_items')
 @mock.patch('bridge.callbacks.modals.determine_list_variable_choices')
 @mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='modal_submit')
