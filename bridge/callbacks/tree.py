@@ -5,7 +5,6 @@ import dash
 import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
-from dash.exceptions import PreventUpdate
 
 from bridge.arc import arc
 from bridge.arc.arc_api import ArcApiClient
@@ -35,8 +34,12 @@ logger = setup_logger(__name__)
     ],
     prevent_initial_call=True
 )
-def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_datadicc_saved, grouped_presets,
-                                 selected_version_data, selected_lang_data):
+def update_tree_items_and_stores(checked_variables,
+                                 upload_crf_ready,
+                                 current_datadicc_saved,
+                                 grouped_presets_dict,
+                                 selected_version_data,
+                                 selected_language_data):
     if upload_crf_ready:
         return (dash.no_update,
                 dash.no_update,
@@ -47,7 +50,7 @@ def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_da
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     current_version = selected_version_data.get('selected_version', None)
-    current_language = selected_lang_data.get('selected_language', None)
+    current_language = selected_language_data.get('selected_language', None)
 
     tree_items_data = arc.get_tree_items(df_current_datadicc, current_version)
 
@@ -68,12 +71,9 @@ def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_da
                 dash.no_update,
                 dash.no_update)
 
-    if current_version is None or grouped_presets is None:
-        raise PreventUpdate  # Prevent update if data is missing
-
     logger.info(f'checked_variables: {checked_variables}')
-    logger.info(f'grouped_presets: {grouped_presets}')
-    checked_template_list = get_checked_template_list(grouped_presets, checked_variables)
+    logger.info(f'grouped_presets: {grouped_presets_dict}')
+    checked_template_list = get_checked_template_list(grouped_presets_dict, checked_variables)
 
     checked = []
     ulist_variable_choices = []
@@ -116,7 +116,8 @@ def update_tree_items_and_stores(checked_variables, upload_crf_ready, current_da
     )
 
 
-def get_checked_template_list(grouped_presets_dict, checked_values_list):
+def get_checked_template_list(grouped_presets_dict,
+                              checked_values_list):
     output = []
     for section, item_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
         if item_checked_list:
@@ -125,10 +126,12 @@ def get_checked_template_list(grouped_presets_dict, checked_values_list):
     return output
 
 
-def update_for_template_options(version, language, df_current_datadicc, ulist_variable_choices,
-                                multilist_variable_choices, checked_key=None):
-    df_current_datadicc.loc[:, 'Answer Options'] = ''
-
+def update_for_template_options(version,
+                                language,
+                                df_current_datadicc,
+                                ulist_variable_choices,
+                                multilist_variable_choices,
+                                checked_key=None):
     translations_for_language = arc.get_translations(language)
     other_text = translations_for_language['other']
 
