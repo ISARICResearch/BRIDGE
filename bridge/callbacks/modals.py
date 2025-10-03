@@ -55,9 +55,9 @@ def display_selected_in_modal(selected: list,
             if selected_variable in ulist_multilist_names:
                 for ulist_multilist_item in ulist_multilist:
                     ulist_multilist_name = ulist_multilist_item[0]
-                    options = []
-                    checked_items = []
                     if ulist_multilist_name == selected_variable:
+                        options = []
+                        checked_items = []
                         for ulist_multilist_variable in ulist_multilist_item[1]:
                             options.append(
                                 {"label": str(ulist_multilist_variable[0]) + ', ' + ulist_multilist_variable[1],
@@ -66,9 +66,9 @@ def display_selected_in_modal(selected: list,
                                 checked_items.append(
                                     str(ulist_multilist_variable[0]) + '_' + ulist_multilist_variable[1])
 
-                    return True, question + ' [' + selected_variable + ']', definition, completion, skip_logic, {
-                        "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
-                        "display": "none"}, options, checked_items, []
+                        return True, question + ' [' + selected_variable + ']', definition, completion, skip_logic, {
+                            "padding": "20px", "maxHeight": "250px", "overflowY": "auto"}, {
+                            "display": "none"}, options, checked_items, []
             else:
                 options = []
                 answer_options = \
