@@ -14,6 +14,8 @@ from reportlab.platypus import Spacer, NextPageTemplate
 
 from bridge.generate_pdf.header_footer import generate_guide_header_footer
 
+from bridge.logging.logger import setup_logger
+logger = setup_logger(__name__)
 
 class StyleSet:
     def __init__(self):
@@ -69,25 +71,32 @@ class TrackingDocTemplate(BaseDocTemplate):
         super().__init__(*args, **kwargs)
 
     def afterFlowable(self, flowable):
-        if isinstance(flowable, TrackingParagraph):
-            page_num = self.page
-            try:
-                # Create a bookmark for this flowable
-                self.canv.bookmarkPage(flowable.key)
-                self.created_bookmarks.add(flowable.key)
-                self.canv.addOutlineEntry(
-                    flowable.getPlainText(), flowable.key)
+        if not isinstance(flowable, TrackingParagraph):
+            return
 
-                self.toc_entries.append({
-                    'kind': flowable.kind,
-                    'title': flowable.getPlainText(),
-                    'key': flowable.key,
-                    'page': page_num,
-                    'paragraph': flowable
-                })
-            except:
-                # Skip if bookmark creation fails
-                pass
+        page_num = self.page
+        key = getattr(flowable, "key", None)
+        title = flowable.getPlainText()
+
+        if not key:
+            logger.debug(f"TrackingParagraph missing key: {title}")
+            # fallback name (still register it so flowable doesn't break)
+            key = f"auto_{id(flowable)}"
+
+        try:
+            self.canv.bookmarkPage(key)
+            self.canv.addOutlineEntry(title, key, level=0, closed=False)
+            self.created_bookmarks.add(key)
+            self.toc_entries.append({
+                "kind": getattr(flowable, "kind", ""),
+                "title": title,
+                "key": key,
+                "page": page_num,
+                "paragraph": flowable,
+            })
+        except Exception as e:
+            logger.warning(f"Skipping bookmark for {key} - {e}")
+
 
 
 ### TOCEntry is a ReportLab Flowable to handle the fancy styling of each entry in the table of contents
@@ -207,13 +216,16 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     doc.build(elements)
 
     # Second pass: Rebuild with TOC inserted at the top
+    logger.info("Generating Table of Contents")
     toc = create_table_of_contents(doc.toc_entries, 560, page_height - top_margin - bottom_margin)
 
     header_footer_partial = partial(
         generate_guide_header_footer, title=guide_title, toc_pages=toc["pages"])
-
+    
+    logger.info("Rebuilding one col document")
     template_one_col = PageTemplate(
         id='OneCol', frames=[frame_one_col], onPage=header_footer_partial)
+    logger.info("Rebuilding two col document")
     template_two_col = PageTemplate(
         id='TwoCol', frames=[frame1, frame2], onPage=header_footer_partial)
 
@@ -276,7 +288,7 @@ def generate_guide_content(data_dictionary):
         ### Add Form and Section Headers when needed
         # we track when needed with current_form and current_section
         # Add a new Form header
-        if type(form) == str:
+        if isinstance(form, str):
             if form != current_form:
                 items = []
                 key = sanitize_key('frm_' + str(index) + form + current_section)
@@ -288,7 +300,7 @@ def generate_guide_content(data_dictionary):
                 elements.append(Spacer(1, 0.07 * inch))
 
         # Add a new Section header
-        if (type(section) == str):
+        if isinstance(section, str):
             if section != current_section:
                 if (variable.startswith(('sign_'))):
                     guides = []
@@ -308,11 +320,18 @@ def generate_guide_content(data_dictionary):
                     guide_to_omit = ""
 
                 items = []
-                key = sanitize_key('sec_' + str(index) + current_form + section)
                 current_section = section
-                # is my tracking paragraph correct?
+
+                key = sanitize_key(f"sec_{index}_{form}_{section}")
+
                 elements.append(TrackingParagraph(
-                    section.title(), style.section, section, key, 'section'))
+                    section.title(),
+                    style.section,
+                    section,
+                    key,
+                    "section"
+                ))
+                elements.append(Spacer(1, 0.07 * inch))
 
         if variable.startswith(('sign_', 'sympt_')):
             if guide == guide_to_omit:
