@@ -22,9 +22,9 @@ from bridge.generate_pdf import form
         State('current_datadicc-store', 'data'),
     ],
     prevent_initial_call=True)
-def display_checked(checked: list,
-                    current_datadicc_saved: str) -> Tuple[list, list, str]:
-    current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
+def display_checked_in_grid(checked: list,
+                            current_datadicc_saved: str) -> Tuple[list, list, str]:
+    df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
     column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
                    {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
@@ -34,24 +34,23 @@ def display_checked(checked: list,
 
     df_selected_variables = pd.DataFrame()
     if checked:
-        selected_dependency_lists = current_datadicc['Dependencies'].loc[
-            current_datadicc['Variable'].isin(checked)].tolist()
+        selected_dependency_lists = df_current_datadicc['Dependencies'].loc[
+            df_current_datadicc['Variable'].isin(checked)].tolist()
         flat_selected_dependency = set()
         for sublist in selected_dependency_lists:
             flat_selected_dependency.update(sublist)
         all_selected = set(checked).union(flat_selected_dependency)
-        df_selected_variables = current_datadicc.loc[current_datadicc['Variable'].isin(all_selected)]
+        df_selected_variables = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(all_selected)]
 
         ## REDCAP Pipeline
-        df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], current_datadicc)
+        df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
 
         # Select Units Transformation
         arc_var_units_selected, delete_this_variables_with_units = arc.get_select_units(
-            df_selected_variables['Variable'],
-            current_datadicc)
+            df_selected_variables['Variable'], df_current_datadicc)
         if arc_var_units_selected is not None:
             df_selected_variables = arc.add_transformed_rows(df_selected_variables, arc_var_units_selected,
-                                                             arc.get_variable_order(current_datadicc))
+                                                             arc.get_variable_order(df_current_datadicc))
             if len(delete_this_variables_with_units) > 0:
                 # This remove all the unit variables that were included in a select unit type question
                 df_selected_variables = df_selected_variables.loc[
@@ -79,12 +78,13 @@ def display_checked(checked: list,
 
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
-
                 formatted_choices = form.format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
+
             elif row['Validation'] == 'date_dmy':
                 date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
                 row['Answer Options'] = date_str
+
             else:
                 row['Answer Options'] = form.LINE_PLACEHOLDER
 

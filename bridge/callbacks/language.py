@@ -24,33 +24,36 @@ class Language:
         return df_version_language
 
     def get_version_language_related_data(self):
-        df_version, version_presets, version_commit = arc.get_arc(self.selected_version)
+        df_version, presets, commit = arc.get_arc(self.selected_version)
         df_version = arc.add_required_datadicc_columns(df_version)
         df_version_language = self.get_dataframe_arc_language(df_version)
 
-        version_arc_lists, version_list_variable_choices = arc.get_list_content(df_version_language,
-                                                                                self.selected_version,
-                                                                                self.selected_language)
-        df_version_language = arc.add_transformed_rows(df_version_language, version_arc_lists,
+        df_arc_lists, list_variable_choices = arc.get_list_content(df_version_language,
+                                                                   self.selected_version,
+                                                                   self.selected_language)
+        df_version_language = arc.add_transformed_rows(df_version_language,
+                                                       df_arc_lists,
                                                        arc.get_variable_order(df_version_language))
 
-        version_arc_ulist, version_ulist_variable_choices = arc.get_user_list_content(df_version_language,
-                                                                                      self.selected_version,
-                                                                                      self.selected_language)
+        df_ulist, ulist_variable_choices = arc.get_user_list_content(df_version_language,
+                                                                     self.selected_version,
+                                                                     self.selected_language)
 
-        df_version_language = arc.add_transformed_rows(df_version_language, version_arc_ulist,
+        df_version_language = arc.add_transformed_rows(df_version_language,
+                                                       df_ulist,
                                                        arc.get_variable_order(df_version_language))
 
-        version_arc_multilist, version_multilist_variable_choices = arc.get_multi_list_content(df_version_language,
-                                                                                               self.selected_version,
-                                                                                               self.selected_language)
+        df_multilist, multilist_variable_choices = arc.get_multi_list_content(df_version_language,
+                                                                              self.selected_version,
+                                                                              self.selected_language)
 
-        df_version_language = arc.add_transformed_rows(df_version_language, version_arc_multilist,
+        df_version_language = arc.add_transformed_rows(df_version_language,
+                                                       df_multilist,
                                                        arc.get_variable_order(df_version_language))
 
-        version_grouped_presets = {}
-        for section, preset_name in version_presets:
-            version_grouped_presets.setdefault(section, []).append(preset_name)
+        grouped_presets = {}
+        for section, preset_name in presets:
+            grouped_presets.setdefault(section, []).append(preset_name)
 
         accordion_items = [
             dbc.AccordionItem(
@@ -62,13 +65,13 @@ class Language:
                     switch=True,
                 )
             )
-            for section, preset_names in version_grouped_presets.items()
+            for section, preset_names in grouped_presets.items()
         ]
         return (
             df_version_language,
-            version_commit,
-            version_grouped_presets,
+            commit,
+            grouped_presets,
             accordion_items,
-            json.dumps(version_ulist_variable_choices),
-            json.dumps(version_multilist_variable_choices)
+            json.dumps(ulist_variable_choices),
+            json.dumps(multilist_variable_choices)
         )
