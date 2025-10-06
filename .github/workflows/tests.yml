@@ -2,7 +2,7 @@ name: Run unit tests
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -26,4 +26,4 @@ jobs:
           pip install pytest pytest-cov pytest-mock
       - name: Run coverage
         run: |
-          pytest --cov=./bridge/callbacks --cov-report term-missing
+          pytest --cov --cov-report term-missing
