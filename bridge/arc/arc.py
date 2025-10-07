@@ -427,10 +427,10 @@ def get_translations(language: str) -> dict:
     return translations[language]
 
 
-def get_list_content(current_datadicc: pd.DataFrame, version: str, language: str) -> tuple[pd.DataFrame, list]:
+def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: str) -> tuple[pd.DataFrame, list]:
     all_rows_lists = []
     list_variable_choices = []
-    datadicc_disease_lists = current_datadicc.loc[current_datadicc['Type'] == 'list']
+    df_datadicc_disease_lists = df_current_datadicc.loc[df_current_datadicc['Type'] == 'list']
 
     translations_for_language = get_translations(language)
     select_text = translations_for_language['select']
@@ -441,7 +441,7 @@ def get_list_content(current_datadicc: pd.DataFrame, version: str, language: str
     any_additional_text = translations_for_language['any_additional']
     other_text = translations_for_language['other']
 
-    for _, row in datadicc_disease_lists.iterrows():
+    for _, row in df_datadicc_disease_lists.iterrows():
         if pd.isnull(row['List']):
             logger.warn('List without corresponding repository file')
 
@@ -464,12 +464,11 @@ def get_list_content(current_datadicc: pd.DataFrame, version: str, language: str
             list_choices = list_choices + '88, ' + other_text
             arrows = ['', '>', '->', '>->', '->->', '>->->']
 
-            # row['Type']='radio'
             repeat_n = 5
             questions_for_this_list = []
-            other_info = current_datadicc.loc[(current_datadicc['Sec'] == row['Sec']) &
-                                              (current_datadicc['vari'] == row['vari']) &
-                                              (current_datadicc['Variable'] != row['Variable'])]
+            other_info = df_current_datadicc.loc[(df_current_datadicc['Sec'] == row['Sec']) &
+                                                 (df_current_datadicc['vari'] == row['vari']) &
+                                                 (df_current_datadicc['Variable'] != row['Variable'])]
 
             for n in range(repeat_n):
                 # Falta agregar las otras opciones con el mismo sec_var
@@ -604,17 +603,12 @@ def get_list_content(current_datadicc: pd.DataFrame, version: str, language: str
                     questions_for_this_list.append(additional_row)
 
             all_rows_lists.append(row)
-            '''if len (other_info)>1:
-                for index, oi in other_info.iterrows():
-                    all_rows_lists.append(oi)
-            elif len(other_info)==1:
-                all_rows_lists.append(other_info.iloc[0])'''
             for qftl in questions_for_this_list:
                 all_rows_lists.append(qftl)
             list_variable_choices.append([row['Variable'], list_variable_choices_aux])
-    arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
+    df_arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
 
-    return arc_list, list_variable_choices
+    return df_arc_list, list_variable_choices
 
 
 def set_cont_lo(list_options: pd.DataFrame, lo: str) -> int:
