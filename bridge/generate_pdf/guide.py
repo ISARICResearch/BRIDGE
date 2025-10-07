@@ -54,10 +54,30 @@ style = StyleSet()
 # This lets us go back for each item and get what page it is on
 class TrackingParagraph(Paragraph):
     def __init__(self, text, style, name=None, key=None, kind=None, **kwargs):
+        logger.debug(f"TrackingParagraph init: kind={kind} key={key} name={name}")
         super().__init__(text, style, **kwargs)
         self.name = name
         self.key = key  # the form or section name
         self.kind = kind  # either 'form' or 'section'
+    def split(self, availWidth, availHeight):
+        """
+        Preserve the bookmark key on the first fragment only,
+        so at least one part defines the destination when drawn.
+        """
+        parts = super().split(availWidth, availHeight)
+        if len(parts) > 1:
+            logger.debug(f"TrackingParagraph {self.key} split into {len(parts)}, keeping key on first fragment.")
+            for i, p in enumerate(parts):
+                if isinstance(p, TrackingParagraph):
+                    if i == 0:
+                        # first fragment keeps the key for bookmark registration
+                        p.key = self.key
+                        p.kind = self.kind
+                    else:
+                        # other fragments should not trigger afterflowable
+                        p.key = None
+                        p.kind = None
+        return parts
 
 
 ### Tracking Doc Template is an extension of the ReportLab BaseDocTemplate Class
@@ -65,7 +85,6 @@ class TrackingParagraph(Paragraph):
 # Each entry has kind, key, title, and page number.
 class TrackingDocTemplate(BaseDocTemplate):
     def __init__(self, *args, **kwargs):
-        # Store TOC entries as (kind, title, key, page_number)
         self.toc_entries = []
         self.created_bookmarks = set()
         super().__init__(*args, **kwargs)
@@ -74,19 +93,22 @@ class TrackingDocTemplate(BaseDocTemplate):
         if not isinstance(flowable, TrackingParagraph):
             return
 
-        page_num = self.page
         key = getattr(flowable, "key", None)
         title = flowable.getPlainText()
+        page_num = self.page
 
+        logger.debug(f"afterFlowable: page={page_num} key={key!r} kind={getattr(flowable,'kind',None)} title={title}")
+
+        # Detect missing keys early
         if not key:
-            logger.debug(f"TrackingParagraph missing key: {title}")
-            # fallback name (still register it so flowable doesn't break)
-            key = f"auto_{id(flowable)}"
+            logger.warning(f"afterFlowable: Missing key for {title[:50]}")
+            return
 
+        # Try to add the bookmark and outline entry, log any failures
         try:
             self.canv.bookmarkPage(key)
-            self.canv.addOutlineEntry(title, key, level=0, closed=False)
             self.created_bookmarks.add(key)
+            self.canv.addOutlineEntry(title, key, level=0, closed=False)
             self.toc_entries.append({
                 "kind": getattr(flowable, "kind", ""),
                 "title": title,
@@ -94,8 +116,17 @@ class TrackingDocTemplate(BaseDocTemplate):
                 "page": page_num,
                 "paragraph": flowable,
             })
+            logger.debug(f"afterFlowable: registered bookmark {key} on page {page_num}")
         except Exception as e:
-            logger.warning(f"Skipping bookmark for {key} - {e}")
+            # Log the failure in detail
+            import traceback
+            tb = traceback.format_exc(limit=1).strip()
+            logger.error(f"afterFlowable: FAILED for key={key!r} on page {page_num}: {e} ({tb})")
+
+        # Check if multiple bookmarks share this key
+        if key in [t["key"] for t in self.toc_entries[:-1]]:
+            logger.warning(f"afterFlowable: duplicate bookmark key detected -> {key}")
+
 
 
 
@@ -208,7 +239,6 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
         topMargin=top_margin,
         bottomMargin=bottom_margin
     )
-
     doc.addPageTemplates([template_one_col, template_two_col])
 
     # First pass: Build and collect TOC data
@@ -242,7 +272,9 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     )
 
     doc.addPageTemplates([template_one_col, template_two_col])
+    logger.info("Building final document")
     doc.build(final_elements)
+    logger.info("Final guide document build complete")
 
 
 ### generate_guide_content actually generates the completion guide from a data_dictionary json
@@ -291,7 +323,7 @@ def generate_guide_content(data_dictionary):
         if isinstance(form, str):
             if form != current_form:
                 items = []
-                key = sanitize_key('frm_' + str(index) + form + current_section)
+                key = sanitize_key(f"form_{index}_{form}_{section}")
                 # New Form
                 current_form = form
                 elements.append(Spacer(1, 0.07 * inch))
