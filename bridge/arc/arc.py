@@ -446,14 +446,14 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
             logger.warn('List without corresponding repository file')
 
         else:
-            list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+            df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
                                                                                   row['List'].replace('_', '/'))
 
             list_choices = ''
             list_variable_choices_aux = []
 
-            for lo in list_options[list_options.columns[0]]:
-                cont_lo = set_cont_lo(list_options, lo)
+            for lo in df_list_options[df_list_options.columns[0]]:
+                cont_lo = set_cont_lo(df_list_options, lo)
                 try:
                     list_variable_choices_aux.append([cont_lo, lo])
                     list_choices += str(cont_lo) + ', ' + lo + ' | '
@@ -611,12 +611,13 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
     return df_arc_list, list_variable_choices
 
 
-def set_cont_lo(list_options: pd.DataFrame, lo: str) -> int:
+def set_cont_lo(list_options: pd.DataFrame,
+                list_option: str) -> int:
     if 'Value' in list_options.columns:
-        cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == lo].iloc[0])
+        cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == list_option].iloc[0])
     else:
         # fallback to index-based counting
-        cont_lo = list_options[list_options.columns[0]].tolist().index(lo) + 1
+        cont_lo = list_options[list_options.columns[0]].tolist().index(list_option) + 1
 
     if cont_lo == 88:
         cont_lo = 89
@@ -625,10 +626,13 @@ def set_cont_lo(list_options: pd.DataFrame, lo: str) -> int:
     return cont_lo
 
 
-def get_list_data(current_datadicc: pd.DataFrame, version: str, language: str, list_type) -> tuple[list, list]:
+def get_list_data(df_current_datadicc: pd.DataFrame,
+                  version: str,
+                  language: str,
+                  list_type) -> tuple[list, list]:
     all_rows_lists = []
     list_variable_choices = []
-    datadicc_disease_lists = current_datadicc.loc[current_datadicc['Type'] == list_type]
+    datadicc_disease_lists = df_current_datadicc.loc[df_current_datadicc['Type'] == list_type]
 
     translations_for_language = get_translations(language)
     select_text = translations_for_language['select']
@@ -641,18 +645,18 @@ def get_list_data(current_datadicc: pd.DataFrame, version: str, language: str, l
         if pd.isnull(row['List']):
             logger.warn('List without corresponding repository file')
         else:
-            list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
+            df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
                                                                                   row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
             list_variable_choices_aux = []
-            for lo in list_options[list_options.columns[0]]:
-                cont_lo = set_cont_lo(list_options, lo)
+            for lo in df_list_options[df_list_options.columns[0]]:
+                cont_lo = set_cont_lo(df_list_options, lo)
                 try:
-                    list_options['Selected'] = pd.to_numeric(list_options['Selected'], errors='coerce')
+                    df_list_options['Selected'] = pd.to_numeric(df_list_options['Selected'], errors='coerce')
 
-                    if list_options['Selected'].loc[list_options[list_options.columns[0]] == lo].iloc[0] == 1:
+                    if df_list_options['Selected'].loc[df_list_options[df_list_options.columns[0]] == lo].iloc[0] == 1:
                         l1_choices += str(cont_lo) + ', ' + lo + ' | '
                         list_variable_choices_aux.append([cont_lo, lo, 1])
                     else:

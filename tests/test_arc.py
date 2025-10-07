@@ -2,15 +2,14 @@ from unittest import mock
 
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal
+import pytest
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from bridge.arc import arc
 
 
-@mock.patch('bridge.arc.arc.ArcApiClient.get_dataframe_arc_list_version_language')
-@mock.patch('bridge.arc.arc.get_translations')
-def test_get_list_content(mock_get_translations,
-                          mock_list):
+@pytest.fixture
+def translation_dict():
     translation_dict = {
         'any_additional': 'Any additional',
         'other': 'Other',
@@ -22,6 +21,14 @@ def test_get_list_content(mock_get_translations,
         'specify_other_infection': 'Specify other infection',
         'units': 'Units'
     }
+    return translation_dict
+
+
+@mock.patch('bridge.arc.arc.ArcApiClient.get_dataframe_arc_list_version_language')
+@mock.patch('bridge.arc.arc.get_translations')
+def test_get_list_content(mock_get_translations,
+                          mock_list,
+                          translation_dict):
     data = {
         'Condition': [
             'Asplenia',
@@ -229,3 +236,104 @@ def test_get_list_content(mock_get_translations,
 
     assert_frame_equal(df_output, df_expected)
     assert list_output == list_expected
+
+
+@mock.patch('bridge.arc.arc.ArcApiClient.get_dataframe_arc_list_version_language')
+@mock.patch('bridge.arc.arc.get_translations')
+def test_get_list_data(mock_get_translations,
+                       mock_list,
+                       translation_dict):
+    data = {
+        'Disease': [
+            'Adenovirus',
+            'Dengue',
+            'Enterovirus',
+            'HSV',
+            'Mpox',
+        ],
+        'Selected': [
+            0,
+            0,
+            0,
+            0,
+            1,
+        ],
+
+    }
+    df_mock_list = pd.DataFrame(data)
+
+    mock_get_translations.return_value = translation_dict
+    mock_list.return_value = df_mock_list
+
+    version = 'v1.1.1'
+    language = 'English'
+    list_type = 'user_list'
+    data = {
+        'Variable': [
+            'inclu_disease',
+        ],
+        'Type': [
+            'user_list',
+        ],
+        'List': [
+            'inclusion_Diseases',
+        ],
+        'Question': [
+            'Suspected or confirmed infection',
+        ],
+        'Sec': [
+            'inclu',
+        ],
+        'vari': [
+            'disease',
+        ],
+
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    list_choices_expected = [
+        ['inclu_disease', [
+            [1, 'Adenovirus', 0],
+            [2, 'Dengue', 0],
+            [3, 'Enterovirus', 0],
+            [4, 'HSV', 0],
+            [5, 'Mpox', 1],
+        ]]]
+    dict1 = {
+        'Variable': 'inclu_disease',
+        'Type': 'user_list',
+        'List': 'inclusion_Diseases',
+        'Question': 'Suspected or confirmed infection',
+        'Sec': 'inclu',
+        'vari': 'disease',
+        'Answer Options': '5, Mpox | 88, Other',
+    }
+    series1 = pd.Series(dict1, name=0)
+    dict2 = {
+        'Variable': 'inclu_disease_otherl3',
+        'Type': 'text',
+        'List': None,
+        'Question': 'Specify other Suspected or confirmed infection',
+        'Sec': 'inclu',
+        'vari': 'disease',
+        'Answer Options': None,
+        'Maximum': None,
+        'Minimum': None,
+        'Skip Logic': "[inclu_disease]='88'",
+        'mod': 'otherl3',
+    }
+    series2 = pd.Series(dict2, name=0)
+    all_rows_expected = [
+        series1,
+        series2,
+    ]
+
+    (list_choices_output,
+     all_rows_output) = arc.get_list_data(df_current_datadicc,
+                                          version,
+                                          language,
+                                          list_type)
+
+    assert list_choices_output == list_choices_expected
+    assert_series_equal(all_rows_output[0], all_rows_expected[0])
+    assert_series_equal(all_rows_output[1], all_rows_expected[1])
