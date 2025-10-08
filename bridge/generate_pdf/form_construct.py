@@ -307,11 +307,11 @@ def construct_testing_form(fields: List[Field], locate_phrase):
     # Initialize the body content
     body_content = []
 
-    fields_to_add = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_result', 'test_ctvalue',
-                     'test_genrep_db', 'test_genrep_ref', 'test_genrep_yn', 'test_pathtested']
-    fields_to_add_answer = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_result',
+    fields_to_add = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_marker','test_result', 'test_ctvalue',
+                     'test_vload','test_genrep_db', 'test_genrep_ref', 'test_genrep_yn', 'test_pathtested']
+    fields_to_add_answer = ['test_collectiondate', 'test_biospecimentype', 'test_labtestmethod', 'test_marker', 'test_result',
                             'test_genrep_db', 'test_genrep_yn', 'test_pathtested']
-    fields_to_add_other = ['test_biospecimentype', 'test_labtestmethod', 'test_genrep_db', 'test_pathtested']
+    fields_to_add_other = ['test_biospecimentype', 'test_genrep_db', 'test_pathtested']
 
     # Iterate through the fields and add rows to the body content
     for field in fields:
