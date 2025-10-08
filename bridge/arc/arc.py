@@ -193,12 +193,12 @@ def get_dependencies(datadicc: pd.DataFrame) -> pd.DataFrame:
     return dependencies
 
 
-def set_select_units(datadicc: pd.DataFrame) -> pd.DataFrame:
-    mask_true = datadicc['select units'] == True
-    for index, row in datadicc[mask_true].iterrows():
-        mask_sec_vari = (datadicc['Sec'] == row['Sec']) & (datadicc['vari'] == row['vari'])
-        datadicc.loc[mask_sec_vari, 'select units'] = True
-    return datadicc
+def set_select_units(df_datadicc: pd.DataFrame) -> pd.DataFrame:
+    mask_true = df_datadicc['select units'] == True
+    for index, row in df_datadicc[mask_true].iterrows():
+        mask_sec_vari = (df_datadicc['Sec'] == row['Sec']) & (df_datadicc['vari'] == row['vari'])
+        df_datadicc.loc[mask_sec_vari, 'select units'] = True
+    return df_datadicc
 
 
 def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
@@ -304,35 +304,36 @@ def get_include_not_show(selected_variables: pd.Series, current_datadicc: pd.Dat
     return current_datadicc.loc[current_datadicc['Variable'].isin(selected_variables)]
 
 
-def get_select_units(selected_variables: pd.Series, current_datadicc: pd.DataFrame) -> tuple[pd.DataFrame, list] | \
-                                                                                       tuple[None, None]:
-    current_datadicc['select units'] = (
-        current_datadicc['Question_english'].str.contains('(select units)', case=False, na=False, regex=False))
+def get_select_units(selected_variables: pd.Series,
+                     df_current_datadicc: pd.DataFrame) -> tuple[pd.DataFrame, list] | \
+                                                           tuple[None, None]:
+    df_current_datadicc['select units'] = (
+        df_current_datadicc['Question_english'].str.contains('(select units)', case=False, na=False, regex=False))
 
-    current_datadicc_units = current_datadicc.loc[
-        current_datadicc['Question_english'].str.contains('(select units)', regex=False)]
-    units_lang = current_datadicc_units.sample(n=1)['Question'].iloc[0]
+    df_current_datadicc_units = df_current_datadicc.loc[
+        df_current_datadicc['Question_english'].str.contains('(select units)', regex=False)]
+    units_lang = df_current_datadicc_units.sample(n=1)['Question'].iloc[0]
     units_lang = extract_parenthesis_content(units_lang)
-    current_datadicc = set_select_units(current_datadicc)
+    df_current_datadicc = set_select_units(df_current_datadicc)
 
-    selected_select_unit = current_datadicc.loc[current_datadicc['select units'] &
-                                                current_datadicc['Variable'].isin(selected_variables) &
-                                                current_datadicc['mod'].notna()]
+    df_selected_select_unit = df_current_datadicc.loc[df_current_datadicc['select units'] &
+                                                   df_current_datadicc['Variable'].isin(selected_variables) &
+                                                   df_current_datadicc['mod'].notna()]
 
-    selected_select_unit['count'] = selected_select_unit.groupby(['Sec', 'vari']).transform('size')
+    df_selected_select_unit['count'] = df_selected_select_unit.groupby(['Sec', 'vari']).transform('size')
 
     select_unit_rows = []
     seen_variables = set()
 
     delete_this_variables_with_units = []
 
-    for _, row in selected_select_unit.iterrows():
+    for _, row in df_selected_select_unit.iterrows():
         if row['count'] > 1:
-            matching_rows = selected_select_unit[(selected_select_unit['Sec'] == row['Sec']) &
-                                                 (selected_select_unit['vari'] == row['vari'])]
+            matching_rows = df_selected_select_unit[(df_selected_select_unit['Sec'] == row['Sec']) &
+                                                 (df_selected_select_unit['vari'] == row['vari'])]
 
-            for dtvwu in matching_rows['Variable']:
-                delete_this_variables_with_units.append(dtvwu)
+            for delete_variable in matching_rows['Variable']:
+                delete_this_variables_with_units.append(delete_variable)
 
             max_value = pd.to_numeric(matching_rows['Maximum'], errors='coerce').max()
             min_value = pd.to_numeric(matching_rows['Minimum'], errors='coerce').min()
@@ -367,9 +368,9 @@ def get_select_units(selected_variables: pd.Series, current_datadicc: pd.DataFra
                 seen_variables.add(row_units['Variable'])
 
     if len(select_unit_rows) > 0:
-        icc_var_units_selected_rows = pd.DataFrame(select_unit_rows).reset_index(drop=True)
-        return icc_var_units_selected_rows, list(
-            set(delete_this_variables_with_units) - set(icc_var_units_selected_rows['Variable']))
+        df_icc_var_units_selected_rows = pd.DataFrame(select_unit_rows).reset_index(drop=True)
+        return df_icc_var_units_selected_rows, sorted(list(
+            set(delete_this_variables_with_units) - set(df_icc_var_units_selected_rows['Variable'])))
     return None, None
 
 

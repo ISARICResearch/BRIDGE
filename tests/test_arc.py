@@ -337,3 +337,134 @@ def test_get_list_data(mock_get_translations,
     assert list_choices_output == list_choices_expected
     assert_series_equal(all_rows_output[0], all_rows_expected[0])
     assert_series_equal(all_rows_output[1], all_rows_expected[1])
+
+
+@mock.patch('bridge.arc.arc.set_select_units')
+@mock.patch('bridge.arc.arc.extract_parenthesis_content', return_value='select units')
+def test_get_select_units(mock_extract_parenthesis,
+                          mock_set_units):
+    data = [
+        'demog_height',
+        'demog_height_cm',
+        'demog_height_in',
+    ]
+    selected_variables = pd.Series(data, name='Variable')
+    data = {
+        'Variable': [
+            'demog_height',
+            'demog_height_cm',
+            'demog_height_in',
+        ],
+        'Question': [
+            'Height (select units)',
+            'Height (cm)',
+            'Height (in)',
+        ],
+        'Question_english': [
+            'Height (select units)',
+            'Height (cm)',
+            'Height (in)',
+        ],
+        'Minimum': [
+            np.nan,
+            0,
+            0,
+        ],
+        'Maximum': [
+            np.nan,
+            250,
+            98,
+        ],
+        'Sec': [
+            'demog',
+            'demog',
+            'demog',
+        ],
+        'vari': [
+            'height',
+            'height',
+            'height',
+        ],
+        'mod': [
+            None,
+            'cm',
+            'in'
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    df_units = pd.DataFrame.from_dict({
+        'select units': [
+            True,
+            True,
+            True,
+        ]})
+    df_mock_set_units = df_current_datadicc.join(df_units)
+    mock_set_units.return_value = df_mock_set_units
+
+    data_expected = {
+        'Variable': [
+            'demog_height',
+            'demog_height_units',
+        ],
+        'Question': [
+            'Height ',
+            'Height (select units)',
+        ],
+        'Question_english': [
+            'Height (cm)',
+            'Height (cm)',
+        ],
+        'Minimum': [
+            0,
+            np.nan,
+        ],
+        'Maximum': [
+            250,
+            np.nan,
+        ],
+        'Sec': [
+            'demog',
+            'demog',
+        ],
+        'vari': [
+            'height',
+            'height',
+        ],
+        'mod': [
+            'cm',
+            'cm',
+        ],
+        'select units': [
+            True,
+            True,
+        ],
+        'count': [
+            2,
+            2,
+        ],
+        'Answer Options': [
+            None,
+            '1,select units | 2,select units',
+        ],
+        'Type': [
+            'text',
+            'radio',
+        ],
+        'Validation': [
+            'number',
+            None,
+        ],
+    }
+    df_expected = pd.DataFrame.from_dict(data_expected)
+    list_expected = [
+        'demog_height_cm',
+        'demog_height_in',
+    ]
+
+    (df_output,
+     list_output) = arc.get_select_units(selected_variables,
+                                         df_current_datadicc)
+
+    assert_frame_equal(df_output, df_expected)
+    assert list_output == list_expected
