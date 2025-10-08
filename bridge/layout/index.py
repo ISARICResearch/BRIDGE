@@ -195,7 +195,7 @@ class Index:
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/UCL_Logo.png", className="img-fluid",
+                                html.Img(src=f"{self.logos_dir}/UCL_logo.png", className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto")
