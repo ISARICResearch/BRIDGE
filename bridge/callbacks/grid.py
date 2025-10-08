@@ -56,8 +56,6 @@ def display_checked_in_grid(checked: list,
                 df_selected_variables = df_selected_variables.loc[
                     ~df_selected_variables['Variable'].isin(delete_this_variables_with_units)]
 
-        df_selected_variables = arc.generate_daily_data_type(df_selected_variables)
-
         last_form, last_section = None, None
         new_rows = []
         df_selected_variables = df_selected_variables.fillna('')

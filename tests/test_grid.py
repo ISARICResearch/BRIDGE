@@ -31,7 +31,6 @@ def test_display_checked_in_grid_checked_empty():
     assert output_variables_json == expected_variables_json
 
 
-@mock.patch('bridge.callbacks.grid.arc.generate_daily_data_type')
 @mock.patch('bridge.callbacks.grid.arc.get_variable_order')
 @mock.patch('bridge.callbacks.grid.arc.add_transformed_rows')
 @mock.patch('bridge.callbacks.grid.arc.get_select_units')
@@ -39,8 +38,7 @@ def test_display_checked_in_grid_checked_empty():
 def test_display_checked_in_grid(mock_include_not_show,
                                  mock_select_units,
                                  mock_add_transformed_rows,
-                                 mock_variable_order,
-                                 mock_daily_data_type):
+                                 mock_variable_order):
     checked = ['inclu_disease']
     current_datadicc_saved = ('{"columns":["Form", "Variable", "Dependencies"],'
                               '"index":[0, 1, 2],'
@@ -93,7 +91,6 @@ def test_display_checked_in_grid(mock_include_not_show,
     df_selected_variables = pd.DataFrame.from_dict(data)
     mock_include_not_show.return_value = df_selected_variables
     mock_select_units.return_value = (None, None)
-    mock_daily_data_type.return_value = df_selected_variables
 
     (output_column_defs,
      output_row_defs,

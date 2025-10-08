@@ -17,7 +17,9 @@ def add_required_datadicc_columns(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     return df_datadicc
 
 
-def get_arc_translation(language: str, version: str, current_datadicc: pd.DataFrame) -> pd.DataFrame:
+def get_arc_translation(language: str,
+                        version: str,
+                        current_datadicc: pd.DataFrame) -> pd.DataFrame:
     try:
         datadicc_english = ArcApiClient().get_dataframe_arc_version_language(version, 'English')
 
@@ -125,9 +127,9 @@ def get_arc_versions() -> tuple[list, str]:
     return version_list, max(version_list)
 
 
-def get_variable_order(current_datadicc: pd.DataFrame) -> list:
-    current_datadicc['Sec_vari'] = current_datadicc['Sec'] + '_' + current_datadicc['vari']
-    order = current_datadicc[['Sec_vari']]
+def get_variable_order(df_current_datadicc: pd.DataFrame) -> list:
+    df_current_datadicc['Sec_vari'] = df_current_datadicc['Sec'] + '_' + df_current_datadicc['vari']
+    order = df_current_datadicc[['Sec_vari']]
     order = order.drop_duplicates().reset_index()
     return list(order['Sec_vari'])
 
@@ -160,16 +162,16 @@ def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
         raise RuntimeError("Failed to format ARC data")
 
 
-def get_dependencies(datadicc: pd.DataFrame) -> pd.DataFrame:
+def get_dependencies(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     mandatory = ['subjid']
 
-    dependencies = datadicc[['Variable', 'Skip Logic']]
+    df_dependencies = df_datadicc[['Variable', 'Skip Logic']]
     field_dependencies = []
-    for s in dependencies['Skip Logic']:
+    for skip_logic_str in df_dependencies['Skip Logic']:
         cont = 0
         variable_dependencies = []
-        if type(s) != float:
-            for i in s.split('['):
+        if type(skip_logic_str) != float:
+            for i in skip_logic_str.split('['):
                 variable = (i[:i.find(']')])
                 if '(' in variable:
                     variable = (variable[:variable.find('(')])
@@ -177,20 +179,26 @@ def get_dependencies(datadicc: pd.DataFrame) -> pd.DataFrame:
                     variable_dependencies.append(variable)
                 cont += 1
         field_dependencies.append(variable_dependencies)
-    dependencies['Dependencies'] = field_dependencies
-    for i in dependencies['Variable']:
-        if 'other' in i:
-            if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')]) >= 1:
-                dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('other', '')].iloc[0].append(i)
 
-        if 'units' in i:
-            if len(dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')]) >= 1:
-                dependencies['Dependencies'].loc[dependencies['Variable'] == i.replace('units', '')].iloc[0].append(i)
+    df_dependencies['Dependencies'] = field_dependencies
+    for variable in df_dependencies['Variable']:
+        if 'other' in variable:
+            if len(df_dependencies['Dependencies'].loc[
+                       df_dependencies['Variable'] == variable.replace('other', '')]) >= 1:
+                df_dependencies['Dependencies'].loc[df_dependencies['Variable'] == variable.replace('other', '')].iloc[
+                    0].append(variable)
 
-        for m in mandatory:
-            dependencies['Dependencies'].loc[dependencies['Variable'] == i].iloc[0].append(m)
+        if 'units' in variable:
+            if len(df_dependencies['Dependencies'].loc[
+                       df_dependencies['Variable'] == variable.replace('units', '')]) >= 1:
+                df_dependencies['Dependencies'].loc[df_dependencies['Variable'] == variable.replace('units', '')].iloc[
+                    0].append(variable)
 
-    return dependencies
+        for mandatory_variable in mandatory:
+            df_dependencies['Dependencies'].loc[df_dependencies['Variable'] == variable].iloc[0].append(
+                mandatory_variable)
+
+    return df_dependencies
 
 
 def set_select_units(df_datadicc: pd.DataFrame) -> pd.DataFrame:
@@ -288,7 +296,8 @@ def extract_parenthesis_content(text: str) -> str:
     return match.group(1) if match else text
 
 
-def get_include_not_show(selected_variables: pd.Series, current_datadicc: pd.DataFrame) -> pd.DataFrame:
+def get_include_not_show(selected_variables: pd.Series,
+                         df_current_datadicc: pd.DataFrame) -> pd.DataFrame:
     include_not_show = ['otherl2', 'otherl3', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
                         'units', 'add', 'type', 'vol', 'site', '0item', '0otherl2',
                         '0addi', '1item', '1otherl2', '1addi', '2item', '2otherl2', '2addi', '3item', '3otherl2',
@@ -297,11 +306,13 @@ def get_include_not_show(selected_variables: pd.Series, current_datadicc: pd.Dat
 
     # Get the include not show for the selected variables
     possible_vars_to_include = [f"{var}_{suffix}" for var in selected_variables for suffix in include_not_show]
-    actual_vars_to_include = [var for var in possible_vars_to_include if var in current_datadicc['Variable'].values]
+    actual_vars_to_include = [var for var in possible_vars_to_include if var in df_current_datadicc['Variable'].values]
     selected_variables = list(selected_variables) + list(actual_vars_to_include)
     # Deduplicate the final list in case of any overlaps
     selected_variables = list(set(selected_variables))
-    return current_datadicc.loc[current_datadicc['Variable'].isin(selected_variables)]
+    df_include_not_show = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(selected_variables)].reset_index(
+        drop=True)
+    return df_include_not_show
 
 
 def get_select_units(selected_variables: pd.Series,
@@ -317,8 +328,8 @@ def get_select_units(selected_variables: pd.Series,
     df_current_datadicc = set_select_units(df_current_datadicc)
 
     df_selected_select_unit = df_current_datadicc.loc[df_current_datadicc['select units'] &
-                                                   df_current_datadicc['Variable'].isin(selected_variables) &
-                                                   df_current_datadicc['mod'].notna()]
+                                                      df_current_datadicc['Variable'].isin(selected_variables) &
+                                                      df_current_datadicc['mod'].notna()]
 
     df_selected_select_unit['count'] = df_selected_select_unit.groupby(['Sec', 'vari']).transform('size')
 
@@ -330,7 +341,7 @@ def get_select_units(selected_variables: pd.Series,
     for _, row in df_selected_select_unit.iterrows():
         if row['count'] > 1:
             matching_rows = df_selected_select_unit[(df_selected_select_unit['Sec'] == row['Sec']) &
-                                                 (df_selected_select_unit['vari'] == row['vari'])]
+                                                    (df_selected_select_unit['vari'] == row['vari'])]
 
             for delete_variable in matching_rows['Variable']:
                 delete_this_variables_with_units.append(delete_variable)
@@ -448,7 +459,7 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
 
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
-                                                                                  row['List'].replace('_', '/'))
+                                                                                     row['List'].replace('_', '/'))
 
             list_choices = ''
             list_variable_choices_aux = []
@@ -612,13 +623,13 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
     return df_arc_list, list_variable_choices
 
 
-def set_cont_lo(list_options: pd.DataFrame,
+def set_cont_lo(df_list_options: pd.DataFrame,
                 list_option: str) -> int:
-    if 'Value' in list_options.columns:
-        cont_lo = int(list_options['Value'].loc[list_options[list_options.columns[0]] == list_option].iloc[0])
+    if 'Value' in df_list_options.columns:
+        cont_lo = int(df_list_options['Value'].loc[df_list_options[df_list_options.columns[0]] == list_option].iloc[0])
     else:
         # fallback to index-based counting
-        cont_lo = list_options[list_options.columns[0]].tolist().index(list_option) + 1
+        cont_lo = df_list_options[df_list_options.columns[0]].tolist().index(list_option) + 1
 
     if cont_lo == 88:
         cont_lo = 89
@@ -647,7 +658,7 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
             logger.warn('List without corresponding repository file')
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
-                                                                                  row['List'].replace('_', '/'))
+                                                                                     row['List'].replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
@@ -715,51 +726,30 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
     return list_variable_choices, all_rows_lists
 
 
-def get_user_list_content(current_datadicc: pd.DataFrame, version: str, language: str) -> tuple[pd.DataFrame, list]:
-    ulist_variable_choices, all_rows_lists = get_list_data(current_datadicc, version, language, 'user_list')
-    arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
-    return arc_list, ulist_variable_choices
+def get_user_list_content(df_current_datadicc: pd.DataFrame,
+                          version: str,
+                          language: str) -> tuple[pd.DataFrame, list]:
+    ulist_variable_choices, all_rows_lists = get_list_data(df_current_datadicc, version, language, 'user_list')
+    df_arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
+    return df_arc_list, ulist_variable_choices
 
 
-def get_multi_list_content(current_datadicc: pd.DataFrame, version: str, language: str) -> tuple[pd.DataFrame, list]:
-    multilist_variable_choices, all_rows_lists = get_list_data(current_datadicc, version, language, 'multi_list')
-    arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
-    return arc_list, multilist_variable_choices
+def get_multi_list_content(df_current_datadicc: pd.DataFrame,
+                           version: str,
+                           language: str) -> tuple[pd.DataFrame, list]:
+    multilist_variable_choices, all_rows_lists = get_list_data(df_current_datadicc, version, language, 'multi_list')
+    df_arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
+    return df_arc_list, multilist_variable_choices
 
 
-def generate_daily_data_type(current_datadicc: pd.DataFrame) -> pd.DataFrame:
-    datadicc_disease = current_datadicc.copy()
-    daily_sections = list(datadicc_disease['Section'].loc[datadicc_disease['Form'] == 'daily'].unique())
-    if len(daily_sections) > 0:
-        if 'ASSESSMENT' in daily_sections:
-            daily_sections.remove('ASSESSMENT')
-        if len(daily_sections) == 1:
-            datadicc_disease = datadicc_disease.loc[datadicc_disease['Variable'] != 'daily_data_type']
-        elif len(daily_sections) > 1:
-            daily_type_dicc = {"VITAL SIGNS & ASSESSMENTS": "1, Vital Signs & Assessments ",
-                               "TREATMENTS & INTERVENTIONS": "2, Treatments & Interventions ",
-                               "LABORATORY RESULTS": "3, Laboratory Results ",
-                               "IMAGING": "4, Imaging "}
-            daily_type_options = ''
-            for daily_sec in daily_sections:
-                for daily_type in daily_type_dicc:
-                    if daily_sec.startswith(daily_type):
-                        daily_type_options = daily_type_options + daily_type_dicc[daily_type] + '|'
-            daily_type_options = daily_type_options[:-1]
-
-            datadicc_disease.loc[
-                datadicc_disease['Variable'] == 'daily_data_type', 'Answer Options'] = daily_type_options
-        return datadicc_disease
-    return current_datadicc
-
-
-def add_transformed_rows(selected_variables: pd.DataFrame, arc_var_units_selected: pd.DataFrame,
+def add_transformed_rows(df_selected_variables: pd.DataFrame,
+                         df_arc_var_units_selected: pd.DataFrame,
                          order: list) -> pd.DataFrame:
-    arc_var_units_selected['Sec_vari'] = arc_var_units_selected['Sec'] + '_' + arc_var_units_selected['vari']
-    result = selected_variables.copy().reset_index(drop=True)
-    arc_var_units_selected = arc_var_units_selected[result.columns]
+    df_arc_var_units_selected['Sec_vari'] = df_arc_var_units_selected['Sec'] + '_' + df_arc_var_units_selected['vari']
+    result = df_selected_variables.copy().reset_index(drop=True)
+    df_arc_var_units_selected = df_arc_var_units_selected[result.columns]
 
-    for _, row in arc_var_units_selected.iterrows():
+    for _, row in df_arc_var_units_selected.iterrows():
         variable = row['Variable']
 
         if variable in result['Variable'].values:
@@ -812,15 +802,15 @@ def add_transformed_rows(selected_variables: pd.DataFrame, arc_var_units_selecte
     return result
 
 
-def custom_alignment(datadicc: pd.DataFrame) -> pd.DataFrame:
-    mask = (datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
-            (datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
-            (datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
-    datadicc.loc[mask, 'Custom Alignment'] = 'RH'
-    return datadicc
+def custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
+    mask = (df_datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
+            (df_datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
+            (df_datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
+    df_datadicc.loc[mask, 'Custom Alignment'] = 'RH'
+    return df_datadicc
 
 
-def generate_crf(datadicc_disease: pd.DataFrame) -> pd.DataFrame:
+def generate_crf(df_datadicc_disease: pd.DataFrame) -> pd.DataFrame:
     # Create a new list to build the reordered rows
     new_rows = []
     used_indices = set()
@@ -830,7 +820,7 @@ def generate_crf(datadicc_disease: pd.DataFrame) -> pd.DataFrame:
         return "_".join(variable.split("_")[:2])
 
     # Loop through each row in the original dataframe
-    for idx, row in datadicc_disease.iterrows():
+    for idx, row in df_datadicc_disease.iterrows():
         var = row['Variable']
         typ = row['Type']
 
@@ -848,27 +838,29 @@ def generate_crf(datadicc_disease: pd.DataFrame) -> pd.DataFrame:
 
             # Find and add the _otherl2 and _otherl3 rows right after the current one
             for suffix in ['_otherl2', '_otherl3']:
-                mask = datadicc_disease['Variable'].str.startswith(prefix + suffix)
-                for i in datadicc_disease[mask].index:
-                    new_rows.append(datadicc_disease.loc[i])
+                mask = df_datadicc_disease['Variable'].str.startswith(prefix + suffix)
+                for i in df_datadicc_disease[mask].index:
+                    new_rows.append(df_datadicc_disease.loc[i])
                     used_indices.add(i)
 
     # Create the final reordered dataframe
-    datadicc_disease = pd.DataFrame(new_rows)
+    df_datadicc_disease = pd.DataFrame(new_rows)
 
-    datadicc_disease.loc[datadicc_disease['Type'] == 'user_list', 'Type'] = 'radio'
-    datadicc_disease.loc[datadicc_disease['Type'] == 'multi_list', 'Type'] = 'checkbox'
-    datadicc_disease.loc[datadicc_disease['Type'] == 'list', 'Type'] = 'radio'
-    datadicc_disease = datadicc_disease[['Form', 'Section', 'Variable',
-                                         'Type', 'Question',
-                                         'Answer Options',
-                                         'Validation',
-                                         'Minimum', 'Maximum',
-                                         'Skip Logic']]
+    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'user_list', 'Type'] = 'radio'
+    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'multi_list', 'Type'] = 'checkbox'
+    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'list', 'Type'] = 'radio'
+    df_datadicc_disease = df_datadicc_disease[['Form', 'Section', 'Variable',
+                                               'Type', 'Question',
+                                               'Answer Options',
+                                               'Validation',
+                                               'Minimum', 'Maximum',
+                                               'Skip Logic']]
 
-    datadicc_disease.columns = ["Form Name", "Section Header", "Variable / Field Name", "Field Type", "Field Label",
-                                "Choices, Calculations, OR Slider Labels", "Text Validation Type OR Show Slider Number",
-                                "Text Validation Min", "Text Validation Max", "Branching Logic (Show field only if...)"]
+    df_datadicc_disease.columns = ["Form Name", "Section Header", "Variable / Field Name", "Field Type", "Field Label",
+                                   "Choices, Calculations, OR Slider Labels",
+                                   "Text Validation Type OR Show Slider Number",
+                                   "Text Validation Min", "Text Validation Max",
+                                   "Branching Logic (Show field only if...)"]
     redcap_cols = ['Variable / Field Name', 'Form Name', 'Section Header', 'Field Type',
                    'Field Label', 'Choices, Calculations, OR Slider Labels', 'Field Note',
                    'Text Validation Type OR Show Slider Number', 'Text Validation Min',
@@ -876,19 +868,20 @@ def generate_crf(datadicc_disease: pd.DataFrame) -> pd.DataFrame:
                    'Branching Logic (Show field only if...)', 'Required Field?',
                    'Custom Alignment', 'Question Number (surveys only)',
                    'Matrix Group Name', 'Matrix Ranking?', 'Field Annotation']
-    datadicc_disease = datadicc_disease.reindex(columns=redcap_cols)
+    df_datadicc_disease = df_datadicc_disease.reindex(columns=redcap_cols)
 
-    datadicc_disease.loc[
-        datadicc_disease['Field Type'].isin(['date_dmy', 'number', 'integer', 'datetime_dmy']), 'Field Type'] = 'text'
-    datadicc_disease = datadicc_disease.loc[
-        datadicc_disease['Field Type'].isin(['text', 'notes', 'radio', 'dropdown', 'calc',
-                                             'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
-    datadicc_disease['Section Header'] = datadicc_disease['Section Header'].where(
-        datadicc_disease['Section Header'] != datadicc_disease['Section Header'].shift(), np.nan)
+    df_datadicc_disease.loc[
+        df_datadicc_disease['Field Type'].isin(
+            ['date_dmy', 'number', 'integer', 'datetime_dmy']), 'Field Type'] = 'text'
+    df_datadicc_disease = df_datadicc_disease.loc[
+        df_datadicc_disease['Field Type'].isin(['text', 'notes', 'radio', 'dropdown', 'calc',
+                                                'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
+    df_datadicc_disease['Section Header'] = df_datadicc_disease['Section Header'].where(
+        df_datadicc_disease['Section Header'] != df_datadicc_disease['Section Header'].shift(), np.nan)
     # For the new empty columns, fill NaN values with a default value (in this case an empty string)
-    datadicc_disease = datadicc_disease.fillna('')
+    df_datadicc_disease = df_datadicc_disease.fillna('')
 
-    datadicc_disease['Section Header'] = datadicc_disease['Section Header'].replace({'': np.nan})
-    datadicc_disease = custom_alignment(datadicc_disease)
+    df_datadicc_disease['Section Header'] = df_datadicc_disease['Section Header'].replace({'': np.nan})
+    df_datadicc_disease = custom_alignment(df_datadicc_disease)
 
-    return datadicc_disease
+    return df_datadicc_disease
