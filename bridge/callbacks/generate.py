@@ -70,20 +70,20 @@ def on_generate_click(n_clicks: int,
         current_version = selected_version_data.get('selected_version', None)
         language = selected_language_data.get('selected_language', None)
 
-        df = arc.generate_crf(selected_variables_from_data)
-        pdf_crf = paper_crf.generate_pdf(df, current_version, crf_name, language)
+        df_crf = arc.generate_crf(selected_variables_from_data)
+        pdf_crf = paper_crf.generate_pdf(df_crf, current_version, crf_name, language)
         pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
 
         # CSV
         csv_buffer = io.BytesIO()
-        df.loc[df['Field Type'] == 'descriptive', 'Field Label'] = df.loc[
-            df['Field Type'] == 'descriptive', 'Field Label'].apply(
+        df_crf.loc[df_crf['Field Type'] == 'descriptive', 'Field Label'] = df_crf.loc[
+            df_crf['Field Type'] == 'descriptive', 'Field Label'].apply(
             lambda
                 x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>')
         if language != 'English':
-            df['Form Name'] = df['Form Name'].apply(lambda x: unidecode(str(x)))
+            df_crf['Form Name'] = df_crf['Form Name'].apply(lambda x: unidecode(str(x)))
 
-        df.to_csv(csv_buffer, index=False, encoding='utf8')
+        df_crf.to_csv(csv_buffer, index=False, encoding='utf8')
         csv_buffer.seek(0)
 
         # XML

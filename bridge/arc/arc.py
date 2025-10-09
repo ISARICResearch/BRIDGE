@@ -442,7 +442,7 @@ def get_translations(language: str) -> dict:
 def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: str) -> tuple[pd.DataFrame, list]:
     all_rows_lists = []
     list_variable_choices = []
-    df_datadicc_disease_lists = df_current_datadicc.loc[df_current_datadicc['Type'] == 'list']
+    df_datadicc_lists = df_current_datadicc.loc[df_current_datadicc['Type'] == 'list']
 
     translations_for_language = get_translations(language)
     select_text = translations_for_language['select']
@@ -453,7 +453,7 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
     any_additional_text = translations_for_language['any_additional']
     other_text = translations_for_language['other']
 
-    for _, row in df_datadicc_disease_lists.iterrows():
+    for _, row in df_datadicc_lists.iterrows():
         if pd.isnull(row['List']):
             logger.warn('List without corresponding repository file')
 
@@ -744,44 +744,45 @@ def get_multi_list_content(df_current_datadicc: pd.DataFrame,
 
 def add_transformed_rows(df_selected_variables: pd.DataFrame,
                          df_arc_var_units_selected: pd.DataFrame,
-                         order: list) -> pd.DataFrame:
+                         variable_order: list) -> pd.DataFrame:
     df_arc_var_units_selected['Sec_vari'] = df_arc_var_units_selected['Sec'] + '_' + df_arc_var_units_selected['vari']
-    result = df_selected_variables.copy().reset_index(drop=True)
-    df_arc_var_units_selected = df_arc_var_units_selected[result.columns]
+    df_transformed = df_selected_variables.copy().reset_index(drop=True)
+    df_arc_var_units_selected = df_arc_var_units_selected[df_transformed.columns]
 
     for _, row in df_arc_var_units_selected.iterrows():
         variable = row['Variable']
 
-        if variable in result['Variable'].values:
+        if variable in df_transformed['Variable'].values:
             # Get the index for the matching variable in the result DataFrame
-            match_index = result.index[result['Variable'] == variable].tolist()[0]
+            match_index = df_transformed.index[df_transformed['Variable'] == variable].tolist()[0]
             # Update each column separately
-            for col in result.columns:
-                result.at[match_index, col] = row[col]
+            for col in df_transformed.columns:
+                df_transformed.at[match_index, col] = row[col]
         else:
             # Identify the base variable name by splitting at the last underscore
             base_var = '_'.join(variable.split('_')[:-1])
 
-            if base_var in result['Variable'].values:
+            if base_var in df_transformed['Variable'].values:
                 # Find the index of the base variable row
-                base_index = result.index[result['Variable'].str.startswith(base_var)].max()
+                base_index = df_transformed.index[df_transformed['Variable'].str.startswith(base_var)].max()
                 row_df = pd.DataFrame([row]).reset_index(drop=True)
                 # Insert the new row immediately after the base variable row
-                result = pd.concat([result.iloc[:base_index + 1], row_df, result.iloc[base_index + 1:]]).reset_index(
+                df_transformed = pd.concat(
+                    [df_transformed.iloc[:base_index + 1], row_df, df_transformed.iloc[base_index + 1:]]).reset_index(
                     drop=True)
 
 
             else:
                 # Variable to be added is not based on the base variable, use the order list
                 variable_to_add = variable
-                order_index = order.index(variable_to_add) if variable_to_add in order else None
+                order_index = variable_order.index(variable_to_add) if variable_to_add in variable_order else None
 
                 if order_index is not None:
                     # Find the next existing variable in 'result' from 'order'
                     insert_before_index = None
-                    for next_variable in order[order_index + 1:]:
-                        if next_variable in result['Variable'].values:
-                            insert_before_index = result.index[result['Variable'] == next_variable][0]
+                    for next_variable in variable_order[order_index + 1:]:
+                        if next_variable in df_transformed['Variable'].values:
+                            insert_before_index = df_transformed.index[df_transformed['Variable'] == next_variable][0]
                             break
 
                     # Create a DataFrame from the current row
@@ -789,19 +790,21 @@ def add_transformed_rows(df_selected_variables: pd.DataFrame,
 
                     # Insert the row at the determined position or append if no next variable is found
                     if insert_before_index is not None:
-                        result = pd.concat(
-                            [result.iloc[:insert_before_index], row_df, result.iloc[insert_before_index:]]).reset_index(
+                        df_transformed = pd.concat(
+                            [df_transformed.iloc[:insert_before_index], row_df,
+                             df_transformed.iloc[insert_before_index:]]).reset_index(
                             drop=True)
                     else:
-                        result = pd.concat([result, row_df]).reset_index(drop=True)
+                        df_transformed = pd.concat([df_transformed, row_df]).reset_index(drop=True)
                 else:
                     # If the variable is not in the order list, append it at the end (or handle as needed)
                     row_df = pd.DataFrame([row]).reset_index(drop=True)
-                    result = pd.concat([result, row_df]).reset_index(drop=True)
+                    df_transformed = pd.concat([df_transformed, row_df]).reset_index(drop=True)
 
-    return result
+    return df_transformed
 
 
+# TODO: Inner function?
 def custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     mask = (df_datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
             (df_datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
@@ -810,7 +813,7 @@ def custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     return df_datadicc
 
 
-def generate_crf(df_datadicc_disease: pd.DataFrame) -> pd.DataFrame:
+def generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     # Create a new list to build the reordered rows
     new_rows = []
     used_indices = set()
@@ -820,68 +823,109 @@ def generate_crf(df_datadicc_disease: pd.DataFrame) -> pd.DataFrame:
         return "_".join(variable.split("_")[:2])
 
     # Loop through each row in the original dataframe
-    for idx, row in df_datadicc_disease.iterrows():
-        var = row['Variable']
-        typ = row['Type']
+    for index, row in df_datadicc.iterrows():
+        variable = row['Variable']
+        variable_type = row['Type']
 
         # Skip rows that have already been added to the new list
-        if idx in used_indices:
+        if index in used_indices:
             continue
 
         # Add the current row to the reordered list
         new_rows.append(row)
-        used_indices.add(idx)
+        used_indices.add(index)
 
         # If it's a multi_list or dropdown, check for corresponding _otherl2 and _otherl3
-        if typ in ['multi_list', 'user_list']:
-            prefix = get_prefix(var)
+        if variable_type in ['multi_list', 'user_list']:
+            prefix = get_prefix(variable)
 
             # Find and add the _otherl2 and _otherl3 rows right after the current one
             for suffix in ['_otherl2', '_otherl3']:
-                mask = df_datadicc_disease['Variable'].str.startswith(prefix + suffix)
-                for i in df_datadicc_disease[mask].index:
-                    new_rows.append(df_datadicc_disease.loc[i])
+                mask = df_datadicc['Variable'].str.startswith(prefix + suffix)
+                for i in df_datadicc[mask].index:
+                    new_rows.append(df_datadicc.loc[i])
                     used_indices.add(i)
 
     # Create the final reordered dataframe
-    df_datadicc_disease = pd.DataFrame(new_rows)
+    df_datadicc = pd.DataFrame(new_rows)
 
-    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'user_list', 'Type'] = 'radio'
-    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'multi_list', 'Type'] = 'checkbox'
-    df_datadicc_disease.loc[df_datadicc_disease['Type'] == 'list', 'Type'] = 'radio'
-    df_datadicc_disease = df_datadicc_disease[['Form', 'Section', 'Variable',
-                                               'Type', 'Question',
-                                               'Answer Options',
-                                               'Validation',
-                                               'Minimum', 'Maximum',
-                                               'Skip Logic']]
+    df_datadicc.loc[df_datadicc['Type'] == 'user_list', 'Type'] = 'radio'
+    df_datadicc.loc[df_datadicc['Type'] == 'multi_list', 'Type'] = 'checkbox'
+    df_datadicc.loc[df_datadicc['Type'] == 'list', 'Type'] = 'radio'
+    df_datadicc = df_datadicc[[
+        'Form',
+        'Section',
+        'Variable',
+        'Type',
+        'Question',
+        'Answer Options',
+        'Validation',
+        'Minimum',
+        'Maximum',
+        'Skip Logic',
+    ]]
 
-    df_datadicc_disease.columns = ["Form Name", "Section Header", "Variable / Field Name", "Field Type", "Field Label",
-                                   "Choices, Calculations, OR Slider Labels",
-                                   "Text Validation Type OR Show Slider Number",
-                                   "Text Validation Min", "Text Validation Max",
-                                   "Branching Logic (Show field only if...)"]
-    redcap_cols = ['Variable / Field Name', 'Form Name', 'Section Header', 'Field Type',
-                   'Field Label', 'Choices, Calculations, OR Slider Labels', 'Field Note',
-                   'Text Validation Type OR Show Slider Number', 'Text Validation Min',
-                   'Text Validation Max', 'Identifier?',
-                   'Branching Logic (Show field only if...)', 'Required Field?',
-                   'Custom Alignment', 'Question Number (surveys only)',
-                   'Matrix Group Name', 'Matrix Ranking?', 'Field Annotation']
-    df_datadicc_disease = df_datadicc_disease.reindex(columns=redcap_cols)
+    df_datadicc.columns = [
+        "Form Name",
+        "Section Header",
+        "Variable / Field Name",
+        "Field Type",
+        "Field Label",
+        "Choices, Calculations, OR Slider Labels",
+        "Text Validation Type OR Show Slider Number",
+        "Text Validation Min",
+        "Text Validation Max",
+        "Branching Logic (Show field only if...)"
+    ]
+    redcap_cols = [
+        'Variable / Field Name',
+        'Form Name',
+        'Section Header',
+        'Field Type',
+        'Field Label',
+        'Choices, Calculations, OR Slider Labels',
+        'Field Note',
+        'Text Validation Type OR Show Slider Number',
+        'Text Validation Min',
+        'Text Validation Max',
+        'Identifier?',
+        'Branching Logic (Show field only if...)',
+        'Required Field?',
+        'Custom Alignment',
+        'Question Number (surveys only)',
+        'Matrix Group Name',
+        'Matrix Ranking?',
+        'Field Annotation'
+    ]
+    df_datadicc = df_datadicc.reindex(columns=redcap_cols)
 
-    df_datadicc_disease.loc[
-        df_datadicc_disease['Field Type'].isin(
-            ['date_dmy', 'number', 'integer', 'datetime_dmy']), 'Field Type'] = 'text'
-    df_datadicc_disease = df_datadicc_disease.loc[
-        df_datadicc_disease['Field Type'].isin(['text', 'notes', 'radio', 'dropdown', 'calc',
-                                                'file', 'checkbox', 'yesno', 'truefalse', 'descriptive', 'slider'])]
-    df_datadicc_disease['Section Header'] = df_datadicc_disease['Section Header'].where(
-        df_datadicc_disease['Section Header'] != df_datadicc_disease['Section Header'].shift(), np.nan)
+    df_datadicc.loc[
+        df_datadicc['Field Type'].isin([
+            'date_dmy',
+            'number',
+            'integer',
+            'datetime_dmy',
+        ]), 'Field Type'] = 'text'
+    df_datadicc = df_datadicc.loc[
+        df_datadicc['Field Type'].isin([
+            'text',
+            'notes',
+            'radio',
+            'dropdown',
+            'calc',
+            'file',
+            'checkbox',
+            'yesno',
+            'truefalse',
+            'descriptive',
+            'slider',
+        ])]
+    df_datadicc['Section Header'] = df_datadicc['Section Header'].where(
+        df_datadicc['Section Header'] != df_datadicc['Section Header'].shift(), np.nan)
     # For the new empty columns, fill NaN values with a default value (in this case an empty string)
-    df_datadicc_disease = df_datadicc_disease.fillna('')
+    df_datadicc = df_datadicc.fillna('')
 
-    df_datadicc_disease['Section Header'] = df_datadicc_disease['Section Header'].replace({'': np.nan})
-    df_datadicc_disease = custom_alignment(df_datadicc_disease)
+    df_datadicc['Section Header'] = df_datadicc['Section Header'].replace({'': np.nan})
+    df_datadicc = custom_alignment(df_datadicc)
 
-    return df_datadicc_disease
+    return df_datadicc
