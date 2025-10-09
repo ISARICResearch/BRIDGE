@@ -804,7 +804,6 @@ def add_transformed_rows(df_selected_variables: pd.DataFrame,
     return df_transformed
 
 
-# TODO: Inner function?
 def custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     mask = (df_datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
             (df_datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
