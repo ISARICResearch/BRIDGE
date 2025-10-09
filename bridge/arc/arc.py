@@ -1,4 +1,5 @@
 import re
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,106 +20,105 @@ def add_required_datadicc_columns(df_datadicc: pd.DataFrame) -> pd.DataFrame:
 
 def get_arc_translation(language: str,
                         version: str,
-                        current_datadicc: pd.DataFrame) -> pd.DataFrame:
-    try:
-        datadicc_english = ArcApiClient().get_dataframe_arc_version_language(version, 'English')
+                        df_current_datadicc: pd.DataFrame) -> pd.DataFrame:
+    df_datadicc_english = ArcApiClient().get_dataframe_arc_version_language(version, 'English')
 
-        df_merged_english = current_datadicc[['Variable']].merge(
-            datadicc_english.set_index('Variable'), on='Variable', how='left')
+    df_merged_english = df_current_datadicc[['Variable']].merge(
+        df_datadicc_english.set_index('Variable'), on='Variable', how='left')
 
-        current_datadicc['Question_english'] = current_datadicc['Variable'].map(
-            df_merged_english.set_index('Variable')['Question'])
+    df_current_datadicc['Question_english'] = df_current_datadicc['Variable'].map(
+        df_merged_english.set_index('Variable')['Question'])
 
-        current_datadicc['Question_english'] = current_datadicc['Question_english'].astype(str)
+    df_current_datadicc['Question_english'] = df_current_datadicc['Question_english'].astype(str)
 
-        datadicc_translated = ArcApiClient().get_dataframe_arc_version_language(version, language)
+    df_datadicc_translated = ArcApiClient().get_dataframe_arc_version_language(version, language)
 
-        df_merged = current_datadicc[['Variable']].merge(
-            datadicc_translated.set_index('Variable'), on='Variable', how='left'
+    df_merged = df_current_datadicc[['Variable']].merge(
+        df_datadicc_translated.set_index('Variable'), on='Variable', how='left'
+    )
+    columns_to_update = [
+        'Form',
+        'Section',
+        'Question',
+        'Answer Options',
+        'Definition',
+        'Completion Guideline',
+    ]
+
+    for col in columns_to_update:
+        df_current_datadicc.loc[df_merged[col].notna(), col] = df_merged.loc[df_merged[col].notna(), col]
+
+    df_current_datadicc['Branch'] = df_current_datadicc.apply(lambda row: _process_skip_logic(row, df_current_datadicc),
+                                                              axis=1)
+    return df_current_datadicc
+
+
+def _extract_logic_components(skip_logic_column: str) -> Tuple[list, list, list, list]:
+    if isinstance(skip_logic_column, str) and pd.notna(skip_logic_column):
+        normalized_logic = re.sub(r"\[([a-zA-Z0-9_]+)\((\d+)\)\]='(\d+)'", r"[\1]='\2'", skip_logic_column)
+
+        variables = re.findall(r"\[([a-zA-Z0-9_]+)\]", normalized_logic)
+
+        raw_values = re.findall(r"[=!<>]=?\s*('[^']*'|\d+\.?\d*)", normalized_logic)
+        values = []
+        for val in raw_values:
+            if val.startswith("'") and val.endswith("'"):
+                values.append(val.strip("'"))
+            else:
+                if '.' in val:
+                    values.append(float(val))
+                else:
+                    values.append(int(val))
+
+        comparison_operators = re.findall(r"(<=|>=|<>|[=><!]=?)", normalized_logic)
+
+        logical_operators = re.findall(r"\b(and|or)\b", normalized_logic)
+
+        return (
+            variables,
+            values,
+            comparison_operators,
+            logical_operators,
         )
-        columns_to_update = ['Form', 'Section', 'Question', 'Answer Options', 'Definition', 'Completion Guideline']
 
-        for col in columns_to_update:
-            current_datadicc.loc[df_merged[col].notna(), col] = df_merged.loc[df_merged[col].notna(), col]
+    return (
+        [],
+        [],
+        [],
+        [],
+    )
 
-        def normalize_logic_syntax(skip_logic_column):
-            # Reemplazar patrones del tipo [variable(numero)]='valor' por [variable]='numero'
-            normalized = re.sub(r"\[([a-zA-Z0-9_]+)\((\d+)\)\]='(\d+)'", r"[\1]='\2'", skip_logic_column)
-            return normalized
 
-        def extract_logic_components(skip_logic_column):
-            # Asegurarse de que la entrada es una cadena válida
-            if isinstance(skip_logic_column, str) and pd.notna(skip_logic_column):
-                # Normalizar la sintaxis antes de realizar la extracción
-                normalized_logic = normalize_logic_syntax(skip_logic_column)
+def _process_skip_logic(row: pd.Series,
+                        df_current_datadicc: pd.DataFrame) -> str:
+    skip_logic = row['Skip Logic']
+    extracted_variables, labels, comparison_operators, logical_operators = _extract_logic_components(skip_logic)
+    branch = []
+    logical_operators = logical_operators + [' ']
+    for i in range(len(extracted_variables)):
+        try:
+            answers = \
+                df_current_datadicc['Answer Options'].loc[
+                    df_current_datadicc['Variable'] == extracted_variables[i]].iloc[
+                    0]
+            question = \
+                df_current_datadicc['Question'].loc[df_current_datadicc['Variable'] == extracted_variables[i]].iloc[0]
+            comp_operators = comparison_operators[i]
+            if isinstance(answers, str) and pd.notna(answers):
+                pairs = answers.split(" | ")
+                dic_answer = {pair.split(", ")[0]: pair.split(", ")[1] for pair in pairs}
+                answers_label = dic_answer.get(labels[i], "Unknown")
 
-                # Extraer variables dentro de corchetes
-                variables = re.findall(r"\[([a-zA-Z0-9_]+)\]", normalized_logic)
+            else:
+                answers_label = labels[i]
+            branch.append(f"({question} {comp_operators} {answers_label}) {logical_operators[i]}")
 
-                # Extraer valores que están siendo comparados (números o cadenas entre comillas)
-                raw_values = re.findall(r"[=!<>]=?\s*('[^']*'|\d+\.?\d*)", normalized_logic)
-                values = []
-                for val in raw_values:
-                    if val.startswith("'") and val.endswith("'"):
-                        # Si es una cadena (encerrada en comillas), eliminar las comillas
-                        values.append(val.strip("'"))
-                    else:
-                        # Convertir a int o float según corresponda
-                        if '.' in val:
-                            values.append(float(val))  # Convertir a float si contiene un punto decimal
-                        else:
-                            values.append(int(val))  # Convertir a int en caso contrario
+        except IndexError:
+            branch.append("Variable not found getARCTranslation")
+        except Exception as e:
+            branch.append(f"Error getARCTranslation: {str(e)}")
 
-                # Extraer operadores de comparación (e.g., =, ==, <, >, <=, >=, <>)
-                comparison_operators = re.findall(r"(<=|>=|<>|[=><!]=?)", normalized_logic)
-
-                # Extraer operadores lógicos (e.g., and, or)
-                logical_operators = re.findall(r"\b(and|or)\b", normalized_logic)
-
-                return variables, values, comparison_operators, logical_operators
-
-            # Devolver listas vacías si la entrada no es válida
-            return [], [], [], []
-
-        def process_skip_logic(row, current_datadicc):
-            skip_logic = row['Skip Logic']
-            extracted_variables, labels, comparison_operators, logical_operators = extract_logic_components(skip_logic)
-            branch = []
-            logical_operators = logical_operators + [' ']
-            for i in range(len(extracted_variables)):
-                # Extraer las opciones de respuesta y mapear valores
-                try:
-                    answers = \
-                        current_datadicc['Answer Options'].loc[
-                            current_datadicc['Variable'] == extracted_variables[i]].iloc[
-                            0]
-                    # Verificar si `answers` es una cadena válida
-                    question = \
-                        current_datadicc['Question'].loc[current_datadicc['Variable'] == extracted_variables[i]].iloc[0]
-                    comp_operators = comparison_operators[i]
-                    if isinstance(answers, str) and pd.notna(answers):
-                        pairs = answers.split(" | ")
-                        dic_answer = {pair.split(", ")[0]: pair.split(", ")[1] for pair in pairs}
-                        answers_label = dic_answer.get(labels[i], "Unknown")
-
-                    else:
-                        answers_label = labels[i]
-                    branch.append(f"({question} {comp_operators} {answers_label}) {logical_operators[i]}")
-
-                except IndexError:
-                    branch.append("Variable not found getARCTranslation")
-                except Exception as e:
-                    branch.append(f"Error getARCTranslation: {str(e)}")
-
-            return "  ".join(branch)
-
-        current_datadicc['Branch'] = current_datadicc.apply(lambda row: process_skip_logic(row, current_datadicc),
-                                                            axis=1)
-    except Exception as e:
-        logger.error(e)
-        raise RuntimeError("Failed to fetch remote file")
-
-    return current_datadicc
+    return "  ".join(branch)
 
 
 def get_arc_versions() -> tuple[list, str]:
@@ -804,7 +804,7 @@ def add_transformed_rows(df_selected_variables: pd.DataFrame,
     return df_transformed
 
 
-def custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
+def _custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     mask = (df_datadicc['Field Type'].isin(['checkbox', 'radio'])) & (
             (df_datadicc['Choices, Calculations, OR Slider Labels'].str.split('|').str.len() < 4) &
             (df_datadicc['Choices, Calculations, OR Slider Labels'].str.len() <= 40))
@@ -816,10 +816,6 @@ def generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     # Create a new list to build the reordered rows
     new_rows = []
     used_indices = set()
-
-    # Function to extract the prefix (e.g., "drug14_antiviral" from "drug14_antiviral_type")
-    def get_prefix(variable):
-        return "_".join(variable.split("_")[:2])
 
     # Loop through each row in the original dataframe
     for index, row in df_datadicc.iterrows():
@@ -836,7 +832,8 @@ def generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
 
         # If it's a multi_list or dropdown, check for corresponding _otherl2 and _otherl3
         if variable_type in ['multi_list', 'user_list']:
-            prefix = get_prefix(variable)
+            # Extract the prefix (e.g., "drug14_antiviral" from "drug14_antiviral_type")
+            prefix = "_".join(variable.split("_")[:2])
 
             # Find and add the _otherl2 and _otherl3 rows right after the current one
             for suffix in ['_otherl2', '_otherl3']:
@@ -925,6 +922,6 @@ def generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     df_datadicc = df_datadicc.fillna('')
 
     df_datadicc['Section Header'] = df_datadicc['Section Header'].replace({'': np.nan})
-    df_datadicc = custom_alignment(df_datadicc)
+    df_datadicc = _custom_alignment(df_datadicc)
 
     return df_datadicc

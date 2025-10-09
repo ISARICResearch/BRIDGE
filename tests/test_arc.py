@@ -47,6 +47,151 @@ def test_add_required_datadicc_columns():
     assert_frame_equal(df_output, df_expected)
 
 
+@mock.patch('bridge.arc.arc._process_skip_logic')
+@mock.patch('bridge.arc.arc.ArcApiClient.get_dataframe_arc_version_language')
+def test_get_arc_translation(mock_arc,
+                             mock_skip_logic):
+    version = 'v1.1.1'
+    language = 'English'
+    data = {
+        'Variable': [
+            'subjid',
+            'inclu_reason',
+        ],
+        'Form': [
+            'presentation',
+            'presentation',
+        ],
+        'Section': [
+            np.nan,
+            'INCLUSION CRITERIA',
+        ],
+        'Question': [
+            'Participant Identification Number (PIN)',
+            'Is the suspected or confirmed infection the reason for hospital admission?',
+        ],
+        'Answer Options': [
+            np.nan,
+            '1, Yes | 0, No | 99, Unknown',
+        ],
+        'Definition': [
+            'The Participant Identification Number or PIN.',
+            'Suspected infection with the pathogen of interest if the reason for the hospital admission.',
+        ],
+        'Completion Guideline': [
+            'Write the Participant Identification Number (PIN).',
+            'Indicate \'Yes\' if suspected or confirmed infection with the pathogen of interest.',
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    data_not_english = {
+        'Variable': [
+            'subjid',
+            'inclu_reason',
+        ],
+        'Form': [
+            'presentation_translated',
+            'presentation_translated',
+        ],
+        'Section': [
+            np.nan,
+            'INCLUSION CRITERIA TRANSLATED',
+        ],
+        'Question': [
+            'Participant Identification Number (PIN)',
+            'Is the suspected or confirmed infection the reason for hospital admission (translated)?',
+        ],
+        'Answer Options': [
+            np.nan,
+            '1, Joo | 0, Ei | 99, Jattipotti',
+        ],
+        'Definition': [
+            'Le Participant Identification Number or PIN.',
+            'Suspected infection with the pathogen of interest if the reason for the hospital admission (translated).',
+        ],
+        'Completion Guideline': [
+            'Kirjoita osallistujan tunnistenumero (PIN-koodi).',
+            'Indicate \'Yes\' if suspected or confirmed infection with the pathogen of interest (translated).',
+        ],
+    }
+    df_not_english = pd.DataFrame.from_dict(data_not_english)
+    branch_logic = '[Some branch logic]'
+
+    mock_arc.side_effect = [df_current_datadicc, df_not_english]
+    mock_skip_logic.return_value = branch_logic
+
+    df_extra_columns = pd.DataFrame.from_dict({
+        'Question_english': [
+            'Participant Identification Number (PIN)',
+            'Is the suspected or confirmed infection the reason for hospital admission?',
+        ],
+        'Branch': [
+            branch_logic,
+            branch_logic,
+        ],
+    })
+
+    df_expected = df_not_english.join(df_extra_columns)
+
+    df_output = arc.get_arc_translation(language,
+                                        version,
+                                        df_current_datadicc)
+
+    assert_frame_equal(df_output, df_expected)
+
+
+def test_extract_logic_components():
+    skip_logic_column = "[inclu_testreason]='88'"
+
+    variables_expected = ['inclu_testreason']
+    values_expected = ['88']
+    comparison_operators_expected = ['=']
+    logical_operators_expected = []
+
+    (variables_output,
+     values_output,
+     comparison_operators_output,
+     logical_operators_output) = arc._extract_logic_components(skip_logic_column)
+
+    assert variables_output == variables_expected
+    assert values_output == values_expected
+    assert comparison_operators_output == comparison_operators_expected
+    assert logical_operators_output == logical_operators_expected
+
+
+@mock.patch('bridge.arc.arc._extract_logic_components')
+def test_process_skip_logic(mock_extract):
+    mock_extract.return_value = (
+        ['inclu_testreason'],
+        ['88'],
+        ['='],
+        [],
+    )
+    data_series = {
+        'Skip Logic': ["[inclu_testreason]='88'"],
+    }
+    row = pd.Series(data_series)
+    data = {
+        'Variable': [
+            'inclu_testreason',
+        ],
+        'Question': [
+            'Reason why the patient was tested',
+        ],
+        'Answer Options': [
+            np.nan,
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    expected = '(Reason why the patient was tested = 88)  '
+
+    output = arc._process_skip_logic(row, df_current_datadicc)
+
+    assert output == expected
+
+
 @mock.patch('bridge.arc.arc.logger')
 @mock.patch('bridge.arc.arc.ArcApiClient.get_arc_version_list')
 def test_get_arc_versions(mock_get_versions,
@@ -1106,7 +1251,7 @@ def test_custom_alignment():
     })
     df_expected = df_datadicc.join(df_custom_aligment)
 
-    df_output = arc.custom_alignment(df_datadicc)
+    df_output = arc._custom_alignment(df_datadicc)
     assert_frame_equal(df_output, df_expected)
 
 
