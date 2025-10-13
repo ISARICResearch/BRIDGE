@@ -54,11 +54,23 @@ def on_generate_click(n_clicks: int,
 
     if not n_clicks:
         # Return empty or initial state if button hasn't been clicked
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )
 
     if not any(json.loads(json_data).values()):
         # Nothing ticked
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )
 
     trigger_id = get_trigger_id(ctx)
 
@@ -119,4 +131,10 @@ def on_generate_click(n_clicks: int,
         )
 
     else:
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )

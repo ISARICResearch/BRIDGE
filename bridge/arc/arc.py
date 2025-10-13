@@ -61,14 +61,14 @@ def _extract_logic_components(skip_logic_column: str) -> Tuple[list, list, list,
 
         raw_values = re.findall(r"[=!<>]=?\s*('[^']*'|\d+\.?\d*)", normalized_logic)
         values = []
-        for val in raw_values:
-            if val.startswith("'") and val.endswith("'"):
-                values.append(val.strip("'"))
+        for raw_value in raw_values:
+            if raw_value.startswith("'") and raw_value.endswith("'"):
+                values.append(raw_value.strip("'"))
             else:
-                if '.' in val:
-                    values.append(float(val))
+                if '.' in raw_value:
+                    values.append(float(raw_value))
                 else:
-                    values.append(int(val))
+                    values.append(int(raw_value))
 
         comparison_operators = re.findall(r"(<=|>=|<>|[=><!]=?)", normalized_logic)
 
@@ -209,30 +209,47 @@ def set_select_units(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     return df_datadicc
 
 
-def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
-    version = version.replace('ICC', 'ARC')
-    include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3', 'units',
-                        'add', 'vol', 'txt', 'calc']
+def get_tree_items(df_datadicc: pd.DataFrame,
+                   version: str) -> dict:
+    include_not_show = [
+        'otherl3', 'otherl2',
+        'route', 'route2',
+        'agent', 'agent2',
+        'warn', 'warn2', 'warn3',
+        'units',
+        'add', 'vol', 'txt', 'calc'
+    ]
 
-    if 'Dependencies' not in datadicc.columns:
-        dependencies = get_dependencies(datadicc)
-        datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
+    if 'Dependencies' not in df_datadicc.columns:
+        dependencies = get_dependencies(df_datadicc)
+        df_datadicc = pd.merge(df_datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
 
-    datadicc = add_required_datadicc_columns(datadicc)
+    df_datadicc = add_required_datadicc_columns(df_datadicc)
 
-    datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
-    datadicc = set_select_units(datadicc)
+    df_datadicc['select units'] = (
+        df_datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
+    df_datadicc = set_select_units(df_datadicc)
 
-    for_item = datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
-        ~datadicc['mod'].isin(include_not_show)]
-    for_item = for_item[for_item['Sec_name'].notna()]
+    df_for_item = df_datadicc[[
+        'Form',
+        'Sec_name',
+        'vari',
+        'mod',
+        'Question',
+        'Variable',
+        'Type',
+    ]].loc[~df_datadicc['mod'].isin(include_not_show)]
+    df_for_item = df_for_item[df_for_item['Sec_name'].notna()]
 
-    tree = {'title': version, 'key': 'ARC', 'children': []}
-    seen_forms = set()
-    seen_sections = {}
-    primary_question_keys = {}  # To keep track of primary question nodes
+    tree_dict = {
+        'title': version,
+        'key': 'ARC', 'children': [],
+    }
+    seen_forms_set = set()
+    seen_sections_dict = {}
+    primary_question_keys_dict = {}  # To keep track of primary question nodes
 
-    for index, row in for_item.iterrows():
+    for index, row in df_for_item.iterrows():
         form = row['Form'].upper()
         sec_name = row['Sec_name'].upper()
         vari = row['vari']
@@ -247,48 +264,61 @@ def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
         question_key = f"{variable_name}"
 
         # Add form node if not already added
-        if form not in seen_forms:
-            form_node = {'title': form, 'key': form, 'children': []}
-            tree['children'].append(form_node)
-            seen_forms.add(form)
-            seen_sections[form] = set()
+        if form not in seen_forms_set:
+            form_node_dict = {
+                'title': form,
+                'key': form, 'children': [],
+            }
+            tree_dict['children'].append(form_node_dict)
+            seen_forms_set.add(form)
+            seen_sections_dict[form] = set()
 
         # Add section node if not already added for this form
-        if sec_name not in seen_sections[form]:
-            sec_node = {'title': sec_name, 'key': f"{form}-{sec_name}", 'children': []}
-            for child in tree['children']:
-                if child['title'] == form:
-                    child['children'].append(sec_node)
+        if sec_name not in seen_sections_dict[form]:
+            sec_node_dict = {
+                'title': sec_name,
+                'key': f"{form}-{sec_name}", 'children': [],
+            }
+            for child_dict in tree_dict['children']:
+                if child_dict['title'] == form:
+                    child_dict['children'].append(sec_node_dict)
                     break
-            seen_sections[form].add(sec_name)
+            seen_sections_dict[form].add(sec_name)
 
         # Check if the question is a primary node or a child node
         if mod is None or pd.isna(mod):
             # Primary node
-            primary_question_node = {'title': question, 'key': question_key, 'children': []}
-            primary_question_keys[(form, vari)] = question_key
-            for form_child in tree['children']:
-                if form_child['title'] == form:
-                    for sec_child in form_child['children']:
-                        if sec_child['title'] == sec_name:
-                            sec_child['children'].append(primary_question_node)
+            primary_question_node_dict = {
+                'title': question,
+                'key': question_key,
+                'children': [],
+            }
+            primary_question_keys_dict[(form, vari)] = question_key
+            for form_child_dict in tree_dict['children']:
+                if form_child_dict['title'] == form:
+                    for sec_child_dict in form_child_dict['children']:
+                        if sec_child_dict['title'] == sec_name:
+                            sec_child_dict['children'].append(primary_question_node_dict)
                             break
         else:
             # Child node of a primary node
-            primary_key = primary_question_keys.get((form, vari))
+            primary_key = primary_question_keys_dict.get((form, vari))
             if primary_key:
-                question_node = {'title': question, 'key': question_key}
+                question_node_dict = {
+                    'title': question,
+                    'key': question_key,
+                }
                 # Find the correct primary question node to add this question
-                for form_child in tree['children']:
-                    if form_child['title'] == form:
-                        for sec_child in form_child['children']:
-                            if sec_child['title'] == sec_name:
-                                for primary_question in sec_child['children']:
-                                    if primary_question['key'] == primary_key:
-                                        primary_question['children'].append(question_node)
+                for form_child_dict in tree_dict['children']:
+                    if form_child_dict['title'] == form:
+                        for sec_child_dict in form_child_dict['children']:
+                            if sec_child_dict['title'] == sec_name:
+                                for primary_question_dict in sec_child_dict['children']:
+                                    if primary_question_dict['key'] == primary_key:
+                                        primary_question_dict['children'].append(question_node_dict)
                                         break
 
-    return tree
+    return tree_dict
 
 
 def extract_parenthesis_content(text: str) -> str:
@@ -380,9 +410,10 @@ def get_select_units(selected_variables: pd.Series,
 
     if len(select_unit_rows) > 0:
         df_icc_var_units_selected_rows = pd.DataFrame(select_unit_rows).reset_index(drop=True)
-        return df_icc_var_units_selected_rows, sorted(list(
-            set(delete_this_variables_with_units) - set(df_icc_var_units_selected_rows['Variable'])))
-    return None, None
+        return (df_icc_var_units_selected_rows,
+                sorted(list(set(delete_this_variables_with_units) - set(df_icc_var_units_selected_rows['Variable']))))
+    return (None,
+            None)
 
 
 def get_translations(language: str) -> dict:
@@ -464,11 +495,11 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
             list_choices = ''
             list_variable_choices_aux = []
 
-            for lo in df_list_options[df_list_options.columns[0]]:
-                cont_lo = set_cont_lo(df_list_options, lo)
+            for list_option in df_list_options[df_list_options.columns[0]]:
+                cont_lo = set_cont_lo(df_list_options, list_option)
                 try:
-                    list_variable_choices_aux.append([cont_lo, lo])
-                    list_choices += str(cont_lo) + ', ' + lo + ' | '
+                    list_variable_choices_aux.append([cont_lo, list_option])
+                    list_choices += str(cont_lo) + ', ' + list_option + ' | '
                 except Exception as e:
                     logger.error(e)
                     raise RuntimeError("Failed to determine list choices")

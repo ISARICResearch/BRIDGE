@@ -17,7 +17,7 @@ from bridge.utils.crf_name import get_crf_name
         (None, [[], [], ['Oropouche'], [], []], 'Oropouche'),
     ]
 )
-@mock.patch('bridge.callbacks.settings.logger')
+@mock.patch('bridge.utils.crf_name.logger')
 def test_get_crf_name(mock_logger,
                       name,
                       checked,

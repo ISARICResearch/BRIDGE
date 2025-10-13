@@ -141,14 +141,20 @@ def test_get_arc_translation(mock_arc,
     assert_frame_equal(df_output, df_expected)
 
 
-def test_extract_logic_components():
-    skip_logic_column = "[inclu_testreason]='88'"
-
-    variables_expected = ['inclu_testreason']
-    values_expected = ['88']
-    comparison_operators_expected = ['=']
-    logical_operators_expected = []
-
+@pytest.mark.parametrize(
+    "skip_logic_column, variables_expected, values_expected, comparison_operators_expected, logical_operators_expected",
+    [
+        ("[inclu_testreason]='88'", ['inclu_testreason'], ['88'], ['='], []),
+        ("[inclu_testreason]=88.0", ['inclu_testreason'], [88.0], ['='], []),
+        ("[inclu_testreason]=88", ['inclu_testreason'], [88], ['='], []),
+        (np.nan, [], [], [], []),
+    ]
+)
+def test_extract_logic_components(skip_logic_column,
+                                  variables_expected,
+                                  values_expected,
+                                  comparison_operators_expected,
+                                  logical_operators_expected):
     (variables_output,
      values_output,
      comparison_operators_output,
@@ -180,15 +186,70 @@ def test_process_skip_logic(mock_extract):
             'Reason why the patient was tested',
         ],
         'Answer Options': [
+            ' 1, Symptomatic | 2, Asymptomatic | 3, Not tested | 99, Unknown | 88, Other',
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+    expected = '(Reason why the patient was tested = Other)  '
+    output = arc._process_skip_logic(row, df_current_datadicc)
+    assert output == expected
+
+
+@mock.patch('bridge.arc.arc._extract_logic_components')
+def test_process_skip_logic_no_answers(mock_extract):
+    mock_extract.return_value = (
+        ['inclu_testreason'],
+        ['88'],
+        ['='],
+        [],
+    )
+    data_series = {
+        'Skip Logic': ["[inclu_testreason]='88'"],
+    }
+    row = pd.Series(data_series)
+    data = {
+        'Variable': [
+            'inclu_testreason',
+        ],
+        'Question': [
+            'Reason why the patient was tested',
+        ],
+        'Answer Options': [
             np.nan,
         ],
     }
     df_current_datadicc = pd.DataFrame.from_dict(data)
-
     expected = '(Reason why the patient was tested = 88)  '
-
     output = arc._process_skip_logic(row, df_current_datadicc)
+    assert output == expected
 
+
+@mock.patch('bridge.arc.arc._extract_logic_components')
+def test_process_skip_logic_index_error(mock_extract):
+    mock_extract.return_value = (
+        ['inclu_testreason_index_error'],
+        ['88'],
+        ['='],
+        [],
+    )
+    data_series = {
+        'Skip Logic': ["[inclu_testreason]='88'"],
+    }
+    row = pd.Series(data_series)
+    data = {
+        'Variable': [
+            'inclu_testreason',
+        ],
+        'Question': [
+            'Reason why the patient was tested',
+        ],
+        'Answer Options': [
+            np.nan,
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+    expected = 'Variable not found getARCTranslation'
+    output = arc._process_skip_logic(row, df_current_datadicc)
     assert output == expected
 
 
@@ -254,7 +315,7 @@ def test_get_arc(mock_sha,
             'Question for inclu_disease',
             'Question for inclu_testreason_otth',
         ],
-        'preset_ARChetype Disease CRF_Covid': [
+        'preset_ARChetype Disease CRF_Covid Adding_Some_Extra_Stuff': [
             1,
             1,
             0,
@@ -283,7 +344,7 @@ def test_get_arc(mock_sha,
     df_dependencies = pd.DataFrame.from_dict(data_dependencies)
     mock_dependencies.return_value = df_dependencies
 
-    data_expected = data = {
+    data_expected = {
         'Variable': [
             'subjid',
             'inclu_disease',
@@ -294,7 +355,7 @@ def test_get_arc(mock_sha,
             'Question for inclu_disease',
             'Question for inclu_testreason_otth',
         ],
-        'preset_ARChetype Disease CRF_Covid': [
+        'preset_ARChetype Disease CRF_Covid Adding_Some_Extra_Stuff': [
             1,
             1,
             0,
@@ -317,7 +378,7 @@ def test_get_arc(mock_sha,
     }
     df_expected = pd.DataFrame.from_dict(data_expected)
     preset_expected = [
-        ['ARChetype Disease CRF', 'Covid'],
+        ['ARChetype Disease CRF', 'Covid Adding Some Extra Stuff'],
         ['ARChetype Disease CRF', 'Dengue'],
     ]
 
@@ -337,15 +398,19 @@ def test_get_dependencies():
             'subjid',
             'inclu_consent_date',
             'readm_prev_site',
-            'treat_other',
-            'medi_units',
+            'treat_an',
+            'treat_another',
+            'medi_something',
+            'medi_somethingunits',
         ],
         'Skip Logic': [
             np.nan,
             "[inclu_consent]=\'1\'",
             "[readm_prev] = \'1\' or [readm_prev]=\'2\' or [readm_prev]=\'3\'",
             "[treat_dailydata]=\'1\'",
-            "[medi_treat]=\'1\'",
+            "[treat_dailydata]=\'1\'",
+            "[medi_treat()]=\'1\'",
+            "[medi_treat()]=\'1\'",
         ],
     }
     df_datadicc = pd.DataFrame.from_dict(data)
@@ -355,21 +420,27 @@ def test_get_dependencies():
             'subjid',
             'inclu_consent_date',
             'readm_prev_site',
-            'treat_other',
-            'medi_units',
+            'treat_an',
+            'treat_another',
+            'medi_something',
+            'medi_somethingunits',
         ],
         'Skip Logic': [
             np.nan,
             "[inclu_consent]=\'1\'",
             "[readm_prev] = \'1\' or [readm_prev]=\'2\' or [readm_prev]=\'3\'",
             "[treat_dailydata]=\'1\'",
-            "[medi_treat]=\'1\'",
+            "[treat_dailydata]=\'1\'",
+            "[medi_treat()]=\'1\'",
+            "[medi_treat()]=\'1\'",
         ],
         'Dependencies': [
             ['subjid'],
             ['inclu_consent', 'subjid'],
             ['readm_prev', 'readm_prev', 'readm_prev', 'subjid'],
+            ['treat_dailydata', 'subjid', 'treat_another'],
             ['treat_dailydata', 'subjid'],
+            ['medi_treat', 'subjid', 'medi_somethingunits'],
             ['medi_treat', 'subjid'],
         ],
     }
@@ -427,6 +498,146 @@ def test_set_select_units():
     df_expected = pd.DataFrame.from_dict(data_expected)
     df_output = arc.set_select_units(df_current_datadicc)
     assert_frame_equal(df_output, df_expected)
+
+
+@mock.patch('bridge.arc.arc.set_select_units')
+@mock.patch('bridge.arc.arc.add_required_datadicc_columns')
+@mock.patch('bridge.arc.arc.get_dependencies')
+def test_get_tree_items(mock_dependencies,
+                        mock_required_columns,
+                        mock_set_units):
+    data = {
+        'Form': [
+            'presentation',
+            'presentation',
+            'presentation',
+            'presentation',
+            'presentation',
+            'presentation',
+        ],
+        'Variable': [
+            'inclu_disease',
+            'demog_age_units',
+            'demog_height',
+            'pres_firstsym',
+            'inclu_testreason',
+            'inclu_testreason_otth',
+        ],
+        'Type': [
+            'user_list',
+            np.nan,
+            np.nan,
+            'multi_list',
+            'radio',
+            'text',
+        ],
+        'Question': [
+            'Suspected or confirmed infection',
+            'Age units',
+            'Height (select units)',
+            'Symptom(s) during first 24 hours of illness (select all that apply)',
+            'Reason why the patient was tested',
+            'Specify other reason',
+        ],
+        'vari': [
+            'disease',
+            'age',
+            'height',
+            'firstsym',
+            'testreason',
+            'testreason',
+        ],
+        'mod': [
+            np.nan,
+            'units',
+            np.nan,
+            None,
+            None,
+            'otth',
+        ],
+        'Sec_name': [
+            'INCLUSION CRITERIA',
+            'DEMOGRAPHICS',
+            'DEMOGRAPHICS',
+            'ONSET & PRESENTATION',
+            'INCLUSION CRITERIA',
+            'INCLUSION CRITERIA',
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+
+    df_dependencies = pd.DataFrame.from_dict({
+        'Variable': [
+            'inclu_disease',
+            'demog_age_units',
+            'demog_height',
+            'pres_firstsym',
+            'inclu_testreason',
+            'inclu_testreason_otth',
+        ],
+        'Dependencies': [
+            ['subjid'],
+            ['demog_birthknow', 'subjid'],
+            ['subjid'],
+            ['subjid'],
+            ['subjid'],
+            ['subjid'],
+        ],
+    })
+
+    version = 'v1.1.1'
+
+    # These extra columns aren't used
+    mock_dependencies.return_value = df_dependencies
+    mock_required_columns.return_value = df_datadicc
+    mock_set_units.return_value = df_datadicc
+
+    expected = {'children': [{
+        'children': [{
+            'children': [{
+                'children': [],
+                'key': 'inclu_disease',
+                'title': '↳ Suspected or confirmed infection',
+            },
+                {
+                    'children': [{
+                        'key': 'inclu_testreason_otth',
+                        'title': 'Specify other reason',
+                    }],
+                    'key': 'inclu_testreason',
+                    'title': 'Reason why the patient was tested',
+                }],
+            'key': 'PRESENTATION-INCLUSION CRITERIA',
+            'title': 'INCLUSION CRITERIA'},
+            {
+                'children': [{
+                    'children': [],
+                    'key': 'demog_height',
+                    'title': 'Height (select units)',
+                }],
+                'key': 'PRESENTATION-DEMOGRAPHICS',
+                'title': 'DEMOGRAPHICS'},
+            {
+                'children': [{
+                    'children': [],
+                    'key': 'pres_firstsym',
+                    'title': '⇉ Symptom(s) during first '
+                             '24 hours of illness (select all that apply)',
+                }],
+                'key': 'PRESENTATION-ONSET & PRESENTATION',
+                'title': 'ONSET & PRESENTATION',
+            }],
+        'key': 'PRESENTATION',
+        'title': 'PRESENTATION',
+    }],
+        'key': 'ARC',
+        'title': 'v1.1.1',
+    }
+
+    output = arc.get_tree_items(df_datadicc,
+                                version)
+
+    assert output == expected
 
 
 def test_extract_parenthesis_content():
@@ -640,7 +851,7 @@ def translation_dict():
 def test_get_list_content(mock_get_translations,
                           mock_list,
                           translation_dict):
-    data = {
+    data_list = {
         'Condition': [
             'Asplenia',
             'Dementia',
@@ -648,9 +859,8 @@ def test_get_list_content(mock_get_translations,
             'Leukemia',
             'Obesity',
         ],
-
     }
-    df_mock_list = pd.DataFrame(data)
+    df_mock_list = pd.DataFrame(data_list)
 
     mock_get_translations.return_value = translation_dict
     mock_list.return_value = df_mock_list
@@ -849,6 +1059,35 @@ def test_get_list_content(mock_get_translations,
     assert list_output == list_expected
 
 
+@mock.patch('bridge.arc.arc.get_translations')
+def test_get_list_content_no_list(mock_get_translations,
+                                  translation_dict):
+    mock_get_translations.return_value = translation_dict
+
+    version = 'v1.1.1'
+    language = 'English'
+    data = {
+        'Variable': [
+            'comor_unlisted',
+        ],
+        'Type': [
+            'list',
+        ],
+        'List': [
+            None,
+        ],
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    (df_output,
+     list_output) = arc.get_list_content(df_current_datadicc,
+                                         version,
+                                         language)
+
+    assert df_output.empty
+    assert not list_output
+
+
 def test_set_cont_lo():
     data = {
         'Condition': [
@@ -989,7 +1228,6 @@ def test_get_list_data(mock_get_translations,
         'vari': [
             'disease',
         ],
-
     }
     df_current_datadicc = pd.DataFrame.from_dict(data)
 
@@ -1039,6 +1277,37 @@ def test_get_list_data(mock_get_translations,
     assert list_choices_output == list_choices_expected
     assert_series_equal(all_rows_output[0], all_rows_expected[0])
     assert_series_equal(all_rows_output[1], all_rows_expected[1])
+
+
+@mock.patch('bridge.arc.arc.get_translations')
+def test_get_list_data_no_list(mock_get_translations,
+                               translation_dict):
+    mock_get_translations.return_value = translation_dict
+
+    version = 'v1.1.1'
+    language = 'English'
+    list_type = 'user_list'
+    data = {
+        'Variable': [
+            'inclu_disease',
+        ],
+        'Type': [
+            'user_list',
+        ],
+        'List': [
+            None,
+        ],  #
+    }
+    df_current_datadicc = pd.DataFrame.from_dict(data)
+
+    (list_choices_output,
+     all_rows_output) = arc.get_list_data(df_current_datadicc,
+                                          version,
+                                          language,
+                                          list_type)
+
+    assert not list_choices_output
+    assert not all_rows_output
 
 
 @pytest.fixture()
