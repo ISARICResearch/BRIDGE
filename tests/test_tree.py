@@ -66,7 +66,7 @@ def df_mock_list():
     return df_mock_list
 
 
-@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.modals.arc_translations.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.tree.ArcApiClient.get_dataframe_arc_list_version_language', return_value=[])
 def test_update_for_template_options_ulist_checked_otherl2(mock_list,
                                                            mock_get_translations,
@@ -119,7 +119,7 @@ def test_update_for_template_options_ulist_checked_otherl2(mock_list,
     assert multilist_output == multilist_expected
 
 
-@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.modals.arc_translations.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.tree.ArcApiClient.get_dataframe_arc_list_version_language', return_value=[])
 def test_update_for_template_options_multilist_selected(mock_list,
                                                         mock_get_translations,
@@ -193,7 +193,7 @@ def df_mock_list_multilist():
     return df_mock_list
 
 
-@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.modals.arc_translations.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.tree.ArcApiClient.get_dataframe_arc_list_version_language', return_value=[])
 def test_update_for_template_options_ulist_multilist(mock_list,
                                                      mock_get_translations,
@@ -307,7 +307,7 @@ def test_update_tree_items_and_stores_upload_crf_ready():
 
 )
 @mock.patch('bridge.callbacks.tree.html.Div', return_value=['Just for checking'])
-@mock.patch('bridge.callbacks.tree.arc.get_tree_items')
+@mock.patch('bridge.callbacks.tree.arc_tree.get_tree_items')
 def test_update_tree_items_and_stores_no_update(mock_get_tree_items,
                                                 mock_html_div,
                                                 trigger,
@@ -345,7 +345,7 @@ def test_update_tree_items_and_stores_no_update(mock_get_tree_items,
 @mock.patch('bridge.callbacks.tree.get_checked_template_list', return_value=[['ARChetype Disease CRF', 'Covid']])
 @mock.patch('bridge.callbacks.tree.logger')
 @mock.patch('bridge.callbacks.tree.html.Div', return_value=['Just for checking'])
-@mock.patch('bridge.callbacks.tree.arc.get_tree_items')
+@mock.patch('bridge.callbacks.tree.arc_tree.get_tree_items')
 def test_update_tree_items_and_stores(mock_get_tree_items,
                                       mock_html_div,
                                       mock_logger,

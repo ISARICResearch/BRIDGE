@@ -12,7 +12,7 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-from bridge.arc.arc import ArcApiClient
+from bridge.arc.arc_core import ArcApiClient
 from bridge.generate_pdf.form import generate_form
 from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_header_footer

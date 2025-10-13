@@ -3,7 +3,7 @@ import json
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from bridge.arc import arc
+from bridge.arc import arc_core, arc_lists, arc_translations
 
 
 class Language:
@@ -16,7 +16,7 @@ class Language:
 
     def get_dataframe_arc_language(self,
                                    df_version: pd.DataFrame) -> pd.DataFrame:
-        df_version_language = arc.get_arc_translation(
+        df_version_language = arc_translations.get_arc_translation(
             self.selected_language,
             self.selected_version,
             df_version
@@ -24,32 +24,32 @@ class Language:
         return df_version_language
 
     def get_version_language_related_data(self):
-        df_version, presets, commit = arc.get_arc(self.selected_version)
-        df_version = arc.add_required_datadicc_columns(df_version)
+        df_version, presets, commit = arc_core.get_arc(self.selected_version)
+        df_version = arc_core.add_required_datadicc_columns(df_version)
         df_version_language = self.get_dataframe_arc_language(df_version)
 
-        df_arc_lists, list_variable_choices = arc.get_list_content(df_version_language,
-                                                                   self.selected_version,
-                                                                   self.selected_language)
-        df_version_language = arc.add_transformed_rows(df_version_language,
-                                                       df_arc_lists,
-                                                       arc.get_variable_order(df_version_language))
+        df_arc_lists, list_variable_choices = arc_lists.get_list_content(df_version_language,
+                                                                         self.selected_version,
+                                                                         self.selected_language)
+        df_version_language = arc_core.add_transformed_rows(df_version_language,
+                                                            df_arc_lists,
+                                                            arc_core.get_variable_order(df_version_language))
 
-        df_ulist, ulist_variable_choices = arc.get_user_list_content(df_version_language,
-                                                                     self.selected_version,
-                                                                     self.selected_language)
+        df_ulist, ulist_variable_choices = arc_lists.get_user_list_content(df_version_language,
+                                                                           self.selected_version,
+                                                                           self.selected_language)
 
-        df_version_language = arc.add_transformed_rows(df_version_language,
-                                                       df_ulist,
-                                                       arc.get_variable_order(df_version_language))
+        df_version_language = arc_core.add_transformed_rows(df_version_language,
+                                                            df_ulist,
+                                                            arc_core.get_variable_order(df_version_language))
 
-        df_multilist, multilist_variable_choices = arc.get_multi_list_content(df_version_language,
-                                                                              self.selected_version,
-                                                                              self.selected_language)
+        df_multilist, multilist_variable_choices = arc_lists.get_multi_list_content(df_version_language,
+                                                                                    self.selected_version,
+                                                                                    self.selected_language)
 
-        df_version_language = arc.add_transformed_rows(df_version_language,
-                                                       df_multilist,
-                                                       arc.get_variable_order(df_version_language))
+        df_version_language = arc_core.add_transformed_rows(df_version_language,
+                                                            df_multilist,
+                                                            arc_core.get_variable_order(df_version_language))
 
         grouped_presets = {}
         for section, preset_name in presets:

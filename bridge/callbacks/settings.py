@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.arc.arc_api import ArcApiClient
 from bridge.callbacks.language import Language
 from bridge.logging.logger import setup_logger
@@ -123,7 +123,7 @@ def store_data_for_selected_version_language(n_clicks_version: int,
     selected_language = None
 
     if button_type == 'dynamic-version':
-        arc_version_list, _arc_version_latest = arc.get_arc_versions()
+        arc_version_list, _arc_version_latest = arc_core.get_arc_versions()
         selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return (dash.no_update,

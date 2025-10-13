@@ -9,7 +9,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_translations, arc_tree
 from bridge.callbacks.language import Language
 from bridge.logging.logger import setup_logger
 
@@ -145,7 +145,7 @@ def update_for_upload_list_selected(df_datadicc: pd.DataFrame(),
                                     variable_choices: str,
                                     list_type: str,
                                     language: str) -> Tuple[pd.DataFrame, str]:
-    translations_for_language = arc.get_translations(language)
+    translations_for_language = arc_translations.get_translations(language)
     other_text = translations_for_language['other']
 
     selected_column = f'{list_type} Selected'
@@ -227,7 +227,7 @@ def update_output_upload_crf(upload_crf_ready: bool,
     checked = list(df_upload_csv['Variable'])
 
     df_version_lang_datadicc = pd.read_json(io.StringIO(upload_version_lang_datadicc_saved), orient='split')
-    tree_items_current_datadicc = arc.get_tree_items(df_version_lang_datadicc, upload_version)
+    tree_items_current_datadicc = arc_tree.get_tree_items(df_version_lang_datadicc, upload_version)
 
     tree_items = html.Div(
         dash_treeview_antd.TreeView(

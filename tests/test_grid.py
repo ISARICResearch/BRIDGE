@@ -31,10 +31,10 @@ def test_display_checked_in_grid_checked_empty():
     assert output_variables_json == expected_variables_json
 
 
-@mock.patch('bridge.callbacks.grid.arc.get_variable_order')
-@mock.patch('bridge.callbacks.grid.arc.add_transformed_rows')
-@mock.patch('bridge.callbacks.grid.arc.get_select_units')
-@mock.patch('bridge.callbacks.grid.arc.get_include_not_show')
+@mock.patch('bridge.callbacks.grid.arc_core.get_variable_order')
+@mock.patch('bridge.callbacks.grid.arc_core.add_transformed_rows')
+@mock.patch('bridge.callbacks.grid.arc_core.get_select_units')
+@mock.patch('bridge.callbacks.grid.arc_core.get_include_not_show')
 def test_display_checked_in_grid(mock_include_not_show,
                                  mock_select_units,
                                  mock_add_transformed_rows,

@@ -5,7 +5,7 @@ import dash
 import pandas as pd
 from dash import Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.generate_pdf import form
 
 
@@ -43,14 +43,14 @@ def display_checked_in_grid(checked: list,
         df_selected_variables = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(all_selected)]
 
         ## REDCAP Pipeline
-        df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
+        df_selected_variables = arc_core.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
 
         # Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units = arc.get_select_units(
+        arc_var_units_selected, delete_this_variables_with_units = arc_core.get_select_units(
             df_selected_variables['Variable'], df_current_datadicc)
         if arc_var_units_selected is not None:
-            df_selected_variables = arc.add_transformed_rows(df_selected_variables, arc_var_units_selected,
-                                                             arc.get_variable_order(df_current_datadicc))
+            df_selected_variables = arc_core.add_transformed_rows(df_selected_variables, arc_var_units_selected,
+                                                                  arc_core.get_variable_order(df_current_datadicc))
             if len(delete_this_variables_with_units) > 0:
                 # This remove all the unit variables that were included in a select unit type question
                 df_selected_variables = df_selected_variables.loc[

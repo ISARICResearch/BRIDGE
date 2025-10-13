@@ -6,7 +6,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient
 from bridge.logging.logger import setup_logger
 
@@ -49,10 +49,10 @@ def update_tree_items_and_stores(checked_variables: list,
     ctx = dash.callback_context
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
-    current_version = selected_version_data.get('selected_version', None)
-    current_language = selected_language_data.get('selected_language', None)
+    current_version = selected_version_data.get('selected_version')
+    current_language = selected_language_data.get('selected_language')
 
-    tree_items_data = arc.get_tree_items(df_current_datadicc, current_version)
+    tree_items_data = arc_tree.get_tree_items(df_current_datadicc, current_version)
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
         tree_items = html.Div(
@@ -132,7 +132,7 @@ def update_for_template_options(version: str,
                                 ulist_variable_choices: list,
                                 multilist_variable_choices: list,
                                 checked_key: str = None):
-    translations_for_language = arc.get_translations(language)
+    translations_for_language = arc_translations.get_translations(language)
     other_text = translations_for_language['other']
 
     df_datadicc_u_multilists = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]

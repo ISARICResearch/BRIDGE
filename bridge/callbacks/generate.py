@@ -9,7 +9,7 @@ import pandas as pd
 from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.generate_pdf import paper_crf
 from bridge.utils.crf_name import get_crf_name
 from bridge.utils.trigger_id import get_trigger_id
@@ -82,7 +82,7 @@ def on_generate_click(n_clicks: int,
         current_version = selected_version_data.get('selected_version', None)
         language = selected_language_data.get('selected_language', None)
 
-        df_crf = arc.generate_crf(selected_variables_from_data)
+        df_crf = arc_core.generate_crf(selected_variables_from_data)
         pdf_crf = paper_crf.generate_pdf(df_crf, current_version, crf_name, language)
         pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
 

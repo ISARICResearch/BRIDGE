@@ -168,7 +168,7 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
          (False,
           '{"columns":["Form","Variable"],"index":[0,1],"data":[["presentation","inclu_disease"],["presentation","inclu_disease"]]}',
           '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
-         '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
           ['Just for checking'])),
         ('[["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]]]',
          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
@@ -180,9 +180,9 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
     ]
 )
 @mock.patch('bridge.callbacks.modals.html.Div', return_value=['Just for checking'])
-@mock.patch('bridge.callbacks.modals.arc.get_tree_items')
+@mock.patch('bridge.callbacks.modals.arc_tree.get_tree_items')
 @mock.patch('bridge.callbacks.modals.determine_list_variable_choices')
-@mock.patch('bridge.callbacks.modals.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.modals.arc_translations.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='modal_submit')
 def test_on_modal_button_click_modal_submit(mock_trigger_id,
                                             mock_get_translations,

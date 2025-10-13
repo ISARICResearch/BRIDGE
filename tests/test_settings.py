@@ -170,7 +170,7 @@ def mock_language_data_return_value():
     ]
 )
 @mock.patch('bridge.callbacks.settings.Language.get_version_language_related_data')
-@mock.patch('bridge.callbacks.settings.arc.get_arc_versions',
+@mock.patch('bridge.callbacks.settings.arc_core.get_arc_versions',
             return_value=(['v1.1.0', 'v1.1.1', 'v1.1.2'], 'v1.1.2'))
 @mock.patch('bridge.callbacks.settings.get_trigger_id', return_value='{"index":0,"type":"dynamic-version"}')
 @mock.patch('bridge.callbacks.settings.logger')
@@ -218,7 +218,7 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
     ]
 )
 @mock.patch('bridge.callbacks.settings.Language.get_version_language_related_data')
-@mock.patch('bridge.callbacks.settings.arc.get_arc_versions',
+@mock.patch('bridge.callbacks.settings.arc_core.get_arc_versions',
             return_value=(['v1.1.0', 'v1.1.1', 'v1.1.2'], 'v1.1.2'))
 @mock.patch('bridge.callbacks.settings.get_trigger_id', return_value='{"index":1,"type":"dynamic-language"}')
 @mock.patch('bridge.callbacks.settings.logger')
