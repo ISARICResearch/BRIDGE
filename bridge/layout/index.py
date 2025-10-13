@@ -185,9 +185,17 @@ class Index:
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
+
+
                         dbc.Col([
                             html.Div([
                                 html.Img(src=f"{self.logos_dir}/VERDI_Logo.jpg", className="img-fluid",
+                                         style={"height": "100px"})
+                            ], className="d-flex justify-content-center")
+                        ], width="auto"),
+                        dbc.Col([
+                            html.Div([
+                                html.Img(src=f"{self.logos_dir}/UCL_logo.png", className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto")
