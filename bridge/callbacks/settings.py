@@ -2,6 +2,7 @@ import json
 
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
 from dash import Input, Output, State
 
 from bridge.arc import arc_core
@@ -46,7 +47,7 @@ def update_language_available_for_version(selected_version_data: dict):
     if not selected_version_data:
         return dash.no_update, dash.no_update
 
-    current_version = selected_version_data.get('selected_version', None)
+    current_version = selected_version_data.get('selected_version')
     arc_languages = ArcApiClient().get_arc_language_list_version(current_version)
     arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
                           i, language in enumerate(arc_languages)]
@@ -85,13 +86,18 @@ def update_output_files_store(checked_values: list) -> list:
     ],
     prevent_initial_call=True
 )
-def store_data_for_selected_version_language(n_clicks_version: int,
-                                             n_clicks_language: int,
+def store_data_for_selected_version_language(n_clicks_version: list,
+                                             n_clicks_language: list,
                                              upload_crf_ready: bool,
                                              selected_version_data: dict,
                                              selected_language_data: dict,
                                              language_list_data: list):
-    if upload_crf_ready:
+    n_clicks_version_not_none = [click for click in n_clicks_version if pd.notnull(click)]
+    n_clicks_language_not_none = [click for click in n_clicks_language if pd.notnull(click)]
+
+    if (not n_clicks_version_not_none and not n_clicks_language_not_none) or upload_crf_ready:
+        # Initial load: update not needed
+        # CRF upload: does this in another callback
         return (dash.no_update,
                 dash.no_update,
                 dash.no_update,

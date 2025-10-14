@@ -96,10 +96,10 @@ def test_update_language_available_for_version(mock_language_list,
 @pytest.mark.parametrize(
     "trigger, clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
     [
-        (None, None, None, True, None, None, [],
+        (None, [None, None, None], [None, None], True, None, None, [],
          (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
           dash.no_update, dash.no_update, dash.no_update)),
-        (None, None, None, False, None, None, [],
+        (None, [None, 1, None, None], [None, None], False, None, None, [],
          (dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,
           False, dash.no_update, dash.no_update)),
     ]
@@ -143,7 +143,12 @@ def mock_language_data_return_value():
 @pytest.mark.parametrize(
     "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
     [
-        (None, None, False, {'selected_version': 'v1.1.1'}, {'selected_language': 'French'}, ['English', 'French'],
+        ([None, 1, None, None],
+         [None, None, None],
+         False,
+         {'selected_version': 'v1.1.1'},
+         {'selected_language': 'French'},
+         ['English', 'French'],
          (
                  {'selected_version': 'v1.1.0'},  # trigger index = 0
                  {'selected_language': 'English'},
@@ -157,7 +162,12 @@ def mock_language_data_return_value():
                  ['version', 'ulist', 'variable', 'choices'],
                  ['version', 'multilist', 'variable', 'choices']
          )),
-        (None, None, False, {'selected_version': 'v1.1.0'}, {'selected_language': 'English'}, ['English', 'French'],
+        ([None, 1, None, None],
+         [None, None, None],
+         False,
+         {'selected_version': 'v1.1.0'},
+         {'selected_language': 'English'},
+         ['English', 'French'],
          (dash.no_update,
           dash.no_update,
           dash.no_update,
@@ -201,7 +211,12 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
 @pytest.mark.parametrize(
     "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
     [
-        (None, None, False, {'selected_version': 'v1.1.1'}, {'selected_language': 'English'}, ['English', 'French'],
+        ([None, None, None, None],
+         [None, None, 1],
+         False,
+         {'selected_version': 'v1.1.1'},
+         {'selected_language': 'English'},
+         ['English', 'French'],
          (
                  {'selected_version': 'v1.1.1'},
                  {'selected_language': 'French'},  # trigger index = 1
