@@ -34,7 +34,7 @@ logger = setup_logger(__name__)
     ],
     prevent_initial_call=True
 )
-def update_tree_items_and_stores(checked_variables: list,
+def update_tree_items_and_stores(checked_templates: list,
                                  upload_crf_ready: bool,
                                  current_datadicc_saved: str,
                                  grouped_presets_dict: dict,
@@ -54,7 +54,7 @@ def update_tree_items_and_stores(checked_variables: list,
 
     tree_items_data = arc_tree.get_tree_items(df_current_datadicc, current_version)
 
-    if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
+    if (not ctx.triggered) | (all(not sublist for sublist in checked_templates)):
         tree_items = html.Div(
             dash_treeview_antd.TreeView(
                 id='input',
@@ -71,9 +71,9 @@ def update_tree_items_and_stores(checked_variables: list,
                 dash.no_update,
                 dash.no_update)
 
-    logger.info(f'checked_variables: {checked_variables}')
+    logger.info(f'checked_variables: {checked_templates}')
     logger.info(f'grouped_presets: {grouped_presets_dict}')
-    checked_template_list = get_checked_template_list(grouped_presets_dict, checked_variables)
+    checked_template_list = get_checked_template_list(grouped_presets_dict, checked_templates)
 
     checked = []
     ulist_variable_choices = []

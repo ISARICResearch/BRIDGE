@@ -2,7 +2,6 @@ from os import getenv
 
 import pandas as pd
 import requests
-from requests import Response
 from requests.exceptions import RequestException
 
 from bridge.logging.logger import setup_logger
@@ -17,7 +16,7 @@ class ArcApiClientError(Exception):
 
 
 class ArcApiClient:
-    
+
     def __init__(self) -> None:
         self.base_url_api: str = 'https://api.github.com/repos/ISARICResearch'
         self.base_url_raw_content: str = 'https://raw.githubusercontent.com/ISARICResearch'
