@@ -13,20 +13,15 @@ def test_display_checked_in_grid_checked_empty():
                               '"index":[0, 1],'
                               '"data":[["presentation", "inclu_disease"]]}')
 
-    (output_column_defs,
-     output_row_defs,
+    (output_row_defs,
      output_variables_json) = get_output_display_checked_in_grid(checked,
                                                                  current_datadicc_saved)
-
-    expected_column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                            {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
     expected_row_defs = [{'options': '', 'question': ''},
                          {'options': '', 'question': ''}]
 
     expected_variables_json = '{"columns":[],"index":[],"data":[]}'
 
-    assert output_column_defs == expected_column_defs
     assert output_row_defs == expected_row_defs
     assert output_variables_json == expected_variables_json
 
@@ -92,13 +87,9 @@ def test_display_checked_in_grid(mock_include_not_show,
     mock_include_not_show.return_value = df_selected_variables
     mock_select_units.return_value = (None, None)
 
-    (output_column_defs,
-     output_row_defs,
+    (output_row_defs,
      output_variables_json) = get_output_display_checked_in_grid(checked,
                                                                  current_datadicc_saved)
-
-    expected_column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                            {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
     expected_row_defs = [{'Answer Options': '',
                           'Form': np.nan,
@@ -173,7 +164,6 @@ def test_display_checked_in_grid(mock_include_not_show,
         '["presentation","INCLUSION CRITERIA","inclu_disease_otherl3","text","Specify other Suspected infection","",""],'
         '["presentation","ONSET & PRESENTATION","pres_onsetdate","date_dmy","Onset date of earliest symptom","","date_dmy"]]}')
 
-    assert output_column_defs == expected_column_defs
     assert output_row_defs == expected_row_defs
     assert output_variables_json == expected_variables_json
 

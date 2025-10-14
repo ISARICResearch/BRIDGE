@@ -5,7 +5,7 @@ import pytest
 
 from bridge.callbacks import sidebar
 
-ASSETS_DIR = '../../../assets'
+ASSETS_DIR = '../../assets'
 ICONS_DIR = f'{ASSETS_DIR}/icons'
 SETTINGS_ON = f"{ICONS_DIR}/settings_on.png"
 SETTINGS_OFF = f"{ICONS_DIR}/settings_off.png"
