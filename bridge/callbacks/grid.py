@@ -11,7 +11,6 @@ from bridge.generate_pdf import form
 
 @dash.callback(
     [
-        Output('CRF_representation_grid', 'columnDefs'),
         Output('CRF_representation_grid', 'rowData'),
         Output('selected_data-store', 'data')
     ],
@@ -23,11 +22,8 @@ from bridge.generate_pdf import form
     ],
     prevent_initial_call=True)
 def display_checked_in_grid(checked: list,
-                            current_datadicc_saved: str) -> Tuple[list, list, str]:
+                            current_datadicc_saved: str) -> Tuple[list, str]:
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-
-    column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                   {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
 
     row_data = [{'question': "", 'options': ""},
                 {'question': "", 'options': ""}]
@@ -98,7 +94,4 @@ def display_checked_in_grid(checked: list,
         # Convert to dictionary for row_data
         row_data = selected_variables_for_table_visualization.to_dict(orient='records')
 
-        column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                       {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
-
-    return column_defs, row_data, df_selected_variables.to_json(date_format='iso', orient='split')
+    return row_data, df_selected_variables.to_json(date_format='iso', orient='split')
