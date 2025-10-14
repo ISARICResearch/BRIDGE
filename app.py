@@ -106,7 +106,7 @@ def main_app():
                 Tree(TREE_ITEMS_DATA).tree_column,
                 MainContent().main_content,
             ],
-            delay_show=1200,
+            delay_show=1400,
         ),
     ])
 
