@@ -115,7 +115,7 @@ class ArcApiClient:
         return df
 
     def get_arc_language_list_version(self,
-                                      version: str) -> list:
+                                      version: str | None) -> list:
         url = '/'.join([self.base_url_api, 'ARC-Translations', 'contents', self.get_arch_version_string(version)])
         language_json = self._get_api_response(url)
         df = pd.DataFrame.from_dict(language_json)

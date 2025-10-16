@@ -82,7 +82,7 @@ def update_tree_items_and_stores(checked_templates: list,
     if len(checked_template_list) > 0:
         for ps in checked_template_list:
             checked_key = 'preset_' + ps[0] + '_' + ps[1]
-            if checked_key in df_current_datadicc:
+            if checked_key in df_current_datadicc.columns:
                 checked = checked + list(
                     df_current_datadicc['Variable'].loc[df_current_datadicc[checked_key].notnull()])
 

@@ -109,7 +109,7 @@ def _process_skip_logic(row: pd.Series,
     return "  ".join(branch)
 
 
-def get_translations(language: str) -> dict:
+def get_translations(language: str | None) -> dict:
     translations = {
         'English': {
             'select': 'Select',

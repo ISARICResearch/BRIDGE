@@ -10,9 +10,11 @@ class Language:
 
     def __init__(self,
                  selected_version: str,
-                 selected_language: str):
+                 selected_language: str,
+                 initial_load: bool):
         self.selected_version = selected_version
         self.selected_language = selected_language
+        self.initial_load = initial_load
 
     def get_dataframe_arc_language(self,
                                    df_version: pd.DataFrame) -> pd.DataFrame:
@@ -26,7 +28,11 @@ class Language:
     def get_version_language_related_data(self):
         df_version, presets, commit = arc_core.get_arc(self.selected_version)
         df_version = arc_core.add_required_datadicc_columns(df_version)
-        df_version_language = self.get_dataframe_arc_language(df_version)
+
+        if not self.initial_load:
+            df_version_language = self.get_dataframe_arc_language(df_version)
+        else:
+            df_version_language = df_version.copy()
 
         df_arc_lists, list_variable_choices = arc_lists.get_list_content(df_version_language,
                                                                          self.selected_version,

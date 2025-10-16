@@ -38,8 +38,8 @@ def display_selected_in_modal(selected: list,
                               ulist_variable_choices_saved: str,
                               multilist_variable_choices_saved: str,
                               is_open: bool,
-                              current_datadicc_saved: str) -> (
-        Tuple)[bool, str, str, str, str, dict, dict, list, list, list]:
+                              current_datadicc_saved: str) -> Tuple[
+    bool, str, str, str, str, dict, dict, list, list, list]:
     if selected:
         ulist = json.loads(ulist_variable_choices_saved)
         multilist = json.loads(multilist_variable_choices_saved)

@@ -47,7 +47,7 @@ def update_language_available_for_version(selected_version_data: dict):
     if not selected_version_data:
         return dash.no_update, dash.no_update
 
-    current_version = selected_version_data.get('selected_version')
+    current_version = selected_version_data.get('selected_version', None)
     arc_languages = ArcApiClient().get_arc_language_list_version(current_version)
     arc_language_items = [dbc.DropdownMenuItem(language, id={"type": "dynamic-language", "index": i}) for
                           i, language in enumerate(arc_languages)]
@@ -81,7 +81,6 @@ def update_output_files_store(checked_values: list) -> list:
     ],
     [
         State('selected-version-store', 'data'),
-        State('selected-language-store', 'data'),
         State('language-list-store', 'data'),
     ],
     prevent_initial_call=True
@@ -90,14 +89,9 @@ def store_data_for_selected_version_language(n_clicks_version: list,
                                              n_clicks_language: list,
                                              upload_crf_ready: bool,
                                              selected_version_data: dict,
-                                             selected_language_data: dict,
                                              language_list_data: list):
-    n_clicks_version_not_none = [click for click in n_clicks_version if pd.notnull(click)]
-    n_clicks_language_not_none = [click for click in n_clicks_language if pd.notnull(click)]
-
-    if (not n_clicks_version_not_none and not n_clicks_language_not_none) or upload_crf_ready:
-        # Initial load: update not needed
-        # CRF upload: does this in another callback
+    if upload_crf_ready:
+        # CRF upload updates in a different callback
         return (dash.no_update,
                 dash.no_update,
                 dash.no_update,
@@ -124,6 +118,9 @@ def store_data_for_selected_version_language(n_clicks_version: list,
     trigger_id = get_trigger_id(ctx)
     button_index = json.loads(trigger_id)["index"]
     button_type = json.loads(trigger_id)["type"]
+
+    initial_load = determine_initial_load_boolean(n_clicks_version,
+                                                  n_clicks_language)
 
     selected_version = None
     selected_language = None
@@ -156,7 +153,9 @@ def store_data_for_selected_version_language(n_clicks_version: list,
             version_accordion_items,
             version_ulist_variable_choices,
             version_multilist_variable_choices
-        ) = Language(selected_version, selected_language).get_version_language_related_data()
+        ) = Language(selected_version,
+                     selected_language,
+                     initial_load).get_version_language_related_data()
         logger.info(f'selected_version: {selected_version}')
         logger.info(f'selected_language: {selected_language}')
         logger.info(f'version_presets: {version_presets}')
@@ -182,3 +181,13 @@ def store_data_for_selected_version_language(n_clicks_version: list,
                 False,
                 dash.no_update,
                 dash.no_update)
+
+
+def determine_initial_load_boolean(n_clicks_version,
+                                   n_clicks_language):
+    initial_load = True
+    n_clicks_version_not_none = [click for click in n_clicks_version if pd.notnull(click)]
+    n_clicks_language_not_none = [click for click in n_clicks_language if pd.notnull(click)]
+    if n_clicks_version_not_none and n_clicks_language_not_none:
+        initial_load = False
+    return initial_load

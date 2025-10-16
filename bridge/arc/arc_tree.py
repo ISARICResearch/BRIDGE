@@ -4,7 +4,7 @@ from bridge.arc import arc_core
 
 
 def get_tree_items(df_datadicc: pd.DataFrame,
-                   version: str) -> dict:
+                   version: str | None) -> dict:
     include_not_show = [
         'otherl3', 'otherl2',
         'route', 'route2',
