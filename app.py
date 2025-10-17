@@ -72,6 +72,27 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+app.clientside_callback(
+    """async  (rowIndex) => {
+        if (rowIndex) {
+            const gridApi =  await dash_ag_grid.getApiAsync("CRF_representation_grid")
+
+            var firstCol = gridApi.getAllDisplayedColumns()[0];
+            var rowsEmpty = gridApi.isRowDataEmpty();
+            
+            if (! rowsEmpty) {
+                var rowNode = gridApi.getDisplayedRowAtIndex(rowIndex);
+                gridApi.ensureNodeVisible(rowNode)
+                gridApi.flashCells({ rowNodes: [rowNode] });
+            }
+        }
+        return dash_clientside.no_update
+    }""",
+    Output('hidden-div', 'id'),
+    Input('focused-cell-index', 'data'),
+    prevent_initial_call=True
+)
+
 
 @app.callback(Output('page-content', 'children'),
               Input('url', 'pathname'))
@@ -106,7 +127,7 @@ def main_app():
                 Tree(TREE_ITEMS_DATA).tree_column,
                 MainContent().main_content,
             ],
-            delay_show=1400,
+            delay_show=1500,
         ),
     ])
 

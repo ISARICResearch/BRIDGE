@@ -11,22 +11,24 @@ from bridge.generate_pdf import form
 
 @dash.callback(
     [
-        Output('CRF_representation_grid', 'rowData'),
-        Output('selected_data-store', 'data')
+        Output('CRF_representation_grid', 'rowData', allow_duplicate=True),
+        Output('selected_data-store', 'data'),
+        Output('focused-cell-index', 'data'),
     ],
     [
         Input('input', 'checked'),
     ],
     [
         State('current_datadicc-store', 'data'),
+        State('focused-cell-index', 'data'),
     ],
     prevent_initial_call=True)
 def display_checked_in_grid(checked: list,
-                            current_datadicc_saved: str) -> Tuple[list, str]:
+                            current_datadicc_saved: str,
+                            focused_cell_index: int) -> Tuple[list, str, int]:
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
-    row_data = [{'question': "", 'options': ""},
-                {'question': "", 'options': ""}]
+    row_data = []
 
     df_selected_variables = pd.DataFrame()
     if checked:
@@ -61,14 +63,14 @@ def display_checked_in_grid(checked: list,
                 new_rows.append(
                     {'Question': f"{row['Form'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'form'})
-                last_form = row['Form']
+                last_form = str(row['Form'])
 
             # Add section separator
             if row['Section'] != last_section and row['Section'] != '':
                 new_rows.append(
                     {'Question': f"{row['Section'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'section'})
-                last_section = row['Section']
+                last_section = str(row['Section'])
 
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
@@ -94,4 +96,28 @@ def display_checked_in_grid(checked: list,
         # Convert to dictionary for row_data
         row_data = selected_variables_for_table_visualization.to_dict(orient='records')
 
-    return row_data, df_selected_variables.to_json(date_format='iso', orient='split')
+    focused_cell_index = get_focused_cell_index(row_data,
+                                                focused_cell_index,
+                                                checked)
+    return (row_data,
+            df_selected_variables.to_json(date_format='iso', orient='split'),
+            focused_cell_index)
+
+
+def get_focused_cell_index(row_data,
+                           focused_cell_index,
+                           checked):
+    if checked:
+        df_row = pd.DataFrame(row_data)
+
+        latest_checked_variable = checked[-1]
+        while (latest_checked_variable.isupper()
+               or latest_checked_variable not in df_row['Variable'].values):
+            # Exclude headers and fields not in data (e.g. units)
+            checked.pop()
+            latest_checked_variable = checked[-1]
+
+        df_variable = df_row[df_row['Variable'] == latest_checked_variable]
+        focused_cell_index = df_variable.index[0]
+
+    return focused_cell_index

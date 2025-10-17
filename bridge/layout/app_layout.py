@@ -64,7 +64,8 @@ class MainContent:
                             width=7
                         )
                     ]
-                )
+                ),
+                html.Div(id="hidden-div", style={"display": "none"}),
             ],
             fluid=True,
             style={
@@ -112,8 +113,8 @@ class MainContent:
                 dcc.Store(id='upload-language-store'),
                 dcc.Store(id='upload-crf-ready', data=False),
                 dcc.Store(id="browser-info-store"),
-
                 dcc.Interval(id="interval-browser", interval=500, n_intervals=0, max_intervals=1),
+                dcc.Store(id='focused-cell-index'),
             ]
         )
         return app_layout
