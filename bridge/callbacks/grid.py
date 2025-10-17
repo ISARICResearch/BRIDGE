@@ -126,18 +126,29 @@ def get_focused_cell_index(row_data,
             latest_checked_variable = checked[-1]
 
         df_row_data_variable = df_row_data[df_row_data['Variable'] == latest_checked_variable]
+        section_name = df_row_data_variable['Section'].values[0]
+        df_row_data_section = df_row_data[df_row_data['Section'] == section_name]
 
         uppercase_variable_list = []
         for item in checked:
             if item.isupper():
                 uppercase_variable_list.append(item)
 
-        if uppercase_variable_list:
+        if len(df_row_data_section) == 1:
+            # Section checked, then a variable in a different section => highlight the variable
+            focused_cell_index = df_row_data_variable.index.tolist()[0]
+
+        elif uppercase_variable_list:
             # One or more section headers have been checked
             if 'ARC' in uppercase_variable_list:
                 # Everything checked => pick first
                 uppercase_variable_list.remove('ARC')
                 section_header = uppercase_variable_list[0]
+                section_question_list = [question for question in df_row_data['Question'].values if
+                                         question.isupper()]
+                if section_header not in section_question_list:
+                    # Subsection, then all
+                    section_header = uppercase_variable_list[1]
 
             else:
                 first_header = uppercase_variable_list[0]
