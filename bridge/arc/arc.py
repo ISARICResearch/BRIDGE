@@ -202,85 +202,99 @@ def set_select_units(datadicc: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
-    version = version.replace('ICC', 'ARC')
-    include_not_show = ['otherl3', 'otherl2', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3', 'units',
-                        'add', 'vol', 'txt', 'calc']
+    
 
-    if 'Dependencies' not in datadicc.columns:
-        dependencies = get_dependencies(datadicc)
-        datadicc = pd.merge(datadicc, dependencies[['Variable', 'Dependencies']], on='Variable')
+    include_not_show = ['otherl3','otherl2','route','route2','agent','agent2',
+                        'warn','warn2','warn3','units','add','vol','txt','calc']
 
-    datadicc = add_required_datadicc_columns(datadicc)
+    # -------- NEW: compute counts BEFORE filtering what to show --------
+    base_for_counts = datadicc[['Form', 'Sec_name', 'vari']].copy()
+    group_counts_total = (
+        base_for_counts
+        .groupby(['Form', 'Sec_name', 'vari'], dropna=False)
+        .size()
+        .rename('n_in_vari_total')
+        .reset_index()
+    )
+    # -------------------------------------------------------------------
 
-    datadicc['select units'] = (datadicc['Question'].str.contains('(select units)', case=False, na=False, regex=False))
-    datadicc = set_select_units(datadicc)
+    # Filter rows used for display in the tree
+    for_item = datadicc[['Form','Sec_name','vari','mod','Question','Variable','Type']].loc[
+        ~datadicc['mod'].isin(include_not_show)
+    ]
+    for_item = for_item[for_item['Sec_name'].notna()].copy()
+    for_item['_row_order'] = range(len(for_item))
 
-    for_item = datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
-        ~datadicc['mod'].isin(include_not_show)]
-    for_item = for_item[for_item['Sec_name'].notna()]
+    # First-question per (Form, Sec_name, vari) based on display rows (keeps UI consistent)
+    idx_first = (
+        for_item.sort_values('_row_order')
+                .groupby(['Form','Sec_name','vari'], dropna=False, as_index=False)
+                .nth(0)[['Form','Sec_name','vari','Question','Variable']]
+                .rename(columns={'Question':'first_question','Variable':'first_variable'})
+                .reset_index(drop=True)
+    )
 
-    tree = {'title': version, 'key': 'ARC', 'children': []}
-    seen_forms = set()
-    seen_sections = {}
-    primary_question_keys = {}  # To keep track of primary question nodes
+    # Merge both: total counts (unfiltered) + first-question (display)
+    for_item = (for_item
+                .merge(group_counts_total, on=['Form','Sec_name','vari'], how='left')
+                .merge(idx_first, on=['Form','Sec_name','vari'], how='left'))
 
-    for index, row in for_item.iterrows():
-        form = row['Form'].upper()
-        sec_name = row['Sec_name'].upper()
-        vari = row['vari']
-        mod = row['mod']
+    # helper prefix (same as before)
+    def _qtitle(row):
         if row['Type'] == 'user_list':
-            question = '↳ ' + row['Question']
+            return '↳ ' + row['Question']
         elif row['Type'] == 'multi_list':
-            question = '⇉ ' + row['Question']
-        else:
-            question = row['Question']
-        variable_name = row['Variable']
-        question_key = f"{variable_name}"
+            return '⇉ ' + row['Question']
+        return row['Question']
 
-        # Add form node if not already added
-        if form not in seen_forms:
-            form_node = {'title': form, 'key': form, 'children': []}
-            tree['children'].append(form_node)
-            seen_forms.add(form)
-            seen_sections[form] = set()
+    tree = {'title': version.replace('ICC','ARC'), 'key':'ARC', 'children': []}
+    seen_forms, seen_sections = set(), {}
 
-        # Add section node if not already added for this form
-        if sec_name not in seen_sections[form]:
-            sec_node = {'title': sec_name, 'key': f"{form}-{sec_name}", 'children': []}
+    # Build tree
+    for (form, sec_name), sec_df in for_item.groupby(['Form','Sec_name'], dropna=False, sort=False):
+        FORM = str(form).upper()
+        SEC = str(sec_name).upper()
+
+        if FORM not in seen_forms:
+            tree['children'].append({'title': FORM, 'key': FORM, 'children': []})
+            seen_forms.add(FORM)
+            seen_sections[FORM] = set()
+        if SEC not in seen_sections[FORM]:
             for child in tree['children']:
-                if child['title'] == form:
-                    child['children'].append(sec_node)
+                if child['title'] == FORM:
+                    child['children'].append({'title': SEC, 'key': f'{FORM}-{SEC}', 'children': []})
                     break
-            seen_sections[form].add(sec_name)
+            seen_sections[FORM].add(SEC)
 
-        # Check if the question is a primary node or a child node
-        if mod is None or pd.isna(mod):
-            # Primary node
-            primary_question_node = {'title': question, 'key': question_key, 'children': []}
-            primary_question_keys[(form, vari)] = question_key
-            for form_child in tree['children']:
-                if form_child['title'] == form:
-                    for sec_child in form_child['children']:
-                        if sec_child['title'] == sec_name:
-                            sec_child['children'].append(primary_question_node)
-                            break
-        else:
-            # Child node of a primary node
-            primary_key = primary_question_keys.get((form, vari))
-            if primary_key:
-                question_node = {'title': question, 'key': question_key}
-                # Find the correct primary question node to add this question
-                for form_child in tree['children']:
-                    if form_child['title'] == form:
-                        for sec_child in form_child['children']:
-                            if sec_child['title'] == sec_name:
-                                for primary_question in sec_child['children']:
-                                    if primary_question['key'] == primary_key:
-                                        primary_question['children'].append(question_node)
-                                        break
+        # find section node
+        section_node = None
+        for child in tree['children']:
+            if child['title'] == FORM:
+                for sec_child in child['children']:
+                    if sec_child['title'] == SEC:
+                        section_node = sec_child
+                        break
+
+        sec_df = sec_df.sort_values('_row_order')
+        for vari, vari_df in sec_df.groupby('vari', dropna=False, sort=False):
+            n_total = int(vari_df['n_in_vari_total'].iloc[0] if pd.notna(vari_df['n_in_vari_total'].iloc[0]) else 0)
+
+            if n_total >= 3:
+                parent_title = vari_df['first_question'].iloc[0]
+                parent_key = f"{FORM}-{SEC}-VARI-{vari}-GROUP"
+                parent_node = {'title': parent_title+' (Group)', 'key': parent_key, 'children': []}
+                section_node['children'].append(parent_node)
+
+                # Add only the filtered/display rows as children
+                for _, r in vari_df.iterrows():
+                    parent_node['children'].append({'title': _qtitle(r), 'key': f"{r['Variable']}"})
+            else:
+                for _, r in vari_df.iterrows():
+                    section_node['children'].append({'title': _qtitle(r), 'key': f"{r['Variable']}"})
 
     return tree
+
+
 
 
 def extract_parenthesis_content(text: str) -> str:
@@ -289,8 +303,8 @@ def extract_parenthesis_content(text: str) -> str:
 
 
 def get_include_not_show(selected_variables: pd.Series, current_datadicc: pd.DataFrame) -> pd.DataFrame:
-    include_not_show = ['otherl2', 'otherl3', 'route', 'route2', 'site', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
-                        'units', 'add', 'type', 'vol', 'site', '0item', '0otherl2',
+    include_not_show = ['otherl2', 'otherl3', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
+                        'units', 'add', 'vol', '0item', '0otherl2',
                         '0addi', '1item', '1otherl2', '1addi', '2item', '2otherl2', '2addi', '3item', '3otherl2',
                         '3addi',
                         '4item', '4otherl2', '4addi', 'txt']

@@ -71,10 +71,6 @@ def on_generate_click(n_clicks: int,
         language = selected_language_data.get('selected_language', None)
         
         df = arc.generate_crf(selected_variables_from_data)
-        df=pd.read_csv('C:/Users/sduquevallejo/OneDrive - Nexus365/CRF SARA/RVF/RVF CRF Recruitment_DataDictionary_2025-10-16.csv')
-        crf_name='Fièvre de la vallée du Rift'
-        language='French'
-
         pdf_crf = paper_crf.generate_pdf(df, current_version, crf_name, language)
         pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
 
