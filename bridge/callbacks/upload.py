@@ -140,8 +140,8 @@ def load_upload_arc_version_language(upload_version_data: str,
                 dash.no_update)
 
 
-def update_for_upload_list_selected(df_datadicc: pd.DataFrame(),
-                                    df_list_upload: pd.DataFrame(),
+def update_for_upload_list_selected(df_datadicc: pd.DataFrame,
+                                    df_list_upload: pd.DataFrame,
                                     variable_choices: str,
                                     list_type: str,
                                     language: str) -> Tuple[pd.DataFrame, str]:

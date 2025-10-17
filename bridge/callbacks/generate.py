@@ -79,12 +79,12 @@ def on_generate_click(n_clicks: int,
         crf_name = get_crf_name(crf_name, checked_presets)
 
         selected_variables_from_data = pd.read_json(io.StringIO(json_data), orient='split')
-        current_version = selected_version_data.get('selected_version', None)
-        language = selected_language_data.get('selected_language', None)
+        version = selected_version_data.get('selected_version')
+        language = selected_language_data.get('selected_language')
 
         df_crf = arc_core.generate_crf(selected_variables_from_data)
-        pdf_crf = paper_crf.generate_pdf(df_crf, current_version, crf_name, language)
-        pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
+        pdf_crf = paper_crf.generate_pdf(df_crf, version, crf_name, language)
+        pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, version, crf_name)
 
         # CSV
         csv_buffer = io.BytesIO()

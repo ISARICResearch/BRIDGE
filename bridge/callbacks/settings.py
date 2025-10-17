@@ -185,9 +185,9 @@ def store_data_for_selected_version_language(n_clicks_version: list,
 
 def determine_initial_load_boolean(n_clicks_version,
                                    n_clicks_language):
-    initial_load = True
-    n_clicks_version_not_none = [click for click in n_clicks_version if pd.notnull(click)]
-    n_clicks_language_not_none = [click for click in n_clicks_language if pd.notnull(click)]
-    if n_clicks_version_not_none and n_clicks_language_not_none:
-        initial_load = False
+    initial_load = False
+    n_clicks_version_unique_values = [click for click in n_clicks_version if pd.notnull(click)]
+    n_clicks_language_unique_values = [click for click in n_clicks_language if pd.notnull(click)]
+    if not n_clicks_version_unique_values and not n_clicks_language_unique_values:
+        initial_load = True
     return initial_load

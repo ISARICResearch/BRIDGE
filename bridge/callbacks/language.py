@@ -11,7 +11,7 @@ class Language:
     def __init__(self,
                  selected_version: str,
                  selected_language: str,
-                 initial_load: bool):
+                 initial_load: bool = False):
         self.selected_version = selected_version
         self.selected_language = selected_language
         self.initial_load = initial_load
