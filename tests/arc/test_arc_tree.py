@@ -98,44 +98,44 @@ def test_get_tree_items(mock_dependencies,
     mock_required_columns.return_value = df_datadicc
     mock_set_units.return_value = df_datadicc
 
-    expected = {'children': [{
-        'children': [{
-            'children': [{
-                'children': [],
-                'key': 'inclu_disease',
-                'title': '↳ Suspected or confirmed infection',
-            },
-                {
-                    'children': [{
+    expected = {'children':
+        [{'children':
+            [{'children':
+                [{
+                    'key': 'inclu_disease',
+                    'title': '↳ Suspected or confirmed '
+                             'infection',
+                },
+                    {
+                        'key': 'inclu_testreason',
+                        'title': 'Reason why the patient '
+                                 'was tested',
+                    },
+                    {
                         'key': 'inclu_testreason_otth',
                         'title': 'Specify other reason',
                     }],
-                    'key': 'inclu_testreason',
-                    'title': 'Reason why the patient was tested',
+                'key': 'PRESENTATION-INCLUSION CRITERIA',
+                'title': 'INCLUSION CRITERIA'},
+                {'children':
+                    [{
+                        'children': [],
+                        'key': 'demog_height',
+                        'title': 'Height (select units)'
+                    }],
+                    'key': 'PRESENTATION-DEMOGRAPHICS',
+                    'title': 'DEMOGRAPHICS'},
+                {'children':
+                    [{
+                        'key': 'pres_firstsym',
+                        'title': '⇉ Symptom(s) during first 24 hours of illness (select all that apply)'
+                    }],
+                    'key': 'PRESENTATION-ONSET & PRESENTATION',
+                    'title': 'ONSET & PRESENTATION',
                 }],
-            'key': 'PRESENTATION-INCLUSION CRITERIA',
-            'title': 'INCLUSION CRITERIA'},
-            {
-                'children': [{
-                    'children': [],
-                    'key': 'demog_height',
-                    'title': 'Height (select units)',
-                }],
-                'key': 'PRESENTATION-DEMOGRAPHICS',
-                'title': 'DEMOGRAPHICS'},
-            {
-                'children': [{
-                    'children': [],
-                    'key': 'pres_firstsym',
-                    'title': '⇉ Symptom(s) during first '
-                             '24 hours of illness (select all that apply)',
-                }],
-                'key': 'PRESENTATION-ONSET & PRESENTATION',
-                'title': 'ONSET & PRESENTATION',
-            }],
-        'key': 'PRESENTATION',
-        'title': 'PRESENTATION',
-    }],
+            'key': 'PRESENTATION',
+            'title': 'PRESENTATION',
+        }],
         'key': 'ARC',
         'title': 'v1.1.1',
     }

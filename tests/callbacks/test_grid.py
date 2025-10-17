@@ -6,6 +6,8 @@ import pandas as pd
 
 from bridge.callbacks import grid
 
+FOCUSED_CELL_INDEX = 0
+
 
 def test_display_checked_in_grid_checked_empty():
     checked = []
@@ -14,12 +16,13 @@ def test_display_checked_in_grid_checked_empty():
                               '"data":[["presentation", "inclu_disease"]]}')
 
     (output_row_defs,
-     output_variables_json) = get_output_display_checked_in_grid(checked,
-                                                                 current_datadicc_saved)
+     output_variables_json,
+     focused_cell_run_callback,
+     focused_cell_index) = get_output_display_checked_in_grid(checked,
+                                                              current_datadicc_saved,
+                                                              FOCUSED_CELL_INDEX)
 
-    expected_row_defs = [{'options': '', 'question': ''},
-                         {'options': '', 'question': ''}]
-
+    expected_row_defs = []
     expected_variables_json = '{"columns":[],"index":[],"data":[]}'
 
     assert output_row_defs == expected_row_defs
@@ -88,8 +91,11 @@ def test_display_checked_in_grid(mock_include_not_show,
     mock_select_units.return_value = (None, None)
 
     (output_row_defs,
-     output_variables_json) = get_output_display_checked_in_grid(checked,
-                                                                 current_datadicc_saved)
+     output_variables_json,
+     focused_cell_run_callback,
+     focused_cell_index) = get_output_display_checked_in_grid(checked,
+                                                              current_datadicc_saved,
+                                                              FOCUSED_CELL_INDEX)
 
     expected_row_defs = [{'Answer Options': '',
                           'Form': np.nan,
@@ -169,17 +175,21 @@ def test_display_checked_in_grid(mock_include_not_show,
 
 
 def get_output_display_checked_in_grid(checked_variables,
-                                       current_datadicc):
+                                       current_datadicc,
+                                       focused_cell):
     def run_callback(checked,
-                     current_datadicc_saved):
+                     current_datadicc_saved,
+                     focused_cell_index):
         return grid.display_checked_in_grid(checked,
-                                            current_datadicc_saved)
+                                            current_datadicc_saved,
+                                            focused_cell_index)
 
     ctx = copy_context()
     output = ctx.run(
         run_callback,
         checked_variables,
         current_datadicc,
+        focused_cell,
     )
 
     return output

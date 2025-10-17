@@ -117,7 +117,6 @@ def test_store_data_for_selected_version_language_no_action(trigger,
                                                                  clicks_language,
                                                                  crf_ready,
                                                                  selected_version,
-                                                                 selected_language,
                                                                  language_list)
     assert output == expected_output
 
@@ -203,7 +202,6 @@ def test_store_data_for_selected_version_language_dynamic_version(mock_logger,
                                                                  clicks_language,
                                                                  crf_ready,
                                                                  selected_version,
-                                                                 selected_language,
                                                                  language_list)
     assert output == expected_output
 
@@ -256,7 +254,6 @@ def test_store_data_for_selected_version_language_dynamic_language(mock_logger,
                                                                  clicks_language,
                                                                  crf_ready,
                                                                  selected_version,
-                                                                 selected_language,
                                                                  language_list)
     assert output == expected_output
 
@@ -266,20 +263,17 @@ def get_output_store_data_for_selected_version_language(trigger,
                                                         clicks_language,
                                                         crf_ready,
                                                         selected_version,
-                                                        selected_language,
                                                         language_list):
     def run_callback(n_clicks_version,
                      n_clicks_language,
                      upload_crf_ready,
                      selected_version_data,
-                     selected_language_data,
                      language_list_data):
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
         return settings.store_data_for_selected_version_language(n_clicks_version,
                                                                  n_clicks_language,
                                                                  upload_crf_ready,
                                                                  selected_version_data,
-                                                                 selected_language_data,
                                                                  language_list_data)
 
     ctx = copy_context()
@@ -289,7 +283,6 @@ def get_output_store_data_for_selected_version_language(trigger,
         clicks_language,
         crf_ready,
         selected_version,
-        selected_language,
         language_list
     )
 
