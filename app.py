@@ -2,11 +2,11 @@ import json
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html, Input, Output
+from dash import dcc, html, Input, Output, State
 
+import bridge.callbacks  # noqa
 from bridge.arc import arc_core, arc_lists, arc_tree
 from bridge.arc.arc_api import ArcApiClient
-import bridge.callbacks
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
@@ -73,23 +73,26 @@ app.clientside_callback(
 )
 
 app.clientside_callback(
-    """async  (rowIndex) => {
-        if (rowIndex) {
+    """async  (runCallback, rowIndex) => {
+        if (runCallback) {
             const gridApi =  await dash_ag_grid.getApiAsync("CRF_representation_grid")
 
             var firstCol = gridApi.getAllDisplayedColumns()[0];
             var rowsEmpty = gridApi.isRowDataEmpty();
-            
+                
             if (! rowsEmpty) {
                 var rowNode = gridApi.getDisplayedRowAtIndex(rowIndex);
                 gridApi.ensureNodeVisible(rowNode)
                 gridApi.flashCells({ rowNodes: [rowNode] });
             }
         }
-        return dash_clientside.no_update
+        return false
     }""",
-    Output('hidden-div', 'id'),
-    Input('focused-cell-index', 'data'),
+    Output('focused-cell-index', 'data', allow_duplicate=True),
+    [
+        Input('focused-cell-run-callback', 'data'),
+    ],
+    State('focused-cell-index', 'data'),
     prevent_initial_call=True
 )
 

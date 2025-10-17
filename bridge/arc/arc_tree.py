@@ -25,14 +25,22 @@ def get_tree_items(datadicc: pd.DataFrame,
     )
 
     # Filter rows used for display in the tree
-    df_for_item = datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
+    df_for_item = datadicc[[
+        'Form',
+        'Sec_name',
+        'vari',
+        'mod',
+        'Question',
+        'Variable',
+        'Type',
+    ]].loc[
         ~datadicc['mod'].isin(include_not_show)
     ]
     df_for_item = df_for_item[df_for_item['Sec_name'].notna()].copy()
     df_for_item['_row_order'] = range(len(df_for_item))
 
     # First-question per (Form, Sec_name, vari) based on display rows (keeps UI consistent)
-    idx_first = (
+    df_idx_first = (
         df_for_item.sort_values('_row_order')
         .groupby(['Form', 'Sec_name', 'vari'], dropna=False, as_index=False)
         .nth(0)[['Form', 'Sec_name', 'vari', 'Question', 'Variable']]
@@ -43,11 +51,12 @@ def get_tree_items(datadicc: pd.DataFrame,
     # Merge both: total counts (unfiltered) + first-question (display)
     df_for_item = (df_for_item
                    .merge(group_counts_total, on=['Form', 'Sec_name', 'vari'], how='left')
-                   .merge(idx_first, on=['Form', 'Sec_name', 'vari'], how='left'))
+                   .merge(df_idx_first, on=['Form', 'Sec_name', 'vari'], how='left'))
 
     tree = {
         'title': version.replace('ICC', 'ARC'),
-        'key': 'ARC', 'children': [],
+        'key': 'ARC',
+        'children': [],
     }
     seen_forms, seen_sections = set(), {}
 
