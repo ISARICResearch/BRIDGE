@@ -39,7 +39,7 @@ def test_on_upload_crf_exception(mock_logger):
         upload.on_upload_crf('template_English_2025-09-16.csv', None)
 
 
-@mock.patch('bridge.callbacks.upload.arc.get_translations', return_value={'other': 'Other'})
+@mock.patch('bridge.callbacks.upload.arc_translations.get_translations', return_value={'other': 'Other'})
 def test_update_for_upload_list_selected(mock_get_translations):
     data = {
         'Form': ['presentation', 'presentation'],
@@ -235,7 +235,7 @@ def test_update_output_upload_crf_not_triggered():
 
 @mock.patch('bridge.callbacks.upload.html.Div', return_value=['Just for checking'])
 @mock.patch('bridge.callbacks.upload.update_for_upload_list_selected')
-@mock.patch('bridge.callbacks.upload.arc.get_tree_items')
+@mock.patch('bridge.callbacks.upload.arc_tree.get_tree_items')
 def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_list, mock_html_div):
     data = {
         'Form': ['here is some mock output'],

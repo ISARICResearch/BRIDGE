@@ -37,8 +37,8 @@ def on_save_click(n_clicks: int,
                   selected_version_data: dict,
                   selected_language_data: dict,
                   crf_name: str,
-                  ulist_variable_choices_saved: list,
-                  multilist_variable_choices_saved: list):
+                  ulist_variable_choices_saved: str,
+                  multilist_variable_choices_saved: str):
     ctx = dash.callback_context
 
     if not n_clicks or not checked_variables:
@@ -49,8 +49,8 @@ def on_save_click(n_clicks: int,
     if trigger_id == 'crf_save':
         crf_name = get_crf_name(crf_name, [])
 
-        current_version = selected_version_data.get('selected_version', None)
-        current_language = selected_language_data.get('selected_language', None)
+        current_version = selected_version_data.get('selected_version')
+        current_language = selected_language_data.get('selected_language')
         date = datetime.today().strftime('%Y-%m-%d')
         # Naming convention expected when uploading
         version_string = current_version.replace('.', '_')

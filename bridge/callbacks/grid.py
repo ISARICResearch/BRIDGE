@@ -5,32 +5,31 @@ import dash
 import pandas as pd
 from dash import Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.generate_pdf import form
 
 
 @dash.callback(
     [
-        Output('CRF_representation_grid', 'columnDefs'),
-        Output('CRF_representation_grid', 'rowData'),
-        Output('selected_data-store', 'data')
+        Output('CRF_representation_grid', 'rowData', allow_duplicate=True),
+        Output('selected_data-store', 'data'),
+        Output('focused-cell-run-callback', 'data', allow_duplicate=True),
+        Output('focused-cell-index', 'data'),
     ],
     [
         Input('input', 'checked'),
     ],
     [
         State('current_datadicc-store', 'data'),
+        State('focused-cell-index', 'data'),
     ],
     prevent_initial_call=True)
 def display_checked_in_grid(checked: list,
-                            current_datadicc_saved: str) -> Tuple[list, list, str]:
+                            current_datadicc_saved: str,
+                            focused_cell_index: int) -> Tuple[list, str, bool, int]:
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
-    column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                   {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
-
-    row_data = [{'question': "", 'options': ""},
-                {'question': "", 'options': ""}]
+    row_data = []
 
     df_selected_variables = pd.DataFrame()
     if checked:
@@ -43,20 +42,18 @@ def display_checked_in_grid(checked: list,
         df_selected_variables = df_current_datadicc.loc[df_current_datadicc['Variable'].isin(all_selected)]
 
         ## REDCAP Pipeline
-        df_selected_variables = arc.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
+        df_selected_variables = arc_core.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
 
         # Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units = arc.get_select_units(
+        arc_var_units_selected, delete_this_variables_with_units = arc_core.get_select_units(
             df_selected_variables['Variable'], df_current_datadicc)
         if arc_var_units_selected is not None:
-            df_selected_variables = arc.add_transformed_rows(df_selected_variables, arc_var_units_selected,
-                                                             arc.get_variable_order(df_current_datadicc))
+            df_selected_variables = arc_core.add_transformed_rows(df_selected_variables, arc_var_units_selected,
+                                                                  arc_core.get_variable_order(df_current_datadicc))
             if len(delete_this_variables_with_units) > 0:
                 # This remove all the unit variables that were included in a select unit type question
                 df_selected_variables = df_selected_variables.loc[
                     ~df_selected_variables['Variable'].isin(delete_this_variables_with_units)]
-
-        df_selected_variables = arc.generate_daily_data_type(df_selected_variables)
 
         last_form, last_section = None, None
         new_rows = []
@@ -67,14 +64,14 @@ def display_checked_in_grid(checked: list,
                 new_rows.append(
                     {'Question': f"{row['Form'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'form'})
-                last_form = row['Form']
+                last_form = str(row['Form'])
 
             # Add section separator
             if row['Section'] != last_section and row['Section'] != '':
                 new_rows.append(
                     {'Question': f"{row['Section'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'section'})
-                last_section = row['Section']
+                last_section = str(row['Section'])
 
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
@@ -93,14 +90,99 @@ def display_checked_in_grid(checked: list,
             new_row['IsSeparator'] = False
             new_rows.append(new_row)
 
-        # Update df_selected_variables with new rows including separators
+        # Update selected variables with new rows including separators
         selected_variables_for_table_visualization = pd.DataFrame(new_rows)
         selected_variables_for_table_visualization = selected_variables_for_table_visualization.loc[
             selected_variables_for_table_visualization['Type'] != 'group']
         # Convert to dictionary for row_data
         row_data = selected_variables_for_table_visualization.to_dict(orient='records')
 
-        column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                       {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
+    focused_cell_index = get_focused_cell_index(row_data,
+                                                focused_cell_index,
+                                                checked)
 
-    return column_defs, row_data, df_selected_variables.to_json(date_format='iso', orient='split')
+    focused_cell_run_callback = False
+    if type(focused_cell_index) is int:
+        focused_cell_run_callback = True
+
+    return (row_data,
+            df_selected_variables.to_json(date_format='iso', orient='split'),
+            focused_cell_run_callback,
+            focused_cell_index)
+
+
+def get_focused_cell_index(row_data,
+                           focused_cell_index,
+                           checked):
+    if checked:
+        df_row_data = pd.DataFrame(row_data)
+        df_row_data['Question'] = df_row_data['Question'].str.split(':').str[0]
+
+        latest_checked_variable = checked[-1]
+        while (latest_checked_variable.isupper()
+               or latest_checked_variable not in df_row_data['Variable'].values):
+            # Exclude headers and fields not in data (e.g. units)
+            checked.pop()
+            latest_checked_variable = checked[-1]
+
+        df_row_data_variable = df_row_data[df_row_data['Variable'] == latest_checked_variable]
+        section_name = df_row_data_variable['Section'].values[0]
+        df_row_data_section = df_row_data[df_row_data['Section'] == section_name]
+
+        uppercase_variable_list = []
+        for item in checked:
+            if item.isupper():
+                uppercase_variable_list.append(item)
+
+        if len(df_row_data_section) == 1:
+            # Section checked, then a variable in a different section => highlight the variable
+            focused_cell_index = df_row_data_variable.index.tolist()[0]
+
+        elif uppercase_variable_list:
+            # One or more section headers have been checked
+            if 'ARC' in uppercase_variable_list:
+                # Everything checked => pick first
+                uppercase_variable_list.remove('ARC')
+                section_header = uppercase_variable_list[0]
+                section_question_list = [question for question in df_row_data['Question'].values if
+                                         question.isupper()]
+                if section_header not in section_question_list:
+                    # Subsection, then all
+                    section_header = uppercase_variable_list[1]
+
+            else:
+                first_header = uppercase_variable_list[0]
+                section_list = [item for item in uppercase_variable_list if '-' not in item]
+
+                if all([item.startswith(first_header) for item in uppercase_variable_list]) and section_list:
+                    # All sections checked => pick first
+                    section_header = first_header
+
+                elif section_list:
+                    # No subsections checked => pick last selected section
+                    section_header = section_list[-1]
+
+                else:
+                    # Multiple subsections checked => pick last one
+                    section_subsection_list = [item for item in uppercase_variable_list if '-' in item]
+                    subsection_list = []
+
+                    for item in section_subsection_list:
+                        subsection_list = subsection_list + item.split('-')
+                    section_header = subsection_list[-1]
+
+                    section_question_list = [question for question in df_row_data['Question'].values if
+                                             question.isupper()]
+                    if section_header not in section_question_list:
+                        # Subsection contains a "-"
+                        section_header = '-'.join([subsection_list[-2], subsection_list[-1]])
+
+            df_row_data_section_start = df_row_data[df_row_data['Question'] == section_header]
+            focused_cell_index = df_row_data_section_start.index.tolist()[0]
+
+        else:
+            # Single variable ticked
+            # Group checked => pick last item in group
+            focused_cell_index = df_row_data_variable.index.tolist()[0]
+
+    return focused_cell_index

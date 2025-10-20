@@ -8,7 +8,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_translations, arc_tree
 from bridge.utils.trigger_id import get_trigger_id
 
 
@@ -38,8 +38,8 @@ def display_selected_in_modal(selected: list,
                               ulist_variable_choices_saved: str,
                               multilist_variable_choices_saved: str,
                               is_open: bool,
-                              current_datadicc_saved: str) -> (
-        Tuple)[bool, str, str, str, str, dict, dict, list, list, list]:
+                              current_datadicc_saved: str) -> Tuple[
+    bool, str, str, str, str, dict, dict, list, list, list]:
     if selected:
         ulist = json.loads(ulist_variable_choices_saved)
         multilist = json.loads(multilist_variable_choices_saved)
@@ -130,9 +130,9 @@ def on_modal_button_click(submit_n_clicks: int,
     if trigger_id == 'modal_submit':
 
         df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
-        selected_version = selected_version_data.get('selected_version', None)
-        selected_language = selected_language_data.get('selected_language', None)
-        translations_for_language = arc.get_translations(selected_language)
+        selected_version = selected_version_data.get('selected_version')
+        selected_language = selected_language_data.get('selected_language')
+        translations_for_language = arc_translations.get_translations(selected_language)
         other_text = translations_for_language['other']
 
         variable_submitted = modal_title.split('[')[1][:-1]
@@ -166,7 +166,7 @@ def on_modal_button_click(submit_n_clicks: int,
 
             checked.append(variable_submitted)
 
-            tree_items_data = arc.get_tree_items(df_current_datadicc, selected_version)
+            tree_items_data = arc_tree.get_tree_items(df_current_datadicc, selected_version)
 
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(

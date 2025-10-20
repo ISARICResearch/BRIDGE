@@ -61,7 +61,7 @@ def test_on_generate_click_no_action(n_clicks,
 @mock.patch('bridge.callbacks.generate.dcc.send_bytes')
 @mock.patch('bridge.callbacks.generate.paper_crf.generate_completion_guide')
 @mock.patch('bridge.callbacks.generate.paper_crf.generate_pdf')
-@mock.patch('bridge.callbacks.generate.arc.generate_crf')
+@mock.patch('bridge.callbacks.generate.arc_core.generate_crf')
 @mock.patch('bridge.callbacks.generate.datetime')
 @mock.patch('bridge.callbacks.generate.get_crf_name', return_value='test_crf')
 @mock.patch('bridge.callbacks.generate.get_trigger_id', return_value='crf_generate')

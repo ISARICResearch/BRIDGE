@@ -2,11 +2,11 @@ import json
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html, Input, Output
+from dash import dcc, html, Input, Output, State
 
-from bridge.arc import arc
+import bridge.callbacks  # noqa
+from bridge.arc import arc_core, arc_lists, arc_tree
 from bridge.arc.arc_api import ArcApiClient
-import bridge.callbacks
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
@@ -26,26 +26,27 @@ server = app.server
 logger.info('Starting BRIDGE application')
 
 # Get initial data from ARC
-ARC_VERSION_LIST, ARC_VERSION_LATEST = arc.get_arc_versions()
+ARC_VERSION_LIST, ARC_VERSION_LATEST = arc_core.get_arc_versions()
 ARC_LANGUAGE_LIST = ArcApiClient().get_arc_language_list_version(ARC_VERSION_LATEST)
 ARC_LANGUAGE_DEFAULT = 'English'
 
-DF_ARC, PRESETS, _COMMIT = arc.get_arc(ARC_VERSION_LATEST)
-DF_ARC = arc.add_required_datadicc_columns(DF_ARC)
+DF_ARC, PRESETS, _COMMIT = arc_core.get_arc(ARC_VERSION_LATEST)
+DF_ARC = arc_core.add_required_datadicc_columns(DF_ARC)
 
-TREE_ITEMS_DATA = arc.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
+TREE_ITEMS_DATA = arc_tree.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
 
 # List content Transformation
-DF_LISTS, LIST_VARIABLE_LIST = arc.get_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
-DF_ARC = arc.add_transformed_rows(DF_ARC, DF_LISTS, arc.get_variable_order(DF_ARC))
+DF_LISTS, LIST_VARIABLE_LIST = arc_lists.get_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_LISTS, arc_core.get_variable_order(DF_ARC))
 
 # User List content Transformation
-DF_ULIST, ULIST_VARIABLE_LIST = arc.get_user_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
-DF_ARC = arc.add_transformed_rows(DF_ARC, DF_ULIST, arc.get_variable_order(DF_ARC))
+DF_ULIST, ULIST_VARIABLE_LIST = arc_lists.get_user_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_ULIST, arc_core.get_variable_order(DF_ARC))
 
 # Multi List content Transformation
-DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc.get_multi_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
-DF_ARC = arc.add_transformed_rows(DF_ARC, DF_MULTILIST, arc.get_variable_order(DF_ARC))
+DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc_lists.get_multi_list_content(DF_ARC, ARC_VERSION_LATEST,
+                                                                         ARC_LANGUAGE_DEFAULT)
+DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_MULTILIST, arc_core.get_variable_order(DF_ARC))
 
 ARC_JSON = DF_ARC.to_json(date_format='iso', orient='split')
 ULIST_VARIABLE_JSON = json.dumps(ULIST_VARIABLE_LIST)
@@ -68,6 +69,30 @@ app.clientside_callback(
     """,
     Output("browser-info-store", "data"),
     Input("interval-browser", "n_intervals"),
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """async  (runCallback, rowIndex) => {
+        if (runCallback) {
+            const gridApi =  await dash_ag_grid.getApiAsync("CRF_representation_grid")
+
+            var firstCol = gridApi.getAllDisplayedColumns()[0];
+            var rowsEmpty = gridApi.isRowDataEmpty();
+                
+            if (! rowsEmpty) {
+                var rowNode = gridApi.getDisplayedRowAtIndex(rowIndex);
+                gridApi.ensureNodeVisible(rowNode)
+                gridApi.flashCells({ rowNodes: [rowNode] });
+            }
+        }
+        return false
+    }""",
+    Output('focused-cell-index', 'data', allow_duplicate=True),
+    [
+        Input('focused-cell-run-callback', 'data'),
+    ],
+    State('focused-cell-index', 'data'),
     prevent_initial_call=True
 )
 
@@ -105,7 +130,7 @@ def main_app():
                 Tree(TREE_ITEMS_DATA).tree_column,
                 MainContent().main_content,
             ],
-            delay_show=1200,
+            delay_show=1500,
         ),
     ])
 

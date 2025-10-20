@@ -18,8 +18,8 @@ PRESET_OFF = f"{ICONS_DIR}/preset_off.png"
         Output("presets-column", "is_in"),
         Output("settings-column", "is_in"),
         Output("tree-column", 'is_in'),
-        Output("settings_icon", "bridge"),
-        Output("preset_icon", "bridge")
+        Output("settings_icon", "src"),
+        Output("preset_icon", "src")
     ],
     [
         Input("toggle-settings-2", "n_clicks"),

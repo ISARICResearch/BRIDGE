@@ -356,7 +356,7 @@ class Row:
     def add_end_columns(self):
         self.columns.insert(0, None)  # Add column before first column
         self.columns.append(None)  # Add column after last column
-        end_width = (1 - self.table_width) / 2;  # Get end width
+        end_width = (1 - self.table_width) / 2  # Get end width
         self.widths.insert(0, end_width)  # Set width first column
         self.widths.append(end_width)  # Set width last column
 

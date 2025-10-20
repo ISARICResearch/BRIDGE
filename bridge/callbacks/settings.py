@@ -2,9 +2,10 @@ import json
 
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
 from dash import Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.arc.arc_api import ArcApiClient
 from bridge.callbacks.language import Language
 from bridge.logging.logger import setup_logger
@@ -80,18 +81,17 @@ def update_output_files_store(checked_values: list) -> list:
     ],
     [
         State('selected-version-store', 'data'),
-        State('selected-language-store', 'data'),
         State('language-list-store', 'data'),
     ],
     prevent_initial_call=True
 )
-def store_data_for_selected_version_language(n_clicks_version: int,
-                                             n_clicks_language: int,
+def store_data_for_selected_version_language(n_clicks_version: list,
+                                             n_clicks_language: list,
                                              upload_crf_ready: bool,
                                              selected_version_data: dict,
-                                             selected_language_data: dict,
                                              language_list_data: list):
     if upload_crf_ready:
+        # CRF upload updates in a different callback
         return (dash.no_update,
                 dash.no_update,
                 dash.no_update,
@@ -119,11 +119,14 @@ def store_data_for_selected_version_language(n_clicks_version: int,
     button_index = json.loads(trigger_id)["index"]
     button_type = json.loads(trigger_id)["type"]
 
+    initial_load = determine_initial_load_boolean(n_clicks_version,
+                                                  n_clicks_language)
+
     selected_version = None
     selected_language = None
 
     if button_type == 'dynamic-version':
-        arc_version_list, _arc_version_latest = arc.get_arc_versions()
+        arc_version_list, _arc_version_latest = arc_core.get_arc_versions()
         selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get('selected_version', None):
             return (dash.no_update,
@@ -150,7 +153,9 @@ def store_data_for_selected_version_language(n_clicks_version: int,
             version_accordion_items,
             version_ulist_variable_choices,
             version_multilist_variable_choices
-        ) = Language(selected_version, selected_language).get_version_language_related_data()
+        ) = Language(selected_version,
+                     selected_language,
+                     initial_load).get_version_language_related_data()
         logger.info(f'selected_version: {selected_version}')
         logger.info(f'selected_language: {selected_language}')
         logger.info(f'version_presets: {version_presets}')
@@ -176,3 +181,13 @@ def store_data_for_selected_version_language(n_clicks_version: int,
                 False,
                 dash.no_update,
                 dash.no_update)
+
+
+def determine_initial_load_boolean(n_clicks_version,
+                                   n_clicks_language):
+    initial_load = False
+    n_clicks_version_unique_values = [click for click in n_clicks_version if pd.notnull(click)]
+    n_clicks_language_unique_values = [click for click in n_clicks_language if pd.notnull(click)]
+    if not n_clicks_version_unique_values and not n_clicks_language_unique_values:
+        initial_load = True
+    return initial_load

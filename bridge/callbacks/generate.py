@@ -9,7 +9,7 @@ import pandas as pd
 from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
-from bridge.arc import arc
+from bridge.arc import arc_core
 from bridge.generate_pdf import paper_crf
 from bridge.utils.crf_name import get_crf_name
 from bridge.utils.trigger_id import get_trigger_id
@@ -54,11 +54,23 @@ def on_generate_click(n_clicks: int,
 
     if not n_clicks:
         # Return empty or initial state if button hasn't been clicked
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )
 
     if not any(json.loads(json_data).values()):
         # Nothing ticked
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )
 
     trigger_id = get_trigger_id(ctx)
 
@@ -67,23 +79,23 @@ def on_generate_click(n_clicks: int,
         crf_name = get_crf_name(crf_name, checked_presets)
 
         selected_variables_from_data = pd.read_json(io.StringIO(json_data), orient='split')
-        current_version = selected_version_data.get('selected_version', None)
-        language = selected_language_data.get('selected_language', None)
-        
-        df = arc.generate_crf(selected_variables_from_data)
-        pdf_crf = paper_crf.generate_pdf(df, current_version, crf_name, language)
-        pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, current_version, crf_name)
+        version = selected_version_data.get('selected_version')
+        language = selected_language_data.get('selected_language')
+
+        df_crf = arc_core.generate_crf(selected_variables_from_data)
+        pdf_crf = paper_crf.generate_pdf(df_crf, version, crf_name, language)
+        pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, version, crf_name)
 
         # CSV
         csv_buffer = io.BytesIO()
-        df.loc[df['Field Type'] == 'descriptive', 'Field Label'] = df.loc[
-            df['Field Type'] == 'descriptive', 'Field Label'].apply(
+        df_crf.loc[df_crf['Field Type'] == 'descriptive', 'Field Label'] = df_crf.loc[
+            df_crf['Field Type'] == 'descriptive', 'Field Label'].apply(
             lambda
                 x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>')
         if language != 'English':
-            df['Form Name'] = df['Form Name'].apply(lambda x: unidecode(str(x)))
+            df_crf['Form Name'] = df_crf['Form Name'].apply(lambda x: unidecode(str(x)))
 
-        df.to_csv(csv_buffer, index=False, encoding='utf8')
+        df_crf.to_csv(csv_buffer, index=False, encoding='utf8')
         csv_buffer.seek(0)
 
         # XML
@@ -119,4 +131,10 @@ def on_generate_click(n_clicks: int,
         )
 
     else:
-        return "", None, None, None, None
+        return (
+            "",
+            None,
+            None,
+            None,
+            None,
+        )

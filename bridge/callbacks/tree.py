@@ -6,7 +6,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc
+from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient
 from bridge.logging.logger import setup_logger
 
@@ -34,7 +34,7 @@ logger = setup_logger(__name__)
     ],
     prevent_initial_call=True
 )
-def update_tree_items_and_stores(checked_variables: list,
+def update_tree_items_and_stores(checked_templates: list,
                                  upload_crf_ready: bool,
                                  current_datadicc_saved: str,
                                  grouped_presets_dict: dict,
@@ -49,12 +49,12 @@ def update_tree_items_and_stores(checked_variables: list,
     ctx = dash.callback_context
     df_current_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient='split')
 
-    current_version = selected_version_data.get('selected_version', None)
-    current_language = selected_language_data.get('selected_language', None)
+    current_version = selected_version_data.get('selected_version')
+    current_language = selected_language_data.get('selected_language')
 
-    tree_items_data = arc.get_tree_items(df_current_datadicc, current_version)
+    tree_items_data = arc_tree.get_tree_items(df_current_datadicc, current_version)
 
-    if (not ctx.triggered) | (all(not sublist for sublist in checked_variables)):
+    if (not ctx.triggered) | (all(not sublist for sublist in checked_templates)):
         tree_items = html.Div(
             dash_treeview_antd.TreeView(
                 id='input',
@@ -71,9 +71,9 @@ def update_tree_items_and_stores(checked_variables: list,
                 dash.no_update,
                 dash.no_update)
 
-    logger.info(f'checked_variables: {checked_variables}')
+    logger.info(f'checked_variables: {checked_templates}')
     logger.info(f'grouped_presets: {grouped_presets_dict}')
-    checked_template_list = get_checked_template_list(grouped_presets_dict, checked_variables)
+    checked_template_list = get_checked_template_list(grouped_presets_dict, checked_templates)
 
     checked = []
     ulist_variable_choices = []
@@ -82,7 +82,7 @@ def update_tree_items_and_stores(checked_variables: list,
     if len(checked_template_list) > 0:
         for ps in checked_template_list:
             checked_key = 'preset_' + ps[0] + '_' + ps[1]
-            if checked_key in df_current_datadicc:
+            if checked_key in df_current_datadicc.columns:
                 checked = checked + list(
                     df_current_datadicc['Variable'].loc[df_current_datadicc[checked_key].notnull()])
 
@@ -132,7 +132,7 @@ def update_for_template_options(version: str,
                                 ulist_variable_choices: list,
                                 multilist_variable_choices: list,
                                 checked_key: str = None):
-    translations_for_language = arc.get_translations(language)
+    translations_for_language = arc_translations.get_translations(language)
     other_text = translations_for_language['other']
 
     df_datadicc_u_multilists = df_current_datadicc.loc[df_current_datadicc['Type'].isin(['user_list', 'multi_list'])]

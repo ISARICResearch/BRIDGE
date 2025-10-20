@@ -6,6 +6,8 @@ import pandas as pd
 
 from bridge.callbacks import grid
 
+FOCUSED_CELL_INDEX = 0
+
 
 def test_display_checked_in_grid_checked_empty():
     checked = []
@@ -13,34 +15,28 @@ def test_display_checked_in_grid_checked_empty():
                               '"index":[0, 1],'
                               '"data":[["presentation", "inclu_disease"]]}')
 
-    (output_column_defs,
-     output_row_defs,
-     output_variables_json) = get_output_display_checked_in_grid(checked,
-                                                                 current_datadicc_saved)
+    (output_row_defs,
+     output_variables_json,
+     focused_cell_run_callback,
+     focused_cell_index) = get_output_display_checked_in_grid(checked,
+                                                              current_datadicc_saved,
+                                                              FOCUSED_CELL_INDEX)
 
-    expected_column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                            {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
-
-    expected_row_defs = [{'options': '', 'question': ''},
-                         {'options': '', 'question': ''}]
-
+    expected_row_defs = []
     expected_variables_json = '{"columns":[],"index":[],"data":[]}'
 
-    assert output_column_defs == expected_column_defs
     assert output_row_defs == expected_row_defs
     assert output_variables_json == expected_variables_json
 
 
-@mock.patch('bridge.callbacks.grid.arc.generate_daily_data_type')
-@mock.patch('bridge.callbacks.grid.arc.get_variable_order')
-@mock.patch('bridge.callbacks.grid.arc.add_transformed_rows')
-@mock.patch('bridge.callbacks.grid.arc.get_select_units')
-@mock.patch('bridge.callbacks.grid.arc.get_include_not_show')
+@mock.patch('bridge.callbacks.grid.arc_core.get_variable_order')
+@mock.patch('bridge.callbacks.grid.arc_core.add_transformed_rows')
+@mock.patch('bridge.callbacks.grid.arc_core.get_select_units')
+@mock.patch('bridge.callbacks.grid.arc_core.get_include_not_show')
 def test_display_checked_in_grid(mock_include_not_show,
                                  mock_select_units,
                                  mock_add_transformed_rows,
-                                 mock_variable_order,
-                                 mock_daily_data_type):
+                                 mock_variable_order):
     checked = ['inclu_disease']
     current_datadicc_saved = ('{"columns":["Form", "Variable", "Dependencies"],'
                               '"index":[0, 1, 2],'
@@ -93,15 +89,13 @@ def test_display_checked_in_grid(mock_include_not_show,
     df_selected_variables = pd.DataFrame.from_dict(data)
     mock_include_not_show.return_value = df_selected_variables
     mock_select_units.return_value = (None, None)
-    mock_daily_data_type.return_value = df_selected_variables
 
-    (output_column_defs,
-     output_row_defs,
-     output_variables_json) = get_output_display_checked_in_grid(checked,
-                                                                 current_datadicc_saved)
-
-    expected_column_defs = [{'headerName': "Question", 'field': "Question", 'wrapText': True},
-                            {'headerName': "Answer Options", 'field': "Answer Options", 'wrapText': True}]
+    (output_row_defs,
+     output_variables_json,
+     focused_cell_run_callback,
+     focused_cell_index) = get_output_display_checked_in_grid(checked,
+                                                              current_datadicc_saved,
+                                                              FOCUSED_CELL_INDEX)
 
     expected_row_defs = [{'Answer Options': '',
                           'Form': np.nan,
@@ -176,23 +170,26 @@ def test_display_checked_in_grid(mock_include_not_show,
         '["presentation","INCLUSION CRITERIA","inclu_disease_otherl3","text","Specify other Suspected infection","",""],'
         '["presentation","ONSET & PRESENTATION","pres_onsetdate","date_dmy","Onset date of earliest symptom","","date_dmy"]]}')
 
-    assert output_column_defs == expected_column_defs
     assert output_row_defs == expected_row_defs
     assert output_variables_json == expected_variables_json
 
 
 def get_output_display_checked_in_grid(checked_variables,
-                                       current_datadicc):
+                                       current_datadicc,
+                                       focused_cell):
     def run_callback(checked,
-                     current_datadicc_saved):
+                     current_datadicc_saved,
+                     focused_cell_index):
         return grid.display_checked_in_grid(checked,
-                                            current_datadicc_saved)
+                                            current_datadicc_saved,
+                                            focused_cell_index)
 
     ctx = copy_context()
     output = ctx.run(
         run_callback,
         checked_variables,
         current_datadicc,
+        focused_cell,
     )
 
     return output
