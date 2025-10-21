@@ -163,6 +163,11 @@ def test_get_arc(mock_sha,
             '[subjid]',
             '[inclu_testreason, subjid]',
         ],
+        'Branch': [
+            '',
+            '',
+            '',
+        ],
         'Question_english': [
             'Question for subjid',
             'Question for inclu_disease',

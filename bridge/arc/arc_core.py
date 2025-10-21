@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 
+from bridge.arc import arc_translations
 from bridge.arc.arc_api import ArcApiClient
 from bridge.logging.logger import setup_logger
 
@@ -20,6 +21,9 @@ def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
     try:
         df_dependencies = get_dependencies(df_datadicc)
         df_datadicc = pd.merge(df_datadicc, df_dependencies[['Variable', 'Dependencies']], on='Variable')
+
+        df_datadicc['Branch'] = df_datadicc.apply(lambda row: arc_translations.process_skip_logic(row, df_datadicc),
+                                                  axis=1)
 
         # Find preset columns
         preset_column_list = [col for col in df_datadicc.columns if "preset_" in col]
