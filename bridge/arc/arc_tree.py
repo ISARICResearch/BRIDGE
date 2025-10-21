@@ -9,15 +9,16 @@ def _qtitle(row):
     return row['Question']
 
 
-def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
+def get_tree_items(df_datadicc: pd.DataFrame,
+                   version: str) -> dict:
     include_not_show = [
         'otherl3', 'otherl2', 'route', 'route2', 'agent', 'agent2',
         'warn', 'warn2', 'warn3', 'units', 'add', 'vol', 'txt', 'calc'
     ]
 
     # rows used for the tree (hide some mods)
-    df_for_item = datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
-        ~datadicc['mod'].isin(include_not_show)
+    df_for_item = df_datadicc[['Form', 'Sec_name', 'vari', 'mod', 'Question', 'Variable', 'Type']].loc[
+        ~df_datadicc['mod'].isin(include_not_show)
     ]
 
     # -------- counts per (Form, Sec_name, vari) --------
@@ -34,7 +35,7 @@ def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
     # prep indexing and "first question"
     df_for_item = df_for_item[df_for_item['Sec_name'].notna()].copy()
     df_for_item['_row_order'] = range(len(df_for_item))
-    idx_first = (
+    df_idx_first = (
         df_for_item.sort_values('_row_order')
         .groupby(['Form', 'Sec_name', 'vari'], dropna=False, as_index=False)
         .nth(0)[['Form', 'Sec_name', 'vari', 'Question', 'Variable']]
@@ -45,7 +46,7 @@ def get_tree_items(datadicc: pd.DataFrame, version: str) -> dict:
     # merge counts + first-question
     df_for_item = (df_for_item
                    .merge(group_counts_total, on=['Form', 'Sec_name', 'vari'], how='left')
-                   .merge(idx_first, on=['Form', 'Sec_name', 'vari'], how='left'))
+                   .merge(df_idx_first, on=['Form', 'Sec_name', 'vari'], how='left'))
 
     # question title prefix
     def _qtitle(row):
