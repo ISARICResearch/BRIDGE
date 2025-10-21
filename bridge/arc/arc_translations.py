@@ -36,7 +36,7 @@ def get_arc_translation(language: str,
     for col in columns_to_update:
         df_current_datadicc.loc[df_merged[col].notna(), col] = df_merged.loc[df_merged[col].notna(), col]
 
-    df_current_datadicc['Branch'] = df_current_datadicc.apply(lambda row: _process_skip_logic(row, df_current_datadicc),
+    df_current_datadicc['Branch'] = df_current_datadicc.apply(lambda row: process_skip_logic(row, df_current_datadicc),
                                                               axis=1)
     return df_current_datadicc
 
@@ -77,34 +77,35 @@ def _extract_logic_components(skip_logic_column: str) -> Tuple[list, list, list,
     )
 
 
-def _process_skip_logic(row: pd.Series,
-                        df_current_datadicc: pd.DataFrame) -> str:
-    skip_logic = row['Skip Logic']
-    extracted_variables, labels, comparison_operators, logical_operators = _extract_logic_components(skip_logic)
+def process_skip_logic(row: pd.Series,
+                       df_current_datadicc: pd.DataFrame) -> str:
     branch = []
-    logical_operators = logical_operators + [' ']
-    for i in range(len(extracted_variables)):
-        try:
-            answers = \
-                df_current_datadicc['Answer Options'].loc[
-                    df_current_datadicc['Variable'] == extracted_variables[i]].iloc[
-                    0]
-            question = \
-                df_current_datadicc['Question'].loc[df_current_datadicc['Variable'] == extracted_variables[i]].iloc[0]
-            comp_operators = comparison_operators[i]
-            if isinstance(answers, str) and pd.notna(answers):
-                pairs = answers.split(" | ")
-                dic_answer = {pair.split(", ")[0]: pair.split(", ")[1] for pair in pairs}
-                answers_label = dic_answer.get(labels[i], "Unknown")
+    if 'Skip Logic' in df_current_datadicc.columns:
+        skip_logic = row['Skip Logic']
+        extracted_variables, labels, comparison_operators, logical_operators = _extract_logic_components(skip_logic)
+        logical_operators = logical_operators + [' ']
+        for i in range(len(extracted_variables)):
+            try:
+                answers = \
+                    df_current_datadicc['Answer Options'].loc[
+                        df_current_datadicc['Variable'] == extracted_variables[i]].iloc[
+                        0]
+                question = \
+                    df_current_datadicc['Question'].loc[df_current_datadicc['Variable'] == extracted_variables[i]].iloc[0]
+                comp_operators = comparison_operators[i]
+                if isinstance(answers, str) and pd.notna(answers):
+                    pairs = answers.split(" | ")
+                    dic_answer = {pair.split(", ")[0]: pair.split(", ")[1] for pair in pairs}
+                    answers_label = dic_answer.get(labels[i], "Unknown")
 
-            else:
-                answers_label = labels[i]
-            branch.append(f"({question} {comp_operators} {answers_label}) {logical_operators[i]}")
+                else:
+                    answers_label = labels[i]
+                branch.append(f"({question} {comp_operators} {answers_label}) {logical_operators[i]}")
 
-        except IndexError:
-            branch.append("Variable not found getARCTranslation")
-        except Exception as e:
-            branch.append(f"Error getARCTranslation: {str(e)}")
+            except IndexError:
+                branch.append("Variable not found getARCTranslation")
+            except Exception as e:
+                branch.append(f"Error getARCTranslation: {str(e)}")
 
     return "  ".join(branch)
 

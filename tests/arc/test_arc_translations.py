@@ -8,7 +8,7 @@ from pandas._testing import assert_frame_equal
 from bridge.arc import arc_translations
 
 
-@mock.patch('bridge.arc.arc_translations._process_skip_logic')
+@mock.patch('bridge.arc.arc_translations.process_skip_logic')
 @mock.patch('bridge.arc.arc_translations.ArcApiClient.get_dataframe_arc_version_language')
 def test_get_arc_translation(mock_arc,
                              mock_skip_logic):
@@ -149,10 +149,13 @@ def test_process_skip_logic(mock_extract):
         'Answer Options': [
             ' 1, Symptomatic | 2, Asymptomatic | 3, Not tested | 99, Unknown | 88, Other',
         ],
+        'Skip Logic': [
+            "[inclu_testreason]='88'",
+        ],
     }
     df_current_datadicc = pd.DataFrame.from_dict(data)
     expected = '(Reason why the patient was tested = Other)  '
-    output = arc_translations._process_skip_logic(row, df_current_datadicc)
+    output = arc_translations.process_skip_logic(row, df_current_datadicc)
     assert output == expected
 
 
@@ -178,10 +181,13 @@ def test_process_skip_logic_no_answers(mock_extract):
         'Answer Options': [
             np.nan,
         ],
+        'Skip Logic': [
+            "[inclu_testreason]='88'",
+        ],
     }
     df_current_datadicc = pd.DataFrame.from_dict(data)
     expected = '(Reason why the patient was tested = 88)  '
-    output = arc_translations._process_skip_logic(row, df_current_datadicc)
+    output = arc_translations.process_skip_logic(row, df_current_datadicc)
     assert output == expected
 
 
@@ -207,10 +213,13 @@ def test_process_skip_logic_index_error(mock_extract):
         'Answer Options': [
             np.nan,
         ],
+        'Skip Logic': [
+            "[inclu_testreason]='88'",
+        ],
     }
     df_current_datadicc = pd.DataFrame.from_dict(data)
     expected = 'Variable not found getARCTranslation'
-    output = arc_translations._process_skip_logic(row, df_current_datadicc)
+    output = arc_translations.process_skip_logic(row, df_current_datadicc)
     assert output == expected
 
 
@@ -226,4 +235,3 @@ def test_get_translations():
 def test_get_translations_exception():
     with pytest.raises(ValueError):
         arc_translations.get_translations('Klingon')
-
