@@ -129,12 +129,26 @@ def get_focused_cell_index(row_data,
         section_name = df_row_data_variable['Section'].values[0]
         df_row_data_section = df_row_data[df_row_data['Section'] == section_name]
 
+        df_row_data_section = df_row_data_section[~df_row_data_section['Variable'].str.contains('_otherl')]
+
         uppercase_variable_list = []
         for item in checked:
             if item.isupper():
                 uppercase_variable_list.append(item)
 
-        if len(df_row_data_section) == 1:
+        type_list = df_row_data_section['Type'].values
+        latest_type = type_list[-1]
+        list_types = [variable_type for variable_type in type_list if variable_type in ['multi_list', 'user_list']]
+        if latest_type not in ['multi_list', 'user_list']:
+            # Not a list => pick latest variable
+            focused_cell_index = df_row_data_section.index.tolist()[-1]
+
+        elif len(list_types) > 1 or latest_type in ['multi_list', 'user_list']:
+            # Multiple lists checked => pick latest list
+            df_lists = df_row_data_section[df_row_data_section['Type'].isin(list_types)]
+            focused_cell_index = df_lists.index.tolist()[-1]
+
+        elif len(df_row_data_section) == 1:
             # Section checked, then a variable in a different section => highlight the variable
             focused_cell_index = df_row_data_variable.index.tolist()[0]
 
