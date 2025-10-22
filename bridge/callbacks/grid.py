@@ -72,6 +72,15 @@ def display_checked_in_grid(checked: list,
                     {'Question': f"{row['Section'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'section'})
                 last_section = str(row['Section'])
+            
+            if row['Type'] == 'descriptive':
+                new_row = row.to_dict()
+                new_row['IsDescriptive'] = True
+
+                new_row['Answer Options'] = ''   
+                new_row['IsSeparator'] = False
+                new_rows.append(new_row)
+                continue  
 
             # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:

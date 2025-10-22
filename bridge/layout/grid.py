@@ -31,8 +31,9 @@ class Grid:
                     "autoHeight": True,
         },
                 rowClassRules={
-                    "form-separator-row ": 'params.data.SeparatorType == "form"',
-                    'section-separator-row': 'params.data.SeparatorType == "section"',
+                    "form-separator-row": 'params.data.SeparatorType == "form"',
+                    "section-separator-row": 'params.data.SeparatorType == "section"',
+                    "descriptive-row": 'params.data.IsDescriptive === true',
                 },
                 style={
                     'overflow-y': 'auto',

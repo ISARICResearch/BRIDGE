@@ -88,3 +88,8 @@
     overflow-x: hidden;
     overflow-y: auto;
 }
+
+.descriptive-row {
+    background-color: #d0e8ff !important; /* light blue */
+    font-weight: bold !important;
+}
