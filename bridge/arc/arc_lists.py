@@ -269,8 +269,11 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
                 dropdown_row['Question'] = f"{select_text} {row['Question']}"
                 other_row['Question'] = f"{specify_other_text} {row['Question']}"
             dropdown_row['mod'] = 'otherl2'
-            dropdown_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
+            if list_type=='multi_list':
+                dropdown_row['Skip Logic'] = '[' + row['Variable'] + "(88)]='1'"
 
+            else:
+                dropdown_row['Skip Logic'] = '[' + row['Variable'] + "]='88'"
             other_row['Variable'] = row['Sec'] + '_' + row['vari'] + '_' + 'otherl3'
             other_row['Answer Options'] = None
             other_row['Type'] = 'text'

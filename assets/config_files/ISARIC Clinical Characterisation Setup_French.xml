@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="test_frenchxml" AsOfDateTime="2025-10-21T13:01:40" CreationDateTime="2025-10-21T13:01:40" SourceSystem="REDCap" SourceSystemVersion="14.5.15">
+<Study OID="Project.Testfrenchxml">
+<GlobalVariables>
+	<StudyName>test_frenchxml</StudyName>
+	<StudyDescription>This file contains the metadata, events, and data for REDCap project "test_frenchxml".</StudyDescription>
+	<ProtocolName>test_frenchxml</ProtocolName>
+	<redcap:RecordAutonumberingEnabled>1</redcap:RecordAutonumberingEnabled>
+	<redcap:CustomRecordLabel></redcap:CustomRecordLabel>
+	<redcap:SecondaryUniqueField></redcap:SecondaryUniqueField>
+	<redcap:SecondaryUniqueFieldDisplayValue>1</redcap:SecondaryUniqueFieldDisplayValue>
+	<redcap:SecondaryUniqueFieldDisplayLabel>1</redcap:SecondaryUniqueFieldDisplayLabel>
+	<redcap:SchedulingEnabled>0</redcap:SchedulingEnabled>
+	<redcap:SurveysEnabled>0</redcap:SurveysEnabled>
+	<redcap:SurveyInvitationEmailField></redcap:SurveyInvitationEmailField>
+	<redcap:DisplayTodayNowButton>1</redcap:DisplayTodayNowButton>
+	<redcap:PreventBranchingEraseValues>0</redcap:PreventBranchingEraseValues>
+	<redcap:RequireChangeReason>0</redcap:RequireChangeReason>
+	<redcap:DataHistoryPopup>1</redcap:DataHistoryPopup>
+	<redcap:OrderRecordsByField></redcap:OrderRecordsByField>
+	<redcap:MyCapEnabled>0</redcap:MyCapEnabled>
+	<redcap:Purpose>0</redcap:Purpose>
+	<redcap:PurposeOther></redcap:PurposeOther>
+	<redcap:ProjectNotes></redcap:ProjectNotes>
+	<redcap:MissingDataCodes></redcap:MissingDataCodes>
+	<redcap:ProtectedEmailMode>0</redcap:ProtectedEmailMode>
+	<redcap:ProtectedEmailModeCustomText></redcap:ProtectedEmailModeCustomText>
+	<redcap:ProtectedEmailModeTrigger>ALL</redcap:ProtectedEmailModeTrigger>
+	<redcap:ProtectedEmailModeLogo></redcap:ProtectedEmailModeLogo>
+	<redcap:RepeatingInstrumentsAndEvents>
+		<redcap:RepeatingEvent redcap:UniqueEventName="quotidien_arm_1"/>
+		<redcap:RepeatingEvent redcap:UniqueEventName="suivi_arm_1"/>
+		<redcap:RepeatingInstruments>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="medicament" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="pathogenes" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="fotografias" redcap:CustomLabel=""/>
+		</redcap:RepeatingInstruments>
+	</redcap:RepeatingInstrumentsAndEvents>
+</GlobalVariables>
+<MetaDataVersion OID="Metadata.Testfrenchxml_2025-10-21_1301" Name="test_frenchxml" redcap:RecordIdField="subjid">
+	<Protocol>
+		<StudyEventRef StudyEventOID="Event.valuation_initiale_arm_1" OrderNumber="1" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.quotidien_arm_1" OrderNumber="2" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.rsum__mdicaments_arm_1" OrderNumber="3" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.issue__fin_de_ltud_arm_1" OrderNumber="4" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.suivi_arm_1" OrderNumber="5" Mandatory="No"/>
+	</Protocol>
+	<StudyEventDef OID="Event.valuation_initiale_arm_1" Name="Évaluation initiale / Admissio" Type="Common" Repeating="No" redcap:EventName="Évaluation initiale / Admissio" redcap:CustomEventLabel="" redcap:UniqueEventName="valuation_initiale_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.presentation" OrderNumber="1" Mandatory="No" redcap:FormName="presentation"/>
+		<FormRef FormOID="Form.quotidien" OrderNumber="2" Mandatory="No" redcap:FormName="quotidien"/>
+	</StudyEventDef>
+	<StudyEventDef OID="Event.quotidien_arm_1" Name="Quotidien" Type="Common" Repeating="Yes" redcap:EventName="Quotidien" redcap:CustomEventLabel="" redcap:UniqueEventName="quotidien_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="3" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.quotidien" OrderNumber="1" Mandatory="No" redcap:FormName="quotidien"/>
+	</StudyEventDef>
+	<StudyEventDef OID="Event.rsum__mdicaments_arm_1" Name="Résumé : Médicaments / Examens" Type="Common" Repeating="No" redcap:EventName="Résumé : Médicaments / Examens" redcap:CustomEventLabel="" redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="4" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.medicament" OrderNumber="1" Mandatory="No" redcap:FormName="medicament"/>
+		<FormRef FormOID="Form.pathogenes" OrderNumber="2" Mandatory="No" redcap:FormName="pathogenes"/>
+		<FormRef FormOID="Form.fotografias" OrderNumber="3" Mandatory="No" redcap:FormName="fotografias"/>
+	</StudyEventDef>
+	<StudyEventDef OID="Event.issue__fin_de_ltud_arm_1" Name="Issue / Fin de l&#039;étude" Type="Common" Repeating="No" redcap:EventName="Issue / Fin de l&#039;étude" redcap:CustomEventLabel="" redcap:UniqueEventName="issue__fin_de_ltud_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="5" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.resultat" OrderNumber="1" Mandatory="No" redcap:FormName="resultat"/>
+		<FormRef FormOID="Form.retrait" OrderNumber="2" Mandatory="No" redcap:FormName="retrait"/>
+	</StudyEventDef>
+	<StudyEventDef OID="Event.suivi_arm_1" Name="Suivi" Type="Common" Repeating="Yes" redcap:EventName="Suivi" redcap:CustomEventLabel="" redcap:UniqueEventName="suivi_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="6" redcap:OffsetMin="0" redcap:OffsetMax="0">
+		<FormRef FormOID="Form.suivi" OrderNumber="1" Mandatory="No" redcap:FormName="suivi"/>
+	</StudyEventDef>
+	<FormDef OID="Form.presentation" Name="Presentation" Repeating="No" redcap:FormName="presentation">
+		<ItemGroupRef ItemGroupOID="presentation.subjid" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="presentation.presentation_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.quotidien" Name="Quotidien" Repeating="No" redcap:FormName="quotidien">
+		<ItemGroupRef ItemGroupOID="quotidien.placeholder" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="quotidien.quotidien_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.medicament" Name="Medicament" Repeating="No" redcap:FormName="medicament">
+		<ItemGroupRef ItemGroupOID="medicament.placeholder2" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="medicament.medicament_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.pathogenes" Name="Pathogenes" Repeating="No" redcap:FormName="pathogenes">
+		<ItemGroupRef ItemGroupOID="pathogenes.placeholder3" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="pathogenes.pathogenes_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.fotografias" Name="Fotografias" Repeating="No" redcap:FormName="fotografias">
+		<ItemGroupRef ItemGroupOID="fotografias.placeholder4" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="fotografias.fotografias_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.resultat" Name="Resultat" Repeating="No" redcap:FormName="resultat">
+		<ItemGroupRef ItemGroupOID="resultat.placeholder5" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="resultat.resultat_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.suivi" Name="Suivi" Repeating="No" redcap:FormName="suivi">
+		<ItemGroupRef ItemGroupOID="suivi.placeholder6" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="suivi.suivi_complete" Mandatory="No"/>
+	</FormDef>
+	<FormDef OID="Form.retrait" Name="Retrait" Repeating="No" redcap:FormName="retrait">
+		<ItemGroupRef ItemGroupOID="retrait.placeholder7" Mandatory="No"/>
+		<ItemGroupRef ItemGroupOID="retrait.retrait_complete" Mandatory="No"/>
+	</FormDef>
+	<ItemGroupDef OID="presentation.subjid" Name="Presentation" Repeating="No">
+		<ItemRef ItemOID="subjid" Mandatory="No" redcap:Variable="subjid"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="presentation.presentation_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="presentation_complete" Mandatory="No" redcap:Variable="presentation_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="quotidien.placeholder" Name="Quotidien" Repeating="No">
+		<ItemRef ItemOID="placeholder" Mandatory="No" redcap:Variable="placeholder"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="quotidien.quotidien_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="quotidien_complete" Mandatory="No" redcap:Variable="quotidien_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="medicament.placeholder2" Name="Medicament" Repeating="No">
+		<ItemRef ItemOID="placeholder2" Mandatory="No" redcap:Variable="placeholder2"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="medicament.medicament_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="medicament_complete" Mandatory="No" redcap:Variable="medicament_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="pathogenes.placeholder3" Name="Pathogenes" Repeating="No">
+		<ItemRef ItemOID="placeholder3" Mandatory="No" redcap:Variable="placeholder3"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="pathogenes.pathogenes_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="pathogenes_complete" Mandatory="No" redcap:Variable="pathogenes_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="fotografias.placeholder4" Name="Fotografias" Repeating="No">
+		<ItemRef ItemOID="placeholder4" Mandatory="No" redcap:Variable="placeholder4"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="fotografias.fotografias_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="fotografias_complete" Mandatory="No" redcap:Variable="fotografias_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="resultat.placeholder5" Name="Resultat" Repeating="No">
+		<ItemRef ItemOID="placeholder5" Mandatory="No" redcap:Variable="placeholder5"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="resultat.resultat_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="resultat_complete" Mandatory="No" redcap:Variable="resultat_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="suivi.placeholder6" Name="Suivi" Repeating="No">
+		<ItemRef ItemOID="placeholder6" Mandatory="No" redcap:Variable="placeholder6"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="suivi.suivi_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="suivi_complete" Mandatory="No" redcap:Variable="suivi_complete"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="retrait.placeholder7" Name="Retrait" Repeating="No">
+		<ItemRef ItemOID="placeholder7" Mandatory="No" redcap:Variable="placeholder7"/>
+	</ItemGroupDef>
+	<ItemGroupDef OID="retrait.retrait_complete" Name="Form Status" Repeating="No">
+		<ItemRef ItemOID="retrait_complete" Mandatory="No" redcap:Variable="retrait_complete"/>
+	</ItemGroupDef>
+	<ItemDef OID="subjid" Name="subjid" DataType="text" Length="999" redcap:Variable="subjid" redcap:FieldType="text">
+		<Question><TranslatedText>Participant Identification Number (PIN):</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="presentation_complete" Name="presentation_complete" DataType="text" Length="1" redcap:Variable="presentation_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="presentation_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder" Name="placeholder" DataType="text" Length="999" redcap:Variable="placeholder" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="quotidien_complete" Name="quotidien_complete" DataType="text" Length="1" redcap:Variable="quotidien_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="quotidien_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder2" Name="placeholder2" DataType="text" Length="999" redcap:Variable="placeholder2" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="medicament_complete" Name="medicament_complete" DataType="text" Length="1" redcap:Variable="medicament_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="medicament_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder3" Name="placeholder3" DataType="text" Length="999" redcap:Variable="placeholder3" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="pathogenes_complete" Name="pathogenes_complete" DataType="text" Length="1" redcap:Variable="pathogenes_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="pathogenes_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder4" Name="placeholder4" DataType="text" Length="999" redcap:Variable="placeholder4" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="fotografias_complete" Name="fotografias_complete" DataType="text" Length="1" redcap:Variable="fotografias_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="fotografias_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder5" Name="placeholder5" DataType="text" Length="999" redcap:Variable="placeholder5" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="resultat_complete" Name="resultat_complete" DataType="text" Length="1" redcap:Variable="resultat_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="resultat_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder6" Name="placeholder6" DataType="text" Length="999" redcap:Variable="placeholder6" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="suivi_complete" Name="suivi_complete" DataType="text" Length="1" redcap:Variable="suivi_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="suivi_complete.choices"/>
+	</ItemDef>
+	<ItemDef OID="placeholder7" Name="placeholder7" DataType="text" Length="999" redcap:Variable="placeholder7" redcap:FieldType="text">
+		<Question><TranslatedText>placeholder</TranslatedText></Question>
+	</ItemDef>
+	<ItemDef OID="retrait_complete" Name="retrait_complete" DataType="text" Length="1" redcap:Variable="retrait_complete" redcap:FieldType="select" redcap:SectionHeader="Form Status">
+		<Question><TranslatedText>Complete?</TranslatedText></Question>
+		<CodeListRef CodeListOID="retrait_complete.choices"/>
+	</ItemDef>
+	<CodeList OID="presentation_complete.choices" Name="presentation_complete" DataType="text" redcap:Variable="presentation_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="quotidien_complete.choices" Name="quotidien_complete" DataType="text" redcap:Variable="quotidien_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="medicament_complete.choices" Name="medicament_complete" DataType="text" redcap:Variable="medicament_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="pathogenes_complete.choices" Name="pathogenes_complete" DataType="text" redcap:Variable="pathogenes_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="fotografias_complete.choices" Name="fotografias_complete" DataType="text" redcap:Variable="fotografias_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="resultat_complete.choices" Name="resultat_complete" DataType="text" redcap:Variable="resultat_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="suivi_complete.choices" Name="suivi_complete" DataType="text" redcap:Variable="suivi_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+	<CodeList OID="retrait_complete.choices" Name="retrait_complete" DataType="text" redcap:Variable="retrait_complete">
+		<CodeListItem CodedValue="0"><Decode><TranslatedText>Incomplete</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="1"><Decode><TranslatedText>Unverified</TranslatedText></Decode></CodeListItem>
+		<CodeListItem CodedValue="2"><Decode><TranslatedText>Complete</TranslatedText></Decode></CodeListItem>
+	</CodeList>
+</MetaDataVersion>
+</Study>
+</ODM>

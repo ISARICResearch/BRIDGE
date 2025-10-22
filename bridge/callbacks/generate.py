@@ -17,7 +17,7 @@ from bridge.utils.trigger_id import get_trigger_id
 pd.options.mode.copy_on_write = True
 
 CONFIG_DIR = join(dirname(dirname(dirname(abspath(__file__)))), 'assets', 'config_files')
-XML_FILE_NAME = 'ISARIC Clinical Characterisation Setup.xml'
+XML_FILE_NAME = 'ISARIC Clinical Characterisation Setup'
 
 
 @dash.callback(
@@ -99,7 +99,8 @@ def on_generate_click(n_clicks: int,
         csv_buffer.seek(0)
 
         # XML
-        xml_file_path = f'{CONFIG_DIR}/{XML_FILE_NAME}'
+        xml_file_name =XML_FILE_NAME+'_'+language+'.xml'
+        xml_file_path = f'{CONFIG_DIR}/{xml_file_name }'
         with open(xml_file_path, 'rb') as file:
             xml_content = file.read()
 
@@ -115,7 +116,7 @@ def on_generate_click(n_clicks: int,
                     zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_data)
                     zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_crf)
                 if 'redcap_xml' in output_files:
-                    zip_file.writestr(XML_FILE_NAME, xml_content)
+                    zip_file.writestr(xml_file_name, xml_content)
             zip_buffer.seek(0)
             return "", dcc.send_bytes(zip_buffer.getvalue(), f"{crf_name}_bundle_{date}.zip"), None, None, None
 
@@ -125,7 +126,7 @@ def on_generate_click(n_clicks: int,
                            f"{crf_name}_DataDictionary_{date}.csv") if 'redcap_csv' in output_files else None,
             dcc.send_bytes(pdf_data,
                            f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None,
-            dcc.send_bytes(xml_content, XML_FILE_NAME) if 'redcap_xml' in output_files else None,
+            dcc.send_bytes(xml_content, xml_file_name) if 'redcap_xml' in output_files else None,
             dcc.send_bytes(pdf_crf,
                            f"{crf_name}_paperlike_{date}.pdf") if 'paper_like' in output_files else None
         )
