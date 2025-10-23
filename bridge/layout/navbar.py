@@ -5,7 +5,7 @@ from dash import html
 class NavBar:
 
     def __init__(self):
-        self.assets_dir = '../../assets'
+        self.assets_dir = 'assets'
         self.logos_dir = f'{self.assets_dir}/logos'
         self.isaric_logo = f'{self.logos_dir}/ISARIC_logo_wh.png'
 

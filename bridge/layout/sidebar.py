@@ -5,7 +5,7 @@ from dash import html
 class SideBar:
 
     def __init__(self):
-        self.assets_dir = '../../assets'
+        self.assets_dir = 'assets'
         self.icons_dir = f'{self.assets_dir}/icons'
         self.settings_off = f"{self.icons_dir}/settings_off.png"
         self.preset_off = f"{self.icons_dir}/preset_off.png"
