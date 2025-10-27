@@ -5,7 +5,7 @@ from dash import html
 class Index:
 
     def __init__(self):
-        self.assets_dir = '../../assets'
+        self.assets_dir = 'assets'
         self.logos_dir = f'{self.assets_dir}/logos'
         self.screenshots_dir = f'{self.assets_dir}/screenshots'
 
@@ -185,7 +185,6 @@ class Index:
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
-
 
                         dbc.Col([
                             html.Div([

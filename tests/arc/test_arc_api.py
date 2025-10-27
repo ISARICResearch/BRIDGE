@@ -104,7 +104,7 @@ def test_write_to_dataframe_json(mock_logger,
     assert_frame_equal(output, df_mock)
 
 
-@mock.patch('bridge.arc.arc_api.ArcApiClient._get_release_json')
+@mock.patch('bridge.arc.arc_api.ArcApiClient._get_api_response')
 def test_get_arc_version_list(mock_release_json,
                               client):
     release_json = [
@@ -130,7 +130,7 @@ def test_get_arc_version_list(mock_release_json,
     assert output == expected
 
 
-@mock.patch('bridge.arc.arc_api.ArcApiClient._get_tag_json')
+@mock.patch('bridge.arc.arc_api.ArcApiClient._get_api_response')
 def test_get_arc_version_sha(mock_tag_json,
                              client):
     expected_sha = '87e78283e0412d78e247fd2a2618e2bb09a0ca17'
@@ -146,7 +146,7 @@ def test_get_arc_version_sha(mock_tag_json,
     assert output == expected_sha
 
 
-@mock.patch('bridge.arc.arc_api.ArcApiClient._get_tag_json')
+@mock.patch('bridge.arc.arc_api.ArcApiClient._get_api_response')
 def test_get_arc_version_sha_exception(mock_tag_json,
                                        client):
     tag_json = [

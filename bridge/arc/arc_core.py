@@ -16,7 +16,8 @@ def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
     logger.info(f'version: {version}')
 
     commit_sha = ArcApiClient().get_arc_version_sha(version)
-    df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha)
+    df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha,
+                                                       version)
 
     try:
         df_dependencies = get_dependencies(df_datadicc)
