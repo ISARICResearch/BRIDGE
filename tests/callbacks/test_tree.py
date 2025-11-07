@@ -76,8 +76,6 @@ def test_update_list_items_ulist_checked_otherl2(mock_list,
     mock_list.return_value = df_mock_list
     version = 'v1.1.2'
     language = 'English'
-    ulist_updated = []
-    multilist_updated = []
     checked_key = 'preset_ARChetype Disease CRF_Covid'
     data = {
         'Variable': ['inclu_disease', 'inclu_disease_otherl2'],
@@ -104,14 +102,18 @@ def test_update_list_items_ulist_checked_otherl2(mock_list,
         '[56, "Abnormal weight loss", 0]]]]'
     )
 
-    df_output, ulist_output, multilist_output = tree.update_list_items(df_current_datadicc,
-                                                                       ulist_saved,
-                                                                       multilist_saved,
-                                                                       ulist_updated,
-                                                                       multilist_updated,
-                                                                       version,
-                                                                       language,
-                                                                       checked_key=checked_key)
+    df_output, ulist_output = tree.update_list_items(df_current_datadicc,
+                                                     ulist_saved,
+                                                     'user_list',
+                                                     version,
+                                                     language,
+                                                     checked_key=checked_key)
+    df_output, multilist_output = tree.update_list_items(df_current_datadicc,
+                                                         multilist_saved,
+                                                         'multi_list',
+                                                         version,
+                                                         language,
+                                                         checked_key=checked_key)
     ulist_expected = (
         '[["inclu_disease", '
         '[[1, "Adenovirus", 0], '
@@ -151,8 +153,6 @@ def test_update_list_items_multilist_selected(mock_list,
     mock_list.return_value = df_mock_list
     version = 'v1.1.2'
     language = 'English'
-    ulist_updated = []
-    multilist_updated = []
     data = {
         'Variable': ['inclu_disease'],
         'Type': ['multi_list'],
@@ -179,13 +179,16 @@ def test_update_list_items_multilist_selected(mock_list,
         '[36, "Oropouche", 0]]]]'
     )
 
-    df_output, ulist_output, multilist_output = tree.update_list_items(df_current_datadicc,
-                                                                       ulist_saved,
-                                                                       multilist_saved,
-                                                                       ulist_updated,
-                                                                       multilist_updated,
-                                                                       version,
-                                                                       language, )
+    df_output, ulist_output = tree.update_list_items(df_current_datadicc,
+                                                     ulist_saved,
+                                                     'user_list',
+                                                     version,
+                                                     language)
+    df_output, multilist_output = tree.update_list_items(df_current_datadicc,
+                                                         multilist_saved,
+                                                         'multi_list',
+                                                         version,
+                                                         language)
     ulist_expected = '[]'
     multilist_expected = (
         '[["inclu_disease", '
@@ -373,11 +376,12 @@ def test_update_tree_items_and_stores(mock_get_tree_items,
     }
     df_mock = pd.DataFrame.from_dict(mock_data)
 
-    mock_update_for_template.return_value = (
-        df_mock,
-        mock_ulist,
-        mock_multilist,
-    )
+    mock_update_for_template.side_effect = [
+        (df_mock,
+        mock_ulist),
+        (df_mock,
+        mock_multilist),
+    ]
 
     (output_tree_items,
      output_json,

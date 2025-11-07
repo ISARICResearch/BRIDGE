@@ -92,25 +92,33 @@ def update_tree_items_and_stores(checked_templates: list,
                     df_datadicc['Variable'].loc[df_datadicc[checked_key].notnull()])
 
             (df_datadicc,
-             ulist_variable_choices,
+             ulist_variable_choices) = update_list_items(df_datadicc,
+                                                         version_lang_ulist_saved,
+                                                         'user_list',
+                                                         version,
+                                                         language,
+                                                         checked_key=checked_key)
+
+            (df_datadicc,
              multilist_variable_choices) = update_list_items(df_datadicc,
-                                                             version_lang_ulist_saved,
                                                              version_lang_multilist_saved,
-                                                             ulist_variable_choices,
-                                                             multilist_variable_choices,
+                                                             'multi_list',
                                                              version,
                                                              language,
                                                              checked_key=checked_key)
 
-
     else:
         (df_datadicc,
-         ulist_variable_choices,
+         ulist_variable_choices) = update_list_items(df_datadicc,
+                                                     version_lang_ulist_saved,
+                                                     'user_list',
+                                                     version,
+                                                     language)
+
+        (df_datadicc,
          multilist_variable_choices) = update_list_items(df_datadicc,
                                                          version_lang_ulist_saved,
-                                                         version_lang_multilist_saved,
-                                                         ulist_variable_choices,
-                                                         multilist_variable_choices,
+                                                         'multi_list',
                                                          version,
                                                          language)
 
@@ -145,62 +153,56 @@ def get_checked_template_list(grouped_presets_dict: dict,
 
 
 def update_list_items(df_datadicc: pd.DataFrame,
-                      ulist_saved: str,
-                      multilist_saved: str,
-                      ulist_updated: list,
-                      multilist_updated: list,
+                      list_saved: str,
+                      list_type: str,
                       version: str,
                       language: str,
-                      checked_key: str = None) -> Tuple[pd.DataFrame, str, str]:
+                      checked_key: str = None) -> Tuple[pd.DataFrame, str]:
     translations_for_language = arc_translations.get_translations(language)
     other_text = translations_for_language['other']
 
-    df_datadicc_lists = df_datadicc.loc[df_datadicc['Type'].isin(['user_list', 'multi_list'])]
+    df_datadicc_list = df_datadicc.loc[df_datadicc['Type'] == list_type]
 
-    for list_data_index, list_data in df_datadicc_lists.iterrows():
-        list_name = str(list_data['List'])
-        variable_name = list_data['Variable']
+    list_variable_choices_updated = []
+
+    for _, datadicc_list_variable_row in df_datadicc_list.iterrows():
+        # Iterate over the variables in this df as it has the list name
+        list_items_updated = []
+        select_answer_options = ''
+        not_select_answer_options = ''
+
+        list_name = str(datadicc_list_variable_row['List'])
+        variable_name = datadicc_list_variable_row['Variable']
         variable_name_not_selected = f'{variable_name}_otherl2'
 
-        df_list_data = ArcApiClient().get_dataframe_arc_list_version_language(version,
-                                                                              language,
-                                                                              list_name.replace('_', '/'))
+        df_template_list_data = ArcApiClient().get_dataframe_arc_list_version_language(version,
+                                                                                       language,
+                                                                                       list_name.replace('_', '/'))
 
-        if checked_key and checked_key in df_list_data.columns:
+        if checked_key and checked_key in df_template_list_data.columns:
             selected_column = checked_key
         else:
             selected_column = 'Selected'
 
-        df_saved_ulist = pd.DataFrame(json.loads(ulist_saved), columns=['Variable', 'list_data'])
-        df_saved_multilist = pd.DataFrame(json.loads(multilist_saved), columns=['Variable', 'list_data'])
-        df_saved_lists = pd.concat([df_saved_ulist, df_saved_multilist], ignore_index=True)
+        df_list_saved = pd.DataFrame(json.loads(list_saved), columns=['Variable', selected_column])
+        list_items_saved = df_list_saved.loc[df_list_saved['Variable'] == variable_name, selected_column].values[0]
 
-        list_items_saved = list(df_saved_lists[df_saved_lists['Variable'] == variable_name]['list_data'])[0]
+        for list_item in list_items_saved:
+            # Update the list items saved with the settings in the template
+            list_item_name = list_item[1]
+            list_item_number = list_item[0]
 
-        ulist_options = []
-        multilist_options = []
-        select_answer_options = ''
-        not_select_answer_options = ''
+            df_template_list_data[selected_column] = df_template_list_data[selected_column].apply(
+                lambda x: float(1) if type(x) == str and x.replace(' ', '') == '1' else x)
+            df_template_checked = df_template_list_data[df_template_list_data[selected_column] == float(1)]
 
-        for index, row in df_list_data.iterrows():
-            selected_value = row[selected_column]
-            if isinstance(selected_value, str):
-                selected_value = float(1) if selected_value.replace(' ', '') == '1' else None
+            checked_list = list(df_template_checked.iloc[:, 0].values)
 
-            list_item_name = row[df_list_data.columns[0]]
-            list_item_number = [x for x in list_items_saved if list_item_name in x][0][0]
-
-            if pd.notnull(selected_value) and int(selected_value) == 1:
-                if list_data['Type'] == 'user_list':
-                    ulist_options.append([list_item_number, str(list_item_name), 1])
-                else:
-                    multilist_options.append([list_item_number, str(list_item_name), 1])
+            if list_item_name in checked_list:
+                list_items_updated.append([list_item_number, str(list_item_name), 1])
                 select_answer_options += f'{list_item_number}, {str(list_item_name)} | '
             else:
-                if list_data['Type'] == 'user_list':
-                    ulist_options.append([list_item_number, str(list_item_name), 0])
-                else:
-                    multilist_options.append([list_item_number, str(list_item_name), 0])
+                list_items_updated.append([list_item_number, str(list_item_name), 0])
                 not_select_answer_options += f'{list_item_number}, {str(list_item_name)} | '
 
         df_datadicc.loc[df_datadicc['Variable'] == variable_name, 'Answer Options'] \
@@ -210,16 +212,11 @@ def update_list_items(df_datadicc: pd.DataFrame,
             df_datadicc.loc[df_datadicc['Variable'] == variable_name_not_selected, 'Answer Options'] \
                 = f'{not_select_answer_options}88, {other_text}'
 
-        if list_data['Type'] == 'user_list':
-            ulist_updated.append([list_data['Variable'], ulist_options])
-
-        elif list_data['Type'] == 'multi_list':
-            multilist_updated.append([list_data['Variable'], multilist_options])
+        list_variable_choices_updated.append([variable_name, list_items_updated])
 
     return (
         df_datadicc,
-        json.dumps(ulist_updated),
-        json.dumps(multilist_updated),
+        json.dumps(list_variable_choices_updated),
     )
 
 
