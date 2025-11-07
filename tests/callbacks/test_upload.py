@@ -36,11 +36,11 @@ def test_on_upload_crf(upload_filename, upload_contents, expected_output):
 @mock.patch('bridge.callbacks.upload.logger')
 def test_on_upload_crf_exception(mock_logger):
     with pytest.raises(AttributeError):
-        upload.on_upload_crf('template_English_2025-09-16.csv', None)
+        upload.on_upload_crf('template_English_2025-09-16.csv', '')
 
 
 @mock.patch('bridge.callbacks.upload.arc_translations.get_translations', return_value={'other': 'Other'})
-def test_update_for_upload_list_selected(mock_get_translations):
+def test_update_list_variables_checked_upload(mock_get_translations):
     data = {
         'Form': ['presentation', 'presentation'],
         'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
@@ -56,22 +56,23 @@ def test_update_for_upload_list_selected(mock_get_translations):
     df_list_upload = pd.DataFrame.from_dict(data)
     list_variable_choices = ('[["inclu_disease", '
                              '[[1, "Adenovirus", 0],'
-                             '[2, "Andes virus infection (hantavirus)", 0],'
-                             '[3, "Argentine haemorrhagic fever (Junin virus)", 0]]], '
+                             '[21, "Andes virus infection (hantavirus)", 0],'
+                             '[13, "Argentine haemorrhagic fever (Junin virus)", 0]]], '
                              '["demog_country", '
                              '[[1, "Afghanistan", 0],'
                              '[2, "Aland Islands", 0]]]]')
     list_type = 'Ulist'
     language = 'English'
-    (df_datadicc, list_variable_choices_updated) = upload.update_for_upload_list_selected(df_datadicc, df_list_upload,
-                                                                                          list_variable_choices,
-                                                                                          list_type, language)
+    (df_datadicc,
+     list_variable_choices_updated) = upload.update_list_variables_checked_upload(df_datadicc, df_list_upload,
+                                                                                               list_variable_choices,
+                                                                                               list_type, language)
 
     data = {
         'Form': ['presentation', 'presentation'],
         'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
         'Variable': ['inclu_disease', 'demog_country'],
-        'Answer Options': ['1, Adenovirus | 2, Andes virus infection (hantavirus) | 88, Other',
+        'Answer Options': ['1, Adenovirus | 21, Andes virus infection (hantavirus) | 88, Other',
                            '2, Aland Islands | 88, Other'],
     }
     df_datadicc_expected = pd.DataFrame.from_dict(data)
@@ -80,13 +81,11 @@ def test_update_for_upload_list_selected(mock_get_translations):
     list_variable_choices_expected = (
         '[["inclu_disease", '
         '[[1, "Adenovirus", 1], '
-        '[2, "Andes virus infection (hantavirus)", 1], '
-        '[3, "Argentine haemorrhagic fever (Junin virus)", 0], '
-        '"88, Other"]], '
+        '[21, "Andes virus infection (hantavirus)", 1], '
+        '[13, "Argentine haemorrhagic fever (Junin virus)", 0]]], '
         '["demog_country", '
         '[[1, "Afghanistan", 0], '
-        '[2, "Aland Islands", 1], '
-        '"88, Other"]]]')
+        '[2, "Aland Islands", 1]]]]')
 
     assert list_variable_choices_updated == list_variable_choices_expected
 
@@ -234,16 +233,18 @@ def test_update_output_upload_crf_not_triggered():
 
 
 @mock.patch('bridge.callbacks.upload.html.Div', return_value=['Just for checking'])
-@mock.patch('bridge.callbacks.upload.update_for_upload_list_selected')
+@mock.patch('bridge.callbacks.upload.update_list_variables_checked_upload')
 @mock.patch('bridge.callbacks.upload.arc_tree.get_tree_items')
-def test_update_output_upload_crf(mock_get_tree_items, mock_update_for_upload_list, mock_html_div):
+def test_update_output_upload_crf(mock_get_tree_items,
+                                  mock_update,
+                                  mock_html_div):
     data = {
         'Form': ['here is some mock output'],
         'Answer Options': ['because it is tested elsewhere'],
     }
     df_mock = pd.DataFrame.from_dict(data)
     list_mock = ['Some', ['mock', 'output', 'list']]
-    mock_update_for_upload_list.return_value = (df_mock, list_mock)
+    mock_update.return_value = (df_mock, list_mock)
 
     trigger = [{'prop_id': 'upload-crf-ready.data', 'value': True}]
     upload_crf_ready = True

@@ -27,16 +27,16 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
 
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
-                                                                                     row['List'].replace('_', '/'))
+                                                                                     str(row['List']).replace('_', '/'))
 
             list_choices = ''
             list_variable_choices_aux = []
 
             for list_option in df_list_options[df_list_options.columns[0]]:
-                cont_lo = set_cont_lo(df_list_options, list_option)
+                cont_lo = set_cont_lo(df_list_options, str(list_option))
                 try:
                     list_variable_choices_aux.append([cont_lo, list_option])
-                    list_choices += str(cont_lo) + ', ' + list_option + ' | '
+                    list_choices += str(cont_lo) + ', ' + str(list_option) + ' | '
                 except Exception as e:
                     logger.error(e)
                     raise RuntimeError("Failed to determine list choices")
@@ -197,7 +197,7 @@ def set_cont_lo(df_list_options: pd.DataFrame,
         cont_lo = int(df_list_options['Value'].loc[df_list_options[df_list_options.columns[0]] == list_option].iloc[0])
     else:
         # fallback to index-based counting
-        cont_lo = df_list_options[df_list_options.columns[0]].tolist().index(list_option) + 1
+        cont_lo = df_list_options[df_list_options.columns[0]].values.tolist().index(list_option) + 1
 
     if cont_lo == 88:
         cont_lo = 89
@@ -226,21 +226,21 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
             logger.warn('List without corresponding repository file')
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
-                                                                                     row['List'].replace('_', '/'))
+                                                                                     str(row['List']).replace('_', '/'))
 
             l2_choices = ''
             l1_choices = ''
             list_variable_choices_aux = []
             for lo in df_list_options[df_list_options.columns[0]]:
-                cont_lo = set_cont_lo(df_list_options, lo)
+                cont_lo = set_cont_lo(df_list_options, str(lo))
                 try:
                     df_list_options['Selected'] = pd.to_numeric(df_list_options['Selected'], errors='coerce')
 
                     if df_list_options['Selected'].loc[df_list_options[df_list_options.columns[0]] == lo].iloc[0] == 1:
-                        l1_choices += str(cont_lo) + ', ' + lo + ' | '
+                        l1_choices += str(cont_lo) + ', ' + str(lo) + ' | '
                         list_variable_choices_aux.append([cont_lo, lo, 1])
                     else:
-                        l2_choices += str(cont_lo) + ', ' + lo + ' | '
+                        l2_choices += str(cont_lo) + ', ' + str(lo) + ' | '
                         list_variable_choices_aux.append([cont_lo, lo, 0])
 
                 except Exception as e:
@@ -269,7 +269,7 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
                 dropdown_row['Question'] = f"{select_text} {row['Question']}"
                 other_row['Question'] = f"{specify_other_text} {row['Question']}"
             dropdown_row['mod'] = 'otherl2'
-            if list_type=='multi_list':
+            if list_type == 'multi_list':
                 dropdown_row['Skip Logic'] = '[' + row['Variable'] + "(88)]='1'"
 
             else:

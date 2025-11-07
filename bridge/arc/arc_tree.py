@@ -48,14 +48,6 @@ def get_tree_items(df_datadicc: pd.DataFrame,
                    .merge(group_counts_total, on=['Form', 'Sec_name', 'vari'], how='left')
                    .merge(df_idx_first, on=['Form', 'Sec_name', 'vari'], how='left'))
 
-    # question title prefix
-    def _qtitle(row):
-        if row['Type'] == 'user_list':
-            return '↳ ' + row['Question']
-        elif row['Type'] == 'multi_list':
-            return '⇉ ' + row['Question']
-        return row['Question']
-
     tree = {'title': version.replace('ICC', 'ARC'), 'key': 'ARC', 'children': []}
     seen_forms, seen_sections = set(), {}
 

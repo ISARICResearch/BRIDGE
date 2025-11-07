@@ -24,7 +24,7 @@ SELECTED_VERSION_DATA_NONE = None
 SELECTED_LANGUAGE_DATA_NONE = None
 
 
-def test_determine_list_variable_choices():
+def test_update_list_variables_checked():
     data = {
         'cod': [1, 15, 33],
         'Option': ['Adenovirus', 'HSV', 'Mpox'],
@@ -65,11 +65,11 @@ def test_determine_list_variable_choices():
              [2, "Aland Islands", 0]
          ]]
     ]
-    df_output, list_output = modals.determine_list_variable_choices(variable_choices_list,
-                                                                    variable_submitted,
-                                                                    df_list_options_checked,
-                                                                    df_datadicc,
-                                                                    other_text)
+    df_output, str_output = modals.update_list_variables_checked(variable_choices_list,
+                                                                  variable_submitted,
+                                                                  df_list_options_checked,
+                                                                  df_datadicc,
+                                                                  other_text)
 
     list_expected = [
         ['inclu_disease',
@@ -105,7 +105,7 @@ def test_determine_list_variable_choices():
     }
     df_expected = pd.DataFrame.from_dict(data)
 
-    assert list_output == list_expected
+    assert str_output == json.dumps(list_expected)
     assert_frame_equal(df_output, df_expected)
 
 
@@ -167,8 +167,14 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
          (False,
           '{"columns":["Form","Variable"],"index":[0,1],"data":[["presentation","inclu_disease"],["presentation","inclu_disease"]]}',
-          '[["inclu_disease", [[1, "Adenovirus", 0], [2, "Andes virus", 0], [10, "Dengue", 1], [33, "Mpox ", 1]]]]',
-          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
+          [['inclu_disease',
+            [[1, 'Adenovirus', 0],
+             [2, 'Andes virus', 0],
+             [10, 'Dengue', 1],
+             [33, 'Mpox ', 1]]]],
+          [['pres_firstsym',
+            [[1, 'Abdominal pain', 0],
+             [2, 'Abnormal weight loss', 0]]]],
           ['Just for checking'])),
         ('[["demog_country", [[1, "Afghanistan", 0], [2, "Estonia", 1], [3, "Finland", 1]]]]',
          '[["pres_firstsym", [[1, "Abdominal pain", 0], [2, "Abnormal weight loss", 0]]]]',
@@ -181,7 +187,7 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
 )
 @mock.patch('bridge.callbacks.modals.html.Div', return_value=['Just for checking'])
 @mock.patch('bridge.callbacks.modals.arc_tree.get_tree_items')
-@mock.patch('bridge.callbacks.modals.determine_list_variable_choices')
+@mock.patch('bridge.callbacks.modals.update_list_variables_checked')
 @mock.patch('bridge.callbacks.modals.arc_translations.get_translations', return_value={'other': 'Other'})
 @mock.patch('bridge.callbacks.modals.get_trigger_id', return_value='modal_submit')
 def test_on_modal_button_click_modal_submit(mock_trigger_id,
@@ -252,22 +258,20 @@ def get_output_on_modal_button_click(trigger,
 
 
 @pytest.mark.parametrize(
-    "selected, ulist_variable_choices_saved, multilist_variable_choices_saved, is_open, current_datadicc_saved, expected_output",
+    "selected, ulist_variable_choices_saved, multilist_variable_choices_saved, current_datadicc_saved, expected_output",
     [
-        ([], None, None, False, None,
+        ([], None, None, None,
          (False, '', '', '', '', {"display": "none"}, {"display": "none"}, [], [], [])),
     ]
 )
 def test_display_selected_in_modal_nothing_selected(selected,
                                                     ulist_variable_choices_saved,
                                                     multilist_variable_choices_saved,
-                                                    is_open,
                                                     current_datadicc_saved,
                                                     expected_output):
     output = get_output_display_selected_in_modal(selected,
                                                   ulist_variable_choices_saved,
                                                   multilist_variable_choices_saved,
-                                                  is_open,
                                                   current_datadicc_saved)
     assert output == expected_output
 
@@ -314,7 +318,6 @@ def test_display_selected_in_modal(mock_list_group_item,
                                    ulist_variable_choices_saved,
                                    multilist_variable_choices_saved,
                                    expected_output):
-    is_open = False
     current_datadicc_saved = (
         '{"columns":["Form", "Variable", "Question", "Definition", "Completion Guideline", "Branch", "Answer Options"],'
         '"index":[0, 1, 2, 3, 4, 5, 6],'
@@ -330,7 +333,6 @@ def test_display_selected_in_modal(mock_list_group_item,
     output = get_output_display_selected_in_modal(selected,
                                                   ulist_variable_choices_saved,
                                                   multilist_variable_choices_saved,
-                                                  is_open,
                                                   current_datadicc_saved)
     assert output == expected_output
 
@@ -338,13 +340,11 @@ def test_display_selected_in_modal(mock_list_group_item,
 def get_output_display_selected_in_modal(selected,
                                          ulist_variable_choices_saved,
                                          multilist_variable_choices_saved,
-                                         is_open,
                                          current_datadicc_saved):
     def run_callback():
         return modals.display_selected_in_modal(selected,
                                                 ulist_variable_choices_saved,
                                                 multilist_variable_choices_saved,
-                                                is_open,
                                                 current_datadicc_saved)
 
     ctx = copy_context()

@@ -44,7 +44,7 @@ def test_get_checked_data_for_list(df_list):
     "n_clicks, checked_variables, current_datadicc_saved, selected_version_data, selected_language_data, crf_name, "
     "ulist_variable_choices_saved, multilist_variable_choices_saved, expected_output",
     [
-        (None, None, None, None, None, None, None, None,
+        (None, None, '', {}, {}, '', '', '',
          ('', None)),
         (None, ['inclu_disease', 'demog_country'], None, None, None, None, None, None,
          ('', None)),
@@ -128,12 +128,12 @@ def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
 def test_on_save_click_wrong_trigger_id(mock_trigger_id):
     n_clicks = 1
     checked_variables = ['inclu_disease']
-    current_datadicc_saved = None
-    selected_version_data = None
-    selected_language_data = None
-    crf_name = None
-    ulist_variable_choices_saved = None
-    multilist_variable_choices_saved = None
+    current_datadicc_saved = ''
+    selected_version_data = {}
+    selected_language_data = {}
+    crf_name = ''
+    ulist_variable_choices_saved = ''
+    multilist_variable_choices_saved = ''
 
     def run_callback():
         return save.on_save_click(n_clicks,

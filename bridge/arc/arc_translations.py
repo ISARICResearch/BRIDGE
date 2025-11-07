@@ -82,7 +82,7 @@ def process_skip_logic(row: pd.Series,
     branch = []
     if 'Skip Logic' in df_current_datadicc.columns:
         skip_logic = row['Skip Logic']
-        extracted_variables, labels, comparison_operators, logical_operators = _extract_logic_components(skip_logic)
+        extracted_variables, labels, comparison_operators, logical_operators = _extract_logic_components(str(skip_logic))
         logical_operators = logical_operators + [' ']
         for i in range(len(extracted_variables)):
             try:
