@@ -137,8 +137,8 @@ def update_tree_items_and_stores(checked_templates: list,
     return (
         tree_items,
         df_datadicc.to_json(date_format='iso', orient='split'),
-        json.dumps(ulist_variable_choices),
-        json.dumps(multilist_variable_choices)
+        ulist_variable_choices,
+        multilist_variable_choices,
     )
 
 

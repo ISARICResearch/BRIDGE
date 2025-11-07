@@ -398,5 +398,5 @@ def test_update_tree_items_and_stores(mock_get_tree_items,
 
     assert output_tree_items == ['Just for checking']
     assert output_json == str(df_mock.to_json(date_format='iso', orient='split'))
-    assert output_ulist == json.dumps(mock_ulist)
-    assert output_multilist == json.dumps(mock_multilist)
+    assert output_ulist == mock_ulist
+    assert output_multilist == mock_multilist
