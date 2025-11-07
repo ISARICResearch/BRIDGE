@@ -42,18 +42,18 @@ def test_on_upload_crf_exception(mock_logger):
 @mock.patch('bridge.callbacks.upload.arc_translations.get_translations', return_value={'other': 'Other'})
 def test_update_list_variables_checked_upload(mock_get_translations):
     data = {
-        'Form': ['presentation', 'presentation'],
-        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
-        'Variable': ['inclu_disease', 'demog_country'],
-        'Answer Options': [None, None]
+        'Form': ['presentation', 'presentation', 'presentation'],
+        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS', 'DEMOGRAPHICS'],
+        'Variable': ['inclu_disease', 'demog_country', 'inclu_disease_otherl2'],
+        'Answer Options': [None, None, None]
     }
     df_datadicc = pd.DataFrame.from_dict(data)
-    data = {
+    data_list = {
         'Variable': ['inclu_disease', 'demog_country'],
         'Ulist Selected': ['Adenovirus|Andes virus infection (hantavirus)', 'Aland Islands'],
         'Multilist Selected': [None, None],
     }
-    df_list_upload = pd.DataFrame.from_dict(data)
+    df_list_upload = pd.DataFrame.from_dict(data_list)
     list_variable_choices = ('[["inclu_disease", '
                              '[[1, "Adenovirus", 0],'
                              '[21, "Andes virus infection (hantavirus)", 0],'
@@ -69,11 +69,12 @@ def test_update_list_variables_checked_upload(mock_get_translations):
                                                                                                list_type, language)
 
     data = {
-        'Form': ['presentation', 'presentation'],
-        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS'],
-        'Variable': ['inclu_disease', 'demog_country'],
+        'Form': ['presentation', 'presentation', 'presentation'],
+        'Section': ['INCLUSION CRITERIA', 'DEMOGRAPHICS', 'DEMOGRAPHICS'],
+        'Variable': ['inclu_disease', 'demog_country', 'inclu_disease_otherl2'],
         'Answer Options': ['1, Adenovirus | 21, Andes virus infection (hantavirus) | 88, Other',
-                           '2, Aland Islands | 88, Other'],
+                           '2, Aland Islands | 88, Other',
+                           '13, Argentine haemorrhagic fever (Junin virus) | 88, Other'],
     }
     df_datadicc_expected = pd.DataFrame.from_dict(data)
     assert_frame_equal(df_datadicc, df_datadicc_expected)
