@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import dash
 from reportlab.lib.units import inch
 
 
@@ -12,7 +12,7 @@ def generate_header_footer(canvas, doc, title):
     logo_scale_isaric = 0.87
 
     # Moves image to X, Y with 0,0 being bottom left hand corner.
-    canvas.drawInlineImage("assets/logos/ISARIC_logo.png", 25, 752, width=69 * logo_scale_isaric,
+    canvas.drawInlineImage("assets/ISARIC_logo.png", 25, 752, width=69 * logo_scale_isaric,
                            height=30 * logo_scale_isaric)  # change for deploy
 
     # Change: now the text in header and footer is a shade of grey, like in paper version
@@ -46,7 +46,7 @@ def generate_guide_header_footer(canvas, doc, title, toc_pages=0):
     logo_scale_isaric = 0.7
 
     # Moves image to X, Y with 0,0 being bottom left hand corner.
-    canvas.drawInlineImage("assets/logos/ISARIC_logo.png", 25, 755, width=69 * logo_scale_isaric,
+    canvas.drawInlineImage("assets/ISARIC_logo.png", 25, 755, width=69 * logo_scale_isaric,
                            height=30 * logo_scale_isaric)  # change for deploy
 
     # Change: now the text in header and footer is a shade of grey, like in paper version
