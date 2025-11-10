@@ -69,8 +69,8 @@ def on_upload_crf(filename: str,
     ],
     prevent_initial_call=True
 )
-def load_upload_arc_version_language(upload_version_data: str,
-                                     upload_language_data: str,
+def load_upload_arc_version_language(upload_version_data: dict,
+                                     upload_language_data: dict,
                                      selected_version_data: dict,
                                      selected_language_data: dict):
     ctx = dash.callback_context
@@ -87,8 +87,8 @@ def load_upload_arc_version_language(upload_version_data: str,
                 dash.no_update,
                 dash.no_update)
 
-    upload_version = upload_version_data.get('upload_version', None)
-    upload_language = upload_language_data.get('upload_language', None)
+    upload_version = upload_version_data.get('upload_version')
+    upload_language = upload_language_data.get('upload_language')
 
     if ((selected_version_data
          and upload_version == selected_version_data.get('selected_version', None))
@@ -138,52 +138,6 @@ def load_upload_arc_version_language(upload_version_data: str,
                 None,
                 dash.no_update,
                 dash.no_update)
-
-
-def update_for_upload_list_selected(df_datadicc: pd.DataFrame,
-                                    df_list_upload: pd.DataFrame,
-                                    variable_choices: str,
-                                    list_type: str,
-                                    language: str) -> Tuple[pd.DataFrame, str]:
-    translations_for_language = arc_translations.get_translations(language)
-    other_text = translations_for_language['other']
-
-    selected_column = f'{list_type} Selected'
-    # Use a dataframe to make replacing values easier
-    df_list_all = pd.DataFrame(json.loads(variable_choices), columns=['Variable', selected_column])
-    df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
-
-    variable_choices_updated_list = []
-
-    for index, row in df_list_upload.iterrows():
-        list_name = row['Variable']
-        boxes_checked = row[selected_column]
-        if pd.notnull(boxes_checked):
-            boxes_checked_list = boxes_checked.split('|')
-            list_index = df_list_all[df_list_all['Variable'] == list_name].index
-            list_values = df_list_all.loc[list_index, selected_column].values[0]
-            datadicc_index = df_datadicc.loc[df_datadicc['Variable'] == list_name].index
-
-            datadicc_values_updated = []
-            list_values_updated = []
-            for list_value in list_values:
-                list_value_name = list_value[1]
-                if list_value_name not in boxes_checked_list:
-                    list_values_updated.append(list_value)
-                else:
-                    list_value_number = list_value[0]
-                    list_values_updated.append([list_value_number, list_value_name, 1])
-                    datadicc_values_updated.append(f'{list_value_number}, {list_value_name}')
-
-            list_values_updated.append(f'88, {other_text}')
-            datadicc_values_updated.append(f'88, {other_text}')
-
-            variable_choices_updated_list.append([list_name, list_values_updated])
-            df_datadicc.loc[datadicc_index, 'Answer Options'] = ' | '.join(datadicc_values_updated)
-
-    list_variable_choices_updated = json.dumps(variable_choices_updated_list)
-
-    return df_datadicc, list_variable_choices_updated
 
 
 @dash.callback(
@@ -245,22 +199,79 @@ def update_output_upload_crf(upload_crf_ready: bool,
     df_upload_multilist = df_upload_csv[['Variable', 'Multilist Selected']]
 
     (df_datadicc_selected,
-     ulist_variables_selected) = update_for_upload_list_selected(df_version_lang_datadicc,
-                                                                 df_upload_ulist,
-                                                                 upload_version_lang_ulist_saved,
-                                                                 'Ulist',
-                                                                 upload_language)
+     ulist_variable_choices) = update_list_variables_checked_upload(df_version_lang_datadicc,
+                                                                    df_upload_ulist,
+                                                                    upload_version_lang_ulist_saved,
+                                                                    'Ulist',
+                                                                    upload_language)
     (df_datadicc_selected,
-     multilist_variables_selected) = update_for_upload_list_selected(df_datadicc_selected,
-                                                                     df_upload_multilist,
-                                                                     upload_version_lang_multilist_saved,
-                                                                     'Multilist',
-                                                                     upload_language)
+     multilist_variable_choices) = update_list_variables_checked_upload(df_datadicc_selected,
+                                                                        df_upload_multilist,
+                                                                        upload_version_lang_multilist_saved,
+                                                                        'Multilist',
+                                                                        upload_language)
 
     return (
         tree_items,
         df_datadicc_selected.to_json(date_format='iso', orient='split'),
-        ulist_variables_selected,
-        multilist_variables_selected,
+        ulist_variable_choices,
+        multilist_variable_choices,
         None,
+    )
+
+
+def update_list_variables_checked_upload(df_datadicc: pd.DataFrame,
+                                         df_list_upload: pd.DataFrame,
+                                         list_saved: str,
+                                         list_type: str,
+                                         language: str) -> Tuple[pd.DataFrame, str]:
+    translations_for_language = arc_translations.get_translations(language)
+    other_text = translations_for_language['other']
+
+    selected_column = f'{list_type} Selected'
+    df_list_saved = pd.DataFrame(json.loads(list_saved), columns=['Variable', selected_column])
+    df_list_upload = df_list_upload[df_list_upload[selected_column].notnull()]
+
+    list_variable_choices_updated = []
+
+    for _, row in df_list_saved.iterrows():
+        list_items_updated = []
+        select_answer_options = ''
+        not_select_answer_options = ''
+        variable_name = row['Variable']
+        variable_name_not_selected = f'{variable_name}_otherl2'
+
+        df_upload_variable = df_list_upload.loc[df_list_upload['Variable'] == variable_name]
+
+        list_items_saved = df_list_saved.loc[df_list_saved['Variable'] == variable_name, selected_column].values[0]
+
+        for list_item in list_items_saved:
+            list_item_name = list_item[1]
+            list_item_number = list_item[0]
+
+            if not df_upload_variable.empty:
+                variables_checked = df_upload_variable[selected_column].values[0]
+                checked_list = variables_checked.split('|')
+                if list_item_name in checked_list:
+                    list_items_updated.append([list_item_number, str(list_item_name), 1])
+                    select_answer_options += f'{list_item_number}, {str(list_item_name)} | '
+                else:
+                    list_items_updated.append([list_item_number, str(list_item_name), 0])
+                    not_select_answer_options += f'{list_item_number}, {str(list_item_name)} | '
+            else:
+                list_items_updated.append([list_item_number, str(list_item_name), 0])
+                not_select_answer_options += f'{list_item_number}, {str(list_item_name)} | '
+
+        df_datadicc.loc[df_datadicc['Variable'] == variable_name, 'Answer Options'] \
+            = f'{select_answer_options}88, {other_text}'
+
+        if variable_name_not_selected in list(df_datadicc['Variable']):
+            df_datadicc.loc[df_datadicc['Variable'] == variable_name_not_selected, 'Answer Options'] \
+                = f'{not_select_answer_options}88, {other_text}'
+
+        list_variable_choices_updated.append([variable_name, list_items_updated])
+
+    return (
+        df_datadicc,
+        json.dumps(list_variable_choices_updated),
     )

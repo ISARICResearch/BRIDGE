@@ -167,7 +167,9 @@ def get_select_units(selected_variables: pd.Series,
 
             max_value = pd.to_numeric(matching_rows['Maximum'], errors='coerce').max()
             min_value = pd.to_numeric(matching_rows['Minimum'], errors='coerce').min()
-            options = ' | '.join([f"{idx + 1},{extract_parenthesis_content(r['Question'])}" for idx, (_, r) in
+
+
+            options = ' | '.join([f"{idx + 1},{extract_parenthesis_content(str(r['Question']))}" for idx, (_, r) in
                                   enumerate(matching_rows.iterrows())])
 
             row_value = row.copy()
