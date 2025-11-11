@@ -1,3 +1,4 @@
+import dash
 import dash_bootstrap_components as dbc
 from dash import html
 
@@ -5,10 +6,6 @@ from dash import html
 class Index:
 
     def __init__(self):
-        self.assets_dir = 'assets'
-        self.logos_dir = f'{self.assets_dir}/logos'
-        self.screenshots_dir = f'{self.assets_dir}/screenshots'
-
         self.navbar_big = dbc.Navbar(
             dbc.Container(
                 [
@@ -16,7 +13,7 @@ class Index:
                         # Use row and col to control vertical alignment of logo / brand
                         dbc.Row(
                             [
-                                dbc.Col(html.Img(src=f"{self.logos_dir}/ISARIC_logo_wh.png", height="100px")),
+                                dbc.Col(html.Img(src=dash.get_asset_url('ISARIC_logo_wh.png'), height="100px")),
                                 dbc.Col(
                                     dbc.NavbarBrand("BRIDGE - BioResearch Integrated Data tool GEnerator",
                                                     className="ms-2")),
@@ -53,7 +50,7 @@ class Index:
                         ], style={'padding': '2rem'})
                     ], md=6, style={'display': 'flex', 'align-items': 'center', 'background-color': '#475160'}),
                     dbc.Col([
-                        html.Img(src=f"{self.screenshots_dir}/home_main.png", style={'width': '100%'})
+                        html.Img(src=dash.get_asset_url('home_main.png'), style={'width': '100%'})
                     ], md=6)
                 ])
             ], style={'padding': '0', 'margin': '0', 'background-color': '#475160'}),
@@ -96,7 +93,7 @@ class Index:
                                     "Additionally, users can start with one of our Presets, which are pre-selected groups of questions. They can click on the Pre-sets tab and select those they want to include in the CRF. All selected questions can be customized."
                                 ], className="card-text")
                             ], className="card-body-fixed"),
-                            dbc.CardImg(src=f"{self.screenshots_dir}/card1.png", bottom=True,
+                            dbc.CardImg(src=dash.get_asset_url('card1.png'), bottom=True,
                                         className="card-img-small"),
                         ], className="mb-3")
                     ], md=4),
@@ -113,7 +110,7 @@ class Index:
                                     "This feature ensures that the CRF is tailored to specific needs, enhancing the precision and relevance of the data collected."
                                 ], className="card-text")
                             ], className="card-body-fixed"),
-                            dbc.CardImg(src=f"{self.screenshots_dir}/card2.png", bottom=True,
+                            dbc.CardImg(src=dash.get_asset_url('card2.png'), bottom=True,
                                         className="card-img-small"),
                         ], className="mb-3")
                     ], md=4),
@@ -130,7 +127,7 @@ class Index:
                                     "Once users are satisfied with their selections, they can name the CRF and click on generate to finalize the process, ensuring a seamless transition to data collection."
                                 ], className="card-text")
                             ], className="card-body-fixed"),
-                            dbc.CardImg(src=f"{self.screenshots_dir}/card3.png", bottom=True,
+                            dbc.CardImg(src=dash.get_asset_url('card3.png'), bottom=True,
                                         className="card-img-small"),
                         ], className="mb-3")
                     ], md=4),
@@ -145,19 +142,19 @@ class Index:
                     dbc.Row([
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/FIOCRUZ_logo.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('FIOCRUZ_logo.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/global_health.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('global_health.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/puc_rio.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('puc_rio.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
@@ -169,32 +166,32 @@ class Index:
                     dbc.Row([
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/CONTAGIO_Logo.jpg", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('CONTAGIO_Logo.jpg'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/LONG_CCCC.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('LONG_CCCC.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/penta_col.jpg", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('penta_col.jpg'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
 
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/VERDI_Logo.jpg", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('VERDI_Logo.jpg'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/UCL_logo.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('UCL_logo.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto")
@@ -210,25 +207,25 @@ class Index:
                     dbc.Row([
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/wellcome-logo.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('wellcome-logo.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/billmelinda-logo.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('billmelinda-logo.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/uk-international-logo.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('uk-international-logo.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto"),
                         dbc.Col([
                             html.Div([
-                                html.Img(src=f"{self.logos_dir}/FundedbytheEU.png", className="img-fluid",
+                                html.Img(src=dash.get_asset_url('FundedbytheEU.png'), className="img-fluid",
                                          style={"height": "100px"})
                             ], className="d-flex justify-content-center")
                         ], width="auto")
@@ -244,7 +241,7 @@ class Index:
                     dbc.Row([
                         dbc.Col([
                             dbc.Card([
-                                dbc.CardImg(src=f"{self.logos_dir}/arc_logo.png", top=True),
+                                dbc.CardImg(src=dash.get_asset_url('arc_logo.png'), top=True),
                                 dbc.CardBody([
                                     html.H4("Analysis and ReseARC Compendium (ARC)", className="card-title"),
                                     html.P([
@@ -261,7 +258,7 @@ class Index:
                         ], md=3),
                         dbc.Col([
                             dbc.Card([
-                                dbc.CardImg(src=f"{self.logos_dir}/fhirflat_logo.png", top=True),
+                                dbc.CardImg(src=dash.get_asset_url('fhirflat_logo.png'), top=True),
                                 dbc.CardBody([
                                     html.H4("FHIRflat", className="card-title"),
                                     html.P([
@@ -280,7 +277,7 @@ class Index:
 
                         dbc.Col([
                             dbc.Card([
-                                dbc.CardImg(src=f"{self.logos_dir}/vertex_logo.png", top=True),
+                                dbc.CardImg(src=dash.get_asset_url('vertex_logo.png'), top=True),
                                 dbc.CardBody([
                                     html.H4("Visual Evidence & Research Tool for Exploration (VERTEX)",
                                             className="card-title"),

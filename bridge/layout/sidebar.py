@@ -1,3 +1,4 @@
+import dash
 import dash_bootstrap_components as dbc
 from dash import html
 
@@ -5,10 +6,8 @@ from dash import html
 class SideBar:
 
     def __init__(self):
-        self.assets_dir = 'assets'
-        self.icons_dir = f'{self.assets_dir}/icons'
-        self.settings_off = f"{self.icons_dir}/settings_off.png"
-        self.preset_off = f"{self.icons_dir}/preset_off.png"
+        self.settings_off = dash.get_asset_url('settings_off.png')
+        self.preset_off = dash.get_asset_url('preset_off.png')
 
         self.sidebar = html.Div(
             [

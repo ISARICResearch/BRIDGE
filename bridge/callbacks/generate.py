@@ -99,8 +99,8 @@ def on_generate_click(n_clicks: int,
         csv_buffer.seek(0)
 
         # XML
-        xml_file_name =XML_FILE_NAME+'_'+language+'.xml'
-        xml_file_path = f'{CONFIG_DIR}/{xml_file_name }'
+        xml_file_name = f'{XML_FILE_NAME}_{language}.xml'
+        xml_file_path = f'{CONFIG_DIR}/{xml_file_name}'
         with open(xml_file_path, 'rb') as file:
             xml_content = file.read()
 
