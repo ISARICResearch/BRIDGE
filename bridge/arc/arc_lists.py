@@ -23,7 +23,7 @@ def get_list_content(df_current_datadicc: pd.DataFrame, version: str, language: 
 
     for _, row in df_datadicc_lists.iterrows():
         if pd.isnull(row['List']):
-            logger.warn('List without corresponding repository file')
+            logger.warning('List without corresponding repository file')
 
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
@@ -223,7 +223,7 @@ def get_list_data(df_current_datadicc: pd.DataFrame,
 
     for _, row in datadicc_disease_lists.iterrows():
         if pd.isnull(row['List']):
-            logger.warn('List without corresponding repository file')
+            logger.warning('List without corresponding repository file')
         else:
             df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(version, language,
                                                                                      str(row['List']).replace('_', '/'))
