@@ -83,11 +83,11 @@ def on_generate_click(n_clicks: int,
         language = selected_language_data.get('selected_language')
 
         df_crf = arc_core.generate_crf(selected_variables_from_data)
-        pdf_crf = paper_crf.generate_pdf(df_crf, version, crf_name, language)
-        pdf_data = paper_crf.generate_completion_guide(selected_variables_from_data, version, crf_name)
+        pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(df_crf, version, crf_name, language)
+        pdf_completion_guide = paper_crf.generate_completion_guide(selected_variables_from_data, version, crf_name)
 
         # CSV
-        csv_buffer = io.BytesIO()
+        csv_data_dict_buffer = io.BytesIO()
         df_crf.loc[df_crf['Field Type'] == 'descriptive', 'Field Label'] = df_crf.loc[
             df_crf['Field Type'] == 'descriptive', 'Field Label'].apply(
             lambda
@@ -95,8 +95,8 @@ def on_generate_click(n_clicks: int,
         if language != 'English':
             df_crf['Form Name'] = df_crf['Form Name'].apply(lambda x: unidecode(str(x)))
 
-        df_crf.to_csv(csv_buffer, index=False, encoding='utf8')
-        csv_buffer.seek(0)
+        df_crf.to_csv(csv_data_dict_buffer, index=False, encoding='utf8')
+        csv_data_dict_buffer.seek(0)
 
         # XML
         xml_file_name = f'{XML_FILE_NAME}_{language}.xml'
@@ -111,10 +111,10 @@ def on_generate_click(n_clicks: int,
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
                 if 'redcap_csv' in output_files:
-                    zip_file.writestr(f"{crf_name}_DataDictionary_{date}.csv", csv_buffer.getvalue())
+                    zip_file.writestr(f"{crf_name}_DataDictionary_{date}.csv", csv_data_dict_buffer.getvalue())
                 if 'paper_like' in output_files:
-                    zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_data)
-                    zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_crf)
+                    zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_completion_guide)
+                    zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_paperlike_crf)
                 if 'redcap_xml' in output_files:
                     zip_file.writestr(xml_file_name, xml_content)
             zip_buffer.seek(0)
@@ -122,12 +122,12 @@ def on_generate_click(n_clicks: int,
 
         return (
             "",
-            dcc.send_bytes(csv_buffer.getvalue(),
+            dcc.send_bytes(csv_data_dict_buffer.getvalue(),
                            f"{crf_name}_DataDictionary_{date}.csv") if 'redcap_csv' in output_files else None,
-            dcc.send_bytes(pdf_data,
+            dcc.send_bytes(pdf_completion_guide,
                            f"{crf_name}_Completion_Guide_{date}.pdf") if 'paper_like' in output_files else None,
             dcc.send_bytes(xml_content, xml_file_name) if 'redcap_xml' in output_files else None,
-            dcc.send_bytes(pdf_crf,
+            dcc.send_bytes(pdf_paperlike_crf,
                            f"{crf_name}_paperlike_{date}.pdf") if 'paper_like' in output_files else None
         )
 

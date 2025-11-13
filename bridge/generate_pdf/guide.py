@@ -12,10 +12,11 @@ from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, \
     PageTemplate, Frame, Flowable
 from reportlab.platypus import Spacer, NextPageTemplate
 
-from bridge.generate_pdf.header_footer import generate_guide_header_footer
-
+from bridge.generate_pdf.header_footer import generate_completion_guide_header_footer
 from bridge.logging.logger import setup_logger
+
 logger = setup_logger(__name__)
+
 
 class StyleSet:
     def __init__(self):
@@ -59,6 +60,7 @@ class TrackingParagraph(Paragraph):
         self.name = name
         self.key = key  # the form or section name
         self.kind = kind  # either 'form' or 'section'
+
     def split(self, availWidth, availHeight):
         """
         Preserve the bookmark key on the first fragment only,
@@ -97,7 +99,7 @@ class TrackingDocTemplate(BaseDocTemplate):
         title = flowable.getPlainText()
         page_num = self.page
 
-        logger.debug(f"afterFlowable: page={page_num} key={key!r} kind={getattr(flowable,'kind',None)} title={title}")
+        logger.debug(f"afterFlowable: page={page_num} key={key!r} kind={getattr(flowable, 'kind', None)} title={title}")
 
         # Detect missing keys early
         if not key:
@@ -126,8 +128,6 @@ class TrackingDocTemplate(BaseDocTemplate):
         # Check if multiple bookmarks share this key
         if key in [t["key"] for t in self.toc_entries[:-1]]:
             logger.warning(f"afterFlowable: duplicate bookmark key detected -> {key}")
-
-
 
 
 ### TOCEntry is a ReportLab Flowable to handle the fancy styling of each entry in the table of contents
@@ -217,7 +217,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     guide_title = version + ", " + crf_name
 
     header_footer_partial = partial(
-        generate_guide_header_footer, title=guide_title)
+        generate_completion_guide_header_footer, title=guide_title)
 
     # First page: single column, same margins
     frame_one_col = Frame(left_margin, bottom_margin,
@@ -250,8 +250,8 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     toc = create_table_of_contents(doc.toc_entries, 560, page_height - top_margin - bottom_margin)
 
     header_footer_partial = partial(
-        generate_guide_header_footer, title=guide_title, toc_pages=toc["pages"])
-    
+        generate_completion_guide_header_footer, title=guide_title, toc_pages=toc["pages"])
+
     logger.info("Rebuilding one col document")
     template_one_col = PageTemplate(
         id='OneCol', frames=[frame_one_col], onPage=header_footer_partial)

@@ -15,7 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from bridge.arc.arc_core import ArcApiClient
 from bridge.generate_pdf.form import generate_form
 from bridge.generate_pdf.guide import generate_guide_doc
-from bridge.generate_pdf.header_footer import generate_header_footer
+from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
 from bridge.generate_pdf.opener import generate_opener
 from bridge.logging.logger import setup_logger
 
@@ -55,7 +55,7 @@ def create_table(data):
     return table
 
 
-def generate_pdf(data_dictionary, version, db_name, language):
+def generate_paperlike_pdf(data_dictionary, version, db_name, language):
     if isinstance(db_name, list):
         db_name = db_name[0]
 
@@ -106,7 +106,7 @@ def generate_pdf(data_dictionary, version, db_name, language):
     elements = generate_form(data_dictionary, elements, locate_phrase)
 
     # Finally, generate the header_footer and bild the document with it
-    header_footer_partial = partial(generate_header_footer, title=db_name)
+    header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
     doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
 
     buffer.seek(0)
