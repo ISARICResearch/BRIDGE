@@ -105,14 +105,14 @@ def set_completion_guide_footer_content(canvas, title):
     return canvas
 
 
-def get_page_numeral(x):
-    match x:
+def get_page_numeral(page_number):
+    match page_number:
         case 1:
             return "i"
         case 2:
-            return "i1"
+            return "ii"
         case 3:
-            return "i1"
+            return "iii"
         case 4:
             return "iv"
         case 5:
