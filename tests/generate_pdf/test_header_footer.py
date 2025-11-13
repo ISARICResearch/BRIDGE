@@ -2,8 +2,8 @@ import datetime
 
 import pytest
 
-
 from bridge.generate_pdf.header_footer import get_page_numeral
+
 MOCK_NOW = datetime.datetime(2025, 11, 13, 13, 8, 24)
 
 
@@ -16,10 +16,6 @@ def patch_datetime_now(monkeypatch):
 
     monkeypatch.setattr(datetime, 'datetime', MockNow)
 
-
-# TODO: Remove
-def test_patch_datetime(patch_datetime_now):
-    assert datetime.datetime.now() == MOCK_NOW
 
 @pytest.mark.parametrize(
     "page_number, expected_output",
