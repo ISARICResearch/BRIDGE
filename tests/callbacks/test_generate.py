@@ -60,7 +60,7 @@ def test_on_generate_click_no_action(n_clicks,
 )
 @mock.patch('bridge.callbacks.generate.dcc.send_bytes')
 @mock.patch('bridge.callbacks.generate.paper_crf.generate_completion_guide')
-@mock.patch('bridge.callbacks.generate.paper_crf.generate_pdf')
+@mock.patch('bridge.callbacks.generate.paper_crf.generate_paperlike_pdf')
 @mock.patch('bridge.callbacks.generate.arc_core.generate_crf')
 @mock.patch('bridge.callbacks.generate.datetime')
 @mock.patch('bridge.callbacks.generate.get_crf_name', return_value='test_crf')
@@ -70,7 +70,7 @@ def test_on_generate_click(
         mock_crf_name,
         mock_date,
         mock_crf_csv,
-        mock_crf_pdf,
+        mock_paperlike_pdf,
         mock_guide_pdf,
         mock_send_bytes,
         selected_language_data,
@@ -110,7 +110,7 @@ def test_on_generate_click(
     df = pd.DataFrame.from_dict(data)
 
     mock_crf_csv.return_value = df
-    mock_crf_pdf.return_value = mock_pdf
+    mock_paperlike_pdf.return_value = mock_pdf
     mock_guide_pdf.return_value = mock_pdf
     mock_send_bytes.return_value = 'UEsDBBQAAAAAANJmQVvCdv2k'
 

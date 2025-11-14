@@ -56,9 +56,6 @@ def create_table(data):
 
 
 def generate_paperlike_pdf(data_dictionary, version, db_name, language):
-    if isinstance(db_name, list):
-        db_name = db_name[0]
-
     buffer = BytesIO()  # Use BytesIO object for in-memory PDF generation
 
     # Remove rows where 'Field Label' starts with '>' or '->'
