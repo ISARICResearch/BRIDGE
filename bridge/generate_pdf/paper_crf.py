@@ -104,7 +104,11 @@ def generate_paperlike_pdf(data_dictionary, version, db_name, language):
 
     # Finally, generate the header_footer and bild the document with it
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
-    doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
+    try:
+        doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
+    except ValueError as e:
+        logger.error(e)
+        raise RuntimeError("Failed to build Paperlike PDF")
 
     buffer.seek(0)
     return buffer.getvalue()  # Return the PDF data

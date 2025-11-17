@@ -243,7 +243,12 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
 
     # First pass: Build and collect TOC data
     elements = [NextPageTemplate('TwoCol')] + generate_guide_content(data_dictionary)
-    doc.build(elements)
+
+    try:
+        doc.build(elements)
+    except ValueError as e:
+        logger.error(e)
+        raise RuntimeError("Failed to build Completion Guide")
 
     # Second pass: Rebuild with TOC inserted at the top
     logger.info("Generating Table of Contents")
@@ -272,9 +277,13 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     )
 
     doc.addPageTemplates([template_one_col, template_two_col])
-    logger.info("Building final document")
-    doc.build(final_elements)
-    logger.info("Final guide document build complete")
+    logger.info("Building final Completion Guide")
+    try:
+        doc.build(elements)
+    except ValueError as e:
+        logger.error(e)
+        raise RuntimeError("Failed to build Completion Guide")
+    logger.info("Final Completion Guide build complete")
 
 
 ### generate_guide_content actually generates the completion guide from a data_dictionary json
