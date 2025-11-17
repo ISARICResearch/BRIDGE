@@ -8,8 +8,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, \
-    PageTemplate, Frame, Flowable
+from reportlab.platypus import Paragraph, PageBreak, BaseDocTemplate, PageTemplate, Frame, Flowable
 from reportlab.platypus import Spacer, NextPageTemplate
 
 from bridge.generate_pdf.header_footer import generate_completion_guide_header_footer
@@ -279,7 +278,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     doc.addPageTemplates([template_one_col, template_two_col])
     logger.info("Building final Completion Guide")
     try:
-        doc.build(elements)
+        doc.build(final_elements)
     except ValueError as e:
         logger.error(e)
         raise RuntimeError("Failed to build Completion Guide")
