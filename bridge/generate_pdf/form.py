@@ -293,7 +293,7 @@ def generate_form(data_dictionary, elements, locate_phrase):
                 section_type = cl.SectionType.MEDICATION
             elif fields_list[0].name.startswith('test_'):
                 section_type = cl.SectionType.TESTING
-            sections.append(cl.Section(fields=fields_list, type=section_type))
+            sections.append(cl.Section(fields=fields_list, section_type=section_type))
 
         return sections
 

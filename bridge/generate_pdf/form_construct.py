@@ -1,6 +1,6 @@
 """ This Generate Form script is for generating custom forms and tables, specifically for Medication and Pathogen Testing """
 
-from typing import List
+from typing import List, Callable
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -24,15 +24,13 @@ ANSWER_COL_COUNT: int = 5
 QUESTION_COL_WIDTH = (TABLE_WIDTH / 6) * .89
 
 
-def construct_standard_row(
-        row: Row,
-        row_index: int,
-        rows_len: int,
-        subsubsection: Subsubsection,
-        subsub_index: int,
-        subsubs_len: int,
-        subsection_style: SubsectionStyle,
-):
+def construct_standard_row(row: Row,
+                           row_index: int,
+                           rows_len: int,
+                           subsubsection: Subsubsection,
+                           subsub_index: int,
+                           subsubs_len: int,
+                           subsection_style: SubsectionStyle) -> Table:
     """
     Function to generate each row of the form as a table.
     Each row is a table to allow any number of columns and structure changing.
@@ -72,14 +70,14 @@ def construct_standard_row(
     ''' === Row Styling ===  handles if row should be shaded or not '''
     # If row is shaded, apply the shaded style and add line under it
     if row.shade == "conditional":
-        subsection_style = SubsectionStyle.QA_BOARDERLESS
+        subsection_style = SubsectionStyle.QA_BORDERLESS
         table_style.add('BACKGROUND', (1, 0), (-2, 0), GREY_95)
         if row_index == rows_len - 1 and not subsub_index == subsubs_len - 1:
             table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
 
     # If row is shaded, apply the shaded style and add line under it
     if row.shade == "descriptive":
-        subsection_style = SubsectionStyle.QA_BOARDERLESS
+        subsection_style = SubsectionStyle.QA_BORDERLESS
         table_style.add('BACKGROUND', (1, 0), (-2, 0), GREY_80)
         table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, colors.black)
         if row_index == rows_len - 1 and not subsub_index == subsubs_len - 1:
@@ -88,7 +86,7 @@ def construct_standard_row(
     ''' === Subsubsection Styling ===  handles if row needs internal lines and adding lines above/below it '''
     # If row is a little header, add line above and below if just one line
     if subsubsection.header:
-        subsection_style = SubsectionStyle.QA_BOARDERLESS
+        subsection_style = SubsectionStyle.QA_BORDERLESS
         if row_index == 0 and subsub_index > 1:
             # if not rows[row_index-1].is_shaded:
             table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, GREY_80)
@@ -97,7 +95,7 @@ def construct_standard_row(
 
     # if row is part of a conditional group, add line above and/or below if starting or ending row
     if subsubsection.is_conditional:
-        subsection_style = SubsectionStyle.QA_BOARDERLESS
+        subsection_style = SubsectionStyle.QA_BORDERLESS
         if row_index == 0 and subsub_index > 1:
             table_style.add('LINEABOVE', (1, 0), (-2, -1), line_width, GREY_80)
             table_style.add('LINEBELOW', (1, 0), (-2, -1), line_width, GREY_80)
@@ -160,7 +158,7 @@ def construct_standard_row(
 def create_heading_table(fields: list,
                          table_width: float,
                          margin_width: float,
-                         line_width: float):
+                         line_width: float) -> Table:
     heading_widths = [margin_width, table_width, margin_width]
     heading_paragraph = fields[0].title
     heading_paragraph.style = style.section_header
@@ -178,7 +176,7 @@ def create_heading_table(fields: list,
     return heading
 
 
-def create_table(body_content):
+def create_table(body_content) -> Table:
     # Define the column widths
     body_widths = [MARGIN_WIDTH, QUESTION_COL_WIDTH]  # Left margin
     body_widths.extend([(TABLE_WIDTH - QUESTION_COL_WIDTH) / ANSWER_COL_COUNT] * ANSWER_COL_COUNT)  # Answer columns
@@ -195,7 +193,7 @@ def create_table(body_content):
     return body
 
 
-def construct_medication_form(fields: List[Field]):
+def construct_medication_form(fields: List[Field]) -> List[Table]:
     """ Function to generate the custom Medication form """
     heading = create_heading_table(fields,
                                    TABLE_WIDTH,
@@ -294,7 +292,8 @@ def construct_medication_form(fields: List[Field]):
     return [heading, body]
 
 
-def construct_testing_form(fields: List[Field], locate_phrase):
+def construct_testing_form(fields: List[Field],
+                           locate_phrase: Callable) -> List[Table]:
     """ Function to generate the custom Pathogen Testing form """
     heading = create_heading_table(fields,
                                    TABLE_WIDTH,
