@@ -57,9 +57,9 @@ class Settings:
                             {'label': 'ISARIC Clinical Characterization XML', 'value': 'redcap_xml'},
                             {'label': 'REDCap Data Dictionary', 'value': 'redcap_csv'},
                             {'label': 'Paper-like CRF (PDF + Guide)', 'value': 'paper_like'},
-                            {'label': 'CRF Review Word Document', 'value': 'paper_word'},   # NUEVO
+                            {'label': 'CRF Review Word Document', 'value': 'paper_word'},   
                         ],
-                        value=['redcap_xml', 'redcap_csv', 'paper_like', 'paper_word'],
+                        value=['redcap_xml', 'redcap_csv', 'paper_like'],
                         inline=True
                     )
                 ], style={'margin-bottom': '20px'}),

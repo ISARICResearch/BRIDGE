@@ -115,7 +115,7 @@ def on_generate_click(n_clicks: int,
                     zip_file.writestr(f"{crf_name}_Completion_Guide_{date}.pdf", pdf_data)
                     zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_crf)
                 if include_word:
-                    zip_file.writestr(f"{crf_name}_paperlike_{date}.docx", word_bytes)
+                    zip_file.writestr(f"{crf_name}_CRFreview_{date}.docx", word_bytes)
                 if include_xml:
                     zip_file.writestr(xml_file_name, xml_content)
 
@@ -140,7 +140,7 @@ def on_generate_click(n_clicks: int,
             dcc.send_bytes(pdf_crf,
                            f"{crf_name}_paperlike_{date}.pdf") if include_pdf_paper else None,
             dcc.send_bytes(word_bytes,
-                           f"{crf_name}_paperlike_{date}.docx") if include_word else None,
+                           f"{crf_name}_CRFreview_{date}.docx") if include_word else None,
         )
 
     else:
