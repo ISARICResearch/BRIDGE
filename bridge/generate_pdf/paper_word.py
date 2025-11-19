@@ -56,12 +56,12 @@ def format_answer(ftype, choices_raw, is_date_field):
     if ft in ("radio", "dropdown", "select"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [" ".join(f"○ {c}" for c in shown) + (" ..." if len(choices) > MAX_CHOICES_SHOWN else "")]
+            return [" ".join(f"○ {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
         return ["○ ________"]
     if ft in ("checkbox", "check box", "checks"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [" ".join(f"☐ {c}" for c in shown) + (" ..." if len(choices) > MAX_CHOICES_SHOWN else "")]
+            return [" ".join(f"☐ {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
         return ["☐ ________"]
     if ft in ("text", "notes", "textarea"):
         return ["__________"]
@@ -69,7 +69,7 @@ def format_answer(ftype, choices_raw, is_date_field):
         return ["Calculated value (read-only)"]
     if choices:
         shown = choices[:MAX_CHOICES_SHOWN]
-        return [" ".join(f"- {c}" for c in shown) + (" ..." if len(choices) > MAX_CHOICES_SHOWN else "")]
+        return [" ".join(f"- {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
     return ["__________"]
 
 
