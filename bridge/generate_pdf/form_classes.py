@@ -535,6 +535,128 @@ class Subsection:
 
         return 'NONE_2'
 
+    def _initial_division(self,
+                          locate_phrase: Callable) -> List[Subsubsection]:
+        subsubsections: List[Subsubsection] = []
+        current_subsub: Subsubsection = Subsubsection(fields=[])
+        subsub_dependencies: List[Dependency] = []
+
+        for index, field in enumerate(self.fields):
+            # add field dependencies to total subsection dependencies
+            subsub_dependencies += field.dependencies
+
+            # find the current dependencies
+            dependency_names = []
+            for dependency in field.dependencies:
+                dependency_names.append(dependency.field_name)
+
+            # find next dependencies
+            next_dependencies = []
+            if index + 1 < len(self.fields):
+                for dependency in self.fields[index + 1].dependencies:
+                    next_dependencies.append(dependency.field_name)
+
+            # if the parent of next field, make a new subsubsection
+            if field.name in next_dependencies:
+                subsubsections.append(current_subsub)  # finish current one
+                '''A subsubsection header is a pair of question paired with an If: ___'''
+                subsub_dependencies = []  # reset dependencies
+                text_field = Field(name=f'{field.name} subsubheader',  # add new subsubsection first item
+                                   is_text=True,
+                                   data=[field],
+                                   question=Paragraph(text=''),
+                                   answer=[Paragraph(text='')])
+                current_subsub = Subsubsection(parent=field.name, header=[field, text_field], fields=[])
+                continue
+
+            # if parent in field's dependencies, add it to that subsubsection
+            if current_subsub.parent in dependency_names:
+                conditional_text = self._get_conditional_text(subsub_dependencies, locate_phrase)
+                current_subsub.header[1].question = Paragraph(text=conditional_text, style=styles.conditional_text)
+                current_subsub.fields.append(field)
+                continue
+
+            # if parent is there (but implicitly not correct), finish last subsub and begin a new one (that isn't a parented subsub)
+            if current_subsub.parent:
+                subsubsections.append(current_subsub)
+                subsub_dependencies = []
+                current_subsub = Subsubsection(fields=[field])
+                continue
+
+            # otherwise, finish last subsubsection and make a new one for this field
+            else:
+                current_subsub.fields.append(field)
+        # if unadded subsubsection, add it
+        if current_subsub.fields:
+            subsubsections.append(current_subsub)
+
+        return subsubsections
+
+    def _handle_conditional_subsubsections(self,
+                                           initial_subsection_list: List[Subsubsection],
+                                           locate_phrase: Callable) -> List[Subsubsection]:
+        # Create list of subsubsections to be added
+        final_subsubsection_list = []
+        # Iterate through current subsubsections
+        for subsub in initial_subsection_list:
+
+            # if there is no header, skip logic and just add it.
+            if not subsub.header:
+                final_subsubsection_list.append(subsub)
+                continue
+
+            # Get subsubsection dependencies
+            # add if not currently in dependencies array
+            dependencies = []
+            dependency_texts = []
+
+            for field in subsub.fields:
+                if field.dependencies:
+                    for dependency in field.dependencies:
+                        dependency_text = self._get_conditional_text(field.dependencies, locate_phrase)
+                        if dependency_text not in dependency_texts:
+                            dependency_texts.append(dependency_text)
+                            dependencies.append(dependency)
+
+            # if not the same length, just add it.
+            if (len(subsub.fields) != len(dependencies)) | (len(subsub.fields) == 0):
+                final_subsubsection_list.append(subsub)
+                continue
+
+            if len(subsub.fields) == 1:
+                new_subsub: Subsubsection = Subsubsection(fields=[subsub.header[0]], is_conditional=True)
+            else:
+                empty_field = Field(
+                    name='empty',
+                    dependencies=subsub.header[0].dependencies,
+                    data=subsub.header[0].data,
+                    is_text=True,
+                    question=Paragraph(text=''),
+                    is_heading=False,
+                    answer=[],
+                )
+                new_subsub = Subsubsection(fields=[],
+                                           header=[subsub.header[0], empty_field],
+                                           is_conditional=True)
+
+            for field in subsub.fields:
+                question_text = f'{self._get_conditional_text(field.dependencies, locate_phrase)} {field.question.text}'
+                new_field = Field(
+                    name=field.name,
+                    dependencies=field.dependencies,
+                    data=field.data,
+                    is_text=field.is_text,
+                    question=Paragraph(text=question_text, style=field.question.style),
+                    is_heading=field.is_heading,
+                    answer=field.answer
+                )
+                new_subsub.fields.append(new_field)
+
+            final_subsubsection_list.append(new_subsub)
+            continue
+
+        return final_subsubsection_list
+
     def divide_into_subsubsections(self,
                                    should_divide: bool,
                                    locate_phrase: Callable) -> List[Subsubsection]:
@@ -553,131 +675,11 @@ class Subsection:
             return [Subsubsection(fields=self.fields)]
 
         ''' Step 1: Split fields into subsubsections based on dependencies '''
-
-        def initial_division(self) -> List[Subsubsection]:
-            subsubsections: List[Subsubsection] = []
-            current_subsub: Subsubsection = Subsubsection(fields=[])
-            subsub_dependencies: List[Dependency] = []
-
-            for index, field in enumerate(self.fields):
-                # add field dependencies to total subsection dependencies
-                subsub_dependencies += field.dependencies
-
-                # find the current dependencies
-                dependency_names = []
-                for dependency in field.dependencies:
-                    dependency_names.append(dependency.field_name)
-
-                # find next dependencies
-                next_dependencies = []
-                if index + 1 < len(self.fields):
-                    for dependency in self.fields[index + 1].dependencies:
-                        next_dependencies.append(dependency.field_name)
-
-                # if the parent of next field, make a new subsubsection
-                if field.name in next_dependencies:
-                    subsubsections.append(current_subsub)  # finish current one
-                    '''A subsubsection header is a pair of question paired with an If: ___'''
-                    subsub_dependencies = []  # reset dependencies
-                    text_field = Field(name=f'{field.name} subsubheader',  # add new subsubsection first item
-                                       is_text=True,
-                                       data=[field],
-                                       question=Paragraph(text=''),
-                                       answer=[Paragraph(text='')])
-                    current_subsub = Subsubsection(parent=field.name, header=[field, text_field], fields=[])
-                    continue
-
-                # if parent in field's dependencies, add it to that subsubsection
-                if current_subsub.parent in dependency_names:
-                    conditional_text = self._get_conditional_text(subsub_dependencies, locate_phrase)
-                    current_subsub.header[1].question = Paragraph(text=conditional_text, style=styles.conditional_text)
-                    current_subsub.fields.append(field)
-                    continue
-
-                # if parent is there (but implicitly not correct), finish last subsub and begin a new one (that isn't a parented subsub)
-                if current_subsub.parent:
-                    subsubsections.append(current_subsub)
-                    subsub_dependencies = []
-                    current_subsub = Subsubsection(fields=[field])
-                    continue
-
-                # otherwise, finish last subsubsection and make a new one for this field
-                else:
-                    current_subsub.fields.append(field)
-            # if unadded subsubsection, add it
-            if current_subsub.fields:
-                subsubsections.append(current_subsub)
-
-            return subsubsections
-
-        initial_subsections = initial_division(self)
+        initial_subsections = self._initial_division(locate_phrase)
 
         ''' Step 2: Style subsubsections if a oneline dependent '''
-
-        def handle_conditional_subsubsections(initial_subsection_list: List[Subsubsection]) -> List[Subsubsection]:
-            # Create list of subsubsections to be added
-            final_subsubsection_list = []
-            # Iterate through current subsubsections
-            for subsub in initial_subsection_list:
-
-                # if there is no header, skip logic and just add it.
-                if not subsub.header:
-                    final_subsubsection_list.append(subsub)
-                    continue
-
-                # Get subsubsection dependencies 
-                # add if not currently in dependencies array
-                dependencies = []
-                dependency_texts = []
-
-                for field in subsub.fields:
-                    if field.dependencies:
-                        for dependency in field.dependencies:
-                            dependency_text = self._get_conditional_text(field.dependencies, locate_phrase)
-                            if dependency_text not in dependency_texts:
-                                dependency_texts.append(dependency_text)
-                                dependencies.append(dependency)
-
-                # if not the same length, just add it.
-                if (len(subsub.fields) != len(dependencies)) | (len(subsub.fields) == 0):
-                    final_subsubsection_list.append(subsub)
-                    continue
-
-                if len(subsub.fields) == 1:
-                    new_subsub: Subsubsection = Subsubsection(fields=[subsub.header[0]], is_conditional=True)
-                else:
-                    empty_field = Field(
-                        name='empty',
-                        dependencies=subsub.header[0].dependencies,
-                        data=subsub.header[0].data,
-                        is_text=True,
-                        question=Paragraph(text=''),
-                        is_heading=False,
-                        answer=[],
-                    )
-                    new_subsub = Subsubsection(fields=[],
-                                               header=[subsub.header[0], empty_field],
-                                               is_conditional=True)
-
-                for field in subsub.fields:
-                    question_text = f'{self._get_conditional_text(field.dependencies, locate_phrase)} {field.question.text}'
-                    new_field = Field(
-                        name=field.name,
-                        dependencies=field.dependencies,
-                        data=field.data,
-                        is_text=field.is_text,
-                        question=Paragraph(text=question_text, style=field.question.style),
-                        is_heading=field.is_heading,
-                        answer=field.answer
-                    )
-                    new_subsub.fields.append(new_field)
-
-                final_subsubsection_list.append(new_subsub)
-                continue
-
-            return final_subsubsection_list
-
-        final_subsubsections = handle_conditional_subsubsections(initial_subsections)
+        final_subsubsections = self._handle_conditional_subsubsections(initial_subsections,
+                                                                       locate_phrase)
 
         self.subsubsections = final_subsubsections
         return final_subsubsections
@@ -698,6 +700,19 @@ class Section:
         self.type = section_type
         self.subsections: List[Subsection] = []
 
+    @staticmethod
+    def _extract_dependencies(branching_logic_str: str):
+        """Extract dependencies from a branching logic string."""
+        if not branching_logic_str:
+            return set()
+        pattern = r'\[([^\]]+)\]'  # Matches content within square brackets
+        matches = re.findall(pattern, branching_logic_str)
+
+        for match in matches:
+            if match.endswith('t(88)'):
+                matches.append(match.removesuffix('t(88)'))
+        return set(matches)
+
     def divide_by_branching_logic(self):
         """Divides self.fields into subsections based on headings and dependencies."""
 
@@ -706,18 +721,6 @@ class Section:
         subsection_dependencies_set = set()
         subsection_names_set = set()
         special_heading: str | None = None
-
-        def extract_dependencies(branching_logic_str: str):
-            """Extract dependencies from a branching logic string."""
-            if not branching_logic_str:
-                return set()
-            pattern = r'\[([^\]]+)\]'  # Matches content within square brackets
-            matches = re.findall(pattern, branching_logic_str)
-
-            for match in matches:
-                if match.endswith('t(88)'):
-                    matches.append(match.removesuffix('t(88)'))
-            return set(matches)
 
         def finalize_subsection(style: SubsectionStyle,
                                 special_header: bool = False):
@@ -754,14 +757,14 @@ class Section:
             if isinstance(field.data[0].get('Branching Logic (Show field only if...)'), str):
                 branching_logic = field.data[0].get('Branching Logic (Show field only if...)')
 
-            dependencies = extract_dependencies(branching_logic)
+            dependencies = self._extract_dependencies(branching_logic)
 
             # Get next field's dependencies
             next_logic = None
             if (index_field + 1 < len(self.fields) and isinstance(
                     self.fields[index_field + 1].data[0].get('Branching Logic (Show field only if...)'), str)):
                 next_logic = self.fields[index_field + 1].data[0].get('Branching Logic (Show field only if...)')
-            next_dependencies = extract_dependencies(next_logic)
+            next_dependencies = self._extract_dependencies(next_logic)
             subsection_started = len(subsection_fields) > 0
 
             dependencies.discard(special_heading)
@@ -833,7 +836,7 @@ class Section:
                     subsections.append(Subsection(subsection_fields, style=style))
             subsection_fields = []
 
-        for i, field in enumerate(self.fields):
+        for index_field, field in enumerate(self.fields):
             if field.is_heading:
                 # if currently a subsection, finish it
                 if subsection_fields:

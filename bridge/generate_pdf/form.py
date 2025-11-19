@@ -1,22 +1,17 @@
 import re
-from typing import List
+from typing import List, Callable
 
 import pandas as pd
 from reportlab.platypus import Paragraph, PageBreak, Spacer
 
-import bridge.generate_pdf.form_classes as cl
-import bridge.generate_pdf.styles as style
+from bridge.generate_pdf import styles
+from bridge.generate_pdf.form_classes import Field, SectionType, Section, Dependency, SubsectionStyle
 from bridge.generate_pdf.form_construct import construct_medication_form, construct_standard_row, construct_testing_form
 
 LINE_PLACEHOLDER = '_' * 40
 
-# So at the moment, one table is made and added to our elements array, before returning the elements array.
-
-# I am interested in chunking this into new tables for each
-
 '''
-
-How generate_form() Works Now:
+How generate_form() works:
 
  To make the form, the data is split into forms which are split into sections.
 
@@ -25,7 +20,6 @@ How generate_form() Works Now:
  - Sections are now a class. Each is made from a list of fields and has a method to divide it into subsections.
  - Subsections are a class.  Each is made from a list of fields and a style choice.  They have a method to divide their fields into rows.
  - Rows are a class.  Each is made from a list of fields and has methods to create the styled columns and widths to be output by ReportLab.  
-
 
 
 So it goes like this: Form > Section > Subsection > Subsubsection > Row > Field > Dependency
@@ -39,7 +33,10 @@ So it goes like this: Form > Section > Subsection > Subsubsection > Row > Field 
 '''
 
 
-def format_choices(choices_str, field_type, threshold=65, is_units=False):
+def format_choices(choices_str: str,
+                   field_type: str,
+                   threshold: int = 65,
+                   is_units: bool = False) -> str | None:
     """
     Format the choices string. If the combined length exceeds the threshold, use line breaks instead of commas.
     Prepend symbols based on the field type.
@@ -68,11 +65,7 @@ def format_choices(choices_str, field_type, threshold=65, is_units=False):
     choices = ''
     if len(choices_str.split('|')) <= 15:
         choices = [symbol + choice.split(',', 1)[-1].strip().replace("Â", "") for choice in choices_str.split('|')]
-        for choice in choices:
-            if len(choice) > 1 and choice[1] == 'Â':
-                choice.pop()
         combined_choices = '   '.join(choices).strip()
-
     else:
         combined_choices = LINE_PLACEHOLDER
     if len(combined_choices) > threshold:
@@ -80,280 +73,275 @@ def format_choices(choices_str, field_type, threshold=65, is_units=False):
     return combined_choices
 
 
-# Generates the array of elements for a pdf of several forms from the data_dictionary
-def generate_form(data_dictionary, elements, locate_phrase):
-    # Function returns array of sections. each section is an array of Fields
-    def get_sections(group):
+def _parse_branching_logic(logic_str: str) -> List[Dependency]:
+    dependency_list = []
+    # Split on boolean operators while keeping the operators
+    tokens = re.split(r'\s+(and|or)\s+', logic_str, flags=re.IGNORECASE)
 
-        # Return section after appending new field to it, or modifying old one
-        def add_field_to_section(row, section: list[cl.Field]):
+    for token in tokens:
+        if token.lower() in ['and', 'or']:
+            continue
+        # Match patterns like [field]='1' or [field] < 5
+        match = re.match(r'\[(\w+)\] ?([!=<>]+) ?[\'"]?(\w+)[\'"]?', token)
 
-            def create_field(row):
+        if match:
+            field, operator, value = match.groups()
+            dependency_list.append(Dependency(field, operator, value))
+    return dependency_list
 
-                def parse_branching_logic(logic_str: str) -> List[cl.Dependency]:
-                    dependencies = []
-                    # Split on boolean operators while keeping the operators
-                    tokens = re.split(r'\s+(and|or)\s+', logic_str, flags=re.IGNORECASE)
 
-                    for token in tokens:
-                        if token.lower() in ['and', 'or']:
-                            continue
-                        # Match patterns like [field]='1' or [field] < 5
-                        match = re.match(r'\[(\w+)\] ?([!=<>]+) ?[\'"]?(\w+)[\'"]?', token)
+def _format_multi_choice_field(row: pd.Series,
+                               new_field) -> Field | None:
+    symbol = {
+        'radio': '○ ',
+        'checkbox': '□ ',
+        'dropdown': '○ ',  # '↧ ',
+        'list': '○ ',
+        'user_list': '○ ',
+        'multi_list': '□ ',
+    }.get(row['Field Type'], '')
 
-                        if match:
-                            field, operator, value = match.groups()
-                            dependencies.append(cl.Dependency(field, operator, value))
-                    return dependencies
+    if type(row['Choices, Calculations, OR Slider Labels']) != str:
+        return None
 
-                # Get field's name:
-                variable_name = row['Variable / Field Name']
+    choices = []
+    if new_field.name == 'test_biospecimentype':
+        '''This is a wierd line of code to check when editing variables related to the PATHOGEN TESTING form.  
+        Specifically 'test_biospecimentype' 
+        This just only pulls the answers presented to me to add to the form'''
+        for choice in row['Choices, Calculations, OR Slider Labels'].split('|'):
+            choices.append(symbol + choice.split(',', 1)[-1].strip())
+    else:
+        choices = [symbol + choice.split(',', 1)[-1].strip() for choice in
+                   row['Choices, Calculations, OR Slider Labels'].split('|')]
 
-                # Get field's dependencies:
-                branching_logic = row['Branching Logic (Show field only if...)']
-                dependencies = []
+    if len(choices) < 23:
+        new_field.answer = [Paragraph(choice, styles.normal) for choice in choices]
+    else:
+        new_field.answer = [Paragraph(LINE_PLACEHOLDER, styles.normal)]
+    return new_field
 
-                if type(branching_logic) == str:
-                    dependencies = parse_branching_logic(branching_logic)
 
-                # Create a new field with question and placeholder answer
-                new_field = cl.Field(
-                    name=variable_name,
-                    dependencies=dependencies,
-                    data=[row],
-                    question=Paragraph(row['Field Label'], style.normal),
-                    answer=[]
-                )
+def _format_text_field(row,
+                       new_field) -> Field:
+    validation = row['Text Validation Type OR Show Slider Number']
 
-                # If country, make it a short line
-                if variable_name == 'demog_country':
-                    new_field.answer = [Paragraph("_" * 18, style.normal)]
-                    return new_field
+    if validation == 'date_dmy':
+        # Add a date placeholder
+        date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
+        new_field.answer = [Paragraph(date_str, styles.normal)]
 
-                # if a multi select
-                if row['Field Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
+    elif validation == 'time':
+        # Add a time placeholder
+        time_str = "_" * 18
+        new_field.answer = [Paragraph(time_str, styles.normal)]
 
-                    # Create multiple-choice answers
-                    symbol = {
-                        'radio': '○ ',
-                        'checkbox': '□ ',
-                        'dropdown': '○ ',  # '↧ ',
-                        'list': '○ ',
-                        'user_list': '○ ',
-                        'multi_list': '□ ',
-                    }.get(row['Field Type'], '')
+    elif validation == 'number':
+        number_str = "_" * 18
+        new_field.answer = [Paragraph(number_str, styles.normal)]
+    else:
+        # Open-ended questions
+        new_field.answer = [Paragraph(LINE_PLACEHOLDER, styles.normal)]
+    return new_field
 
-                    if type(row['Choices, Calculations, OR Slider Labels']) != str:
-                        return None
 
-                    choices = []
-                    if new_field.name == 'test_biospecimentype':
-                        '''This is a wierd line of code to check when editing variables related to the PATHOGEN TESTING form.  
-                        Specifically 'test_biospecimentype' 
-                        This just only pulls the answers presented to me to add to the form'''
-                        for choice in row['Choices, Calculations, OR Slider Labels'].split('|'):
-                            choices.append(symbol + choice.split(',', 1)[-1].strip())
-                    else:
-                        choices = [symbol + choice.split(',', 1)[-1].strip() for choice in
-                                   row['Choices, Calculations, OR Slider Labels'].split('|')]
+def _create_field(row: pd.Series) -> Field | None:
+    variable_name = row['Variable / Field Name']
+    branching_logic = row['Branching Logic (Show field only if...)']
+    dependency_list = []
 
-                    if len(choices) < 23:
-                        new_field.answer = [Paragraph(choice, style.normal) for choice in choices]
-                    else:
-                        # return None
-                        new_field.answer = [Paragraph(LINE_PLACEHOLDER, style.normal)]
-                    return new_field
+    if type(branching_logic) == str:
+        dependency_list = _parse_branching_logic(branching_logic)
 
-                # else if a text fill
-                elif row['Field Type'] == 'text':
-                    # Get type of text (date, number, etc.)
-                    validation = row['Text Validation Type OR Show Slider Number']
+    # Create a new field with question and placeholder answer
+    new_field = Field(
+        name=variable_name,
+        dependencies=dependency_list,
+        data=[row],
+        question=Paragraph(row['Field Label'], styles.normal),
+        answer=[]
+    )
 
-                    # if date
-                    if validation == 'date_dmy':
-                        # Add a date placeholder
-                        date_str = """[<font color="lightgrey">_D_</font>][<font color="lightgrey">_D_</font>]/[<font color="lightgrey">_M_</font>][<font color="lightgrey">_M_</font>]/[<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>][<font color="lightgrey">_Y_</font>]"""
-                        new_field.answer = [Paragraph(date_str, style.normal)]
-                    # if time
-                    elif validation == 'time':
-                        # Add a time placeholder
-                        time_str = "_" * 18
-                        new_field.answer = [Paragraph(time_str, style.normal)]
-                    # if number
-                    elif validation == 'number':
-                        number_str = "_" * 18
-                        new_field.answer = [Paragraph(number_str, style.normal)]
-                    else:
-                        # Open-ended questions
-                        new_field.answer = [Paragraph(LINE_PLACEHOLDER, style.normal)]
-                    return new_field
+    # If country, make it a short line
+    if variable_name == 'demog_country':
+        new_field.answer = [Paragraph("_" * 18, styles.normal)]
+        return new_field
 
-                return None
+    if row['Field Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
+        new_field = _format_multi_choice_field(row, new_field)
+        return new_field
 
-            variable_name = row['Variable / Field Name']
+    elif row['Field Type'] == 'text':
+        new_field = _format_text_field(row, new_field)
+        return new_field
 
-            # work from here, if descriptive, go do a thing, else...
-            if row['Field Type'] == 'descriptive':
-                new_field = cl.Field(
-                    name=variable_name,
-                    dependencies=[],
-                    data=[row],
-                    question=Paragraph(row['Field Label']),
-                    answer=[Paragraph('')],
-                    is_descriptive=True
-                )
-                if type(new_field) == cl.Field: section.append(new_field)
-                return section
+    return None
 
-            ### ! Handle special cases (add to last question) ###
 
-            if "demog_country_other" in variable_name:
-                return section
+def _add_field_to_section(row: pd.Series,
+                          section: List[Field]) -> List[Field]:
+    variable_name = row['Variable / Field Name']
 
-                # if other, oth, otherl3: add "Specify Other" to last field's answer
-            if variable_name.endswith(
-                    ("lesion_torsoo", "lesion_armso", "lesion_legso", "lesion_palmo", "lesion_soleo", 'lesion_genito',
-                     'lesion_perio', 'lesion_ocularo', 'lesion_heado')):
-                section[-1].answer.append(Paragraph("_" * 18, style.normal))
-                section[-1].data.append(row)
+    if row['Field Type'] == 'descriptive':
+        new_field = Field(
+            name=variable_name,
+            dependencies=[],
+            data=[row],
+            question=Paragraph(row['Field Label']),
+            answer=[Paragraph('')],
+            is_descriptive=True
+        )
+        if type(new_field) == Field:
+            section.append(new_field)
+        return section
 
-                # if other, oth, otherl3: add "Specify Other" to last field's answer
-            elif variable_name.endswith(("_oth", "_otherl3")):
-                section[-1].answer.append(Paragraph("_" * 18, style.normal))
-                section[-1].data.append(row)
+    ### ! Handle special cases (add to last question) ###
 
-            # if otherl2: ignore (Because these are long lists)
-            elif variable_name.endswith("_otherl2"):
-                return section
+    if "demog_country_other" in variable_name:
+        return section
 
-            # if units, add units to last field's answer
-            elif variable_name.endswith("_units"):
-                # Add "Units" to the last field's answer
-                formatted_choices = format_choices(row['Choices, Calculations, OR Slider Labels'], row['Field Type'],
-                                                   200, True)
+    if variable_name.endswith(
+            ('lesion_torsoo', 'lesion_armso', 'lesion_legso', 'lesion_palmo', 'lesion_soleo', 'lesion_genito',
+             'lesion_perio', 'lesion_ocularo', 'lesion_heado')):
+        section[-1].answer.append(Paragraph("_" * 18, styles.normal))
+        section[-1].data.append(row)
 
-                if type(formatted_choices) == str:
-                    section[-1].answer.append(Paragraph(formatted_choices, style.normal))
-                else:
-                    section[-1].answer.append(Paragraph(f"Units:" + "_" * (18 - len("Units:")), style.normal))
+    # if other, oth, otherl3: add "Specify Other" to last field's answer
+    elif variable_name.endswith(("_oth", "_otherl3")):
+        section[-1].answer.append(Paragraph("_" * 18, styles.normal))
+        section[-1].data.append(row)
 
-                section[-1].data.append(row)
+    # if otherl2: ignore (Because these are long lists)
+    elif variable_name.endswith("_otherl2"):
+        return section
 
-            ### ! If not a special case, add new field to section ###
-            else:
-                new_field = create_field(row)
-                if type(new_field) == cl.Field: section.append(new_field)
+    # if units, add units to last field's answer
+    elif variable_name.endswith("_units"):
+        formatted_choices = format_choices(row['Choices, Calculations, OR Slider Labels'], row['Field Type'],
+                                           200, True)
 
-            return section
+        if type(formatted_choices) == str:
+            section[-1].answer.append(Paragraph(formatted_choices, styles.normal))
+        else:
+            section[-1].answer.append(Paragraph(f"Units:" + "_" * (18 - len("Units:")), styles.normal))
 
-        # form sections are a list of lists of fields, where then each section is a list of fields
-        section_fields: list[list[cl.Field]] = []
-        current_section_name = None
+        section[-1].data.append(row)
 
-        for i, row in group.iterrows():
-            if '>' in row['Field Label'][0:2]:
-                continue
-            if ('_unlisted_' in row['Variable / Field Name']) and not (
-                    '_unlisted_0item' in row['Variable / Field Name'] or '_unlisted_type' in row[
-                'Variable / Field Name']):
-                continue
-            if row['Variable / Field Name'].endswith('addi'):
-                continue
-            # If row part of new section, add Section Header field
-            if row['Section Header'] != current_section_name and pd.notna(row['Section Header']):
-                section_fields.append([])
-                current_section_name = row['Section Header']
-                current_section_index = len(section_fields) - 1
-                section_fields[current_section_index].append(
-                    cl.Field(
-                        name=row['Variable / Field Name'],
-                        data=[row],
-                        is_heading=True,
-                        title=Paragraph(current_section_name, style.section_header)
-                    )
-                )
+    ### ! If not a special case, add new field to section ###
+    else:
+        new_field = _create_field(row)
+        if type(new_field) == Field: section.append(new_field)
 
-            # If form_sections isn't yet started, add
-            if len(section_fields) == 0:
-                section_fields.append([])
+    return section
 
+
+def _get_sections(group: pd.Series) -> List[Section]:
+    """Return section after appending new field to it, or modifying old one."""
+
+    section_fields = []
+    current_section_name = None
+
+    for index, row in group.iterrows():
+        if '>' in row['Field Label'][0:2]:
+            continue
+        if ('_unlisted_' in row['Variable / Field Name']) and not (
+                '_unlisted_0item' in row['Variable / Field Name'] or '_unlisted_type' in row[
+            'Variable / Field Name']):
+            continue
+        if row['Variable / Field Name'].endswith('addi'):
+            continue
+        # If row part of new section, add Section Header field
+        if row['Section Header'] != current_section_name and pd.notna(row['Section Header']):
+            section_fields.append([])
+            current_section_name = row['Section Header']
             current_section_index = len(section_fields) - 1
+            section_fields[current_section_index].append(
+                Field(
+                    name=row['Variable / Field Name'],
+                    data=[row],
+                    is_heading=True,
+                    title=Paragraph(current_section_name, styles.section_header)
+                )
+            )
 
-            field_to_add = row
-            if '_unlisted_0item' in row['Variable / Field Name'] or '_unlisted_type' in row['Variable / Field Name']:
-                field_to_add['Field Label'] = ""
+        # If form_sections isn't yet started, add
+        if len(section_fields) == 0:
+            section_fields.append([])
 
-            section_fields[current_section_index] = add_field_to_section(field_to_add,
-                                                                         section_fields[current_section_index])
+        current_section_index = len(section_fields) - 1
 
-        sections: List[cl.Section] = []
-        for fields_list in section_fields:
-            section_type = cl.SectionType.STANDARD
-            if fields_list[0].name.startswith('medi_'):
-                section_type = cl.SectionType.MEDICATION
-            elif fields_list[0].name.startswith('test_'):
-                section_type = cl.SectionType.TESTING
-            sections.append(cl.Section(fields=fields_list, section_type=section_type))
+        field_to_add = row
+        if '_unlisted_0item' in row['Variable / Field Name'] or '_unlisted_type' in row['Variable / Field Name']:
+            field_to_add['Field Label'] = ""
 
-        return sections
+        section_fields[current_section_index] = _add_field_to_section(field_to_add,
+                                                                      section_fields[current_section_index])
 
-    # Iterate through each form (ie: Presentation, Medication, etc.)
-    for form_name in data_dictionary['Form Name'].drop_duplicates():
+    section_list = []
+    for fields_list in section_fields:
+        section_type = SectionType.STANDARD
+        if fields_list[0].name.startswith('medi_'):
+            section_type = SectionType.MEDICATION
+        elif fields_list[0].name.startswith('test_'):
+            section_type = SectionType.TESTING
+        section_list.append(Section(fields=fields_list, section_type=section_type))
 
-        group = data_dictionary[data_dictionary['Form Name'] == form_name]
+    return section_list
 
-        # Replace "_" in form names with spaces and make it uppercase
+
+def generate_form(df_datadicc: pd.DataFrame,
+                  element_list: list,
+                  locate_phrase: Callable) -> List:
+    """
+    Generates the array of elements for a pdf of several forms from the data_dictionary
+    Function returns array of sections. Each section is an array of Fields
+    """
+
+    for form_name in df_datadicc['Form Name'].drop_duplicates():
+        group = df_datadicc[df_datadicc['Form Name'] == form_name]
         fixed_name = form_name.replace("_", " ").upper()
 
         # Add form name as a title for each table
-        elements.append(PageBreak())
-        elements.append(Paragraph(fixed_name, style.form_header))
+        element_list.append(PageBreak())
+        element_list.append(Paragraph(str(fixed_name), styles.form_header))
 
         # Form Sections are a way of splitting up the data into lists of Fields
         # where each field represents a heading or Question Answer pair.
-
-        sections = get_sections(group)
+        sections = _get_sections(group)
 
         # For each section, divide into subsections
         for section in sections:
-
-            if section.type == cl.SectionType.MEDICATION:
+            if section.type == SectionType.MEDICATION:
                 medication_form = construct_medication_form(section.fields)
                 for table in medication_form:
-                    elements.append(table)
+                    element_list.append(table)
 
-            elif section.type == cl.SectionType.TESTING:
+            elif section.type == SectionType.TESTING:
                 medication_form = construct_testing_form(section.fields, locate_phrase)
                 for table in medication_form:
-                    elements.append(table)
+                    element_list.append(table)
 
             else:
                 subsections = section.divide_into_subsections()
-
                 # For each subsection, divide into rows
                 for subsection in subsections:
-
                     subsubsections = subsection.divide_into_subsubsections(
-                        bool(subsection.style != cl.SubsectionStyle.QA_BLACK), locate_phrase)
+                        bool(subsection.style != SubsectionStyle.QA_BLACK), locate_phrase)
 
                     for subsub_index, subsubsection in enumerate(subsubsections):
-
                         rows = subsubsection.divide_into_rows()
+                        if not rows:
+                            continue
 
-                        if rows is None: continue
-
-                        # For each row, setup to get columns and widths
-                        # Then, style it and add it to elements
                         for row_index, row in enumerate(rows):
-
-                            if row is None: continue
+                            # For each row, setup to get columns and widths
+                            # Then, style it and add it to elements
+                            if row is None:
+                                continue
 
                             row.setup_row()
 
-                            # Here on is the final step, styling it and adding the row as a table to the page
-
                             # Scale column widths to fit page width
-
                             row_table = construct_standard_row(
                                 row,
                                 row_index,
@@ -364,9 +352,9 @@ def generate_form(data_dictionary, elements, locate_phrase):
                                 subsection.style
                             )
 
-                            elements.append(row_table)
+                            element_list.append(row_table)
 
             # Add space between form sections
-            elements.append(Spacer(1, 12))
+            element_list.append(Spacer(1, 12))
 
-    return elements
+    return element_list

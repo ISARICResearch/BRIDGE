@@ -69,14 +69,14 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
         bottomMargin=bottom_margin
     )
 
-    elements = []
-    elements = generate_opener(elements, details, db_name)
+    element_list = []
+    element_list = generate_opener(element_list, details, db_name)
     df_datadicc['Section Header'] = df_datadicc['Section Header'].replace({'': np.nan})
-    elements = generate_form(df_datadicc, elements, locate_phrase)
+    element_list = generate_form(df_datadicc, element_list, locate_phrase)
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
 
     try:
-        doc.build(elements, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
+        doc.build(element_list, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
     except ValueError as e:
         logger.error(e)
         raise RuntimeError("Failed to build Paperlike PDF")
