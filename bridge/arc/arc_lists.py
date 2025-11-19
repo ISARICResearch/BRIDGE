@@ -402,9 +402,10 @@ class ArcList:
                         choices_text = f'{str(list_option_number)}, {str(list_option)} | '
                         if selected_value == 1:
                             l1_choices += choices_text
+                            list_variable_choices_aux.append([list_option_number, list_option, 1])
                         else:
                             l2_choices += choices_text
-                        list_variable_choices_aux.append([list_option_number, list_option, 0])
+                            list_variable_choices_aux.append([list_option_number, list_option, 0])
 
                     except Exception as e:
                         logger.error(e)

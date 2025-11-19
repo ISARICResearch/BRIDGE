@@ -1,4 +1,3 @@
-import json
 from contextvars import copy_context
 from unittest import mock
 
@@ -378,9 +377,9 @@ def test_update_tree_items_and_stores(mock_get_tree_items,
 
     mock_update_for_template.side_effect = [
         (df_mock,
-        mock_ulist),
+         mock_ulist),
         (df_mock,
-        mock_multilist),
+         mock_multilist),
     ]
 
     (output_tree_items,
