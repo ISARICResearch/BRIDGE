@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def _qtitle(row):
+def _format_question_text(row):
     if row['Type'] == 'user_list':
         return '↳ ' + row['Question']
     elif row['Type'] == 'multi_list':
@@ -88,28 +88,28 @@ def get_tree_items(df_datadicc: pd.DataFrame,
                         break
 
         sec_df = sec_df.sort_values('_row_order')
-        for vari, vari_df in sec_df.groupby('vari', dropna=False, sort=False):
+        for vari, df_variable in sec_df.groupby('vari', dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            mask_units = vari_df['Question'].str.contains('(select units)', case=False, na=False, regex=False)
+            mask_units = df_variable['Question'].str.contains('(select units)', case=False, na=False, regex=False)
             if mask_units.any():
-                parent_row = vari_df.loc[mask_units].iloc[0]
-                parent_title = _qtitle(parent_row)
+                parent_row = df_variable.loc[mask_units].iloc[0]
+                parent_title = _format_question_text(parent_row)
                 parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
 
                 parent_node = {'title': parent_title, 'key': parent_key, 'children': []}
                 section_node['children'].append(parent_node)
 
                 # add children excluding the units row
-                for _, r in vari_df.loc[~mask_units].iterrows():
-                    parent_node['children'].append({'title': _qtitle(r), 'key': f"{r['Variable']}"})
+                for _, variable_series in df_variable.loc[~mask_units].iterrows():
+                    parent_node['children'].append({'title': _format_question_text(variable_series), 'key': f"{variable_series['Variable']}"})
                 continue  # this vari handled
 
             # Fallback: your normal grouping (>=3 => group; else flat)
-            n_total = int(vari_df['n_in_vari_total'].iloc[0] if pd.notna(vari_df['n_in_vari_total'].iloc[0]) else 0)
+            n_total = int(df_variable['n_in_vari_total'].iloc[0] if pd.notna(df_variable['n_in_vari_total'].iloc[0]) else 0)
 
             if n_total >= 3:
-                parent_title = vari_df['first_question'].iloc[0]
+                parent_title = df_variable['first_question'].iloc[0]
                 parent_key = f"{form_upper}-{sec_name_upper}-VARI-{vari}-GROUP"
                 parent_node = {
                     'title': parent_title + ' (Group)',
@@ -118,10 +118,10 @@ def get_tree_items(df_datadicc: pd.DataFrame,
                 }
                 section_node['children'].append(parent_node)
 
-                for _, r in vari_df.iterrows():
-                    parent_node['children'].append({'title': _qtitle(r), 'key': f"{r['Variable']}"})
+                for _, variable_series in df_variable.iterrows():
+                    parent_node['children'].append({'title': _format_question_text(variable_series), 'key': f"{variable_series['Variable']}"})
             else:
-                for _, r in vari_df.iterrows():
-                    section_node['children'].append({'title': _qtitle(r), 'key': f"{r['Variable']}"})
+                for _, variable_series in df_variable.iterrows():
+                    section_node['children'].append({'title': _format_question_text(variable_series), 'key': f"{variable_series['Variable']}"})
 
     return tree

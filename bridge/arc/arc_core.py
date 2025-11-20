@@ -111,7 +111,7 @@ def set_select_units(df_datadicc: pd.DataFrame) -> pd.DataFrame:
 
 
 def extract_parenthesis_content(text: str) -> str:
-    match = re.search(r'\(([^)]+)\)', text)
+    match = re.search(r'\(([^)]+)\)$', text)
     return match.group(1) if match else text
 
 
