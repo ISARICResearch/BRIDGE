@@ -3,13 +3,15 @@ from unittest import mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from bridge.callbacks import grid
 
 FOCUSED_CELL_INDEX = 0
 
 
-def test_display_checked_in_grid_checked_empty():
+@mock.patch('bridge.callbacks.grid.get_focused_cell_index', return_value=0)
+def test_display_checked_in_grid_checked_empty(mock_focused_cell_index):
     checked = []
     current_datadicc_saved = ('{"columns":["Form", "Variable"],'
                               '"index":[0, 1],'
@@ -29,6 +31,7 @@ def test_display_checked_in_grid_checked_empty():
     assert output_variables_json == expected_variables_json
 
 
+@mock.patch('bridge.callbacks.grid.get_focused_cell_index', return_value=0)
 @mock.patch('bridge.callbacks.grid.arc_core.get_variable_order')
 @mock.patch('bridge.callbacks.grid.arc_core.add_transformed_rows')
 @mock.patch('bridge.callbacks.grid.arc_core.get_select_units')
@@ -36,7 +39,8 @@ def test_display_checked_in_grid_checked_empty():
 def test_display_checked_in_grid(mock_include_not_show,
                                  mock_select_units,
                                  mock_add_transformed_rows,
-                                 mock_variable_order):
+                                 mock_variable_order,
+                                 mock_focused_cell_index):
     checked = ['inclu_disease']
     current_datadicc_saved = ('{"columns":["Form", "Variable", "Dependencies"],'
                               '"index":[0, 1, 2],'
@@ -48,34 +52,46 @@ def test_display_checked_in_grid(mock_include_not_show,
             'presentation',
             'presentation',
             'presentation',
+            'presentation',
+            'presentation',
         ],
         'Section': [
             None,
             'INCLUSION CRITERIA',
             'INCLUSION CRITERIA',
+            'INCLUSION CRITERIA',
             'ONSET & PRESENTATION',
+            'DEMOGRAPHICS',
         ],
         'Variable': [
             'subjid',
+            'inclu_consentdes',
             'inclu_disease',
             'inclu_disease_otherl3',
             'pres_onsetdate',
+            'demog_height_cm',
         ],
         'Type': [
             'text',
+            'descriptive',
             'user_list',
             'text',
             'date_dmy',
+            'number',
         ],
         'Question': [
             'Participant Identification Number (PIN)',
+            'Consent:',
             'Suspected infection',
             'Specify other Suspected infection',
             'Onset date of earliest symptom',
+            'Height (cm)',
         ],
         'Answer Options': [
             None,
+            None,
             '33, Mpox | 88, Other',
+            None,
             None,
             None,
         ],
@@ -83,12 +99,20 @@ def test_display_checked_in_grid(mock_include_not_show,
             None,
             None,
             None,
+            None,
             'date_dmy',
+            'number',
         ],
     }
+    delete_this_variables_with_units = [
+        'demog_height_cm',
+        'demog_height_in',
+    ]
     df_selected_variables = pd.DataFrame.from_dict(data)
     mock_include_not_show.return_value = df_selected_variables
-    mock_select_units.return_value = (None, None)
+    mock_add_transformed_rows.return_value = df_selected_variables
+    mock_select_units.return_value = (pd.DataFrame(),
+                                      delete_this_variables_with_units)
 
     (output_row_defs,
      output_variables_json,
@@ -99,6 +123,7 @@ def test_display_checked_in_grid(mock_include_not_show,
 
     expected_row_defs = [{'Answer Options': '',
                           'Form': np.nan,
+                          'IsDescriptive': np.nan,
                           'IsSeparator': True,
                           'Question': 'PRESENTATION',
                           'Section': np.nan,
@@ -108,6 +133,7 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Variable': np.nan},
                          {'Answer Options': '________________________________________',
                           'Form': 'presentation',
+                          'IsDescriptive': np.nan,
                           'IsSeparator': False,
                           'Question': 'Participant Identification Number (PIN)',
                           'Section': '',
@@ -117,6 +143,7 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Variable': 'subjid'},
                          {'Answer Options': '',
                           'Form': np.nan,
+                          'IsDescriptive': np.nan,
                           'IsSeparator': True,
                           'Question': 'INCLUSION CRITERIA',
                           'Section': np.nan,
@@ -124,8 +151,19 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Type': np.nan,
                           'Validation': np.nan,
                           'Variable': np.nan},
+                         {'Answer Options': '',
+                          'Form': 'presentation',
+                          'IsDescriptive': True,
+                          'IsSeparator': False,
+                          'Question': 'Consent:',
+                          'Section': 'INCLUSION CRITERIA',
+                          'SeparatorType': np.nan,
+                          'Type': 'descriptive',
+                          'Validation': '',
+                          'Variable': 'inclu_consentdes'},
                          {'Answer Options': '○ Mpox   ○ Other',
                           'Form': 'presentation',
+                          'IsDescriptive': np.nan,
                           'IsSeparator': False,
                           'Question': 'Suspected infection',
                           'Section': 'INCLUSION CRITERIA',
@@ -135,6 +173,7 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Variable': 'inclu_disease'},
                          {'Answer Options': '________________________________________',
                           'Form': 'presentation',
+                          'IsDescriptive': np.nan,
                           'IsSeparator': False,
                           'Question': 'Specify other Suspected infection',
                           'Section': 'INCLUSION CRITERIA',
@@ -144,6 +183,7 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Variable': 'inclu_disease_otherl3'},
                          {'Answer Options': '',
                           'Form': np.nan,
+                          'IsDescriptive': np.nan,
                           'IsSeparator': True,
                           'Question': 'ONSET & PRESENTATION',
                           'Section': np.nan,
@@ -153,6 +193,7 @@ def test_display_checked_in_grid(mock_include_not_show,
                           'Variable': np.nan},
                          {'Answer Options': '[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]',
                           'Form': 'presentation',
+                          'IsDescriptive': np.nan,
                           'IsSeparator': False,
                           'Question': 'Onset date of earliest symptom',
                           'Section': 'ONSET & PRESENTATION',
@@ -163,9 +204,10 @@ def test_display_checked_in_grid(mock_include_not_show,
 
     expected_variables_json = (
         '{"columns":["Form","Section","Variable","Type","Question","Answer Options","Validation"],'
-        '"index":[0,1,2,3],'
+        '"index":[0,1,2,3,4],'
         '"data":['
         '["presentation","","subjid","text","Participant Identification Number (PIN)","",""],'
+        '["presentation","INCLUSION CRITERIA","inclu_consentdes","descriptive","Consent:","",""],'
         '["presentation","INCLUSION CRITERIA","inclu_disease","user_list","Suspected infection","33, Mpox | 88, Other",""],'
         '["presentation","INCLUSION CRITERIA","inclu_disease_otherl3","text","Specify other Suspected infection","",""],'
         '["presentation","ONSET & PRESENTATION","pres_onsetdate","date_dmy","Onset date of earliest symptom","","date_dmy"]]}')
@@ -193,3 +235,26 @@ def get_output_display_checked_in_grid(checked_variables,
     )
 
     return output
+
+
+@pytest.mark.parametrize(
+    "row_data, focused_cell_index, checked, expected_output",
+    [
+        ([], 5, [], 5),
+        ([{'Question': 'PRESENTATION', 'Type': 'descriptive', 'Variable': 'another_variable',
+           'Section': 'INCLUSION CRITERIA'},
+          {'Question': 'PRESENTATION', 'Type': 'descriptive', 'Variable': 'inclu_consentdes',
+           'Section': 'INCLUSION CRITERIA'},
+          ], 0, ['inclu_consentdes'], 1),
+    ]
+)
+def test_get_focused_cell_index(mocker,
+                                row_data,
+                                focused_cell_index,
+                                checked,
+                                expected_output):
+    output = grid.get_focused_cell_index(row_data,
+                                         focused_cell_index,
+                                         checked)
+
+    assert output == expected_output

@@ -86,7 +86,7 @@ app.clientside_callback(
                 gridApi.flashCells({ rowNodes: [rowNode] });
             }
         }
-        return false
+        return 0
     }""",
     Output('focused-cell-index', 'data', allow_duplicate=True),
     [
