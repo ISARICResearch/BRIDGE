@@ -280,7 +280,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     doc.addPageTemplates([template_one_col, template_two_col])
 
     # First pass: Build and collect TOC data
-    element_list = [NextPageTemplate('TwoCol')] + generate_guide_content(data_dictionary)
+    element_list = [NextPageTemplate('TwoCol')] + _generate_guide_content(data_dictionary)
 
     try:
         doc.build(element_list)
@@ -290,7 +290,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
 
     # Second pass: Rebuild with TOC inserted at the top
     logger.info("Generating Table of Contents")
-    toc = create_table_of_contents(doc.toc_entries, 560, page_height - top_margin - bottom_margin)
+    toc = _create_table_of_contents(doc.toc_entries, 560, page_height - top_margin - bottom_margin)
 
     header_footer_partial = partial(
         generate_completion_guide_header_footer, title=guide_title, toc_pages=toc["pages"])
@@ -304,7 +304,7 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
 
     final_element_list = (toc['elements'] +
                           [NextPageTemplate('TwoCol'), PageBreak()] +
-                          generate_guide_content(data_dictionary))
+                          _generate_guide_content(data_dictionary))
 
     doc = TrackingDocTemplate(
         buffer,
@@ -325,23 +325,21 @@ def generate_guide_doc(data_dictionary, version, crf_name, buffer):
     logger.info("Final Completion Guide build complete")
 
 
-def generate_guide_content(df_datadicc: pd.DataFrame) -> list:
+def _sanitize_key(text: str) -> str:
+    if text is None:
+        raise ValueError("Cannot create key from None")
+    text = str(text)
+    # Remove special characters and limit length
+    safe_text = re.sub(r'[^a-zA-Z0-9_]', '_', text)
+    return safe_text[:100]
+
+
+def _generate_guide_content(df_datadicc: pd.DataFrame) -> list:
     """
     Generates the completion guide from a data_dictionary json.
     """
 
-    def sanitize_key(text: str) -> str:
-        if text is None:
-            raise ValueError("Cannot create key from None")
-        text = str(text)
-        # Remove special characters and limit length
-        safe_text = re.sub(r'[^a-zA-Z0-9_]', '_', text)
-        return safe_text[:100]
-
     element_list = []
-
-    # Assume 'header_footer' function is defined elsewhere
-    # and 'df_datadicc' processing is as before
 
     # Process data_dictionary and add Paragraphs to elements
     df_datadicc['Section'] = df_datadicc['Section'].replace({'': np.nan})
@@ -373,7 +371,7 @@ def generate_guide_content(df_datadicc: pd.DataFrame) -> list:
         if isinstance(form, str):
             if form != current_form:
                 items = []
-                key = sanitize_key(f"form_{index}_{form}_{section}")
+                key = _sanitize_key(f"form_{index}_{form}_{section}")
                 # New Form
                 current_form = form
                 element_list.append(Spacer(1, 0.07 * inch))
@@ -410,7 +408,7 @@ def generate_guide_content(df_datadicc: pd.DataFrame) -> list:
                 items = []
                 current_section = section
 
-                key = sanitize_key(f"sec_{index}_{form}_{section}")
+                key = _sanitize_key(f"sec_{index}_{form}_{section}")
 
                 element_list.append(TrackingParagraph(
                     str(section.title()),
@@ -442,9 +440,9 @@ def generate_guide_content(df_datadicc: pd.DataFrame) -> list:
     return element_list
 
 
-def create_table_of_contents(toc_entries: list,
-                             total_width: float,
-                             total_height: float) -> dict:
+def _create_table_of_contents(toc_entries: list,
+                              total_width: float,
+                              total_height: float) -> dict:
     """
     Generates a table of contents for the completion guide based on the generated
     toc_entries (a list of dictionaries to hold key information (key, kind, title, page_num))

@@ -6,7 +6,7 @@ import pandas as pd
 from dash import Input, Output, State
 
 from bridge.arc import arc_core
-from bridge.generate_pdf import form
+from bridge.generate_pdf.form import Form
 
 
 @dash.callback(
@@ -85,7 +85,7 @@ def display_checked_in_grid(checked: list,
 
                 # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
-                formatted_choices = form.format_choices(row['Answer Options'], row['Type'])
+                formatted_choices = Form().format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
 
             elif row['Validation'] == 'date_dmy':
@@ -93,7 +93,7 @@ def display_checked_in_grid(checked: list,
                 row['Answer Options'] = date_str
 
             else:
-                row['Answer Options'] = form.LINE_PLACEHOLDER
+                row['Answer Options'] = Form().line_placeholder
 
             # Add the processed row to new_rows
             new_row = row.to_dict()

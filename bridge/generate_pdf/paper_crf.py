@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate
 
 from bridge.arc.arc_core import ArcApiClient
-from bridge.generate_pdf.form import generate_form
+from bridge.generate_pdf.form import Form
 from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
 from bridge.generate_pdf.opener import generate_opener
@@ -72,7 +72,7 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
     element_list = []
     element_list = generate_opener(element_list, details, db_name)
     df_datadicc['Section Header'] = df_datadicc['Section Header'].replace({'': np.nan})
-    element_list = generate_form(df_datadicc, element_list, locate_phrase)
+    element_list = Form().generate_form(df_datadicc, element_list, locate_phrase)
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
 
     try:
