@@ -29,10 +29,10 @@ class Language:
     def get_version_language_related_data(self):
         df_version, presets, commit = arc_core.get_arc(self.version)
 
-        if not self.initial_load:
-            df_version_language = self.get_dataframe_arc_language(df_version)
-        else:
+        if self.initial_load or self.language == 'English':
             df_version_language = df_version.copy()
+        else:
+            df_version_language = self.get_dataframe_arc_language(df_version)
 
         df_version_language = arc_core.add_required_datadicc_columns(df_version_language)
 
