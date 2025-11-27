@@ -1,0 +1,26 @@
+import pytest
+
+from bridge.generate_pdf.header_footer import get_page_numeral
+
+
+@pytest.mark.parametrize(
+    "page_number, expected_output",
+    [
+        (1, "i"),
+        (2, "ii"),
+        (3, "iii"),
+        (4, "iv"),
+        (5, "v"),
+        (6, "vi"),
+        (7, "vii"),
+        (8, "viii"),
+        (9, "ix"),
+        (10, "x"),
+        (-5, "_"),
+        (0, "_"),
+        (27, "_"),
+    ]
+)
+def test_get_page_numeral(page_number,
+                          expected_output):
+    assert get_page_numeral(page_number) == expected_output

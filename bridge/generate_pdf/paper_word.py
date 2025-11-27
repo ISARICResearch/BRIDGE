@@ -1,11 +1,9 @@
 import io
 import re
+
 import pandas as pd
 from docx import Document
 from docx.shared import Pt
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 MAX_CHOICES_SHOWN = 10
 
@@ -16,11 +14,13 @@ def pick_col(df, names):
             return n
     return None
 
+
 def split_choices(raw):
     if pd.isna(raw) or not str(raw).strip():
         return []
     parts = re.split(r'\s*\|\s*|\r?\n|;\s*', str(raw).strip())
     return [p.strip() for p in parts if p.strip()]
+
 
 def clean_choice_label(part):
     p = str(part).strip()
@@ -30,13 +30,15 @@ def clean_choice_label(part):
     m = re.split(r'^\s*\d+[\)\.:-]\s*', p)
     return m[-1].strip() if m else p
 
+
 def is_date(field_type, validation):
     ft = str(field_type or "").lower()
     val = str(validation or "").lower()
     return (
-        "date" in ft or "datetime" in ft or
-        "date_dmy" in val or "date_mdy" in val or "date_ymd" in val or "date" in val
+            "date" in ft or "datetime" in ft or
+            "date_dmy" in val or "date_mdy" in val or "date_ymd" in val or "date" in val
     )
+
 
 RE_88 = re.compile(
     r"(?:=\s*['\"]?\s*88\s*['\"]?)"
@@ -45,8 +47,10 @@ RE_88 = re.compile(
     re.I,
 )
 
+
 def branching_other(txt):
     return bool(RE_88.search(str(txt or "")))
+
 
 def format_answer(ftype, choices_raw, is_date_field):
     ft = str(ftype or "").lower().strip()
@@ -78,7 +82,7 @@ def df_to_word(df: pd.DataFrame) -> bytes:
     Genera un .docx tipo 'paper-like' a partir de un DataFrame REDCap-style
     y devuelve los bytes del documento.
     """
-    
+
     df = df.copy()
     df = df.fillna("")
 
@@ -154,7 +158,6 @@ def df_to_word(df: pd.DataFrame) -> bytes:
         for line in format_answer(ftype, choices, isdate):
             a_cell.add_paragraph(line)
 
-  
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)

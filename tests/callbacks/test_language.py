@@ -27,11 +27,11 @@ def test_get_dataframe_arc_language(mock_translation):
 
 
 @mock.patch('bridge.callbacks.language.dbc.AccordionItem')
-@mock.patch('bridge.callbacks.language.arc_lists.get_multi_list_content')
-@mock.patch('bridge.callbacks.language.arc_lists.get_user_list_content')
+@mock.patch('bridge.callbacks.language.ArcList.get_multi_list_content')
+@mock.patch('bridge.callbacks.language.ArcList.get_user_list_content')
 @mock.patch('bridge.callbacks.language.arc_core.get_variable_order')
 @mock.patch('bridge.callbacks.language.arc_core.add_transformed_rows')
-@mock.patch('bridge.callbacks.language.arc_lists.get_list_content')
+@mock.patch('bridge.callbacks.language.ArcList.get_list_content')
 @mock.patch('bridge.callbacks.language.Language.get_dataframe_arc_language')
 @mock.patch('bridge.callbacks.language.arc_core.add_required_datadicc_columns')
 @mock.patch('bridge.callbacks.language.arc_core.get_arc')

@@ -305,6 +305,13 @@ def test_extract_parenthesis_content():
     assert output_str == expected_str
 
 
+def test_extract_parenthesis_content_multiple_brackets():
+    text = 'Neutrophils (AB) (CD) (EF) (select units)'
+    output_str = arc_core.extract_parenthesis_content(text)
+    expected_str = 'select units'
+    assert output_str == expected_str
+
+
 def test_get_include_not_show():
     data = [
         'demog_age',

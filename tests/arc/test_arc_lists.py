@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pandas._testing import assert_frame_equal, assert_series_equal
 
-from bridge.arc import arc_lists
+from bridge.arc.arc_lists import ArcList
 
 
 @pytest.fixture
@@ -229,9 +229,7 @@ def test_get_list_content(mock_get_translations,
     ]
 
     (df_output,
-     list_output) = arc_lists.get_list_content(df_current_datadicc,
-                                               version,
-                                               language)
+     list_output) = ArcList(version, language).get_list_content(df_current_datadicc)
 
     assert_frame_equal(df_output, df_expected)
     assert list_output == list_expected
@@ -258,9 +256,7 @@ def test_get_list_content_no_list(mock_get_translations,
     df_current_datadicc = pd.DataFrame.from_dict(data)
 
     (df_output,
-     list_output) = arc_lists.get_list_content(df_current_datadicc,
-                                               version,
-                                               language)
+     list_output) = ArcList(version, language).get_list_content(df_current_datadicc)
 
     assert df_output.empty
     assert not list_output
@@ -291,8 +287,8 @@ def test_set_cont_lo():
     list_option = 'Cardiomyopathy'
 
     expected_int = 6
-    output_int = arc_lists.set_cont_lo(df_list_options,
-                                       list_option)
+    output_int = ArcList._get_list_option_number(df_list_options,
+                                                 list_option)
     assert output_int == expected_int
 
 
@@ -313,8 +309,8 @@ def test_set_cont_lo_88():
     list_option = 'Asplenia'
 
     expected_int = 89
-    output_int = arc_lists.set_cont_lo(df_list_options,
-                                       list_option)
+    output_int = ArcList._get_list_option_number(df_list_options,
+                                                 list_option)
     assert output_int == expected_int
 
 
@@ -335,8 +331,8 @@ def test_set_cont_lo_99():
     list_option = 'Asplenia'
 
     expected_int = 100
-    output_int = arc_lists.set_cont_lo(df_list_options,
-                                       list_option)
+    output_int = ArcList._get_list_option_number(df_list_options,
+                                                 list_option)
     assert output_int == expected_int
 
 
@@ -352,8 +348,8 @@ def test_set_cont_lo_no_value():
     list_option = 'Asplenia'
 
     expected_int = 2
-    output_int = arc_lists.set_cont_lo(df_list_options,
-                                       list_option)
+    output_int = ArcList._get_list_option_number(df_list_options,
+                                                 list_option)
     assert output_int == expected_int
 
 
@@ -447,10 +443,8 @@ def test_get_list_data(mock_get_translations,
     ]
 
     (list_choices_output,
-     all_rows_output) = arc_lists.get_list_data(df_current_datadicc,
-                                                version,
-                                                language,
-                                                list_type)
+     all_rows_output) = ArcList(version, language)._get_list_data(df_current_datadicc,
+                                                                  list_type)
 
     assert list_choices_output == list_choices_expected
     assert_series_equal(all_rows_output[0], all_rows_expected[0])
@@ -479,10 +473,8 @@ def test_get_list_data_no_list(mock_get_translations,
     df_current_datadicc = pd.DataFrame.from_dict(data)
 
     (list_choices_output,
-     all_rows_output) = arc_lists.get_list_data(df_current_datadicc,
-                                                version,
-                                                language,
-                                                list_type)
+     all_rows_output) = ArcList(version, language)._get_list_data(df_current_datadicc,
+                                                                  list_type)
 
     assert not list_choices_output
     assert not all_rows_output
@@ -551,7 +543,7 @@ def list_expected_get_list_content():
     return list_expected
 
 
-@mock.patch('bridge.arc.arc_lists.get_list_data')
+@mock.patch('bridge.arc.arc_lists.ArcList._get_list_data')
 def test_get_user_list_content(mock_list_data,
                                mock_list_choices,
                                mock_all_rows,
@@ -565,15 +557,13 @@ def test_get_user_list_content(mock_list_data,
     language = 'English'
 
     (df_output,
-     list_output) = arc_lists.get_user_list_content(df_current_datadicc,
-                                                    version,
-                                                    language)
+     list_output) = ArcList(version, language).get_user_list_content(df_current_datadicc)
 
     assert_frame_equal(df_output, df_expected_get_list_content)
     assert list_output == list_expected_get_list_content
 
 
-@mock.patch('bridge.arc.arc_lists.get_list_data')
+@mock.patch('bridge.arc.arc_lists.ArcList._get_list_data')
 def test_get_multi_list_content(mock_list_data,
                                 mock_list_choices,
                                 mock_all_rows,
@@ -587,9 +577,7 @@ def test_get_multi_list_content(mock_list_data,
     language = 'English'
 
     (df_output,
-     list_output) = arc_lists.get_multi_list_content(df_current_datadicc,
-                                                     version,
-                                                     language)
+     list_output) = ArcList(version, language).get_multi_list_content(df_current_datadicc)
 
     assert_frame_equal(df_output, df_expected_get_list_content)
     assert list_output == list_expected_get_list_content
