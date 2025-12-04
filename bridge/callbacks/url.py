@@ -29,8 +29,6 @@ def update_output_based_on_url(template_check_flag: bool,
         params = parse_qs(parsed_url.query)
 
         param_value = params.get('param', [''])[0]
-        if param_value=='Recommended%Outcomes_Dengue':
-            param_value='Recommended Outcomes_Dengue'
         group, value = param_value.split('_') if '_' in param_value else (None, None)
 
         checklist_values = {key: [] for key in grouped_presets.keys()}

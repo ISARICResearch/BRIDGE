@@ -5,8 +5,9 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State
 
 import bridge.callbacks  # noqa
-from bridge.arc import arc_core, arc_lists, arc_tree
+from bridge.arc import arc_core, arc_tree
 from bridge.arc.arc_api import ArcApiClient
+from bridge.arc.arc_lists import ArcList
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
@@ -36,16 +37,15 @@ DF_ARC = arc_core.add_required_datadicc_columns(DF_ARC)
 TREE_ITEMS_DATA = arc_tree.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
 
 # List content Transformation
-DF_LISTS, LIST_VARIABLE_LIST = arc_lists.get_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_LISTS, LIST_VARIABLE_LIST = ArcList(ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT).get_list_content(DF_ARC)
 DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_LISTS, arc_core.get_variable_order(DF_ARC))
 
 # User List content Transformation
-DF_ULIST, ULIST_VARIABLE_LIST = arc_lists.get_user_list_content(DF_ARC, ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT)
+DF_ULIST, ULIST_VARIABLE_LIST = ArcList(ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT).get_user_list_content(DF_ARC)
 DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_ULIST, arc_core.get_variable_order(DF_ARC))
 
 # Multi List content Transformation
-DF_MULTILIST, MULTILIST_VARIABLE_LIST = arc_lists.get_multi_list_content(DF_ARC, ARC_VERSION_LATEST,
-                                                                         ARC_LANGUAGE_DEFAULT)
+DF_MULTILIST, MULTILIST_VARIABLE_LIST = ArcList(ARC_VERSION_LATEST, ARC_LANGUAGE_DEFAULT).get_multi_list_content(DF_ARC)
 DF_ARC = arc_core.add_transformed_rows(DF_ARC, DF_MULTILIST, arc_core.get_variable_order(DF_ARC))
 
 ARC_JSON = DF_ARC.to_json(date_format='iso', orient='split')
@@ -86,7 +86,7 @@ app.clientside_callback(
                 gridApi.flashCells({ rowNodes: [rowNode] });
             }
         }
-        return false
+        return 0
     }""",
     Output('focused-cell-index', 'data', allow_duplicate=True),
     [

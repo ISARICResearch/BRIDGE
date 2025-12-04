@@ -6,7 +6,7 @@ import pandas as pd
 from dash import Input, Output, State
 
 from bridge.arc import arc_core
-from bridge.generate_pdf import form
+from bridge.generate_pdf.form import Form
 
 
 @dash.callback(
@@ -45,8 +45,9 @@ def display_checked_in_grid(checked: list,
         df_selected_variables = arc_core.get_include_not_show(df_selected_variables['Variable'], df_current_datadicc)
 
         # Select Units Transformation
-        arc_var_units_selected, delete_this_variables_with_units = arc_core.get_select_units(
-            df_selected_variables['Variable'], df_current_datadicc)
+        (arc_var_units_selected,
+         delete_this_variables_with_units) = arc_core.get_select_units(df_selected_variables['Variable'],
+                                                                       df_current_datadicc)
         if arc_var_units_selected is not None:
             df_selected_variables = arc_core.add_transformed_rows(df_selected_variables, arc_var_units_selected,
                                                                   arc_core.get_variable_order(df_current_datadicc))
@@ -72,19 +73,19 @@ def display_checked_in_grid(checked: list,
                     {'Question': f"{row['Section'].upper()}", 'Answer Options': '', 'IsSeparator': True,
                      'SeparatorType': 'section'})
                 last_section = str(row['Section'])
-            
+
             if row['Type'] == 'descriptive':
                 new_row = row.to_dict()
                 new_row['IsDescriptive'] = True
 
-                new_row['Answer Options'] = ''   
+                new_row['Answer Options'] = ''
                 new_row['IsSeparator'] = False
                 new_rows.append(new_row)
-                continue  
+                continue
 
-            # Process the actual row
+                # Process the actual row
             if row['Type'] in ['radio', 'dropdown', 'checkbox', 'list', 'user_list', 'multi_list']:
-                formatted_choices = form.format_choices(row['Answer Options'], row['Type'])
+                formatted_choices = Form().format_choices(row['Answer Options'], row['Type'])
                 row['Answer Options'] = formatted_choices
 
             elif row['Validation'] == 'date_dmy':
@@ -92,7 +93,7 @@ def display_checked_in_grid(checked: list,
                 row['Answer Options'] = date_str
 
             else:
-                row['Answer Options'] = form.LINE_PLACEHOLDER
+                row['Answer Options'] = Form().line_placeholder
 
             # Add the processed row to new_rows
             new_row = row.to_dict()
@@ -120,9 +121,9 @@ def display_checked_in_grid(checked: list,
             focused_cell_index)
 
 
-def get_focused_cell_index(row_data,
-                           focused_cell_index,
-                           checked):
+def get_focused_cell_index(row_data: list,
+                           focused_cell_index: int,
+                           checked: list) -> int:
     if checked:
         df_row_data = pd.DataFrame(row_data)
         df_row_data['Question'] = df_row_data['Question'].str.split(':').str[0]
