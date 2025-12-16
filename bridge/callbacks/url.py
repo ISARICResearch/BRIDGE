@@ -32,7 +32,7 @@ def update_output_based_on_url(template_check_flag: bool,
         
         mapping = {
                 "Recommended%Outcomes_Dengue": "Recommended Outcomes_Dengue",
-                "mpox-pregnancy-paediatric": "ARChetype Disease CRF_Mpox Pregnancy and Paediatrics",
+                "mpox-pregnancy-paediatric": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
             }
 
         param_value = mapping.get(
