@@ -148,7 +148,8 @@ def get_checked_template_list(grouped_presets_dict: dict,
     for section, item_checked_list in zip(grouped_presets_dict.keys(), checked_values_list):
         if item_checked_list:
             for item_checked in item_checked_list:
-                output.append([section, item_checked.replace(' ', '_')])
+                #output.append([section, item_checked.replace(' ', '_')])
+                output.append([section, item_checked])
     return output
 
 
