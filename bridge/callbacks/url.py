@@ -29,6 +29,18 @@ def update_output_based_on_url(template_check_flag: bool,
         params = parse_qs(parsed_url.query)
 
         param_value = params.get('param', [''])[0]
+        
+        mapping = {
+                "Recommended%Outcomes_Dengue": "Recommended Outcomes_Dengue",
+                "mpox-pregnancy-paediatric": "ARChetype Disease CRF_Mpox Pregnancy and Paediatrics",
+            }
+
+        param_value = mapping.get(
+            param_value,
+            param_value.replace("-", " ")
+        )
+
+             
         group, value = param_value.split('_') if '_' in param_value else (None, None)
 
         checklist_values = {key: [] for key in grouped_presets.keys()}
