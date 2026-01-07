@@ -64,7 +64,7 @@ class ElementList:
         # Filtering out rows that are not related to form details
         df_form_details = self.df_details[
             ~self.df_details[TEXT_FIELD].str.startswith("Timing /Events:") &
-            self.df_details[PAPER_LIKE_FIELD].isin(['PRESENTATION FORM', 'DAILY FORM', 'OUTCOME FORM'])].copy()
+            self.df_details[PAPER_LIKE_FIELD].isin(['PRESENTATION FORM', 'DAILY FORM', 'OUTCOME FORM','PREGNANCY FORM','NEONATE FORM'])].copy()
 
         # Build the paragraphs with the desired format
         form_names_added = set()

@@ -117,7 +117,7 @@ def extract_parenthesis_content(text: str) -> str:
 
 def get_include_not_show(selected_variables: pd.Series,
                          df_current_datadicc: pd.DataFrame) -> pd.DataFrame:
-    include_not_show = ['otherl2', 'otherl3', 'route', 'route2', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
+    include_not_show = ['otherl2', 'otherl3', 'agent', 'agent2', 'warn', 'warn2', 'warn3',
                         'units', 'add', 'vol', '0item', '0otherl2',
                         '0addi', '1item', '1otherl2', '1addi', '2item', '2otherl2', '2addi', '3item', '3otherl2',
                         '3addi',
