@@ -57,7 +57,7 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
         
         mask = details['Paper-like section'] == 'Timing /Events'
 
-        details.loc[mask, 'Text'] = (
+        details.loc[mask, 'Text_translation'] = (
             'Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study'
         )
             
