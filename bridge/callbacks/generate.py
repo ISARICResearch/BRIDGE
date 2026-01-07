@@ -86,7 +86,6 @@ def on_generate_click(n_clicks: int,
         language = selected_language_data.get('selected_language')
 
         df_crf = arc_core.generate_crf(selected_variables_from_data)
-
         # PDFs
         pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(df_crf, version, crf_name, language)
         pdf_completion_guide = paper_crf.generate_completion_guide(selected_variables_from_data, version, crf_name)

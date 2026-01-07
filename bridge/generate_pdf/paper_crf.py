@@ -42,8 +42,25 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
                            language: str) -> bytes:
     buffer = BytesIO()
     df_datadicc = df_datadicc[~df_datadicc['Field Label'].str.startswith(('>', '->'))]
+    preg_flag=0
+    
+    if df_datadicc['Form Name'].str.contains('neonate|pregnancy', case=False, na=False).any():
+        preg_flag = 1
 
     details = ArcApiClient().get_dataframe_paper_like_details(version, language)
+
+    if preg_flag == 0:
+        details = details.loc[
+            (details['Paper-like section'] != 'PREGNANCY FORM') &
+            (details['Paper-like section'] != 'NEONATE FORM')
+        ]
+        
+        mask = details['Paper-like section'] == 'Timing /Events'
+
+        details.loc[mask, 'Text'] = (
+            'Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study'
+        )
+            
     supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(version, language)
 
     # Locate the phrase in the supplemental phrases DataFrame
