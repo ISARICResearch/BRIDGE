@@ -51,8 +51,8 @@ jobs:
             exit 1
           fi
 
-          # Write indented heredoc, then dedent it to /tmp/ssm-script.sh so linter is happy
-          cat <<'INDENTED' | python3 - <<'PY' > /tmp/ssm-script.sh
+          # 1) write the indented heredoc to a temp file (keeps linter happy)
+          cat > /tmp/ssm-script.indented <<'INDENTED'
               #!/bin/bash -eux
               trap 'echo "Error on line $LINENO"; exit 1' ERR
 
@@ -77,12 +77,17 @@ jobs:
               docker image prune -f
               docker volume prune -f
           INDENTED
-          PY
+
+          # 2) dedent it to the real script file using Python (atomic write)
+          python3 - <<'PY' > /tmp/ssm-script.sh
           import sys, textwrap
-          print(textwrap.dedent(sys.stdin.read()), end='')
+          text = open('/tmp/ssm-script.indented', 'r').read()
+          print(textwrap.dedent(text), end='')
           PY
 
-          # Confirm script was written and is executable
+          # remove the indented temporary (optional)
+          rm -f /tmp/ssm-script.indented
+
           chmod +x /tmp/ssm-script.sh
           echo "Wrote /tmp/ssm-script.sh ($(wc -c < /tmp/ssm-script.sh) bytes)"
 
@@ -94,9 +99,10 @@ jobs:
           PY
 
           echo "Wrote /tmp/ssm-params.json ($(wc -c < /tmp/ssm-params.json) bytes)"
+          echo "===== DEBUG: /tmp/ssm-script.sh ====="
+          sed 's/^/| /' /tmp/ssm-script.sh
           echo "===== DEBUG: /tmp/ssm-params.json ====="
           cat /tmp/ssm-params.json
-          echo
           echo "===== END DEBUG ====="
 
           # Send the command and capture CommandId
