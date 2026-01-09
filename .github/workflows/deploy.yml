@@ -52,7 +52,7 @@ jobs:
           fi
 
           # 1) write the indented heredoc to a temp file (keeps linter happy)
-          cat > /tmp/ssm-script.indented <<'INDENTED'
+          cat > /tmp/ssm-script.indented <<INDENTED
               #!/bin/bash -eux
               trap 'echo "Error on line $LINENO"; exit 1' ERR
 
