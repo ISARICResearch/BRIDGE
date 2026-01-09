@@ -46,26 +46,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Build the remote script into a variable using cat <<'EOF' which tolerates YAML indentation.
+          # Build the remote script into a variable using cat <<'EOF'
           SSM_COMMAND=$(cat <<'EOF'
           #!/bin/bash -eux
           trap 'echo "Error on line $LINENO"; exit 1' ERR
 
-          # Instance performs ECR login using its instance role
           aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin "${ECR_REPO}"
 
-          # Stop & remove previous container
           docker stop isaric-bridge 2>/dev/null || true
           docker rm -v isaric-bridge 2>/dev/null || true
 
-          # Pull and start
           docker pull "${ECR_REPO}:latest"
           docker run -d --restart unless-stopped --name isaric-bridge \
             --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
             -p 8050:8050 \
             "${ECR_REPO}:latest"
 
-          # verify it's up
           sleep 3
           if ! docker ps --filter "name=^/isaric-bridge$" --format '{{.Status}}' | grep -q .; then
             echo "Container failed to start"
@@ -73,22 +69,31 @@ jobs:
             exit 1
           fi
 
-          # Clean up
           docker image prune -f
           docker volume prune -f
           EOF
           )
 
-          # Send the command and capture the CommandId directly
+          # Convert the script into the JSON parameters file expected by AWS CLI
+          # This produces: {"commands":["#!/bin/bash -eux", "trap ...", ... ]}
+          printf '%s\n' "$SSM_COMMAND" \
+            | python3 - <<'PY' > /tmp/ssm-params.json
+          import sys, json
+          lines = [l for l in sys.stdin.read().splitlines() if l != ""]
+          print(json.dumps({"commands": lines}))
+          PY
+
+          # Send the command using the JSON file and capture the CommandId
           CMD_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy isaric-bridge via GitHub Actions" \
-            --parameters commands="$SSM_COMMAND" \
+            --parameters file:///tmp/ssm-params.json \
             --region eu-west-2 \
             --query 'Command.CommandId' --output text)
 
           echo "Sent SSM command: $CMD_ID"
+
 
           # Poll for final status (robust to "InvocationDoesNotExist" early error)
           for i in $(seq 1 30); do
