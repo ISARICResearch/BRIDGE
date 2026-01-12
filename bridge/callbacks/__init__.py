@@ -1,9 +1,9 @@
-from . import generate
-from . import grid
-from . import modals
-from . import save
-from . import settings
-from . import sidebar
-from . import tree
-from . import upload
-from . import url
+from . import generate as generate
+from . import grid as grid
+from . import modals as modals
+from . import save as save
+from . import settings as settings
+from . import sidebar as sidebar
+from . import tree as tree
+from . import upload as upload
+from . import url as url

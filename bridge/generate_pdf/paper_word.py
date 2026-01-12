@@ -18,16 +18,16 @@ def pick_col(df, names):
 def split_choices(raw):
     if pd.isna(raw) or not str(raw).strip():
         return []
-    parts = re.split(r'\s*\|\s*|\r?\n|;\s*', str(raw).strip())
+    parts = re.split(r"\s*\|\s*|\r?\n|;\s*", str(raw).strip())
     return [p.strip() for p in parts if p.strip()]
 
 
 def clean_choice_label(part):
     p = str(part).strip()
-    for sep in [',', ':', '=']:
+    for sep in [",", ":", "="]:
         if sep in p:
             return p.split(sep, 1)[1].strip()
-    m = re.split(r'^\s*\d+[\)\.:-]\s*', p)
+    m = re.split(r"^\s*\d+[\)\.:-]\s*", p)
     return m[-1].strip() if m else p
 
 
@@ -35,8 +35,12 @@ def is_date(field_type, validation):
     ft = str(field_type or "").lower()
     val = str(validation or "").lower()
     return (
-            "date" in ft or "datetime" in ft or
-            "date_dmy" in val or "date_mdy" in val or "date_ymd" in val or "date" in val
+        "date" in ft
+        or "datetime" in ft
+        or "date_dmy" in val
+        or "date_mdy" in val
+        or "date_ymd" in val
+        or "date" in val
     )
 
 
@@ -60,12 +64,18 @@ def format_answer(ftype, choices_raw, is_date_field):
     if ft in ("radio", "dropdown", "select"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [" ".join(f"○ {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
+            return [
+                " ".join(f"○ {c}" for c in shown)
+                + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
+            ]
         return ["○ ________"]
     if ft in ("checkbox", "check box", "checks"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [" ".join(f"☐ {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
+            return [
+                " ".join(f"☐ {c}" for c in shown)
+                + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
+            ]
         return ["☐ ________"]
     if ft in ("text", "notes", "textarea"):
         return ["__________"]
@@ -73,7 +83,10 @@ def format_answer(ftype, choices_raw, is_date_field):
         return ["Calculated value (read-only)"]
     if choices:
         shown = choices[:MAX_CHOICES_SHOWN]
-        return [" ".join(f"- {c}" for c in shown) + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")]
+        return [
+            " ".join(f"- {c}" for c in shown)
+            + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
+        ]
     return ["__________"]
 
 
@@ -89,18 +102,28 @@ def df_to_word(df: pd.DataFrame) -> bytes:
     c_form = pick_col(df, ["Form Name", "form_name", "Form"])
     c_section = pick_col(df, ["Section Header", "section_header", "Section"])
     c_label = pick_col(df, ["Field Label", "field_label"]) or df.columns[0]
-    c_var = pick_col(df, ["Variable / Field Name", "variable / field name", "varname"]) or df.columns[0]
+    c_var = (
+        pick_col(df, ["Variable / Field Name", "variable / field name", "varname"])
+        or df.columns[0]
+    )
     c_type = pick_col(df, ["Field Type", "field_type"])
     c_choices = pick_col(df, ["Choices, Calculations, OR Slider Labels", "Choices"])
-    c_val = pick_col(df, ["Text Validation Type OR Show Slider Number",
-                          "Text Validation Type", "text_validation_type"])
-    c_branch = pick_col(df, ["Branching Logic (Show field only if...)",
-                             "branching_logic", "Logic"])
+    c_val = pick_col(
+        df,
+        [
+            "Text Validation Type OR Show Slider Number",
+            "Text Validation Type",
+            "text_validation_type",
+        ],
+    )
+    c_branch = pick_col(
+        df, ["Branching Logic (Show field only if...)", "branching_logic", "Logic"]
+    )
 
     # skip descriptive
     if c_type in df.columns:
         df = df[df[c_type].str.lower() != "descriptive"]
-        df = df[~df[c_label].str.contains('>')]
+        df = df[~df[c_label].str.contains(">")]
 
     doc = Document()
     style = doc.styles["Normal"]

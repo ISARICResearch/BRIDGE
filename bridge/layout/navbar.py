@@ -4,9 +4,8 @@ from dash import html
 
 
 class NavBar:
-
     def __init__(self):
-        self.isaric_logo = dash.get_asset_url('ISARIC_logo_wh.png')
+        self.isaric_logo = dash.get_asset_url("ISARIC_logo_wh.png")
 
         self.navbar = dbc.Navbar(
             dbc.Container(
@@ -25,12 +24,11 @@ class NavBar:
                     html.A(
                         dbc.NavbarBrand(
                             "BRIDGE - BioResearch Integrated Data tool GEnerator",
-                            className="mx-auto"
+                            className="mx-auto",
                         ),
                         href="https://bridge.isaric.org/",
                         style={"textDecoration": "none", "color": "white"},
                     ),
-
                     html.A(
                         dbc.NavbarBrand("Getting started with BRIDGE"),
                         href="https://isaricresearch.github.io/Training/bridge_starting.html",
@@ -38,7 +36,7 @@ class NavBar:
                     ),
                     dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
                 ],
-                className="d-flex justify-content-between w-100"
+                className="d-flex justify-content-between w-100",
             ),
             color="#BA0225",
             dark=True,

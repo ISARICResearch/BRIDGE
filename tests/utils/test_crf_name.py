@@ -9,23 +9,18 @@ from bridge.utils.crf_name import get_crf_name
 @pytest.mark.parametrize(
     "name, checked, expected_output",
     [
-        (['name1', 'name2', 'name3'], [], 'name1'),
-        (None, [], 'no_name'),
-        (None, [['Covid'], [], [], [], []], 'Covid'),
-        (None, [['Covid', 'Dengue'], [], [], [], []], 'Covid'),
-        (None, [['Dengue'], [], ['Oropouche'], [], []], 'Dengue'),
-        (None, [[], [], ['Oropouche'], [], []], 'Oropouche'),
-    ]
+        (["name1", "name2", "name3"], [], "name1"),
+        (None, [], "no_name"),
+        (None, [["Covid"], [], [], [], []], "Covid"),
+        (None, [["Covid", "Dengue"], [], [], [], []], "Covid"),
+        (None, [["Dengue"], [], ["Oropouche"], [], []], "Dengue"),
+        (None, [[], [], ["Oropouche"], [], []], "Oropouche"),
+    ],
 )
-@mock.patch('bridge.utils.crf_name.logger')
-def test_get_crf_name(mock_logger,
-                      name,
-                      checked,
-                      expected_output):
-    def run_callback(crf_name,
-                     checked_values):
-        return get_crf_name(crf_name,
-                            checked_values)
+@mock.patch("bridge.utils.crf_name.logger")
+def test_get_crf_name(mock_logger, name, checked, expected_output):
+    def run_callback(crf_name, checked_values):
+        return get_crf_name(crf_name, checked_values)
 
     ctx = copy_context()
     output = ctx.run(
