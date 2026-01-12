@@ -19,8 +19,7 @@ from bridge.generate_pdf.header_footer import get_page_numeral
         (-5, "_"),
         (0, "_"),
         (27, "_"),
-    ]
+    ],
 )
-def test_get_page_numeral(page_number,
-                          expected_output):
+def test_get_page_numeral(page_number, expected_output):
     assert get_page_numeral(page_number) == expected_output

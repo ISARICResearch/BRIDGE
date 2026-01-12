@@ -20,53 +20,60 @@ from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-REGISTERED_FONT = 'DejaVuSans'
-REGISTERED_FONT_BOLD = 'DejaVuSans-Bold'
+REGISTERED_FONT = "DejaVuSans"
+REGISTERED_FONT_BOLD = "DejaVuSans-Bold"
 
-ASSETS_DIR_FULL = join(dirname(dirname(dirname(abspath(__file__)))), 'assets')
-FONTS_DIR_FULL = join(ASSETS_DIR_FULL, 'fonts')
+ASSETS_DIR_FULL = join(dirname(dirname(dirname(abspath(__file__)))), "assets")
+FONTS_DIR_FULL = join(ASSETS_DIR_FULL, "fonts")
 
-pdfmetrics.registerFont(TTFont(REGISTERED_FONT, join(FONTS_DIR_FULL, f'{REGISTERED_FONT}.ttf')))
-pdfmetrics.registerFont(TTFont(REGISTERED_FONT_BOLD, join(FONTS_DIR_FULL, f'{REGISTERED_FONT_BOLD}.ttf')))
-
-registerFontFamily(
-    REGISTERED_FONT,
-    normal=REGISTERED_FONT,
-    bold=REGISTERED_FONT_BOLD
+pdfmetrics.registerFont(
+    TTFont(REGISTERED_FONT, join(FONTS_DIR_FULL, f"{REGISTERED_FONT}.ttf"))
+)
+pdfmetrics.registerFont(
+    TTFont(REGISTERED_FONT_BOLD, join(FONTS_DIR_FULL, f"{REGISTERED_FONT_BOLD}.ttf"))
 )
 
+registerFontFamily(REGISTERED_FONT, normal=REGISTERED_FONT, bold=REGISTERED_FONT_BOLD)
 
-def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
-                           version: str,
-                           db_name: str,
-                           language: str) -> bytes:
+
+def generate_paperlike_pdf(
+    df_datadicc: pd.DataFrame, version: str, db_name: str, language: str
+) -> bytes:
     buffer = BytesIO()
-    df_datadicc = df_datadicc[~df_datadicc['Field Label'].str.startswith(('>', '->'))]
-    preg_flag=0
-    
-    if df_datadicc['Form Name'].str.contains('neonate|pregnancy', case=False, na=False).any():
+    df_datadicc = df_datadicc[~df_datadicc["Field Label"].str.startswith((">", "->"))]
+    preg_flag = 0
+
+    if (
+        df_datadicc["Form Name"]
+        .str.contains("neonate|pregnancy", case=False, na=False)
+        .any()
+    ):
         preg_flag = 1
 
     details = ArcApiClient().get_dataframe_paper_like_details(version, language)
 
     if preg_flag == 0:
         details = details.loc[
-            (details['Paper-like section'] != 'PREGNANCY FORM') &
-            (details['Paper-like section'] != 'NEONATE FORM')
+            (details["Paper-like section"] != "PREGNANCY FORM")
+            & (details["Paper-like section"] != "NEONATE FORM")
         ]
-        
-        mask = details['Paper-like section'] == 'Timing /Events'
 
-        details.loc[mask, 'Text_translation'] = (
-            'Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study'
+        mask = details["Paper-like section"] == "Timing /Events"
+
+        details.loc[mask, "Text_translation"] = (
+            "Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study"
         )
-            
-    supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(version, language)
+
+    supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(
+        version, language
+    )
 
     # Locate the phrase in the supplemental phrases DataFrame
     def locate_phrase(variable: str) -> dict:
         try:
-            phrase = supplemental_phrases.loc[supplemental_phrases['variable'] == variable, 'text'].values[0]
+            phrase = supplemental_phrases.loc[
+                supplemental_phrases["variable"] == variable, "text"
+            ].values[0]
             return {"error": False, "text": phrase}
         except IndexError:
             logger.warning(f"Variable '{variable}' not found in supplemental phrases.")
@@ -83,17 +90,21 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
         leftMargin=left_margin,
         rightMargin=right_margin,
         topMargin=top_margin,
-        bottomMargin=bottom_margin
+        bottomMargin=bottom_margin,
     )
 
     element_list = []
     element_list = generate_opener(element_list, details, db_name)
-    df_datadicc['Section Header'] = df_datadicc['Section Header'].replace({'': np.nan})
+    df_datadicc["Section Header"] = df_datadicc["Section Header"].replace({"": np.nan})
     element_list = Form().generate_form(df_datadicc, element_list, locate_phrase)
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
 
     try:
-        doc.build(element_list, onFirstPage=header_footer_partial, onLaterPages=header_footer_partial)
+        doc.build(
+            element_list,
+            onFirstPage=header_footer_partial,
+            onLaterPages=header_footer_partial,
+        )
     except ValueError as e:
         logger.error(e)
         raise RuntimeError("Failed to build Paperlike PDF")
@@ -102,9 +113,9 @@ def generate_paperlike_pdf(df_datadicc: pd.DataFrame,
     return buffer.getvalue()
 
 
-def generate_completion_guide(df_datadicc: pd.DataFrame,
-                              version: str,
-                              db_name: str) -> bytes:
+def generate_completion_guide(
+    df_datadicc: pd.DataFrame, version: str, db_name: str
+) -> bytes:
     df_datadicc = df_datadicc.copy()
     buffer = BytesIO()
     generate_guide_doc(df_datadicc, version, db_name, buffer)

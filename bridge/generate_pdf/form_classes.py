@@ -1,6 +1,5 @@
-""" This Generate Form script is for defining the classes, properties, and methods needed to create the forms """
+"""This Generate Form script is for defining the classes, properties, and methods needed to create the forms
 
-''' 
 It defines:
 Section >               a group of questions in a form, all under on Section Header (usually)
   Subsection >          a group of all connected or all disconnected questions within a section
@@ -9,7 +8,7 @@ Section >               a group of questions in a form, all under on Section Hea
       Row >             a row of fields on the final sheet
         Field >         a single item on the form. Can be a question / answer pair or a Heading
           Dependency    each field can have dependencies, this holds the dependencies from the Branching Logic in a clear and reproducible way
-'''
+"""
 
 import re
 from enum import Enum
@@ -19,14 +18,11 @@ from reportlab.platypus import Paragraph
 
 from bridge.generate_pdf import styles
 
-LINE_PLACEHOLDER = '_' * 40
+LINE_PLACEHOLDER = "_" * 40
 
 
 class Dependency:
-    def __init__(self,
-                 field_name: str,
-                 operator: str,
-                 value: str):
+    def __init__(self, field_name: str, operator: str, value: str):
         self.field_name = field_name  # The question this depends on (e.g. 'expo14_yn')
         self.operator = operator  # Comparison operator (e.g. '=', '>', etc.)
         self.value = value  # Required value (e.g. '1')
@@ -35,16 +31,18 @@ class Dependency:
 class Field:
     """Custom class to store data, question, and answer for form."""
 
-    def __init__(self,
-                 name: str,
-                 data: List,
-                 dependencies: List[Dependency] = None,
-                 is_heading: bool = False,
-                 is_text: bool = False,
-                 is_descriptive: bool = False,
-                 title: Paragraph = None,
-                 question: Paragraph = None,
-                 answer: List[Paragraph] = None):
+    def __init__(
+        self,
+        name: str,
+        data: List,
+        dependencies: List[Dependency] = None,
+        is_heading: bool = False,
+        is_text: bool = False,
+        is_descriptive: bool = False,
+        title: Paragraph = None,
+        question: Paragraph = None,
+        answer: List[Paragraph] = None,
+    ):
         if not dependencies:
             dependencies = []
         self.name = name
@@ -58,8 +56,12 @@ class Field:
         self.answer = answer  # List of Paragraph objects
         self.question_width: float | None = None  # 1/6 or 2/6 of total width
         self.answer_width: float | None = None  # 1/6 or 2/6 of total width
-        self.q_rows: List[int] | None = None  # number of rows for Q at width 1/6 and 2/6
-        self.a_rows: List[int] | None = None  # number of rows for A at width 1/6 and 2/6
+        self.q_rows: List[int] | None = (
+            None  # number of rows for Q at width 1/6 and 2/6
+        )
+        self.a_rows: List[int] | None = (
+            None  # number of rows for A at width 1/6 and 2/6
+        )
 
     @property
     def parent_questions(self) -> List[str]:
@@ -67,8 +69,7 @@ class Field:
         return [d.field_name for d in self.dependencies if d.field_name]
 
     @staticmethod
-    def _string_to_rows(string: str,
-                        row_length: int) -> int:
+    def _string_to_rows(string: str, row_length: int) -> int:
         current_line_length = 0
         rows = 1
         words = string.split()
@@ -80,30 +81,40 @@ class Field:
                     rows += 1
                 # Add as many rows as needed for the long word
                 rows += len(word) // row_length
-                current_line_length = len(word) % row_length  # Remainder for the next line
+                current_line_length = (
+                    len(word) % row_length
+                )  # Remainder for the next line
             else:
                 # Check if the word fits in the current line
-                if current_line_length + len(word) + (1 if current_line_length > 0 else 0) > row_length:
+                if (
+                    current_line_length
+                    + len(word)
+                    + (1 if current_line_length > 0 else 0)
+                    > row_length
+                ):
                     # Move to the next row
                     rows += 1
-                    current_line_length = len(word)  # Start the new line with the current word
+                    current_line_length = len(
+                        word
+                    )  # Start the new line with the current word
                 else:
                     # Add the word to the current line
                     current_line_length += len(word) + (
-                        1 if current_line_length > 0 else 0)  # Add a space if not the first word
+                        1 if current_line_length > 0 else 0
+                    )  # Add a space if not the first word
 
         return rows
 
-    '''
+    """
         These two functions (get answer width and get question width) are both pretty simple. They take the number
         of rows that the question and answer occupy at 1/6 width and 2/6 width, making stylistic decisions based on
-        the number of rows that are being used.  
-        
-        At default, both will return 1/6, as this looks best. 
+        the number of rows that are being used.
 
-        Despite that, logic is added so that for X condition, Y length is chosen. 
+        At default, both will return 1/6, as this looks best.
+
+        Despite that, logic is added so that for X condition, Y length is chosen.
         For clarity, add logic for conditions that return 1/6 as well as 2/6
-    '''
+    """
 
     def calc_row_lengths(self):
         """
@@ -131,9 +142,7 @@ class Field:
         return
 
     @staticmethod
-    def get_answer_width(q_16: int,
-                         a_16: int,
-                         a_26: int) -> float:
+    def get_answer_width(q_16: int, a_16: int, a_26: int) -> float:
         a_dif = a_16 - a_26
 
         # if no difference between lengths, A is short
@@ -150,10 +159,7 @@ class Field:
         return 1 / 6
 
     @staticmethod
-    def get_question_width(q_16: int,
-                           q_26: int,
-                           a_16: int,
-                           a_16_bool: int) -> float:
+    def get_question_width(q_16: int, q_26: int, a_16: int, a_16_bool: int) -> float:
         q_dif = q_16 - q_26
 
         # if no difference between question lengths, keep it short
@@ -170,11 +176,10 @@ class Field:
         return 1 / 6
 
     def calc_question_answer_widths(self):
-
         # First, handle exceptions; places we already can know the width before starting.
 
         # If a date
-        if self.data[0]['Text Validation Type OR Show Slider Number'] == 'date_dmy':
+        if self.data[0]["Text Validation Type OR Show Slider Number"] == "date_dmy":
             self.question_width = 1 / 6
             self.answer_width = 2 / 6
             return
@@ -195,7 +200,7 @@ class Field:
         )
 
         # Get Question Width, knowing the length of the answer
-        a_is_short = (self.answer_width == 1 / 6)
+        a_is_short = self.answer_width == 1 / 6
         self.question_width = self.get_question_width(
             self.q_rows[0],
             self.q_rows[1],
@@ -205,7 +210,6 @@ class Field:
         return
 
     def setup_field(self):
-
         # If a descriptive header
         if self.is_descriptive:
             self.question_width = 1  # Make question take up the entire row
@@ -237,14 +241,14 @@ class Row:
     and make that light grey.
     """
 
-    def __init__(self,
-                 fields: List[Field],
-                 shade: styles.RowShade = 'none'):
+    def __init__(self, fields: List[Field], shade: styles.RowShade = "none"):
         self.fields = fields
         self.shade: styles.RowShade = shade
         self.columns: List = []
         self.widths: List[float] = []
-        self.table_width = 0.92  # Width of the table, change if the overall form width changes
+        self.table_width = (
+            0.92  # Width of the table, change if the overall form width changes
+        )
 
     def setup_row(self):
         """
@@ -294,13 +298,18 @@ class Row:
                 if left_field.a_rows[0] > left_field.a_rows[1]:
                     left_field.answer_width = 2 / 6
 
-            if right_field.answer_width == 1 / 6 and right_field.question_width == 1 / 6:
+            if (
+                right_field.answer_width == 1 / 6
+                and right_field.question_width == 1 / 6
+            ):
                 if right_field.a_rows[0] > right_field.a_rows[1]:
                     right_field.answer_width = 2 / 6
 
         for field in self.fields:
-            if field.is_text: continue
-            if field.is_descriptive: continue
+            if field.is_text:
+                continue
+            if field.is_descriptive:
+                continue
             is_short = field.question_width == 1 / 6
             if is_short:
                 if field.q_rows[0] <= 3:
@@ -327,11 +336,13 @@ class Row:
         for width in self.widths:
             total_width += width
 
-        if total_width >= (self.table_width - .001):
+        if total_width >= (self.table_width - 0.001):
             return
 
         if len(self.fields) == 1:
-            right_spacer_width = (self.table_width * 0.5) + (self.table_width * 0.5) - total_width
+            right_spacer_width = (
+                (self.table_width * 0.5) + (self.table_width * 0.5) - total_width
+            )
 
             # Add widths to list
             self.widths.insert(0, 0)  # Set width left column
@@ -342,16 +353,24 @@ class Row:
             return
 
         if len(self.fields) == 2:
-            left_width = (self.fields[0].question_width + self.fields[0].answer_width) * self.table_width
-            right_width = (self.fields[1].question_width + self.fields[1].answer_width) * self.table_width
+            left_width = (
+                self.fields[0].question_width + self.fields[0].answer_width
+            ) * self.table_width
+            right_width = (
+                self.fields[1].question_width + self.fields[1].answer_width
+            ) * self.table_width
 
-            if (self.fields[0].question_width + self.fields[0].answer_width + self.fields[1].question_width +
-                self.fields[1].answer_width) == 14 / 6:
+            if (
+                self.fields[0].question_width
+                + self.fields[0].answer_width
+                + self.fields[1].question_width
+                + self.fields[1].answer_width
+            ) == 14 / 6:
                 left_spacer = 0
                 right_spacer = 2 / 6 * self.table_width
             else:
-                left_spacer = ((self.table_width / 2) - left_width)
-                right_spacer = ((self.table_width / 2) - right_width)
+                left_spacer = (self.table_width / 2) - left_width
+                right_spacer = (self.table_width / 2) - right_width
 
             # Add widths to list
             self.widths.insert(4, right_spacer)  # Set width left column
@@ -382,11 +401,13 @@ class Subsubsection:
     Custom class to store sections of fields.
     """
 
-    def __init__(self,
-                 fields: list[Field],
-                 parent: str = None,
-                 header: list[Field] = None,
-                 is_conditional: bool = False):
+    def __init__(
+        self,
+        fields: list[Field],
+        parent: str = None,
+        header: list[Field] = None,
+        is_conditional: bool = False,
+    ):
         self.fields = fields
         self.header = header
         self.parent = parent
@@ -394,11 +415,10 @@ class Subsubsection:
         self.rows: List[Row] = []
 
     @staticmethod
-    def _get_shade(is_header: bool,
-                   is_descriptive: bool) -> styles.RowShade:
-        return 'conditional' if is_header \
-            else 'descriptive' if is_descriptive \
-            else 'none'
+    def _get_shade(is_header: bool, is_descriptive: bool) -> styles.RowShade:
+        return (
+            "conditional" if is_header else "descriptive" if is_descriptive else "none"
+        )
 
     def divide_into_rows(self) -> List[Row]:
         rows: List[Row] = []
@@ -409,7 +429,9 @@ class Subsubsection:
         if is_header:
             self.header[0].setup_field()
             self.header[1].setup_field()
-            heading_row: Row = Row(fields=[self.header[0], self.header[1]], shade='none')
+            heading_row: Row = Row(
+                fields=[self.header[0], self.header[1]], shade="none"
+            )
             rows.append(heading_row)
 
         ### Define variables ###
@@ -444,8 +466,7 @@ class Subsubsection:
             else:
                 rows.append(current_row)
                 current_row = Row(
-                    fields=[field],
-                    shade=self._get_shade(is_header, is_descriptive)
+                    fields=[field], shade=self._get_shade(is_header, is_descriptive)
                 )
 
         if current_row.fields:
@@ -457,10 +478,10 @@ class Subsubsection:
 
 
 class SubsectionStyle(Enum):
-    HEADING = 'heading'
-    QA_BLACK = 'QA_BLACK'
-    QA_GREY = 'QA_GREY'
-    QA_BORDERLESS = 'qa_borderless'
+    HEADING = "heading"
+    QA_BLACK = "QA_BLACK"
+    QA_GREY = "QA_GREY"
+    QA_BORDERLESS = "qa_borderless"
 
 
 class Subsection:
@@ -468,64 +489,72 @@ class Subsection:
     Custom class to store sub subsections of fields - most important for branching logic.
     """
 
-    def __init__(self,
-                 fields: list[Field],
-                 style: SubsectionStyle,
-                 special_heading: bool = False):
+    def __init__(
+        self, fields: list[Field], style: SubsectionStyle, special_heading: bool = False
+    ):
         self.fields = fields  # Holds all fields in subsection
         self.style = style  # Holds style of subsection
         self.special_heading = special_heading  # Holds if 'special heading' should be there (subsection should have "If ___:")
         self.subsubsections: List[
-            Subsubsection] = []  # Hold the subsubsections (only more than 1 when Branching Logic requires it)
+            Subsubsection
+        ] = []  # Hold the subsubsections (only more than 1 when Branching Logic requires it)
 
-    # Function to divide fields into rows that make sense  
-    def _get_conditional_text(self,
-                              dependencies: List[Dependency],
-                              locate_phrase: Callable) -> str:
+    # Function to divide fields into rows that make sense
+    def _get_conditional_text(
+        self, dependencies: List[Dependency], locate_phrase: Callable
+    ) -> str:
         if not dependencies:
-            return 'NONE_1'
-        if_text = locate_phrase('if')['text']
+            return "NONE_1"
+        if_text = locate_phrase("if")["text"]
 
         conditions = []
         parent_question = None
 
         for dependency in dependencies:
             # Find the parent question in previous fields
-            parent_question = next((f for f in self.fields if f.name == dependency.field_name), None)
+            parent_question = next(
+                (f for f in self.fields if f.name == dependency.field_name), None
+            )
 
             if not parent_question:
                 continue
 
-            if type(parent_question.data[0]['Choices, Calculations, OR Slider Labels']) != str:
-                return f'{if_text} {parent_question.data[0]['Field Label']}:'
+            if not isinstance(
+                parent_question.data[0]["Choices, Calculations, OR Slider Labels"],
+                str,
+            ):
+                return f"{if_text} {parent_question.data[0]['Field Label']}:"
 
-            options = parent_question.data[0]['Choices, Calculations, OR Slider Labels'].split("|")
+            options = parent_question.data[0][
+                "Choices, Calculations, OR Slider Labels"
+            ].split("|")
             condition = None
             for index_option, option in enumerate(options):
-                options[index_option] = option.split(',')
+                options[index_option] = option.split(",")
                 for index_part, part in enumerate(options[index_option]):
                     options[index_option][index_part] = part.strip()
                     if options[index_option][0] == dependency.value:
                         condition = options[index_option][1]
 
-            if condition: conditions.append(condition)
+            if condition:
+                conditions.append(condition)
 
         if len(conditions) == 0:
             if parent_question:
                 return f'{if_text} {parent_question.data[0]['Field Label']}:'
 
         if len(conditions) == 1:
-            return f'{if_text} {conditions[0]}:'
+            return f"{if_text} {conditions[0]}:"
 
         if len(conditions) > 1:
-            total_condition = f'{if_text} '
+            total_condition = f"{if_text} "
             conditions_added = []
             for condition in conditions:
-                if 'yes' in condition.lower():
-                    condition = 'Yes'
+                if "yes" in condition.lower():
+                    condition = "Yes"
 
                 if condition not in conditions_added:
-                    total_condition += f'{condition}, '
+                    total_condition += f"{condition}, "
                     conditions_added.append(condition)
 
             total_condition = total_condition[:-2]
@@ -533,10 +562,9 @@ class Subsection:
 
             return total_condition
 
-        return 'NONE_2'
+        return "NONE_2"
 
-    def _initial_division(self,
-                          locate_phrase: Callable) -> List[Subsubsection]:
+    def _initial_division(self, locate_phrase: Callable) -> List[Subsubsection]:
         subsubsections: List[Subsubsection] = []
         current_subsub: Subsubsection = Subsubsection(fields=[])
         subsub_dependencies: List[Dependency] = []
@@ -559,20 +587,28 @@ class Subsection:
             # if the parent of next field, make a new subsubsection
             if field.name in next_dependencies:
                 subsubsections.append(current_subsub)  # finish current one
-                '''A subsubsection header is a pair of question paired with an If: ___'''
+                """A subsubsection header is a pair of question paired with an If: ___"""
                 subsub_dependencies = []  # reset dependencies
-                text_field = Field(name=f'{field.name} subsubheader',  # add new subsubsection first item
-                                   is_text=True,
-                                   data=[field],
-                                   question=Paragraph(text=''),
-                                   answer=[Paragraph(text='')])
-                current_subsub = Subsubsection(parent=field.name, header=[field, text_field], fields=[])
+                text_field = Field(
+                    name=f"{field.name} subsubheader",  # add new subsubsection first item
+                    is_text=True,
+                    data=[field],
+                    question=Paragraph(text=""),
+                    answer=[Paragraph(text="")],
+                )
+                current_subsub = Subsubsection(
+                    parent=field.name, header=[field, text_field], fields=[]
+                )
                 continue
 
             # if parent in field's dependencies, add it to that subsubsection
             if current_subsub.parent in dependency_names:
-                conditional_text = self._get_conditional_text(subsub_dependencies, locate_phrase)
-                current_subsub.header[1].question = Paragraph(text=conditional_text, style=styles.conditional_text)
+                conditional_text = self._get_conditional_text(
+                    subsub_dependencies, locate_phrase
+                )
+                current_subsub.header[1].question = Paragraph(
+                    text=conditional_text, style=styles.conditional_text
+                )
                 current_subsub.fields.append(field)
                 continue
 
@@ -592,14 +628,13 @@ class Subsection:
 
         return subsubsections
 
-    def _handle_conditional_subsubsections(self,
-                                           initial_subsection_list: List[Subsubsection],
-                                           locate_phrase: Callable) -> List[Subsubsection]:
+    def _handle_conditional_subsubsections(
+        self, initial_subsection_list: List[Subsubsection], locate_phrase: Callable
+    ) -> List[Subsubsection]:
         # Create list of subsubsections to be added
         final_subsubsection_list = []
         # Iterate through current subsubsections
         for subsub in initial_subsection_list:
-
             # if there is no header, skip logic and just add it.
             if not subsub.header:
                 final_subsubsection_list.append(subsub)
@@ -613,7 +648,9 @@ class Subsection:
             for field in subsub.fields:
                 if field.dependencies:
                     for dependency in field.dependencies:
-                        dependency_text = self._get_conditional_text(field.dependencies, locate_phrase)
+                        dependency_text = self._get_conditional_text(
+                            field.dependencies, locate_phrase
+                        )
                         if dependency_text not in dependency_texts:
                             dependency_texts.append(dependency_text)
                             dependencies.append(dependency)
@@ -624,23 +661,27 @@ class Subsection:
                 continue
 
             if len(subsub.fields) == 1:
-                new_subsub: Subsubsection = Subsubsection(fields=[subsub.header[0]], is_conditional=True)
+                new_subsub: Subsubsection = Subsubsection(
+                    fields=[subsub.header[0]], is_conditional=True
+                )
             else:
                 empty_field = Field(
-                    name='empty',
+                    name="empty",
                     dependencies=subsub.header[0].dependencies,
                     data=subsub.header[0].data,
                     is_text=True,
-                    question=Paragraph(text=''),
+                    question=Paragraph(text=""),
                     is_heading=False,
                     answer=[],
                 )
-                new_subsub = Subsubsection(fields=[],
-                                           header=[subsub.header[0], empty_field],
-                                           is_conditional=True)
+                new_subsub = Subsubsection(
+                    fields=[],
+                    header=[subsub.header[0], empty_field],
+                    is_conditional=True,
+                )
 
             for field in subsub.fields:
-                question_text = f'{self._get_conditional_text(field.dependencies, locate_phrase)} {field.question.text}'
+                question_text = f"{self._get_conditional_text(field.dependencies, locate_phrase)} {field.question.text}"
                 new_field = Field(
                     name=field.name,
                     dependencies=field.dependencies,
@@ -648,7 +689,7 @@ class Subsection:
                     is_text=field.is_text,
                     question=Paragraph(text=question_text, style=field.question.style),
                     is_heading=field.is_heading,
-                    answer=field.answer
+                    answer=field.answer,
                 )
                 new_subsub.fields.append(new_field)
 
@@ -657,45 +698,48 @@ class Subsection:
 
         return final_subsubsection_list
 
-    def divide_into_subsubsections(self,
-                                   should_divide: bool,
-                                   locate_phrase: Callable) -> List[Subsubsection]:
-        if_complete_form_text = locate_phrase('if_completeForm')['text']
+    def divide_into_subsubsections(
+        self, should_divide: bool, locate_phrase: Callable
+    ) -> List[Subsubsection]:
+        if_complete_form_text = locate_phrase("if_completeForm")["text"]
 
         # For only a couple forms with one specific question that leads to "If Yes, complete the form:"
         if self.special_heading:
-            text_field = Field(name=f'{self.fields[0].name} subsubheader',
-                               is_text=True,
-                               data=[self.fields[0]],
-                               question=Paragraph(text=f'{if_complete_form_text}:'),
-                               answer=[Paragraph(text='')])
+            text_field = Field(
+                name=f"{self.fields[0].name} subsubheader",
+                is_text=True,
+                data=[self.fields[0]],
+                question=Paragraph(text=f"{if_complete_form_text}:"),
+                answer=[Paragraph(text="")],
+            )
             return [Subsubsection(fields=[], header=[self.fields[0], text_field])]
 
         if not should_divide:
             return [Subsubsection(fields=self.fields)]
 
-        ''' Step 1: Split fields into subsubsections based on dependencies '''
+        """ Step 1: Split fields into subsubsections based on dependencies """
         initial_subsections = self._initial_division(locate_phrase)
 
-        ''' Step 2: Style subsubsections if a oneline dependent '''
-        final_subsubsections = self._handle_conditional_subsubsections(initial_subsections,
-                                                                       locate_phrase)
+        """ Step 2: Style subsubsections if a oneline dependent """
+        final_subsubsections = self._handle_conditional_subsubsections(
+            initial_subsections, locate_phrase
+        )
 
         self.subsubsections = final_subsubsections
         return final_subsubsections
 
 
 class SectionType(Enum):
-    STANDARD = 'standard'
-    MEDICATION = 'medication'
-    TESTING = 'testing'
+    STANDARD = "standard"
+    MEDICATION = "medication"
+    TESTING = "testing"
 
 
 # Custom class section
 class Section:
-    def __init__(self,
-                 fields: list[Field],
-                 section_type: SectionType = SectionType.STANDARD):
+    def __init__(
+        self, fields: list[Field], section_type: SectionType = SectionType.STANDARD
+    ):
         self.fields = fields
         self.type = section_type
         self.subsections: List[Subsection] = []
@@ -705,12 +749,12 @@ class Section:
         """Extract dependencies from a branching logic string."""
         if not branching_logic_str:
             return set()
-        pattern = r'\[([^\]]+)\]'  # Matches content within square brackets
+        pattern = r"\[([^\]]+)\]"  # Matches content within square brackets
         matches = re.findall(pattern, branching_logic_str)
 
         for match in matches:
-            if match.endswith('t(88)'):
-                matches.append(match.removesuffix('t(88)'))
+            if match.endswith("t(88)"):
+                matches.append(match.removesuffix("t(88)"))
         return set(matches)
 
     def divide_by_branching_logic(self):
@@ -722,13 +766,17 @@ class Section:
         subsection_names_set = set()
         special_heading: str | None = None
 
-        def finalize_subsection(style: SubsectionStyle,
-                                special_header: bool = False):
+        def finalize_subsection(style: SubsectionStyle, special_header: bool = False):
             """Finalize the current subsection and reset tracking variables."""
-            nonlocal subsection_fields, subsection_dependencies_set, subsection_names_set
+            nonlocal \
+                subsection_fields, \
+                subsection_dependencies_set, \
+                subsection_names_set
             if subsection_fields:
                 if special_header:
-                    subsections.append(Subsection(subsection_fields, style=style, special_heading=True))
+                    subsections.append(
+                        Subsection(subsection_fields, style=style, special_heading=True)
+                    )
                 else:
                     subsections.append(Subsection(subsection_fields, style=style))
             subsection_fields = []
@@ -747,23 +795,44 @@ class Section:
                 continue
 
             # Handle Special Forms
-            special_form_prefixes = ["vital_", "sympt_", "lesion_", "treat_", "critd_", "labs_", "imagi_", "test_"]
+            special_form_prefixes = [
+                "vital_",
+                "sympt_",
+                "lesion_",
+                "treat_",
+                "critd_",
+                "labs_",
+                "imagi_",
+                "test_",
+            ]
             special_form = bool(field.name.startswith(tuple(special_form_prefixes)))
-            if (index_field == 1) and (special_form == True):
+            if (index_field == 1) and special_form:
                 special_heading = field.name
 
             # Get dependencies from branching_logic
             branching_logic = None
-            if isinstance(field.data[0].get('Branching Logic (Show field only if...)'), str):
-                branching_logic = field.data[0].get('Branching Logic (Show field only if...)')
+            if isinstance(
+                field.data[0].get("Branching Logic (Show field only if...)"), str
+            ):
+                branching_logic = field.data[0].get(
+                    "Branching Logic (Show field only if...)"
+                )
 
             dependencies = self._extract_dependencies(branching_logic)
 
             # Get next field's dependencies
             next_logic = None
-            if (index_field + 1 < len(self.fields) and isinstance(
-                    self.fields[index_field + 1].data[0].get('Branching Logic (Show field only if...)'), str)):
-                next_logic = self.fields[index_field + 1].data[0].get('Branching Logic (Show field only if...)')
+            if index_field + 1 < len(self.fields) and isinstance(
+                self.fields[index_field + 1]
+                .data[0]
+                .get("Branching Logic (Show field only if...)"),
+                str,
+            ):
+                next_logic = (
+                    self.fields[index_field + 1]
+                    .data[0]
+                    .get("Branching Logic (Show field only if...)")
+                )
             next_dependencies = self._extract_dependencies(next_logic)
             subsection_started = len(subsection_fields) > 0
 
@@ -780,11 +849,15 @@ class Section:
                         finalize_subsection(SubsectionStyle.QA_BLACK)
                         subsection_fields.append(field)
                         subsection_names_set.add(field.name)
-                        subsection_dependencies_set.update(dependencies, next_dependencies)
+                        subsection_dependencies_set.update(
+                            dependencies, next_dependencies
+                        )
                     else:
                         subsection_fields.append(field)
                         subsection_names_set.add(field.name)
-                        subsection_dependencies_set.update(dependencies, next_dependencies)
+                        subsection_dependencies_set.update(
+                            dependencies, next_dependencies
+                        )
                 # Dependency-rich subsection
                 else:
                     # if current subsection has dependencies AND name is IN dependencies
@@ -792,7 +865,9 @@ class Section:
 
                     # if current dependencies overlap with last dependencies, keep it going
                     # if current dependencies overlap with subsection names, keep it going
-                    dependency_overlap = not subsection_dependencies_set.isdisjoint(dependencies)
+                    dependency_overlap = not subsection_dependencies_set.isdisjoint(
+                        dependencies
+                    )
                     name_overlap = not subsection_names_set.isdisjoint(dependencies)
 
                     if not dependency_overlap and not name_overlap:
@@ -831,7 +906,11 @@ class Section:
             """Finalize the current subsection and reset tracking variables."""
             if subsection_fields:
                 if len(subsection_fields) <= 10:
-                    subsections.append(Subsection(subsection_fields, style=SubsectionStyle.QA_BORDERLESS))
+                    subsections.append(
+                        Subsection(
+                            subsection_fields, style=SubsectionStyle.QA_BORDERLESS
+                        )
+                    )
                 else:
                     subsections.append(Subsection(subsection_fields, style=style))
             subsection_fields = []

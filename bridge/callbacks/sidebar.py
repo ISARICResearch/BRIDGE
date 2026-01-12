@@ -10,32 +10,25 @@ from bridge.utils.trigger_id import get_trigger_id
     [
         Output("presets-column", "is_in"),
         Output("settings-column", "is_in"),
-        Output("tree-column", 'is_in'),
+        Output("tree-column", "is_in"),
         Output("settings_icon", "src"),
-        Output("preset_icon", "src")
+        Output("preset_icon", "src"),
     ],
-    [
-        Input("toggle-settings-2", "n_clicks"),
-        Input("toggle-settings-1", "n_clicks")
-    ],
-    [
-        State("presets-column", "is_in"),
-        State("settings-column", "is_in")
-    ],
-    prevent_initial_call=True
+    [Input("toggle-settings-2", "n_clicks"), Input("toggle-settings-1", "n_clicks")],
+    [State("presets-column", "is_in"), State("settings-column", "is_in")],
+    prevent_initial_call=True,
 )
-def toggle_columns(_n_presets: int,
-                   _n_settings: int,
-                   is_in_presets: bool,
-                   is_in_settings: bool) -> Tuple[bool, bool, bool, str, str]:
+def toggle_columns(
+    _n_presets: int, _n_settings: int, is_in_presets: bool, is_in_settings: bool
+) -> Tuple[bool, bool, bool, str, str]:
     ctx = dash.callback_context
 
     trigger_id = get_trigger_id(ctx)
 
-    settings_on = dash.get_asset_url('settings_on.png')
-    settings_off = dash.get_asset_url('settings_off.png')
-    preset_on = dash.get_asset_url('preset_on.png')
-    preset_off = dash.get_asset_url('preset_off.png')
+    settings_on = dash.get_asset_url("settings_on.png")
+    settings_off = dash.get_asset_url("settings_off.png")
+    preset_on = dash.get_asset_url("preset_on.png")
+    preset_off = dash.get_asset_url("preset_off.png")
 
     # Initialize the state of icons
     preset_icon_img = preset_off
@@ -74,8 +67,10 @@ def toggle_columns(_n_presets: int,
     # Determine tree-column visibility
     is_in_tree = not (new_is_in_presets or new_is_in_settings)
 
-    return (new_is_in_presets,
-            new_is_in_settings,
-            is_in_tree,
-            settings_icon_img,
-            preset_icon_img)
+    return (
+        new_is_in_presets,
+        new_is_in_settings,
+        is_in_tree,
+        settings_icon_img,
+        preset_icon_img,
+    )

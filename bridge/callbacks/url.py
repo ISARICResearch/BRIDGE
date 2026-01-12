@@ -6,42 +6,38 @@ from dash import Input, Output, State
 
 @dash.callback(
     [
-        Output('crf_name', 'value'),
-        Output({'type': 'template_check', 'index': dash.ALL}, 'value'),
+        Output("crf_name", "value"),
+        Output({"type": "template_check", "index": dash.ALL}, "value"),
     ],
     [
-        Input('templates_checks_ready', 'data'),
-        Input('grouped_presets-store', 'data'),
+        Input("templates_checks_ready", "data"),
+        Input("grouped_presets-store", "data"),
     ],
     [
-        State('url', 'href'),
+        State("url", "href"),
     ],
     prevent_initial_call=True,
 )
-def update_output_based_on_url(template_check_flag: bool,
-                               grouped_presets: dict,
-                               href: str):
+def update_output_based_on_url(
+    template_check_flag: bool, grouped_presets: dict, href: str
+):
     if not template_check_flag:
         return dash.no_update
 
-    if '?param=' in href:
+    if "?param=" in href:
         parsed_url = urlparse(href)
         params = parse_qs(parsed_url.query)
 
-        param_value = params.get('param', [''])[0]
-        
+        param_value = params.get("param", [""])[0]
+
         mapping = {
-                "Recommended%Outcomes_Dengue": "Recommended Outcomes_Dengue",
-                "mpox-pregnancy-paediatric": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
-            }
+            "Recommended%Outcomes_Dengue": "Recommended Outcomes_Dengue",
+            "mpox-pregnancy-paediatric": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
+        }
 
-        param_value = mapping.get(
-            param_value,
-            param_value.replace("-", " ")
-        )
+        param_value = mapping.get(param_value, param_value.replace("-", " "))
 
-             
-        group, value = param_value.split('_') if '_' in param_value else (None, None)
+        group, value = param_value.split("_") if "_" in param_value else (None, None)
 
         checklist_values = {key: [] for key in grouped_presets.keys()}
 
