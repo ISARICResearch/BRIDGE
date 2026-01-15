@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+import dash_treeview_antd
 from dash import dcc, html
 
 from bridge.layout.grid import Grid
@@ -6,7 +7,21 @@ from bridge.layout.modals import Modals
 
 
 class MainContent:
-    def __init__(self):
+    def __init__(self, tree_items_data):
+        self.tree_items_data = tree_items_data
+
+        self.tree_items = html.Div(
+            dash_treeview_antd.TreeView(
+                id="input",
+                multiple=False,
+                checkable=True,
+                checked=[],
+                data=self.tree_items_data,
+            ),
+            id="tree_items_container",
+            className="tree-item",
+        )
+
         self.main_content = dbc.Container(
             [
                 dbc.Row(
@@ -16,6 +31,17 @@ class MainContent:
                                 html.Div(
                                     id="output-expanded", style={"display": "none"}
                                 ),
+                                dbc.Fade(
+                                    self.tree_items,
+                                    id="tree-column",
+                                    is_in=True,  # Initially show
+                                    style={
+                                        "position": "fixed",
+                                        "left": "4rem",
+                                        "width": "35%",
+                                        "height": "90%",
+                                    },
+                                )
                             ],
                             width=5,
                         ),
