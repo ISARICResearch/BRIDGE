@@ -50,7 +50,7 @@ class Grid:
             ),
             style={
                 "overflow-y": "auto",
-                "height": "67vh",
+                "height": "75vh",
                 "width": "100%",
                 "white-space": "normal",
                 "overflow-x": "hidden",

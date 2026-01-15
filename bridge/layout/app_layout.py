@@ -13,7 +13,6 @@ class MainContent:
                     [
                         dbc.Col(
                             [
-                                html.Div(),
                                 html.Div(
                                     id="output-expanded", style={"display": "none"}
                                 ),
@@ -22,7 +21,7 @@ class MainContent:
                         ),
                         dbc.Col(
                             [
-                                dbc.Row([html.Div(), Grid().grid]),
+                                dbc.Row(Grid().grid),
                                 html.Br(),
                                 dbc.Row(
                                     [
@@ -32,7 +31,6 @@ class MainContent:
                                                 type="text",
                                                 id="crf_name",
                                             ),
-                                            width=5,
                                         ),
                                         dbc.Col(
                                             dbc.Button(
@@ -40,7 +38,7 @@ class MainContent:
                                                 color="primary",
                                                 id="crf_generate",
                                             ),
-                                            width=2,
+                                            width="auto",
                                         ),
                                         dbc.Col(
                                             dbc.Button(
@@ -48,46 +46,23 @@ class MainContent:
                                                 color="primary",
                                                 id="crf_save",
                                             ),
-                                            width=3,
-                                        ),
-                                    ],
-                                    style={"height": "8%"},
-                                ),
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            dbc.Button(
-                                                "Upload Template",
-                                                color="secondary",
-                                                disabled=True,
-                                            ),
-                                            width=2,
+                                            width="auto",
                                         ),
                                         dbc.Col(
                                             dcc.Upload(
-                                                id="upload-crf",
-                                                children=html.Div(
-                                                    [
-                                                        "Drag and Drop or ",
-                                                        html.A("Select File"),
-                                                    ]
+                                                dbc.Button(
+                                                    'Upload Template',
+                                                    color="primary",
                                                 ),
-                                                style={
-                                                    "width": "100%",
-                                                    "height": "60px",
-                                                    "lineHeight": "60px",
-                                                    "borderWidth": "1px",
-                                                    "borderStyle": "dashed",
-                                                    "borderRadius": "5px",
-                                                    "textAlign": "center",
-                                                },
+                                                id="upload-crf",
                                             ),
+                                            width="auto",
                                         ),
                                     ],
-                                    style={"height": "10%"},
                                 ),
+                                dbc.Row(html.Div(), style={"height": "1rem"}),
                                 dbc.Row(
-                                    html.Div(
+                                    dbc.Col(
                                         [
                                             "BRIDGE is being developed by ISARIC. For inquiries, support, or collaboration, please write to: ",
                                             html.A(
@@ -129,11 +104,11 @@ class MainContent:
 
     @staticmethod
     def define_app_layout(
-        arc_json,
-        ulist_variable_json,
-        multilist_variable_json,
-        grouped_presets_json,
-        arc_language_list,
+            arc_json,
+            ulist_variable_json,
+            multilist_variable_json,
+            grouped_presets_json,
+            arc_language_list,
     ):
         app_layout = html.Div(
             [
