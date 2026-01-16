@@ -41,7 +41,7 @@ class MainContent:
                                         "width": "35%",
                                         "height": "90%",
                                     },
-                                )
+                                ),
                             ],
                             width=5,
                         ),
@@ -77,7 +77,7 @@ class MainContent:
                                         dbc.Col(
                                             dcc.Upload(
                                                 dbc.Button(
-                                                    'Upload Template',
+                                                    "Upload Template",
                                                     color="primary",
                                                 ),
                                                 id="upload-crf",
@@ -130,11 +130,11 @@ class MainContent:
 
     @staticmethod
     def define_app_layout(
-            arc_json,
-            ulist_variable_json,
-            multilist_variable_json,
-            grouped_presets_json,
-            arc_language_list,
+        arc_json,
+        ulist_variable_json,
+        multilist_variable_json,
+        grouped_presets_json,
+        arc_language_list,
     ):
         app_layout = html.Div(
             [
