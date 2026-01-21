@@ -81,6 +81,9 @@ def format_answer(ftype, choices_raw, is_date_field):
         return ["__________"]
     if ft in ("calc", "calculation"):
         return ["Calculated value (read-only)"]
+    if ft in ("descriptive"):
+        return [""]
+
     if choices:
         shown = choices[:MAX_CHOICES_SHOWN]
         return [
@@ -122,7 +125,6 @@ def df_to_word(df: pd.DataFrame) -> bytes:
 
     # skip descriptive
     if c_type in df.columns:
-        df = df[df[c_type].str.lower() != "descriptive"]
         df = df[~df[c_label].str.contains(">")]
 
     doc = Document()
