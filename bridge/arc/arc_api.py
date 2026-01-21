@@ -121,6 +121,7 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
+        df = df.loc[df["Validation"] != "units"]  # temporal filter
         return df
 
     def get_dataframe_arc_version_language(
@@ -149,6 +150,8 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
+        if "Validation" in df.columns:
+            df = df.loc[df["Validation"] != "units"]  # temporal filter
         return df
 
     def get_dataframe_arc_list_version_language(
