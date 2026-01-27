@@ -39,7 +39,7 @@ class MainContent:
                                         "position": "fixed",
                                         "left": "4rem",
                                         "width": "35%",
-                                        "height": "90%",
+                                        "height": "95%",
                                     },
                                 ),
                             ],
@@ -47,6 +47,7 @@ class MainContent:
                         ),
                         dbc.Col(
                             [
+                                dbc.Row(html.Div(), style={"height": "1rem"}),
                                 dbc.Row(Grid().grid),
                                 html.Br(),
                                 dbc.Row(
@@ -109,21 +110,17 @@ class MainContent:
                                                 target="_blank",
                                             ),
                                             " on behalf of Oxford University.",
-                                        ]
+                                        ],
                                     )
                                 ),
                             ],
                             width=7,
                         ),
-                    ]
+                    ],
                 ),
             ],
             fluid=True,
             style={
-                "margin-top": "1rem",
-                "margin-bottom": "1rem",
-                "margin-left": "1rem",
-                "margin-right": "1rem",
                 "width": "98vw",
             },
         )

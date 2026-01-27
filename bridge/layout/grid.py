@@ -41,19 +41,13 @@ class Grid:
                     "descriptive-row": "params.data.IsDescriptive === true",
                 },
                 style={
-                    "overflow-y": "auto",
-                    "height": "99%",
-                    "width": "100%",
-                    "white-space": "normal",
-                    "overflow-x": "hidden",
+                    "height": "75vh",
                 },
             ),
             style={
-                "overflow-y": "auto",
-                "height": "75vh",
-                "width": "100%",
-                "white-space": "normal",
                 "overflow-x": "hidden",
+                "overflow-y": "auto",
+                "width": "100%",
                 "text-overflow": "ellipsis",
             },
         )

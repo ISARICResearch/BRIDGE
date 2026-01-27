@@ -81,7 +81,7 @@
 }
 
 .tree-item {
-    height: 89vh; /* Needs to be fixed height for overflow */
+    height: 100%; /* Needs to be fixed height for overflow */
     width: 100%;
     white-space: normal; /* Allow text to wrap */
     display: block; /* Needs to be block display for overflow */
