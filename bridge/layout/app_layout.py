@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+import dash_treeview_antd
 from dash import dcc, html
 
 from bridge.layout.grid import Grid
@@ -6,23 +7,48 @@ from bridge.layout.modals import Modals
 
 
 class MainContent:
-    def __init__(self):
+    def __init__(self, tree_items_data):
+        self.tree_items_data = tree_items_data
+
+        self.tree_items = html.Div(
+            dash_treeview_antd.TreeView(
+                id="input",
+                multiple=False,
+                checkable=True,
+                checked=[],
+                data=self.tree_items_data,
+            ),
+            id="tree_items_container",
+            className="tree-item",
+        )
+
         self.main_content = dbc.Container(
             [
                 dbc.Row(
                     [
                         dbc.Col(
                             [
-                                html.Div(),
                                 html.Div(
                                     id="output-expanded", style={"display": "none"}
+                                ),
+                                dbc.Fade(
+                                    self.tree_items,
+                                    id="tree-column",
+                                    is_in=True,  # Initially show
+                                    style={
+                                        "position": "fixed",
+                                        "left": "4rem",
+                                        "width": "35%",
+                                        "height": "95%",
+                                    },
                                 ),
                             ],
                             width=5,
                         ),
                         dbc.Col(
                             [
-                                dbc.Row([html.Div(), Grid().grid]),
+                                dbc.Row(html.Div(), style={"height": "1rem"}),
+                                dbc.Row(Grid().grid),
                                 html.Br(),
                                 dbc.Row(
                                     [
@@ -32,7 +58,6 @@ class MainContent:
                                                 type="text",
                                                 id="crf_name",
                                             ),
-                                            width=5,
                                         ),
                                         dbc.Col(
                                             dbc.Button(
@@ -40,7 +65,7 @@ class MainContent:
                                                 color="primary",
                                                 id="crf_generate",
                                             ),
-                                            width=2,
+                                            width="auto",
                                         ),
                                         dbc.Col(
                                             dbc.Button(
@@ -48,46 +73,23 @@ class MainContent:
                                                 color="primary",
                                                 id="crf_save",
                                             ),
-                                            width=3,
-                                        ),
-                                    ],
-                                    style={"height": "8%"},
-                                ),
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            dbc.Button(
-                                                "Upload Template",
-                                                color="secondary",
-                                                disabled=True,
-                                            ),
-                                            width=2,
+                                            width="auto",
                                         ),
                                         dbc.Col(
                                             dcc.Upload(
-                                                id="upload-crf",
-                                                children=html.Div(
-                                                    [
-                                                        "Drag and Drop or ",
-                                                        html.A("Select File"),
-                                                    ]
+                                                dbc.Button(
+                                                    "Upload Template",
+                                                    color="primary",
                                                 ),
-                                                style={
-                                                    "width": "100%",
-                                                    "height": "60px",
-                                                    "lineHeight": "60px",
-                                                    "borderWidth": "1px",
-                                                    "borderStyle": "dashed",
-                                                    "borderRadius": "5px",
-                                                    "textAlign": "center",
-                                                },
+                                                id="upload-crf",
                                             ),
+                                            width="auto",
                                         ),
                                     ],
-                                    style={"height": "10%"},
                                 ),
+                                dbc.Row(html.Div(), style={"height": "1rem"}),
                                 dbc.Row(
-                                    html.Div(
+                                    dbc.Col(
                                         [
                                             "BRIDGE is being developed by ISARIC. For inquiries, support, or collaboration, please write to: ",
                                             html.A(
@@ -108,21 +110,17 @@ class MainContent:
                                                 target="_blank",
                                             ),
                                             " on behalf of Oxford University.",
-                                        ]
+                                        ],
                                     )
                                 ),
                             ],
                             width=7,
                         ),
-                    ]
+                    ],
                 ),
             ],
             fluid=True,
             style={
-                "margin-top": "1rem",
-                "margin-bottom": "1rem",
-                "margin-left": "1rem",
-                "margin-right": "1rem",
                 "width": "98vw",
             },
         )

@@ -2,7 +2,7 @@ import json
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html, Input, Output, State
+from dash import html, Input, Output, State
 
 import bridge.callbacks  # noqa
 from bridge.arc import arc_core, arc_tree
@@ -13,7 +13,6 @@ from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
 from bridge.layout.settings import Settings
 from bridge.layout.sidebar import SideBar
-from bridge.layout.tree import Tree
 from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -75,7 +74,7 @@ for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 
-app.layout = MainContent().define_app_layout(
+app.layout = MainContent(TREE_ITEMS_DATA).define_app_layout(
     ARC_JSON,
     ULIST_VARIABLE_JSON,
     MULTILIST_VARIABLE_JSON,
@@ -140,23 +139,14 @@ def main_app():
         [
             NavBar().navbar,
             SideBar().sidebar,
-            dcc.Loading(
-                id="loading-overlay",
-                type="circle",
-                fullscreen=True,
-                children=[
-                    Settings(
-                        ARC_VERSION_LIST,
-                        ARC_LANGUAGE_LIST,
-                        ARC_VERSION_LATEST,
-                        ARC_LANGUAGE_DEFAULT,
-                    ).settings_column,
-                    SideBar().preset_column,
-                    Tree(TREE_ITEMS_DATA).tree_column,
-                    MainContent().main_content,
-                ],
-                delay_show=1500,
-            ),
+            Settings(
+                ARC_VERSION_LIST,
+                ARC_LANGUAGE_LIST,
+                ARC_VERSION_LATEST,
+                ARC_LANGUAGE_DEFAULT,
+            ).settings_column,
+            SideBar().preset_column,
+            MainContent(TREE_ITEMS_DATA).main_content,
         ]
     )
 
