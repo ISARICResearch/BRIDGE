@@ -1,4 +1,7 @@
 import pandas as pd
+from packaging.version import parse
+
+from bridge.arc.arc_core import ARC_UNIT_CHANGE_VERSION
 
 
 def _format_question_text(row):
@@ -10,6 +13,13 @@ def _format_question_text(row):
 
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
+    if parse(version.replace("v", "")) < parse(ARC_UNIT_CHANGE_VERSION.replace("v", "")):
+        # Uses "Question" contains "(select units)"
+        select_units_conversion = True
+    else:
+        # Uses "Validation" == "units"
+        select_units_conversion = False
+
     include_not_show = [
         "otherl3",
         "otherl2",
@@ -20,7 +30,6 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         "warn",
         "warn2",
         "warn3",
-        "units",
         "add",
         "vol",
         "txt",
@@ -29,7 +38,7 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
 
     # rows used for the tree (hide some mods)
     df_for_item = df_datadicc[
-        ["Form", "Sec_name", "vari", "mod", "Question", "Variable", "Type"]
+        ["Form", "Sec_name", "vari", "mod", "Question", "Variable", "Type", "Validation", "Answer Options"]
     ].loc[~df_datadicc["mod"].isin(include_not_show)]
 
     # -------- counts per (Form, Sec_name, vari) --------
@@ -62,8 +71,8 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
     seen_forms, seen_sections = set(), {}
 
     # Build tree
-    for (form, sec_name), sec_df in df_for_item.groupby(
-        ["Form", "Sec_name"], dropna=False, sort=False
+    for (form, sec_name), df_sec in df_for_item.groupby(
+            ["Form", "Sec_name"], dropna=False, sort=False
     ):
         form_upper = str(form).upper()
         sec_name_upper = str(sec_name).upper()
@@ -102,30 +111,54 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                         section_node = sec_child
                         break
 
-        sec_df = sec_df.sort_values("_row_order")
-        for vari, df_variable in sec_df.groupby("vari", dropna=False, sort=False):
+        df_sec = df_sec.sort_values("_row_order")
+        for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            mask_units = df_variable["Question"].str.contains(
-                "(select units)", case=False, na=False, regex=False
-            )
-            if mask_units.any():
-                parent_row = df_variable.loc[mask_units].iloc[0]
-                parent_title = _format_question_text(parent_row)
-                parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
+            if not select_units_conversion:
+                unit_mask = df_variable["Validation"] == "units"
+                df_units: pd.DataFrame = df_variable[unit_mask]
+                if not df_units.empty:
+                    parent_row = df_units.iloc[0]
+                    parent_title = _format_question_text(parent_row)
+                    parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
+                    old_parent_key = parent_key.replace("_units", "")
 
-                parent_node = {"title": parent_title, "key": parent_key, "children": []}
-                section_node["children"].append(parent_node)
+                    parent_node = {"title": parent_title, "key": parent_key, "children": []}
+                    section_node["children"].append(parent_node)
 
-                # add children excluding the units row
-                for _, variable_series in df_variable.loc[~mask_units].iterrows():
-                    parent_node["children"].append(
-                        {
-                            "title": _format_question_text(variable_series),
-                            "key": f"{variable_series['Variable']}",
-                        }
-                    )
-                continue  # this vari handled
+                    # add children excluding the units row
+                    df_children = df_variable[(~unit_mask) & (df_variable["Variable"] != old_parent_key)]
+                    for _, row in df_children.iterrows():
+                        parent_node["children"].append(
+                            {
+                                "title": _format_question_text(row),
+                                "key": f"{row['Variable']}",
+                            }
+                        )
+                    continue  # this vari handled
+
+            else:
+                mask_units: pd.Series = df_variable["Question"].str.contains(
+                    "(select units)", case=False, na=False, regex=False
+                )
+                if mask_units.any():
+                    parent_row = df_variable.loc[mask_units].iloc[0]
+                    parent_title = _format_question_text(parent_row)
+                    parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
+
+                    parent_node = {"title": parent_title, "key": parent_key, "children": []}
+                    section_node["children"].append(parent_node)
+
+                    # add children excluding the units row
+                    for _, variable_series in df_variable.loc[~mask_units].iterrows():
+                        parent_node["children"].append(
+                            {
+                                "title": _format_question_text(variable_series),
+                                "key": f"{variable_series['Variable']}",
+                            }
+                        )
+                    continue  # this vari handled
 
             # Fallback: your normal grouping (>=3 => group; else flat)
             n_total = int(

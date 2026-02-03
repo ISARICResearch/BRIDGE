@@ -11,6 +11,8 @@ logger = setup_logger(__name__)
 
 pd.options.mode.copy_on_write = True
 
+ARC_UNIT_CHANGE_VERSION = 'v1.2.1'
+
 
 def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
     logger.info(f"version: {version}")
@@ -104,6 +106,7 @@ def get_dependencies(df_datadicc: pd.DataFrame) -> pd.DataFrame:
                     df_dependencies["Variable"] == variable.replace("other", "")
                 ].iloc[0].append(variable)
 
+        #TODO
         if "units" in variable:
             if (
                 len(
@@ -151,7 +154,8 @@ def get_include_not_show(
         "warn",
         "warn2",
         "warn3",
-        "units",
+        # TODO
+        # "units",
         "add",
         "vol",
         "0item",
@@ -190,6 +194,7 @@ def get_include_not_show(
     return df_include_not_show
 
 
+# TODO
 def get_select_units(
     selected_variables: pd.Series, df_current_datadicc: pd.DataFrame
 ) -> tuple[pd.DataFrame, list] | tuple[None, None]:
