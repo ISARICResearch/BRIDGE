@@ -1,7 +1,6 @@
 import pandas as pd
-from packaging.version import parse
 
-from bridge.arc.arc_core import ARC_UNIT_CHANGE_VERSION
+from bridge.arc.arc_core import get_select_units_conversion_bool
 
 
 def _format_question_text(row):
@@ -13,12 +12,7 @@ def _format_question_text(row):
 
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
-    if parse(version.replace("v", "")) < parse(ARC_UNIT_CHANGE_VERSION.replace("v", "")):
-        # Uses "Question" contains "(select units)"
-        select_units_conversion = True
-    else:
-        # Uses "Validation" == "units"
-        select_units_conversion = False
+    select_units_conversion = get_select_units_conversion_bool(version)
 
     include_not_show = [
         "otherl3",
@@ -38,7 +32,17 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
 
     # rows used for the tree (hide some mods)
     df_for_item = df_datadicc[
-        ["Form", "Sec_name", "vari", "mod", "Question", "Variable", "Type", "Validation", "Answer Options"]
+        [
+            "Form",
+            "Sec_name",
+            "vari",
+            "mod",
+            "Question",
+            "Variable",
+            "Type",
+            "Validation",
+            "Answer Options",
+        ]
     ].loc[~df_datadicc["mod"].isin(include_not_show)]
 
     # -------- counts per (Form, Sec_name, vari) --------
@@ -72,7 +76,7 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
 
     # Build tree
     for (form, sec_name), df_sec in df_for_item.groupby(
-            ["Form", "Sec_name"], dropna=False, sort=False
+        ["Form", "Sec_name"], dropna=False, sort=False
     ):
         form_upper = str(form).upper()
         sec_name_upper = str(sec_name).upper()
@@ -115,6 +119,7 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
+            #  TODO Split into to functions (old and new)?
             if not select_units_conversion:
                 unit_mask = df_variable["Validation"] == "units"
                 df_units: pd.DataFrame = df_variable[unit_mask]
@@ -124,11 +129,17 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                     parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
                     old_parent_key = parent_key.replace("_units", "")
 
-                    parent_node = {"title": parent_title, "key": parent_key, "children": []}
+                    parent_node = {
+                        "title": parent_title,
+                        "key": parent_key,
+                        "children": [],
+                    }
                     section_node["children"].append(parent_node)
 
                     # add children excluding the units row
-                    df_children = df_variable[(~unit_mask) & (df_variable["Variable"] != old_parent_key)]
+                    df_children = df_variable[
+                        (~unit_mask) & (df_variable["Variable"] != old_parent_key)
+                    ]
                     for _, row in df_children.iterrows():
                         parent_node["children"].append(
                             {
@@ -147,7 +158,11 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                     parent_title = _format_question_text(parent_row)
                     parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
 
-                    parent_node = {"title": parent_title, "key": parent_key, "children": []}
+                    parent_node = {
+                        "title": parent_title,
+                        "key": parent_key,
+                        "children": [],
+                    }
                     section_node["children"].append(parent_node)
 
                     # add children excluding the units row
