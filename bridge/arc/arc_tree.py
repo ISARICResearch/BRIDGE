@@ -119,7 +119,6 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            #  TODO Split into to functions (old and new)?
             if not select_units_conversion:
                 unit_mask = df_variable["Validation"] == "units"
                 df_units: pd.DataFrame = df_variable[unit_mask]
@@ -139,8 +138,9 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
 
                     # add children excluding the units row
                     df_children = df_variable[
-                        (~unit_mask) & (df_variable["Variable"] != parent_key) &
-                        (~unit_mask) & (df_variable["Variable"] != old_parent_key)
+                        (~unit_mask)
+                        & (df_variable["Variable"] != parent_key)
+                        & (df_variable["Variable"] != old_parent_key)
                     ]
                     for _, row in df_children.iterrows():
                         parent_node["children"].append(

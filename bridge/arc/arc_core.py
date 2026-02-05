@@ -94,35 +94,34 @@ def get_dependencies(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     for variable in df_dependencies["Variable"]:
         if "other" in variable:
             if (
-                    len(
-                        df_dependencies["Dependencies"].loc[
-                            df_dependencies["Variable"] == variable.replace("other", "")
-                        ]
-                    )
-                    >= 1
+                len(
+                    df_dependencies["Dependencies"].loc[
+                        df_dependencies["Variable"] == variable.replace("other", "")
+                    ]
+                )
+                >= 1
             ):
                 df_dependencies["Dependencies"].loc[
                     df_dependencies["Variable"] == variable.replace("other", "")
-                    ].iloc[0].append(variable)
+                ].iloc[0].append(variable)
 
-        # TODO
         if "units" in variable:
             if (
-                    len(
-                        df_dependencies["Dependencies"].loc[
-                            df_dependencies["Variable"] == variable.replace("units", "")
-                        ]
-                    )
-                    >= 1
+                len(
+                    df_dependencies["Dependencies"].loc[
+                        df_dependencies["Variable"] == variable.replace("units", "")
+                    ]
+                )
+                >= 1
             ):
                 df_dependencies["Dependencies"].loc[
                     df_dependencies["Variable"] == variable.replace("units", "")
-                    ].iloc[0].append(variable)
+                ].iloc[0].append(variable)
 
         for mandatory_variable in mandatory:
             df_dependencies["Dependencies"].loc[
                 df_dependencies["Variable"] == variable
-                ].iloc[0].append(mandatory_variable)
+            ].iloc[0].append(mandatory_variable)
 
     return df_dependencies
 
@@ -133,7 +132,7 @@ def extract_parenthesis_content(text: str) -> str:
 
 
 def get_include_not_show(
-        selected_variables: pd.Series, df_current_datadicc: pd.DataFrame
+    selected_variables: pd.Series, df_current_datadicc: pd.DataFrame
 ) -> pd.DataFrame:
     include_not_show = [
         "otherl2",
@@ -183,7 +182,7 @@ def get_include_not_show(
 
 
 def add_select_units_field(
-        df_datadicc: pd.DataFrame, select_units_conversion: bool
+    df_datadicc: pd.DataFrame, select_units_conversion: bool
 ) -> pd.DataFrame:
     if not select_units_conversion:
         # E.g. demog_height_units
@@ -193,14 +192,14 @@ def add_select_units_field(
         for _, row in df_datadicc[df_datadicc["select units"]].iterrows():
             variable_key = f"{row['Variable']}"
             mask_sec_vari = (df_datadicc["Sec"] == row["Sec"]) & (
-                    df_datadicc["vari"] == row["vari"]
+                df_datadicc["vari"] == row["vari"]
             )
             df_datadicc.loc[mask_sec_vari, "select units"] = True
             # Only show the original one (NOT suffixed "_units") in the grid
             # This maps to what is in the tree
-            df_datadicc.loc[
-                df_datadicc["Variable"] == variable_key, "select units"
-            ] = False
+            df_datadicc.loc[df_datadicc["Variable"] == variable_key, "select units"] = (
+                False
+            )
 
     else:
         # E.g. demog_height (demog_height_units doesn't exist)
@@ -210,7 +209,7 @@ def add_select_units_field(
         # E.g. Add demog_height_cm / demog_height_in
         for _, row in df_datadicc[df_datadicc["select units"]].iterrows():
             mask_sec_vari = (df_datadicc["Sec"] == row["Sec"]) & (
-                    df_datadicc["vari"] == row["vari"]
+                df_datadicc["vari"] == row["vari"]
             )
             df_datadicc.loc[mask_sec_vari, "select units"] = True
 
@@ -220,7 +219,6 @@ def add_select_units_field(
 def get_units_language(df_datadicc: pd.DataFrame, select_units_conversion: bool) -> str:
     if not select_units_conversion:
         df_units = df_datadicc.loc[df_datadicc["Validation"] == "units"]
-
     else:
         df_units = df_datadicc.loc[
             df_datadicc["Question_english"].str.contains("(select units)", regex=False)
@@ -231,30 +229,28 @@ def get_units_language(df_datadicc: pd.DataFrame, select_units_conversion: bool)
 
 
 def create_units_dataframe(
-        df_datadicc: pd.DataFrame,
-        selected_variables: pd.Series,
+    df_datadicc: pd.DataFrame,
+    selected_variables: pd.Series,
 ) -> pd.DataFrame:
     df_units = df_datadicc.loc[
         df_datadicc["select units"]  # True
         & df_datadicc["Variable"].isin(selected_variables.values)
         & pd.notnull(df_datadicc["mod"])
-        ]
+    ]
     df_units["count"] = df_units.groupby(["Sec", "vari"]).transform("size")
     return df_units
 
 
 def select_units_transformation(
-        selected_variables: pd.Series,
-        df_datadicc: pd.DataFrame,
-        version: str,
-) -> tuple[pd.DataFrame, list] | tuple[None, None]:
+    selected_variables: pd.Series,
+    df_datadicc: pd.DataFrame,
+    version: str,
+) -> tuple[pd.DataFrame, list]:
     select_units_conversion = get_select_units_conversion_bool(version)
     df_datadicc = add_select_units_field(df_datadicc, select_units_conversion)
     units_lang = get_units_language(df_datadicc, select_units_conversion)
 
-    df_units = create_units_dataframe(
-        df_datadicc, selected_variables
-    )
+    df_units = create_units_dataframe(df_datadicc, selected_variables)
 
     select_unit_rows_list = []
     unit_variables_to_delete = []
@@ -263,9 +259,8 @@ def select_units_transformation(
     for _, row in df_units.iterrows():
         if row["count"] > 1:
             matching_rows = df_units[
-                (df_units["Sec"] == row["Sec"])
-                & (df_units["vari"] == row["vari"])
-                ]
+                (df_units["Sec"] == row["Sec"]) & (df_units["vari"] == row["vari"])
+            ]
 
             for delete_variable in matching_rows["Variable"]:
                 unit_variables_to_delete.append(delete_variable)
@@ -296,7 +291,7 @@ def select_units_transformation(
             row_units["Maximum"] = None
             row_units["Minimum"] = None
             row_units["Question"] = (
-                    row["Question"].split("(")[0] + "(" + units_lang + ")"
+                row["Question"].split("(")[0] + "(" + units_lang + ")"
             )
             row_units["Validation"] = None
 
@@ -323,18 +318,18 @@ def select_units_transformation(
                 )
             ),
         )
-    return None, None
+    return pd.DataFrame(), list()
 
 
 def add_transformed_rows(
-        df_selected: pd.DataFrame,
-        df_selected_units: pd.DataFrame,
-        variable_order: list,
+    df_selected: pd.DataFrame,
+    df_selected_units: pd.DataFrame,
+    variable_order: list,
 ) -> pd.DataFrame:
     df_output = df_selected.copy().reset_index(drop=True)
 
     df_selected_units["Sec_vari"] = (
-            df_selected_units["Sec"] + "_" + df_selected_units["vari"]
+        df_selected_units["Sec"] + "_" + df_selected_units["vari"]
     )
     df_selected_units = df_selected_units[df_output.columns]
 
@@ -363,7 +358,7 @@ def add_transformed_rows(
                     [
                         df_output.iloc[: base_index + 1],
                         df_row,
-                        df_output.iloc[base_index + 1:],
+                        df_output.iloc[base_index + 1 :],
                     ]
                 ).reset_index(drop=True)
 
@@ -379,11 +374,11 @@ def add_transformed_rows(
                 if order_index is not None:
                     # Find the next existing variable in 'result' from 'order'
                     insert_before_index = None
-                    for next_variable in variable_order[order_index + 1:]:
+                    for next_variable in variable_order[order_index + 1 :]:
                         if next_variable in df_output["Variable"].values:
                             insert_before_index = df_output.index[
                                 df_output["Variable"] == next_variable
-                                ][0]
+                            ][0]
                             break
 
                     # Create a DataFrame from the current row
@@ -539,13 +534,13 @@ def generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
 
 def _custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     mask = (df_datadicc["Field Type"].isin(["checkbox", "radio"])) & (
-            (
-                    df_datadicc["Choices, Calculations, OR Slider Labels"]
-                    .str.split("|")
-                    .str.len()
-                    < 4
-            )
-            & (df_datadicc["Choices, Calculations, OR Slider Labels"].str.len() <= 40)
+        (
+            df_datadicc["Choices, Calculations, OR Slider Labels"]
+            .str.split("|")
+            .str.len()
+            < 4
+        )
+        & (df_datadicc["Choices, Calculations, OR Slider Labels"].str.len() <= 40)
     )
     df_datadicc.loc[mask, "Custom Alignment"] = "RH"
     return df_datadicc
@@ -553,7 +548,7 @@ def _custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
 
 def get_select_units_conversion_bool(version: str) -> bool:
     if parse(version.replace("v", "")) < parse(
-            ARC_UNIT_CHANGE_VERSION.replace("v", "")
+        ARC_UNIT_CHANGE_VERSION.replace("v", "")
     ):
         # Old versions: "Question" contains "(select units)"
         select_units_conversion = True
