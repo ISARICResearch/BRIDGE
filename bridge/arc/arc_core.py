@@ -143,7 +143,6 @@ def get_include_not_show(
         "warn",
         "warn2",
         "warn3",
-        # TODO
         "units",
         "add",
         "vol",
@@ -193,15 +192,14 @@ def add_select_units_field(
         # E.g. Add demog_height_cm / demog_height_in
         for _, row in df_datadicc[df_datadicc["select units"]].iterrows():
             variable_key = f"{row['Variable']}"
-            old_variable_key = variable_key.replace("_units", "")
-
             mask_sec_vari = (df_datadicc["Sec"] == row["Sec"]) & (
                     df_datadicc["vari"] == row["vari"]
             )
             df_datadicc.loc[mask_sec_vari, "select units"] = True
-            # Only show the new one (suffixed "_units") in the grid
+            # Only show the original one (NOT suffixed "_units") in the grid
+            # This maps to what is in the tree
             df_datadicc.loc[
-                df_datadicc["Variable"] == old_variable_key, "select units"
+                df_datadicc["Variable"] == variable_key, "select units"
             ] = False
 
     else:
@@ -234,22 +232,15 @@ def get_units_language(df_datadicc: pd.DataFrame, select_units_conversion: bool)
 
 def create_units_dataframe(
         df_datadicc: pd.DataFrame,
-        select_units_conversion: bool,
         selected_variables: pd.Series,
 ) -> pd.DataFrame:
-    df_grid_units = df_datadicc.loc[
+    df_units = df_datadicc.loc[
         df_datadicc["select units"]  # True
         & df_datadicc["Variable"].isin(selected_variables.values)
         & pd.notnull(df_datadicc["mod"])
         ]
-
-    if not select_units_conversion:
-        # E.g. demog_height_units. demog_height is dropped above as "mod" is empty
-        df_grid_units = df_grid_units[df_grid_units["Validation"] != "units"]
-
-    df_grid_units["count"] = df_grid_units.groupby(["Sec", "vari"]).transform("size")
-
-    return df_grid_units
+    df_units["count"] = df_units.groupby(["Sec", "vari"]).transform("size")
+    return df_units
 
 
 def select_units_transformation(
@@ -262,7 +253,7 @@ def select_units_transformation(
     units_lang = get_units_language(df_datadicc, select_units_conversion)
 
     df_units = create_units_dataframe(
-        df_datadicc, select_units_conversion, selected_variables
+        df_datadicc, selected_variables
     )
 
     select_unit_rows_list = []

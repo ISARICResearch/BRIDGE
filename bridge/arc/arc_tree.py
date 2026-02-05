@@ -129,15 +129,17 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                     parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
                     old_parent_key = parent_key.replace("_units", "")
 
+                    # Use the old parent key, minus "_units", so that subsequent functionality (e.g. in grid) won't change
                     parent_node = {
                         "title": parent_title,
-                        "key": parent_key,
+                        "key": old_parent_key,
                         "children": [],
                     }
                     section_node["children"].append(parent_node)
 
                     # add children excluding the units row
                     df_children = df_variable[
+                        (~unit_mask) & (df_variable["Variable"] != parent_key) &
                         (~unit_mask) & (df_variable["Variable"] != old_parent_key)
                     ]
                     for _, row in df_children.iterrows():

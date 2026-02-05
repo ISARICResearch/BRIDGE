@@ -184,6 +184,7 @@ def get_focused_cell_index(
                 checked.pop()
                 latest_checked_variable = checked[-1]
         except IndexError:
+            # TODO: Sometimes 0 not there
             latest_checked_variable = checked[0]
 
         df_row_data_variable = df_row_data[
