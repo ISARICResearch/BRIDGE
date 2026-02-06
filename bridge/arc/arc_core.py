@@ -182,9 +182,9 @@ def get_include_not_show(
 
 
 def add_select_units_field(
-    df_datadicc: pd.DataFrame, select_units_conversion: bool
+    df_datadicc: pd.DataFrame, dynamic_units_conversion: bool
 ) -> pd.DataFrame:
-    if not select_units_conversion:
+    if not dynamic_units_conversion:
         # E.g. demog_height_units
         df_datadicc["select units"] = df_datadicc["Validation"] == "units"
 
@@ -216,8 +216,10 @@ def add_select_units_field(
     return df_datadicc
 
 
-def get_units_language(df_datadicc: pd.DataFrame, select_units_conversion: bool) -> str:
-    if not select_units_conversion:
+def get_units_language(
+    df_datadicc: pd.DataFrame, dynamic_units_conversion: bool
+) -> str:
+    if not dynamic_units_conversion:
         df_units = df_datadicc.loc[df_datadicc["Validation"] == "units"]
     else:
         df_units = df_datadicc.loc[
@@ -241,14 +243,14 @@ def create_units_dataframe(
     return df_units
 
 
-def select_units_transformation(
+def units_transformation(
     selected_variables: pd.Series,
     df_datadicc: pd.DataFrame,
     version: str,
 ) -> tuple[pd.DataFrame, list]:
-    select_units_conversion = get_select_units_conversion_bool(version)
-    df_datadicc = add_select_units_field(df_datadicc, select_units_conversion)
-    units_lang = get_units_language(df_datadicc, select_units_conversion)
+    dynamic_units_conversion = get_dynamic_units_conversion_bool(version)
+    df_datadicc = add_select_units_field(df_datadicc, dynamic_units_conversion)
+    units_lang = get_units_language(df_datadicc, dynamic_units_conversion)
 
     df_units = create_units_dataframe(df_datadicc, selected_variables)
 
@@ -546,13 +548,13 @@ def _custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
     return df_datadicc
 
 
-def get_select_units_conversion_bool(version: str) -> bool:
+def get_dynamic_units_conversion_bool(version: str) -> bool:
     if parse(version.replace("v", "")) < parse(
         ARC_UNIT_CHANGE_VERSION.replace("v", "")
     ):
         # Old versions: "Question" contains "(select units)"
-        select_units_conversion = True
+        dynamic_units_conversion = True
     else:
         # New versions: "Validation" == "units"
-        select_units_conversion = False
-    return select_units_conversion
+        dynamic_units_conversion = False
+    return dynamic_units_conversion

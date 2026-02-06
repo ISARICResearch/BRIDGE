@@ -1,6 +1,23 @@
 import pandas as pd
 
-from bridge.arc.arc_core import get_select_units_conversion_bool
+from bridge.arc.arc_core import get_dynamic_units_conversion_bool
+
+INCLUDE_NOT_SHOW = [
+    "otherl3",
+    "otherl2",
+    "route",
+    "route2",
+    "agent",
+    "agent2",
+    "warn",
+    "warn2",
+    "warn3",
+    "units",
+    "add",
+    "vol",
+    "txt",
+    "calc",
+]
 
 
 def _format_question_text(row):
@@ -12,38 +29,24 @@ def _format_question_text(row):
 
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
-    select_units_conversion = get_select_units_conversion_bool(version)
+    dynamic_units_conversion = get_dynamic_units_conversion_bool(version)
 
-    include_not_show = [
-        "otherl3",
-        "otherl2",
-        "route",
-        "route2",
-        "agent",
-        "agent2",
-        "warn",
-        "warn2",
-        "warn3",
-        "add",
-        "vol",
-        "txt",
-        "calc",
+    rows_for_tree = [
+        "Form",
+        "Sec_name",
+        "vari",
+        "mod",
+        "Question",
+        "Variable",
+        "Type",
     ]
+    if not dynamic_units_conversion:
+        rows_for_tree.append("Validation")
 
     # rows used for the tree (hide some mods)
-    df_for_item = df_datadicc[
-        [
-            "Form",
-            "Sec_name",
-            "vari",
-            "mod",
-            "Question",
-            "Variable",
-            "Type",
-            "Validation",
-            "Answer Options",
-        ]
-    ].loc[~df_datadicc["mod"].isin(include_not_show)]
+    df_for_item = df_datadicc[rows_for_tree].loc[
+        ~df_datadicc["mod"].isin(INCLUDE_NOT_SHOW)
+    ]
 
     # -------- counts per (Form, Sec_name, vari) --------
     base_for_counts = df_for_item[["Form", "Sec_name", "vari"]].copy()
@@ -119,7 +122,7 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            if not select_units_conversion:
+            if not dynamic_units_conversion:
                 unit_mask = df_variable["Validation"] == "units"
                 df_units: pd.DataFrame = df_variable[unit_mask]
                 if not df_units.empty:

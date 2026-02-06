@@ -85,10 +85,8 @@ def create_selected_dataframe(
     )
 
     # Select Units Transformation
-    df_grid_units_display, unit_variables_to_delete = (
-        arc_core.select_units_transformation(
-            df_selected_variables["Variable"], df_datadicc, version
-        )
+    df_grid_units_display, unit_variables_to_delete = arc_core.units_transformation(
+        df_selected_variables["Variable"], df_datadicc, version
     )
 
     if not df_grid_units_display.empty:

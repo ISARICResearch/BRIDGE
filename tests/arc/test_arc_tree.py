@@ -2,14 +2,30 @@ from unittest import mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from bridge.arc import arc_tree
 
 
-@mock.patch("bridge.arc.arc_core.set_select_units")
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
+@mock.patch("bridge.arc.arc_core.get_dynamic_units_conversion_bool")
+@mock.patch("bridge.arc.arc_core.add_select_units_field")
 @mock.patch("bridge.arc.arc_core.add_required_datadicc_columns")
 @mock.patch("bridge.arc.arc_core.get_dependencies")
-def test_get_tree_items(mock_dependencies, mock_required_columns, mock_set_units):
+def test_get_tree_items(
+    mock_dependencies,
+    mock_required_columns,
+    mock_set_units,
+    mock_dynamic_units_bool,
+    dynamic_units_conversion,
+):
+    mock_dynamic_units_bool.return_value = dynamic_units_conversion
     data = {
         "Form": [
             "presentation",

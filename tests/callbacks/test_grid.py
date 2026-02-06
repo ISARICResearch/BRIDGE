@@ -1,7 +1,6 @@
 from contextvars import copy_context
 from unittest import mock
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -11,245 +10,100 @@ FOCUSED_CELL_INDEX = 0
 
 
 @mock.patch("bridge.callbacks.grid.get_focused_cell_index", return_value=0)
-def test_display_checked_in_grid_checked_empty(mock_focused_cell_index):
+def test_display_checked_in_grid_checked_empty(_mock_focused_cell_index):
     checked = []
     current_datadicc_saved = (
         '{"columns":["Form", "Variable"],'
         '"index":[0, 1],'
-        '"data":[["presentation", "inclu_disease"]]}'
+        '"data":[["some_data", "for_the_mock"]]}'
     )
-
+    selected_version_data = {"selected_version": "v1.1.2"}
     (
-        output_row_defs,
+        output_row_data_list,
         output_variables_json,
         focused_cell_run_callback,
         focused_cell_index,
     ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, FOCUSED_CELL_INDEX
+        checked, current_datadicc_saved, FOCUSED_CELL_INDEX, selected_version_data
     )
 
-    expected_row_defs = []
+    expected_row_data_list = []
     expected_variables_json = '{"columns":[],"index":[],"data":[]}'
 
-    assert output_row_defs == expected_row_defs
+    assert output_row_data_list == expected_row_data_list
     assert output_variables_json == expected_variables_json
 
 
 @mock.patch("bridge.callbacks.grid.get_focused_cell_index", return_value=0)
-@mock.patch("bridge.callbacks.grid.arc_core.get_variable_order")
-@mock.patch("bridge.callbacks.grid.arc_core.add_transformed_rows")
-@mock.patch("bridge.callbacks.grid.arc_core.get_select_units")
-@mock.patch("bridge.callbacks.grid.arc_core.get_include_not_show")
+@mock.patch("bridge.callbacks.grid.create_new_row_list")
+@mock.patch("bridge.callbacks.grid.create_selected_dataframe")
 def test_display_checked_in_grid(
-    mock_include_not_show,
-    mock_select_units,
-    mock_add_transformed_rows,
-    mock_variable_order,
-    mock_focused_cell_index,
+    mock_selected_dataframe, mock_new_row_list, _mock_focused_index
 ):
-    checked = ["inclu_disease"]
+    checked = ["not_empty"]
     current_datadicc_saved = (
-        '{"columns":["Form", "Variable", "Dependencies"],'
-        '"index":[0, 1, 2],'
-        '"data":[["presentation", "inclu_disease", "[subjid]"]]}'
+        '{"columns":["Form", "Variable"],'
+        '"index":[0, 1],'
+        '"data":[["some_data", "for_the_mock"]]}'
     )
-
+    selected_version_data = {"selected_version": "v1.1.2"}
     data = {
-        "Form": [
-            "presentation",
-            "presentation",
-            "presentation",
-            "presentation",
-            "presentation",
-            "presentation",
-        ],
-        "Section": [
-            None,
-            "INCLUSION CRITERIA",
-            "INCLUSION CRITERIA",
-            "INCLUSION CRITERIA",
-            "ONSET & PRESENTATION",
-            "DEMOGRAPHICS",
-        ],
         "Variable": [
-            "subjid",
-            "inclu_consentdes",
-            "inclu_disease",
-            "inclu_disease_otherl3",
-            "pres_onsetdate",
-            "demog_height_cm",
-        ],
-        "Type": [
-            "text",
-            "descriptive",
-            "user_list",
-            "text",
-            "date_dmy",
-            "number",
-        ],
-        "Question": [
-            "Participant Identification Number (PIN)",
-            "Consent:",
-            "Suspected infection",
-            "Specify other Suspected infection",
-            "Onset date of earliest symptom",
-            "Height (cm)",
-        ],
-        "Answer Options": [
-            None,
-            None,
-            "33, Mpox | 88, Other",
-            None,
-            None,
-            None,
-        ],
-        "Validation": [
-            None,
-            None,
-            None,
-            None,
-            "date_dmy",
-            "number",
+            "some_more_data",
         ],
     }
-    delete_this_variables_with_units = [
-        "demog_height_cm",
-        "demog_height_in",
+    df_selected = pd.DataFrame(data)
+    mock_selected_dataframe.return_value = df_selected
+    mock_new_row_list.return_value = [
+        {
+            "Question": "some dummy data",
+            "Type": "number",
+        },
+        {
+            "Question": "some more dummy data",
+            "Type": "radio",
+        },
+        {
+            "Question": "some group dummy data (to be dropped)",
+            "Type": "group",
+        },
     ]
-    df_selected_variables = pd.DataFrame.from_dict(data)
-    mock_include_not_show.return_value = df_selected_variables
-    mock_add_transformed_rows.return_value = df_selected_variables
-    mock_select_units.return_value = (pd.DataFrame(), delete_this_variables_with_units)
 
     (
-        output_row_defs,
+        output_row_data_list,
         output_variables_json,
         focused_cell_run_callback,
         focused_cell_index,
     ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, FOCUSED_CELL_INDEX
+        checked, current_datadicc_saved, FOCUSED_CELL_INDEX, selected_version_data
     )
 
-    expected_row_defs = [
+    expected_row_data_list = [
         {
-            "Answer Options": "",
-            "Form": np.nan,
-            "IsDescriptive": np.nan,
-            "IsSeparator": True,
-            "Question": "PRESENTATION",
-            "Section": np.nan,
-            "SeparatorType": "form",
-            "Type": np.nan,
-            "Validation": np.nan,
-            "Variable": np.nan,
+            "Question": "some dummy data",
+            "Type": "number",
         },
         {
-            "Answer Options": "________________________________________",
-            "Form": "presentation",
-            "IsDescriptive": np.nan,
-            "IsSeparator": False,
-            "Question": "Participant Identification Number (PIN)",
-            "Section": "",
-            "SeparatorType": np.nan,
-            "Type": "text",
-            "Validation": "",
-            "Variable": "subjid",
-        },
-        {
-            "Answer Options": "",
-            "Form": np.nan,
-            "IsDescriptive": np.nan,
-            "IsSeparator": True,
-            "Question": "INCLUSION CRITERIA",
-            "Section": np.nan,
-            "SeparatorType": "section",
-            "Type": np.nan,
-            "Validation": np.nan,
-            "Variable": np.nan,
-        },
-        {
-            "Answer Options": "",
-            "Form": "presentation",
-            "IsDescriptive": True,
-            "IsSeparator": False,
-            "Question": "Consent:",
-            "Section": "INCLUSION CRITERIA",
-            "SeparatorType": np.nan,
-            "Type": "descriptive",
-            "Validation": "",
-            "Variable": "inclu_consentdes",
-        },
-        {
-            "Answer Options": "○ Mpox   ○ Other",
-            "Form": "presentation",
-            "IsDescriptive": np.nan,
-            "IsSeparator": False,
-            "Question": "Suspected infection",
-            "Section": "INCLUSION CRITERIA",
-            "SeparatorType": np.nan,
-            "Type": "user_list",
-            "Validation": "",
-            "Variable": "inclu_disease",
-        },
-        {
-            "Answer Options": "________________________________________",
-            "Form": "presentation",
-            "IsDescriptive": np.nan,
-            "IsSeparator": False,
-            "Question": "Specify other Suspected infection",
-            "Section": "INCLUSION CRITERIA",
-            "SeparatorType": np.nan,
-            "Type": "text",
-            "Validation": "",
-            "Variable": "inclu_disease_otherl3",
-        },
-        {
-            "Answer Options": "",
-            "Form": np.nan,
-            "IsDescriptive": np.nan,
-            "IsSeparator": True,
-            "Question": "ONSET & PRESENTATION",
-            "Section": np.nan,
-            "SeparatorType": "section",
-            "Type": np.nan,
-            "Validation": np.nan,
-            "Variable": np.nan,
-        },
-        {
-            "Answer Options": "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]",
-            "Form": "presentation",
-            "IsDescriptive": np.nan,
-            "IsSeparator": False,
-            "Question": "Onset date of earliest symptom",
-            "Section": "ONSET & PRESENTATION",
-            "SeparatorType": np.nan,
-            "Type": "date_dmy",
-            "Validation": "date_dmy",
-            "Variable": "pres_onsetdate",
+            "Question": "some more dummy data",
+            "Type": "radio",
         },
     ]
-
     expected_variables_json = (
-        '{"columns":["Form","Section","Variable","Type","Question","Answer Options","Validation"],'
-        '"index":[0,1,2,3,4],'
-        '"data":['
-        '["presentation","","subjid","text","Participant Identification Number (PIN)","",""],'
-        '["presentation","INCLUSION CRITERIA","inclu_consentdes","descriptive","Consent:","",""],'
-        '["presentation","INCLUSION CRITERIA","inclu_disease","user_list","Suspected infection","33, Mpox | 88, Other",""],'
-        '["presentation","INCLUSION CRITERIA","inclu_disease_otherl3","text","Specify other Suspected infection","",""],'
-        '["presentation","ONSET & PRESENTATION","pres_onsetdate","date_dmy","Onset date of earliest symptom","","date_dmy"]]}'
+        '{"columns":["Variable"],"index":[0],"data":[["some_more_data"]]}'
     )
 
-    assert output_row_defs == expected_row_defs
+    assert output_row_data_list == expected_row_data_list
     assert output_variables_json == expected_variables_json
 
 
 def get_output_display_checked_in_grid(
-    checked_variables, current_datadicc, focused_cell
+    checked_variables, current_datadicc, focused_cell, version_data
 ):
-    def run_callback(checked, current_datadicc_saved, focused_cell_index):
+    def run_callback(
+        checked, current_datadicc_saved, focused_cell_index, selected_version_data
+    ):
         return grid.display_checked_in_grid(
-            checked, current_datadicc_saved, focused_cell_index
+            checked, current_datadicc_saved, focused_cell_index, selected_version_data
         )
 
     ctx = copy_context()
@@ -258,6 +112,7 @@ def get_output_display_checked_in_grid(
         checked_variables,
         current_datadicc,
         focused_cell,
+        version_data,
     )
 
     return output
@@ -354,9 +209,7 @@ def get_output_display_checked_in_grid(
         ),
     ],
 )
-def test_get_focused_cell_index(
-    mocker, row_data, focused_cell_index, checked, expected_output
-):
+def test_get_focused_cell_index(row_data, focused_cell_index, checked, expected_output):
     output = grid.get_focused_cell_index(row_data, focused_cell_index, checked)
 
     assert output == expected_output
