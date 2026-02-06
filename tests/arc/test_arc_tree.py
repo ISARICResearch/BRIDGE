@@ -6,10 +6,14 @@ import pandas as pd
 from bridge.arc import arc_tree
 
 
-@mock.patch("bridge.arc.arc_core.set_select_units")
+@mock.patch("bridge.arc.arc_core.add_select_units_field")
 @mock.patch("bridge.arc.arc_core.add_required_datadicc_columns")
 @mock.patch("bridge.arc.arc_core.get_dependencies")
-def test_get_tree_items(mock_dependencies, mock_required_columns, mock_set_units):
+def test_get_tree_items(
+    mock_dependencies,
+    mock_required_columns,
+    mock_set_units,
+):
     data = {
         "Form": [
             "presentation",

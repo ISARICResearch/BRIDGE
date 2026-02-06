@@ -1,5 +1,22 @@
 import pandas as pd
 
+INCLUDE_NOT_SHOW = [
+    "otherl3",
+    "otherl2",
+    "route",
+    "route2",
+    "agent",
+    "agent2",
+    "warn",
+    "warn2",
+    "warn3",
+    "units",
+    "add",
+    "vol",
+    "txt",
+    "calc",
+]
+
 
 def _format_question_text(row):
     if row["Type"] == "user_list":
@@ -10,27 +27,20 @@ def _format_question_text(row):
 
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
-    include_not_show = [
-        "otherl3",
-        "otherl2",
-        "route",
-        "route2",
-        "agent",
-        "agent2",
-        "warn",
-        "warn2",
-        "warn3",
-        "units",
-        "add",
-        "vol",
-        "txt",
-        "calc",
+    rows_for_tree = [
+        "Form",
+        "Sec_name",
+        "vari",
+        "mod",
+        "Question",
+        "Variable",
+        "Type",
     ]
 
     # rows used for the tree (hide some mods)
-    df_for_item = df_datadicc[
-        ["Form", "Sec_name", "vari", "mod", "Question", "Variable", "Type"]
-    ].loc[~df_datadicc["mod"].isin(include_not_show)]
+    df_for_item = df_datadicc[rows_for_tree].loc[
+        ~df_datadicc["mod"].isin(INCLUDE_NOT_SHOW)
+    ]
 
     # -------- counts per (Form, Sec_name, vari) --------
     base_for_counts = df_for_item[["Form", "Sec_name", "vari"]].copy()
@@ -62,7 +72,7 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
     seen_forms, seen_sections = set(), {}
 
     # Build tree
-    for (form, sec_name), sec_df in df_for_item.groupby(
+    for (form, sec_name), df_sec in df_for_item.groupby(
         ["Form", "Sec_name"], dropna=False, sort=False
     ):
         form_upper = str(form).upper()
@@ -102,11 +112,11 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                         section_node = sec_child
                         break
 
-        sec_df = sec_df.sort_values("_row_order")
-        for vari, df_variable in sec_df.groupby("vari", dropna=False, sort=False):
+        df_sec = df_sec.sort_values("_row_order")
+        for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            mask_units = df_variable["Question"].str.contains(
+            mask_units: pd.Series = df_variable["Question"].str.contains(
                 "(select units)", case=False, na=False, regex=False
             )
             if mask_units.any():
@@ -114,7 +124,11 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
                 parent_title = _format_question_text(parent_row)
                 parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
 
-                parent_node = {"title": parent_title, "key": parent_key, "children": []}
+                parent_node = {
+                    "title": parent_title,
+                    "key": parent_key,
+                    "children": [],
+                }
                 section_node["children"].append(parent_node)
 
                 # add children excluding the units row
