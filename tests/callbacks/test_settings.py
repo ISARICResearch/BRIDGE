@@ -234,9 +234,9 @@ def mock_language_data_return_value():
 )
 @mock.patch("bridge.callbacks.settings.logger")
 def test_store_data_for_selected_version_language_dynamic_version(
-    mock_logger,
+    _mock_logger,
     mock_trigger_id,
-    mock_versions,
+    _mock_versions,
     mock_language_data,
     clicks_version,
     clicks_language,

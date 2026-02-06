@@ -240,6 +240,7 @@ def create_units_dataframe(
         & pd.notnull(df_datadicc["mod"])
     ]
     df_units["count"] = df_units.groupby(["Sec", "vari"]).transform("size")
+    df_units = df_units.reset_index(drop=True)
     return df_units
 
 

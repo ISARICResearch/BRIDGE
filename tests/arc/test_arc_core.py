@@ -889,3 +889,137 @@ def test_generate_crf():
     df_output = arc_core.generate_crf(df_datadicc)
 
     assert_frame_equal(df_output, df_expected)
+
+
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
+def test_get_units_language(dynamic_units_conversion):
+    data = {
+        "Variable": [
+            "demog_height",
+            "demog_height_units",
+            "demog_height_cm",
+            "demog_height_in",
+        ],
+        "Validation": [
+            "number",
+            "units",
+            "number",
+            "number",
+        ],
+        "Question": [
+            "Height(select units)",
+            "Height(select units)",
+            "Height(select cm)",
+            "Height(select in)",
+        ],
+        "Question_english": [
+            "Height(select units)",
+            "Height(select units)",
+            "Height(select cm)",
+            "Height(select in)",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+    # Adjust the input to reflect what is in ARC for the different versions
+    if dynamic_units_conversion:
+        df_datadicc = df_datadicc.drop(
+            df_datadicc[df_datadicc["Variable"] == "demog_height_units"].index
+        )
+    expected_str = "select units"
+    output_str = arc_core.get_units_language(df_datadicc, dynamic_units_conversion)
+    assert output_str == expected_str
+
+
+def test_create_units_dataframe():
+    data_datadicc = {
+        "Variable": [
+            "demog_height",
+            "demog_height_units",
+            "demog_height_cm",
+            "demog_height_in",
+        ],
+        "select units": [
+            True,
+            False,
+            True,
+            True,
+        ],
+        "mod": [
+            None,
+            "units",
+            "cm",
+            "in",
+        ],
+        "Sec": [
+            "demog",
+            "demog",
+            "demog",
+            "demog",
+        ],
+        "vari": [
+            "height",
+            "height",
+            "height",
+            "height",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data_datadicc)
+    data_selected = [
+        "demog_height",
+        "demog_height_units",
+        "demog_height_cm",
+        "demog_height_in",
+    ]
+    selected_variables = pd.Series(data_selected, name="Variable")
+    data_expected = {
+        "Variable": [
+            "demog_height_cm",
+            "demog_height_in",
+        ],
+        "select units": [
+            True,
+            True,
+        ],
+        "mod": [
+            "cm",
+            "in",
+        ],
+        "Sec": [
+            "demog",
+            "demog",
+        ],
+        "vari": [
+            "height",
+            "height",
+        ],
+        "count": [
+            2,
+            2,
+        ],
+    }
+    df_expected = pd.DataFrame.from_dict(data_expected)
+
+    df_output = arc_core.create_units_dataframe(df_datadicc, selected_variables)
+
+    assert_frame_equal(df_output, df_expected)
+
+
+@pytest.mark.parametrize(
+    "version, expected_output",
+    [
+        ("v1.1.5", True),
+        ("v1.2.0", True),
+        ("v1.2.1", False),
+        ("v1.2.2", False),
+        ("v1.3.5", False),
+    ],
+)
+def test_get_dynamic_units_conversion_bool(version, expected_output):
+    output = arc_core.get_dynamic_units_conversion_bool(version)
+    assert output == expected_output

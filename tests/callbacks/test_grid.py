@@ -3,6 +3,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+from statsmodels.compat.pandas import assert_frame_equal
 
 from bridge.callbacks import grid
 
@@ -213,3 +214,131 @@ def test_get_focused_cell_index(row_data, focused_cell_index, checked, expected_
     output = grid.get_focused_cell_index(row_data, focused_cell_index, checked)
 
     assert output == expected_output
+
+
+@mock.patch("bridge.callbacks.grid.arc_core.get_variable_order")
+@mock.patch("bridge.callbacks.grid.arc_core.add_transformed_rows")
+@mock.patch("bridge.callbacks.grid.arc_core.units_transformation")
+@mock.patch("bridge.callbacks.grid.arc_core.get_include_not_show")
+def test_create_selected_dataframe(
+    _mock_include, mock_units, mock_transformed_rows, mock_order
+):
+    data_datadicc = {
+        "Variable": [
+            "demog_height",
+            "demog_height_units",
+            "demog_height_cm",
+            "demog_height_in",
+            "demog_weight_kg",
+        ],
+        "Dependencies": [
+            ["subjid", "another_variable"],
+            ["subjid", "another_variable 2"],
+            ["subjid", "another_variable 3"],
+            ["subjid", "another_variable 4"],
+            ["subjid", "another_variable 5"],
+        ],
+    }
+    df_datadicc = pd.DataFrame(data_datadicc)
+    checked = [
+        "PRESENTATION-DEMOGRAPHICS-VARI-height-GROUP",
+        "demog_height",
+        "demog_height_cm",
+        "demog_height_in",
+    ]
+    version = "v1.2.1"
+
+    unit_variables_to_delete = ["demog_height_units", "demog_weight_kg"]
+    mock_units.return_value = [df_datadicc, unit_variables_to_delete]
+    mock_transformed_rows.return_value = df_datadicc
+
+    data_expected = {
+        "Variable": [
+            "demog_height",
+            "demog_height_cm",
+            "demog_height_in",
+        ],
+        "Dependencies": [
+            ["subjid", "another_variable"],
+            ["subjid", "another_variable 3"],
+            ["subjid", "another_variable 4"],
+        ],
+    }
+    df_expected = pd.DataFrame(data_expected)
+
+    df_output = grid.create_selected_dataframe(df_datadicc, checked, version)
+
+    assert_frame_equal(df_output, df_expected)
+
+
+def test_create_new_row_list():
+    data_selected = {
+        "Form": [
+            "presentation",
+            "presentation",
+            "presentation",
+        ],
+        "Section": [
+            None,
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+        ],
+        "Type": [
+            "text",
+            "text",
+            "radio",
+        ],
+        "Validation": [
+            None,
+            "number",
+            None,
+        ],
+        "Answer Options": [
+            "Answer A | Answer B",
+            "",
+            "",
+        ],
+    }
+    df_selected = pd.DataFrame.from_dict(data_selected)
+
+    expected_list = [
+        {
+            "Answer Options": "",
+            "IsSeparator": True,
+            "Question": "PRESENTATION",
+            "SeparatorType": "form",
+        },
+        {
+            "Answer Options": "________________________________________",
+            "Form": "presentation",
+            "IsSeparator": False,
+            "Section": None,
+            "Type": "text",
+            "Validation": None,
+        },
+        {
+            "Answer Options": "",
+            "IsSeparator": True,
+            "Question": "DEMOGRAPHICS",
+            "SeparatorType": "section",
+        },
+        {
+            "Answer Options": "________________________________________",
+            "Form": "presentation",
+            "IsSeparator": False,
+            "Section": "DEMOGRAPHICS",
+            "Type": "text",
+            "Validation": "number",
+        },
+        {
+            "Answer Options": "○",
+            "Form": "presentation",
+            "IsSeparator": False,
+            "Section": "DEMOGRAPHICS",
+            "Type": "radio",
+            "Validation": None,
+        },
+    ]
+
+    output_list = grid.create_new_row_list(df_selected)
+    assert output_list == expected_list

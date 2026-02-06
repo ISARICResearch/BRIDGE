@@ -342,7 +342,7 @@ def test_update_tree_items_and_stores_upload_crf_ready():
 @mock.patch("bridge.callbacks.tree.html.Div", return_value=["Just for checking"])
 @mock.patch("bridge.callbacks.tree.arc_tree.get_tree_items")
 def test_update_tree_items_and_stores_no_update(
-    mock_get_tree_items, mock_html_div, trigger, checked_variables
+    _mock_get_tree_items, _mock_html_div, trigger, checked_variables
 ):
     upload_crf_ready = False
     current_datadicc_saved = (

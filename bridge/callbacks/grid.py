@@ -103,6 +103,7 @@ def create_selected_dataframe(
             ]
 
     df_selected_variables = df_selected_variables.fillna("")
+    df_selected_variables = df_selected_variables.reset_index(drop=True)
     return df_selected_variables
 
 

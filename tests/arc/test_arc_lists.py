@@ -236,8 +236,11 @@ def test_get_list_content(mock_get_translations, mock_list, translation_dict):
     assert list_output == list_expected
 
 
+@mock.patch("bridge.arc.arc_lists.logger")
 @mock.patch("bridge.arc.arc_lists.arc_translations.get_translations")
-def test_get_list_content_no_list(mock_get_translations, translation_dict):
+def test_get_list_content_no_list(
+    mock_get_translations, _mock_logger, translation_dict
+):
     mock_get_translations.return_value = translation_dict
 
     version = "v1.1.1"

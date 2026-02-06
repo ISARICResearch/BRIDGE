@@ -1,7 +1,5 @@
 import pandas as pd
 
-from bridge.arc.arc_core import get_dynamic_units_conversion_bool
-
 INCLUDE_NOT_SHOW = [
     "otherl3",
     "otherl2",
@@ -29,8 +27,6 @@ def _format_question_text(row):
 
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
-    dynamic_units_conversion = get_dynamic_units_conversion_bool(version)
-
     rows_for_tree = [
         "Form",
         "Sec_name",
@@ -40,8 +36,6 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         "Variable",
         "Type",
     ]
-    if not dynamic_units_conversion:
-        rows_for_tree.append("Validation")
 
     # rows used for the tree (hide some mods)
     df_for_item = df_datadicc[rows_for_tree].loc[
@@ -122,63 +116,30 @@ def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
         for vari, df_variable in df_sec.groupby("vari", dropna=False, sort=False):
             # SPECIAL CASE: when a "(select units)" question exists in this vari,
             # make THAT row the parent, and attach all other rows (same vari) as children.
-            if not dynamic_units_conversion:
-                unit_mask = df_variable["Validation"] == "units"
-                df_units: pd.DataFrame = df_variable[unit_mask]
-                if not df_units.empty:
-                    parent_row = df_units.iloc[0]
-                    parent_title = _format_question_text(parent_row)
-                    parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
-                    old_parent_key = parent_key.replace("_units", "")
+            mask_units: pd.Series = df_variable["Question"].str.contains(
+                "(select units)", case=False, na=False, regex=False
+            )
+            if mask_units.any():
+                parent_row = df_variable.loc[mask_units].iloc[0]
+                parent_title = _format_question_text(parent_row)
+                parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
 
-                    # Use the old parent key, minus "_units", so that subsequent functionality (e.g. in grid) won't change
-                    parent_node = {
-                        "title": parent_title,
-                        "key": old_parent_key,
-                        "children": [],
-                    }
-                    section_node["children"].append(parent_node)
+                parent_node = {
+                    "title": parent_title,
+                    "key": parent_key,
+                    "children": [],
+                }
+                section_node["children"].append(parent_node)
 
-                    # add children excluding the units row
-                    df_children = df_variable[
-                        (~unit_mask)
-                        & (df_variable["Variable"] != parent_key)
-                        & (df_variable["Variable"] != old_parent_key)
-                    ]
-                    for _, row in df_children.iterrows():
-                        parent_node["children"].append(
-                            {
-                                "title": _format_question_text(row),
-                                "key": f"{row['Variable']}",
-                            }
-                        )
-                    continue  # this vari handled
-
-            else:
-                mask_units: pd.Series = df_variable["Question"].str.contains(
-                    "(select units)", case=False, na=False, regex=False
-                )
-                if mask_units.any():
-                    parent_row = df_variable.loc[mask_units].iloc[0]
-                    parent_title = _format_question_text(parent_row)
-                    parent_key = f"{parent_row['Variable']}"  # use the units variable as the parent key
-
-                    parent_node = {
-                        "title": parent_title,
-                        "key": parent_key,
-                        "children": [],
-                    }
-                    section_node["children"].append(parent_node)
-
-                    # add children excluding the units row
-                    for _, variable_series in df_variable.loc[~mask_units].iterrows():
-                        parent_node["children"].append(
-                            {
-                                "title": _format_question_text(variable_series),
-                                "key": f"{variable_series['Variable']}",
-                            }
-                        )
-                    continue  # this vari handled
+                # add children excluding the units row
+                for _, variable_series in df_variable.loc[~mask_units].iterrows():
+                    parent_node["children"].append(
+                        {
+                            "title": _format_question_text(variable_series),
+                            "key": f"{variable_series['Variable']}",
+                        }
+                    )
+                continue  # this vari handled
 
             # Fallback: your normal grouping (>=3 => group; else flat)
             n_total = int(
