@@ -40,7 +40,7 @@ def test_on_upload_crf(upload_filename, upload_contents, expected_output):
 
 
 @mock.patch("bridge.callbacks.upload.logger")
-def test_on_upload_crf_exception(mock_logger):
+def test_on_upload_crf_exception(_mock_logger):
     with pytest.raises(AttributeError):
         upload.on_upload_crf("template_English_2025-09-16.csv", "")
 
@@ -49,7 +49,7 @@ def test_on_upload_crf_exception(mock_logger):
     "bridge.callbacks.upload.arc_translations.get_translations",
     return_value={"other": "Other"},
 )
-def test_update_list_variables_checked_upload(mock_get_translations):
+def test_update_list_variables_checked_upload(_mock_get_translations):
     data = {
         "Form": ["presentation", "presentation", "presentation"],
         "Section": ["INCLUSION CRITERIA", "DEMOGRAPHICS", "DEMOGRAPHICS"],
@@ -181,7 +181,7 @@ def test_load_upload_arc_version_language_no_update(triggered_trigger):
 @mock.patch("bridge.callbacks.upload.logger")
 @mock.patch("bridge.callbacks.upload.Language.get_version_language_related_data")
 def test_load_upload_arc_version_language_json_error(
-    mock_error, mock_logger, triggered_trigger
+    mock_error, _mock_logger, triggered_trigger
 ):
     mock_error.return_value = (None, None, None, None, None, None)
     mock_error.side_effect = json.JSONDecodeError("msg", "", 1)
@@ -215,7 +215,7 @@ def test_load_upload_arc_version_language_json_error(
 
 @mock.patch("bridge.callbacks.upload.logger")
 @mock.patch("bridge.callbacks.upload.Language.get_version_language_related_data")
-def test_load_upload_arc_version_language(mock_error, mock_logger, triggered_trigger):
+def test_load_upload_arc_version_language(mock_error, _mock_logger, triggered_trigger):
     data = {
         "Form": ["presentation", "presentation"],
         "Section": ["INCLUSION CRITERIA", "DEMOGRAPHICS"],
@@ -324,7 +324,7 @@ def test_update_output_upload_crf_not_triggered():
 @mock.patch("bridge.callbacks.upload.html.Div", return_value=["Just for checking"])
 @mock.patch("bridge.callbacks.upload.update_list_variables_checked_upload")
 @mock.patch("bridge.callbacks.upload.arc_tree.get_tree_items")
-def test_update_output_upload_crf(mock_get_tree_items, mock_update, mock_html_div):
+def test_update_output_upload_crf(_mock_get_tree_items, mock_update, _mock_html_div):
     data = {
         "Form": ["here is some mock output"],
         "Answer Options": ["because it is tested elsewhere"],

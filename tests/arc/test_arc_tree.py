@@ -1,19 +1,10 @@
-from unittest import mock
-
 import numpy as np
 import pandas as pd
 
 from bridge.arc import arc_tree
 
 
-@mock.patch("bridge.arc.arc_core.add_select_units_field")
-@mock.patch("bridge.arc.arc_core.add_required_datadicc_columns")
-@mock.patch("bridge.arc.arc_core.get_dependencies")
-def test_get_tree_items(
-    mock_dependencies,
-    mock_required_columns,
-    mock_set_units,
-):
+def test_get_tree_items():
     data = {
         "Form": [
             "presentation",
@@ -74,33 +65,7 @@ def test_get_tree_items(
     }
     df_datadicc = pd.DataFrame.from_dict(data)
 
-    df_dependencies = pd.DataFrame.from_dict(
-        {
-            "Variable": [
-                "inclu_disease",
-                "demog_age_units",
-                "demog_height",
-                "pres_firstsym",
-                "inclu_testreason",
-                "inclu_testreason_otth",
-            ],
-            "Dependencies": [
-                ["subjid"],
-                ["demog_birthknow", "subjid"],
-                ["subjid"],
-                ["subjid"],
-                ["subjid"],
-                ["subjid"],
-            ],
-        }
-    )
-
     version = "v1.1.1"
-
-    # These extra columns aren't used
-    mock_dependencies.return_value = df_dependencies
-    mock_required_columns.return_value = df_datadicc
-    mock_set_units.return_value = df_datadicc
 
     expected = {
         "children": [

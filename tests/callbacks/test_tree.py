@@ -87,7 +87,7 @@ def df_mock_list():
     return_value=[],
 )
 def test_update_list_items_ulist_checked_otherl2(
-    mock_list, mock_get_translations, df_mock_list
+    mock_list, _mock_get_translations, df_mock_list
 ):
     mock_list.return_value = df_mock_list
     version = "v1.1.2"
@@ -174,7 +174,7 @@ def test_update_list_items_ulist_checked_otherl2(
     return_value=[],
 )
 def test_update_list_items_multilist_selected(
-    mock_list, mock_get_translations, df_mock_list
+    mock_list, _mock_get_translations, df_mock_list
 ):
     mock_list.return_value = df_mock_list
     version = "v1.1.2"
@@ -396,10 +396,10 @@ def test_update_tree_items_and_stores_no_update(
 @mock.patch("bridge.callbacks.tree.html.Div", return_value=["Just for checking"])
 @mock.patch("bridge.callbacks.tree.arc_tree.get_tree_items")
 def test_update_tree_items_and_stores(
-    mock_get_tree_items,
-    mock_html_div,
-    mock_logger,
-    mock_template_list,
+    _mock_get_tree_items,
+    _mock_html_div,
+    _mock_logger,
+    _mock_template_list,
     mock_update_for_template,
     trigger,
     checked_variables,

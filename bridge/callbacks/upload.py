@@ -29,7 +29,7 @@ pd.options.mode.copy_on_write = True
     ],
     prevent_initial_call=True,
 )
-def on_upload_crf(filename: str, contents: str):
+def on_upload_crf(filename: str, _contents: str):
     if filename:
         try:
             upload_version = re.search(r"v\d_\d_\d", filename).group(0)
@@ -177,7 +177,7 @@ def load_upload_arc_version_language(
     prevent_initial_call=True,
 )
 def update_output_upload_crf(
-    upload_crf_ready: bool,
+    _upload_crf_ready: bool,
     upload_version_data: dict,
     upload_language_data: dict,
     upload_crf_contents: str,

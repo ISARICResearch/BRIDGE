@@ -43,7 +43,7 @@ class ConditionalMock:
 )
 @mock.patch("bridge.callbacks.sidebar.get_trigger_id", return_value="toggle-settings-2")
 def test_toggle_columns_settings_two(
-    mock_trigger_id,
+    _mock_trigger_id,
     mocker,
     n_presets,
     n_settings,
@@ -72,7 +72,7 @@ def test_toggle_columns_settings_two(
 )
 @mock.patch("bridge.callbacks.sidebar.get_trigger_id", return_value="toggle-settings-1")
 def test_toggle_columns_settings_one(
-    mock_trigger_id,
+    _mock_trigger_id,
     mocker,
     n_presets,
     n_settings,
@@ -101,7 +101,7 @@ def test_toggle_columns_settings_one(
 )
 @mock.patch("bridge.callbacks.sidebar.get_trigger_id", return_value="no-settings")
 def test_toggle_columns_settings_none(
-    mock_trigger_id,
+    _mock_trigger_id,
     mocker,
     n_presets,
     n_settings,

@@ -18,7 +18,7 @@ from bridge.utils.crf_name import get_crf_name
     ],
 )
 @mock.patch("bridge.utils.crf_name.logger")
-def test_get_crf_name(mock_logger, name, checked, expected_output):
+def test_get_crf_name(_mock_logger, name, checked, expected_output):
     def run_callback(crf_name, checked_values):
         return get_crf_name(crf_name, checked_values)
 

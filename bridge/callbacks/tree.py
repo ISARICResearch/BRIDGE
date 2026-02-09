@@ -48,7 +48,7 @@ def update_tree_items_and_stores(
     version_lang_multilist_saved: str,
 ):
     if upload_crf_ready:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     ctx = dash.callback_context
     df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
@@ -71,7 +71,7 @@ def update_tree_items_and_stores(
             id="tree_items_container",
             className="tree-item",
         )
-        return (tree_items, dash.no_update, dash.no_update, dash.no_update)
+        return tree_items, dash.no_update, dash.no_update, dash.no_update
 
     logger.info(f"checked_variables: {checked_templates}")
     logger.info(f"grouped_presets: {grouped_presets_dict}")

@@ -99,8 +99,8 @@ def test_on_generate_click_no_action(
 @mock.patch("bridge.callbacks.generate.get_crf_name", return_value="test_crf")
 @mock.patch("bridge.callbacks.generate.get_trigger_id", return_value="crf_generate")
 def test_on_generate_click(
-    mock_trigger_id,
-    mock_crf_name,
+    _mock_trigger_id,
+    _mock_crf_name,
     mock_date,
     mock_crf_csv,
     mock_paperlike_pdf,
@@ -178,7 +178,7 @@ def test_on_generate_click(
 )
 @mock.patch("bridge.callbacks.generate.get_trigger_id", return_value="crf_not_generate")
 def test_on_generate_click_wrong_trigger_id(
-    mock_trigger_id,
+    _mock_trigger_id,
     n_clicks,
     json_data,
     selected_version_data,
