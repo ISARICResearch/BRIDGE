@@ -12,6 +12,37 @@ from bridge.logging.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+ARC_UNIT_CHANGE_VERSION = "v1.2.1"
+
+INCLUDE_NOT_SHOW = [
+    "otherl2",
+    "otherl3",
+    "agent",
+    "agent2",
+    "warn",
+    "warn2",
+    "warn3",
+    "units",
+    "add",
+    "vol",
+    "0item",
+    "0otherl2",
+    "0addi",
+    "1item",
+    "1otherl2",
+    "1addi",
+    "2item",
+    "2otherl2",
+    "2addi",
+    "3item",
+    "3otherl2",
+    "3addi",
+    "4item",
+    "4otherl2",
+    "4addi",
+    "txt",
+]
+
 
 @dash.callback(
     [
@@ -40,8 +71,12 @@ def display_checked_in_grid(
 
     if checked:
         version = selected_version_data.get("selected_version", None)
+        dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
+
+        checked = _checked_updates_for_units(checked, dynamic_units_conversion, df_datadicc)
+
         df_selected_variables = _create_selected_dataframe(
-            df_datadicc, checked, version
+            df_datadicc, checked, dynamic_units_conversion
         )
         new_row_list = _create_new_row_list(df_selected_variables)
 
@@ -73,8 +108,46 @@ def display_checked_in_grid(
     )
 
 
+def _checked_updates_for_units(
+    checked: list, dynamic_units_conversion: bool, df_datadicc: pd.DataFrame
+) -> list:
+    # Deal with, e.g. labs_glucose
+    # This has three units, which confuses matters when two are checked!
+    # labs_glucose / labs_glucose_units needs to be added to checked
+    # Only do this for last checked variable
+    last_checked_variable = checked[-1]
+    last_checked_base_var = "_".join(last_checked_variable.split("_")[:-1])
+    no_base_var_checked = len(
+        [variable for variable in checked if last_checked_base_var in variable]
+    )
+    if no_base_var_checked > 1:
+        if not dynamic_units_conversion:
+            last_checked_units = f"{last_checked_base_var}_units"
+
+            df_units = df_datadicc.loc[df_datadicc["Validation"] == "units"]
+            if last_checked_units in df_units["Variable"].values:
+                if last_checked_units not in checked:
+                    checked.append(last_checked_units)
+        else:
+            df_datadicc_base_var = df_datadicc[
+                df_datadicc["Variable"] == last_checked_base_var
+            ]
+            if df_datadicc_base_var["Question_english"].str.contains(
+                "(select units)", case=False, na=False, regex=False
+            ):
+                if last_checked_base_var not in checked:
+                    checked.append(last_checked_base_var)
+
+    if not dynamic_units_conversion:
+        # Replace "_units" fields with the original value, e.g. demog_height for demog_height_units
+        # Then subsequent processing will be the same for both
+        # This is okay because "Validation" field no longer needed for grid
+        checked = [re.sub("_units$", "", variable) for variable in checked]
+    return checked
+
+
 def _create_selected_dataframe(
-    df_datadicc: pd.DataFrame, checked: list, version: str
+    df_datadicc: pd.DataFrame, checked: list, dynamic_units_conversion: bool
 ) -> pd.DataFrame:
     selected_dependency_lists = (
         df_datadicc["Dependencies"].loc[df_datadicc["Variable"].isin(checked)].tolist()
@@ -83,16 +156,17 @@ def _create_selected_dataframe(
     for sublist in selected_dependency_lists:
         flat_selected_dependency.update(sublist)
     all_selected = set(checked).union(flat_selected_dependency)
+
     df_selected_variables = df_datadicc.loc[df_datadicc["Variable"].isin(all_selected)]
 
-    ## REDCAP Pipeline
+    # REDCAP Pipeline
     df_selected_variables = _get_include_not_show(
         df_selected_variables["Variable"], df_datadicc
     )
 
     # Select Units Transformation
     df_grid_units_display, unit_variables_to_delete = _units_transformation(
-        df_selected_variables["Variable"], df_datadicc, version
+        df_selected_variables["Variable"], df_datadicc, dynamic_units_conversion
     )
 
     if not df_grid_units_display.empty:
@@ -188,38 +262,9 @@ def _extract_parenthesis_content(text: str) -> str:
 def _get_include_not_show(
     selected_variables: pd.Series, df_current_datadicc: pd.DataFrame
 ) -> pd.DataFrame:
-    include_not_show = [
-        "otherl2",
-        "otherl3",
-        "agent",
-        "agent2",
-        "warn",
-        "warn2",
-        "warn3",
-        "units",
-        "add",
-        "vol",
-        "0item",
-        "0otherl2",
-        "0addi",
-        "1item",
-        "1otherl2",
-        "1addi",
-        "2item",
-        "2otherl2",
-        "2addi",
-        "3item",
-        "3otherl2",
-        "3addi",
-        "4item",
-        "4otherl2",
-        "4addi",
-        "txt",
-    ]
-
     # Get the include not show for the selected variables
     possible_vars_to_include = [
-        f"{var}_{suffix}" for var in selected_variables for suffix in include_not_show
+        f"{var}_{suffix}" for var in selected_variables for suffix in INCLUDE_NOT_SHOW
     ]
     actual_vars_to_include = [
         var
@@ -249,8 +294,8 @@ def _add_select_units_field(
                 df_datadicc["vari"] == row["vari"]
             )
             df_datadicc.loc[mask_sec_vari, "select units"] = True
+
             # Only show the original one (NOT suffixed "_units") in the grid
-            # This maps to what is in the tree
             df_datadicc.loc[df_datadicc["Variable"] == variable_key, "select units"] = (
                 False
             )
@@ -284,7 +329,7 @@ def _get_units_language(
     return units_lang
 
 
-def _create_units_dataframe(
+def _create_grid_units_dataframe(
     df_datadicc: pd.DataFrame,
     selected_variables: pd.Series,
 ) -> pd.DataFrame:
@@ -301,13 +346,12 @@ def _create_units_dataframe(
 def _units_transformation(
     selected_variables: pd.Series,
     df_datadicc: pd.DataFrame,
-    version: str,
+    dynamic_units_conversion: bool,
 ) -> tuple[pd.DataFrame, list]:
-    dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
     df_datadicc = _add_select_units_field(df_datadicc, dynamic_units_conversion)
     units_lang = _get_units_language(df_datadicc, dynamic_units_conversion)
 
-    df_units = _create_units_dataframe(df_datadicc, selected_variables)
+    df_units = _create_grid_units_dataframe(df_datadicc, selected_variables)
 
     select_unit_rows_list = []
     unit_variables_to_delete = []
@@ -325,6 +369,7 @@ def _units_transformation(
             max_value = pd.to_numeric(matching_rows["Maximum"], errors="coerce").max()
             min_value = pd.to_numeric(matching_rows["Minimum"], errors="coerce").min()
 
+            # E.g. Combine units from demog_heigh_cm and demog_height_in
             options = " | ".join(
                 [
                     f"{idx + 1},{_extract_parenthesis_content(str(r['Question']))}"
@@ -348,7 +393,9 @@ def _units_transformation(
             row_units["Maximum"] = None
             row_units["Minimum"] = None
             row_units["Question"] = (
-                row["Question"].split("(")[0] + "(" + units_lang + ")"
+                (row["Question"].split("(")[0] + "(" + units_lang + ")")
+                if "(" in row["Question"]
+                else row["Question"]
             )
             row_units["Validation"] = None
 
@@ -385,20 +432,7 @@ def _get_focused_cell_index(
         df_row_data = pd.DataFrame(row_data)
         df_row_data["Question"] = df_row_data["Question"].str.split(":").str[0]
 
-        # TODO: This is messy and unclear what it's doing
-        try:
-            if len(checked) > 1:
-                latest_checked_variable = checked[-1]
-                while (
-                    latest_checked_variable.isupper()
-                    or latest_checked_variable not in df_row_data["Variable"].values
-                ) and len(checked) > 1:
-                    checked.pop()
-                    latest_checked_variable = checked[-1]
-            else:
-                latest_checked_variable = checked[0]
-        except IndexError:
-            latest_checked_variable = checked[0]
+        latest_checked_variable = _get_latest_checked_variable(checked, df_row_data)
 
         df_row_data_variable = df_row_data[
             df_row_data["Variable"] == latest_checked_variable
@@ -505,3 +539,21 @@ def _get_focused_cell_index(
             focused_cell_index = df_row_data_variable.index.tolist()[0]
 
     return focused_cell_index
+
+
+def _get_latest_checked_variable(checked: list, df_row_data: pd.DataFrame) -> list:
+    checked_variables = checked.copy()
+
+    if len(checked_variables) > 1:
+        latest_checked_variable = checked_variables[-1]
+        while (
+            latest_checked_variable.isupper()
+            or latest_checked_variable not in df_row_data["Variable"].values
+        ) and len(checked_variables) > 1:
+            checked_variables.pop()
+            latest_checked_variable = checked_variables[-1]
+
+    else:
+        latest_checked_variable = checked_variables[0]
+
+    return latest_checked_variable
