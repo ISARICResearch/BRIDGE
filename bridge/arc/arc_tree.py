@@ -34,14 +34,14 @@ ROWS_FOR_TREE = [
 
 def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
     dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
-    df_for_item = _create_tree_item_dataframe(df_datadicc, dynamic_units_conversion)
+    df_tree = _create_tree_item_dataframe(df_datadicc, dynamic_units_conversion)
 
     tree = {"title": version, "key": "ARC", "children": []}
     seen_forms = set()
     seen_sections = dict()
 
     # Build tree
-    for (form, sec_name), df_sec in df_for_item.groupby(
+    for (form, sec_name), df_sec in df_tree.groupby(
         ["Form", "Sec_name"], dropna=False, sort=False
     ):
         form_upper = str(form).upper()
@@ -143,7 +143,7 @@ def _get_units_parent_units_dataframes(
             parent_name = df_parent_of_units["Variable"].values[0]
             df_units = df_variable[df_variable["Variable"] != parent_name]
 
-    return df_parent_of_units, df_units
+    return df_parent_of_units.reset_index(drop=True), df_units.reset_index(drop=True)
 
 
 def _create_tree_item_dataframe(
@@ -236,7 +236,7 @@ def _find_section_node(tree: dict, form_upper: str, sec_name_upper: str) -> None
     return section_node
 
 
-def _format_question_text(row) -> str:
+def _format_question_text(row: pd.Series) -> str:
     if row["Type"] == "user_list":
         return "↳ " + row["Question"]
     elif row["Type"] == "multi_list":

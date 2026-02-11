@@ -8,12 +8,14 @@ from statsmodels.compat.pandas import assert_frame_equal
 
 from bridge.callbacks import grid
 
-FOCUSED_CELL_INDEX = 0
-
 
 @mock.patch("bridge.callbacks.grid._get_focused_cell_index", return_value=0)
-def test_display_checked_in_grid_checked_empty(_mock_focused_cell_index):
+@mock.patch("bridge.callbacks.grid._checked_updates_for_units")
+def test_display_checked_in_grid_checked_empty(
+    _mock_checked_updates, _mock_focused_cell_index
+):
     checked = []
+    _mock_checked_updates = []
     current_datadicc_saved = (
         '{"columns":["Form", "Variable"],'
         '"index":[0, 1],'
@@ -26,7 +28,7 @@ def test_display_checked_in_grid_checked_empty(_mock_focused_cell_index):
         focused_cell_run_callback,
         focused_cell_index,
     ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, FOCUSED_CELL_INDEX, selected_version_data
+        checked, current_datadicc_saved, 0, selected_version_data
     )
 
     expected_row_data_list = []
@@ -39,10 +41,15 @@ def test_display_checked_in_grid_checked_empty(_mock_focused_cell_index):
 @mock.patch("bridge.callbacks.grid._get_focused_cell_index", return_value=0)
 @mock.patch("bridge.callbacks.grid._create_new_row_list")
 @mock.patch("bridge.callbacks.grid._create_selected_dataframe")
+@mock.patch("bridge.callbacks.grid._checked_updates_for_units", return_value=[])
 def test_display_checked_in_grid(
-    mock_selected_dataframe, mock_new_row_list, _mock_focused_index
+    _mock_checked_updates,
+    mock_selected_dataframe,
+    mock_new_row_list,
+    _mock_focused_index,
 ):
     checked = ["not_empty"]
+    _mock_checked_updates.return_value = ["not_empty"]
     current_datadicc_saved = (
         '{"columns":["Form", "Variable"],'
         '"index":[0, 1],'
@@ -77,7 +84,7 @@ def test_display_checked_in_grid(
         focused_cell_run_callback,
         focused_cell_index,
     ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, FOCUSED_CELL_INDEX, selected_version_data
+        checked, current_datadicc_saved, 0, selected_version_data
     )
 
     expected_row_data_list = [
@@ -121,108 +128,60 @@ def get_output_display_checked_in_grid(
 
 
 @pytest.mark.parametrize(
-    "row_data, focused_cell_index, checked, expected_output",
+    "focused_cell_index, expected_output",
     [
-        ([], 5, [], 5),
-        (
-            [
-                {
-                    "Question": "Another question",
-                    "Type": "descriptive",
-                    "Variable": "another_variable",
-                    "Section": "INCLUSION CRITERIA",
-                },
-                {
-                    "Question": "Consent:",
-                    "Type": "descriptive",
-                    "Variable": "inclu_consentdes",
-                    "Section": "INCLUSION CRITERIA",
-                },
-            ],
-            16,
-            [
-                "inclu_consentdes",
-                "A FAKE UPPERCASE VARIABLE",
-                "fake_variable_not_in_row",
-            ],
-            1,
-        ),
-        (
-            [
-                {
-                    "Question": "Another question",
-                    "Type": "descriptive",
-                    "Variable": "another_variable",
-                    "Section": "INCLUSION CRITERIA",
-                },
-                {
-                    "Question": "Gender",
-                    "Type": "radio",
-                    "Variable": "demog_gender",
-                    "Section": "DEMOGRAPHICS",
-                },
-                {
-                    "Question": "Country",
-                    "Type": "user_list",
-                    "Variable": "demog_country",
-                    "Section": "DEMOGRAPHICS",
-                },
-                {
-                    "Question": "Consent:",
-                    "Type": "descriptive",
-                    "Variable": "inclu_consentdes",
-                    "Section": "INCLUSION CRITERIA",
-                },
-            ],
-            7,
-            ["demog_country", "demog_gender"],
-            2,
-        ),
-        (
-            [
-                {
-                    "Question": "Another question",
-                    "Type": "descriptive",
-                    "Variable": "another_variable",
-                    "Section": "INCLUSION CRITERIA",
-                },
-                {
-                    "Question": "Gender",
-                    "Type": "radio",
-                    "Variable": "demog_gender",
-                    "Section": "DEMOGRAPHICS",
-                },
-                {
-                    "Question": "Country",
-                    "Type": "user_list",
-                    "Variable": "demog_country",
-                    "Section": "DEMOGRAPHICS",
-                },
-                {
-                    "Question": "Consent:",
-                    "Type": "descriptive",
-                    "Variable": "inclu_consentdes",
-                    "Section": "INCLUSION CRITERIA",
-                },
-            ],
-            7,
-            ["demog_country", "demog_gender"],
-            2,
-        ),
+        (None, None),
+        (0, 0),
     ],
 )
-def test_get_focused_cell_index(row_data, focused_cell_index, checked, expected_output):
+@mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
+def test_get_focused_cell_index_no_action(
+    _mock_latest_checked, focused_cell_index, expected_output
+):
+    row_data = []
+    checked = []
     output = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
+    if expected_output:
+        assert output == expected_output
+    else:
+        assert not output
 
-    assert output == expected_output
+
+@mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
+def test_get_focused_cell_index(
+    mock_latest_checked,
+):
+    mock_latest_checked.return_value = "demog_height"
+    row_data = [
+        {"Variable": np.nan},
+        {"Variable": "subjid"},
+        {"Variable": "demog_height"},
+        {"Variable": "demog_height_units"},
+    ]
+    focused_cell_index = 3
+    checked = ["demog_height", "demog_height_cm", "demog_height_in"]
+    expected = 2
+    output = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
+    assert output == expected
 
 
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
 @mock.patch("bridge.arc.arc_core.get_variable_order")
 @mock.patch("bridge.arc.arc_core.add_transformed_rows")
 @mock.patch("bridge.callbacks.grid._units_transformation")
 @mock.patch("bridge.callbacks.grid._get_include_not_show")
 def test_create_selected_dataframe(
-    _mock_include, mock_units, mock_transformed_rows, _mock_order
+    _mock_include,
+    mock_units,
+    mock_transformed_rows,
+    _mock_order,
+    dynamic_units_conversion,
 ):
     data_datadicc = {
         "Variable": [
@@ -247,7 +206,6 @@ def test_create_selected_dataframe(
         "demog_height_cm",
         "demog_height_in",
     ]
-    version = "v1.2.1"
 
     unit_variables_to_delete = ["demog_height_units", "demog_weight_kg"]
     mock_units.return_value = [df_datadicc, unit_variables_to_delete]
@@ -267,7 +225,9 @@ def test_create_selected_dataframe(
     }
     df_expected = pd.DataFrame(data_expected)
 
-    df_output = grid._create_selected_dataframe(df_datadicc, checked, version)
+    df_output = grid._create_selected_dataframe(
+        df_datadicc, checked, dynamic_units_conversion
+    )
 
     assert_frame_equal(df_output, df_expected)
 
@@ -278,9 +238,13 @@ def test_create_new_row_list():
             "presentation",
             "presentation",
             "presentation",
+            "presentation",
+            "presentation",
         ],
         "Section": [
             None,
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
             "DEMOGRAPHICS",
             "DEMOGRAPHICS",
         ],
@@ -288,16 +252,22 @@ def test_create_new_row_list():
             "text",
             "text",
             "radio",
+            "descriptive",
+            "date_dmy",
         ],
         "Validation": [
             None,
             "number",
             None,
+            None,
+            "date_dmy",
         ],
         "Answer Options": [
             "Answer A | Answer B",
-            "",
-            "",
+            "Answer C | Answer D | Answer E",
+            "Answer 1 | Answer 2",
+            "Answer 3 | Answer 4",
+            "Answer 5 | Answer 6 | Answer 7",
         ],
     }
     df_selected = pd.DataFrame.from_dict(data_selected)
@@ -332,12 +302,29 @@ def test_create_new_row_list():
             "Validation": "number",
         },
         {
-            "Answer Options": "○",
+            "Answer Options": "○ Answer 1   ○ Answer 2",
             "Form": "presentation",
             "IsSeparator": False,
             "Section": "DEMOGRAPHICS",
             "Type": "radio",
             "Validation": None,
+        },
+        {
+            "Answer Options": "",
+            "Form": "presentation",
+            "IsDescriptive": True,
+            "IsSeparator": False,
+            "Section": "DEMOGRAPHICS",
+            "Type": "descriptive",
+            "Validation": None,
+        },
+        {
+            "Answer Options": "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]",
+            "Form": "presentation",
+            "IsSeparator": False,
+            "Section": "DEMOGRAPHICS",
+            "Type": "date_dmy",
+            "Validation": "date_dmy",
         },
     ]
 
@@ -461,6 +448,12 @@ def test_extract_parenthesis_content_multiple_brackets():
     assert output_str == expected_str
 
 
+def test_extract_parenthesis_content_no_brackets():
+    text = "Neutrophils"
+    output_str = grid._extract_parenthesis_content(text)
+    assert output_str == text
+
+
 def test_get_include_not_show():
     data = [
         "demog_age",
@@ -498,13 +491,30 @@ def test_get_include_not_show():
     assert_frame_equal(df_output, df_expected)
 
 
-@mock.patch("bridge.callbacks.grid._create_units_dataframe")
+@mock.patch(
+    "bridge.callbacks.grid._create_grid_units_dataframe", return_value=pd.DataFrame()
+)
+@mock.patch("bridge.callbacks.grid._get_units_language")
+@mock.patch("bridge.callbacks.grid._add_select_units_field")
+def test_units_transformation_no_data(
+    _mock_select_units, _mock_language, _mock_units_dataframe
+):
+    selected_variables = pd.Series()
+    df_datadicc = pd.DataFrame()
+    dynamic_units_conversion = True
+    (df_output, list_output) = grid._units_transformation(
+        selected_variables, df_datadicc, dynamic_units_conversion
+    )
+    df_expected = pd.DataFrame()
+    list_expected = []
+    assert_frame_equal(df_output, df_expected)
+    assert list_output == list_expected
+
+
+@mock.patch("bridge.callbacks.grid._create_grid_units_dataframe")
 @mock.patch("bridge.callbacks.grid._get_units_language", return_value="select units")
 @mock.patch("bridge.callbacks.grid._add_select_units_field")
-@mock.patch("bridge.arc.arc_core.get_dynamic_units_conversion_bool")
-def test_units_transformation(
-    _mock_bool, mock_select_units, _mock_language, mock_units_dataframe
-):
+def test_units_transformation(mock_select_units, _mock_language, mock_units_dataframe):
     data = [
         "demog_height",
         "demog_height_units",
@@ -513,7 +523,7 @@ def test_units_transformation(
     ]
     selected_variables = pd.Series(data, name="Variable")
     df_datadicc = pd.DataFrame()
-    version = "v1.1.2"
+    dynamic_units_conversion = True  # Not used
     mock_select_units.return_value = pd.DataFrame()
     data = {
         "Variable": [
@@ -612,7 +622,7 @@ def test_units_transformation(
     ]
 
     (df_output, list_output) = grid._units_transformation(
-        selected_variables, df_datadicc, version
+        selected_variables, df_datadicc, dynamic_units_conversion
     )
 
     assert_frame_equal(df_output, df_expected)
@@ -664,7 +674,7 @@ def test_get_units_language(dynamic_units_conversion):
     assert output_str == expected_str
 
 
-def test_create_units_dataframe():
+def test_create_grid_units_dataframe():
     data_datadicc = {
         "Variable": [
             "demog_height",
@@ -733,6 +743,234 @@ def test_create_units_dataframe():
     }
     df_expected = pd.DataFrame.from_dict(data_expected)
 
-    df_output = grid._create_units_dataframe(df_datadicc, selected_variables)
+    df_output = grid._create_grid_units_dataframe(df_datadicc, selected_variables)
 
     assert_frame_equal(df_output, df_expected)
+
+
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
+def test_checked_updates_for_units_no_change(dynamic_units_conversion):
+    checked = ["a_variable", "a_different_variable_base"]
+    df_datadicc = pd.DataFrame()  # Not used
+    expected = ["a_variable", "a_different_variable_base"]
+    output = grid._checked_updates_for_units(
+        checked, dynamic_units_conversion, df_datadicc
+    )
+    assert output == expected
+
+
+@pytest.fixture()
+def df_datadicc_new_units():
+    data = {
+        "Variable": [
+            "labs_glucose",
+            "labs_glucose_units",
+            "labs_glucose_mmoll",
+            "labs_glucose_mgdl",
+            "labs_glucose_gl",
+        ],
+        "Validation": [
+            "number",
+            "units",
+            "number",
+            "number",
+            "number",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+    return df_datadicc
+
+
+@pytest.fixture()
+def df_datadicc_old_units():
+    data = {
+        "Variable": [
+            "labs_glucose",
+            "labs_glucose_mmoll",
+            "labs_glucose_mgdl",
+            "labs_glucose_gl",
+        ],
+        "Question_english": [
+            "Random blood glucose (select units)",
+            "Random blood glucose (mmol/L)",
+            "Random blood glucose (mg/dL)",
+            "Random blood glucose (g/L)",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+    return df_datadicc
+
+
+def test_checked_updates_for_units_all_units_checked_dynamic_units_false(
+    df_datadicc_new_units,
+):
+    checked = [
+        "labs_glucose_units",
+        "labs_glucose_mmoll",
+        "labs_glucose_mgdl",
+        "labs_glucose_gl",
+    ]
+    dynamic_units_conversion = False
+    expected = [
+        "labs_glucose",
+        "labs_glucose_mmoll",
+        "labs_glucose_mgdl",
+        "labs_glucose_gl",
+    ]
+    output = grid._checked_updates_for_units(
+        checked, dynamic_units_conversion, df_datadicc_new_units
+    )
+    assert output == expected
+
+
+def test_checked_updates_for_units_all_units_checked_dynamic_units_true(
+    df_datadicc_old_units,
+):
+    checked = [
+        "labs_glucose",
+        "labs_glucose_mmoll",
+        "labs_glucose_mgdl",
+        "labs_glucose_gl",
+    ]
+    dynamic_units_conversion = True
+    expected = [
+        "labs_glucose",
+        "labs_glucose_mmoll",
+        "labs_glucose_mgdl",
+        "labs_glucose_gl",
+    ]
+    output = grid._checked_updates_for_units(
+        checked, dynamic_units_conversion, df_datadicc_old_units
+    )
+    assert output == expected
+
+
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
+def test_checked_updates_for_units_two_units(
+    dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
+):
+    checked = [
+        "labs_glucose_mmoll",
+        "labs_glucose_gl",
+    ]
+
+    expected = [
+        "labs_glucose_mmoll",
+        "labs_glucose_gl",
+        "labs_glucose",
+    ]
+
+    if not dynamic_units_conversion:
+        output = grid._checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc_new_units
+        )
+    else:
+        output = grid._checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc_old_units
+        )
+
+    assert output == expected
+
+
+@pytest.mark.parametrize(
+    "dynamic_units_conversion",
+    [
+        True,
+        False,
+    ],
+)
+def test_checked_updates_for_units_one_unit(
+    dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
+):
+    checked = [
+        "labs_glucose_mgdl",
+    ]
+
+    expected = [
+        "labs_glucose_mgdl",
+    ]
+
+    if not dynamic_units_conversion:
+        output = grid._checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc_old_units
+        )
+    else:
+        output = grid._checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc_old_units
+        )
+
+    assert output == expected
+
+
+def test_get_latest_checked_variable_single_checked():
+    checked = ["a_single_variable"]
+    df_row_data = pd.DataFrame()  # Not used
+    expected = "a_single_variable"
+    output = grid._get_latest_checked_variable(checked, df_row_data)
+    assert output == expected
+
+
+def test_get_latest_checked_variable_multiple_checked_not_in_row_data():
+    checked = [
+        "demog_height",
+        "demog_height_cm",
+        "demog_height_in",
+    ]
+    data = {
+        "Variable": [
+            "demog_height",
+        ],
+    }
+    df_row_data = pd.DataFrame(data)
+    expected = "demog_height"
+    output = grid._get_latest_checked_variable(checked, df_row_data)
+    assert output == expected
+
+
+def test_get_latest_checked_variable_multiple_checked_in_row_data():
+    checked = [
+        "PRESENTATION-DEMOGRAPHICS-VARI-healthcare-GROUP",
+        "demog_healthcare",
+        "demog_healthcare_ptfacing",
+        "demog_healthcare_expbiosample",
+    ]
+    data = {
+        "Variable": [
+            "demog_healthcare_expbiosample",
+        ],
+    }
+    df_row_data = pd.DataFrame(data)
+    expected = "demog_healthcare_expbiosample"
+    output = grid._get_latest_checked_variable(checked, df_row_data)
+    assert output == expected
+
+
+def test_get_latest_checked_variable_multiple_checked_plus_header():
+    checked = [
+        "nborn_motherpin",
+        "nborn_motherincl",
+        "NEONATE-NEONATE DETAILS",
+    ]
+    data = {
+        "Variable": [
+            "nborn_motherpin",
+            "nborn_motherincl",
+            "NEONATE-NEONATE DETAILS",
+        ],
+    }
+    df_row_data = pd.DataFrame(data)
+    expected = "nborn_motherincl"
+    output = grid._get_latest_checked_variable(checked, df_row_data)
+    assert output == expected

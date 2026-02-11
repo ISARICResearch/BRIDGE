@@ -73,7 +73,9 @@ def display_checked_in_grid(
         version = selected_version_data.get("selected_version", None)
         dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
 
-        checked = _checked_updates_for_units(checked, dynamic_units_conversion, df_datadicc)
+        checked = _checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc
+        )
 
         df_selected_variables = _create_selected_dataframe(
             df_datadicc, checked, dynamic_units_conversion
@@ -113,7 +115,7 @@ def _checked_updates_for_units(
 ) -> list:
     # Deal with, e.g. labs_glucose
     # This has three units, which confuses matters when two are checked!
-    # labs_glucose / labs_glucose_units needs to be added to checked
+    # labs_glucose / labs_glucose_units is missing from checked and needs to be added
     # Only do this for last checked variable
     last_checked_variable = checked[-1]
     last_checked_base_var = "_".join(last_checked_variable.split("_")[:-1])
@@ -132,8 +134,10 @@ def _checked_updates_for_units(
             df_datadicc_base_var = df_datadicc[
                 df_datadicc["Variable"] == last_checked_base_var
             ]
-            if df_datadicc_base_var["Question_english"].str.contains(
-                "(select units)", case=False, na=False, regex=False
+            if (
+                df_datadicc_base_var["Question_english"]
+                .str.contains("(select units)", case=False, na=False, regex=False)
+                .values[0]
             ):
                 if last_checked_base_var not in checked:
                     checked.append(last_checked_base_var)
@@ -350,7 +354,6 @@ def _units_transformation(
 ) -> tuple[pd.DataFrame, list]:
     df_datadicc = _add_select_units_field(df_datadicc, dynamic_units_conversion)
     units_lang = _get_units_language(df_datadicc, dynamic_units_conversion)
-
     df_units = _create_grid_units_dataframe(df_datadicc, selected_variables)
 
     select_unit_rows_list = []
@@ -426,122 +429,20 @@ def _units_transformation(
 
 
 def _get_focused_cell_index(
-    row_data: list, focused_cell_index: int, checked: list
-) -> int:
+    row_data: list, focused_cell_index: int | None, checked: list
+) -> int | None:
     if checked:
         df_row_data = pd.DataFrame(row_data)
-        df_row_data["Question"] = df_row_data["Question"].str.split(":").str[0]
-
         latest_checked_variable = _get_latest_checked_variable(checked, df_row_data)
 
         df_row_data_variable = df_row_data[
             df_row_data["Variable"] == latest_checked_variable
         ]
-        section_name = df_row_data_variable["Section"].values[0]
-        df_row_data_section = df_row_data[df_row_data["Section"] == section_name]
-
-        df_row_data_section = df_row_data_section[
-            ~df_row_data_section["Variable"].str.contains("_otherl")
-        ]
-
-        uppercase_variable_list = []
-        for item in checked:
-            if item.isupper():
-                uppercase_variable_list.append(item)
-
-        type_list = df_row_data_section["Type"].values
-        latest_type = type_list[-1]
-        list_types = [
-            variable_type
-            for variable_type in type_list
-            if variable_type in ["multi_list", "user_list"]
-        ]
-        if latest_type not in ["multi_list", "user_list"]:
-            # Not a list => pick latest variable
-            focused_cell_index = df_row_data_section.index.tolist()[-1]
-
-        elif len(list_types) > 1 or latest_type in ["multi_list", "user_list"]:
-            # Multiple lists checked => pick latest list
-            df_lists = df_row_data_section[df_row_data_section["Type"].isin(list_types)]
-            focused_cell_index = df_lists.index.tolist()[-1]
-
-        elif len(df_row_data_section) == 1:
-            # Section checked, then a variable in a different section => highlight the variable
-            focused_cell_index = df_row_data_variable.index.tolist()[0]
-
-        elif uppercase_variable_list:
-            # One or more section headers have been checked
-            if "ARC" in uppercase_variable_list:
-                # Everything checked => pick first
-                uppercase_variable_list.remove("ARC")
-                section_header = uppercase_variable_list[0]
-                section_question_list = [
-                    question
-                    for question in df_row_data["Question"].values
-                    if question.isupper()
-                ]
-                if section_header not in section_question_list:
-                    # Subsection, then all
-                    section_header = uppercase_variable_list[1]
-
-            else:
-                first_header = uppercase_variable_list[0]
-                section_list = [
-                    item for item in uppercase_variable_list if "-" not in item
-                ]
-
-                if (
-                    all(
-                        [
-                            item.startswith(first_header)
-                            for item in uppercase_variable_list
-                        ]
-                    )
-                    and section_list
-                ):
-                    # All sections checked => pick first
-                    section_header = first_header
-
-                elif section_list:
-                    # No subsections checked => pick last selected section
-                    section_header = section_list[-1]
-
-                else:
-                    # Multiple subsections checked => pick last one
-                    section_subsection_list = [
-                        item for item in uppercase_variable_list if "-" in item
-                    ]
-                    subsection_list = []
-
-                    for item in section_subsection_list:
-                        subsection_list = subsection_list + item.split("-")
-                    section_header = subsection_list[-1]
-
-                    section_question_list = [
-                        question
-                        for question in df_row_data["Question"].values
-                        if question.isupper()
-                    ]
-                    if section_header not in section_question_list:
-                        # Subsection contains a "-"
-                        section_header = "-".join(
-                            [subsection_list[-2], subsection_list[-1]]
-                        )
-
-            df_row_data_section_start = df_row_data[
-                df_row_data["Question"] == section_header
-            ]
-            focused_cell_index = df_row_data_section_start.index.tolist()[0]
-
-        else:
-            # Single variable ticked
-            # Group checked => pick last item in group
-            focused_cell_index = df_row_data_variable.index.tolist()[0]
-
+        focused_cell_index = df_row_data_variable.index.tolist()[0]
     return focused_cell_index
 
 
-def _get_latest_checked_variable(checked: list, df_row_data: pd.DataFrame) -> list:
+def _get_latest_checked_variable(checked: list, df_row_data: pd.DataFrame) -> str:
     checked_variables = checked.copy()
 
     if len(checked_variables) > 1:

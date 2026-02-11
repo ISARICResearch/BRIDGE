@@ -78,7 +78,7 @@ def test_update_list_variables_checked_upload(_mock_get_translations):
     list_type = "Ulist"
     language = "English"
     (df_datadicc, list_variable_choices_updated) = (
-        upload.update_list_variables_checked_upload(
+        upload._update_list_variables_checked_upload(
             df_datadicc, df_list_upload, list_variable_choices, list_type, language
         )
     )
@@ -322,7 +322,7 @@ def test_update_output_upload_crf_not_triggered():
 
 
 @mock.patch("bridge.callbacks.upload.html.Div", return_value=["Just for checking"])
-@mock.patch("bridge.callbacks.upload.update_list_variables_checked_upload")
+@mock.patch("bridge.callbacks.upload._update_list_variables_checked_upload")
 @mock.patch("bridge.callbacks.upload.arc_tree.get_tree_items")
 def test_update_output_upload_crf(_mock_get_tree_items, mock_update, _mock_html_div):
     data = {

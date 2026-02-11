@@ -29,7 +29,7 @@ def test_get_checked_template_list():
         "UserGenerated": ["Oropouche"],
     }
     checked_values_list = [["Covid"], ["ARI"], [], [], []]
-    output = tree.get_checked_template_list(grouped_presets_dict, checked_values_list)
+    output = tree._get_checked_template_list(grouped_presets_dict, checked_values_list)
     expected = [["ARChetype Disease CRF", "Covid"], ["ARChetype Syndromic CRF", "ARI"]]
     assert output == expected
 
@@ -118,7 +118,7 @@ def test_update_list_items_ulist_checked_otherl2(
         '[56, "Abnormal weight loss", 0]]]]'
     )
 
-    df_output, ulist_output = tree.update_list_items(
+    df_output, ulist_output = tree._update_list_items(
         df_current_datadicc,
         ulist_saved,
         "user_list",
@@ -126,7 +126,7 @@ def test_update_list_items_ulist_checked_otherl2(
         language,
         checked_key=checked_key,
     )
-    df_output, multilist_output = tree.update_list_items(
+    df_output, multilist_output = tree._update_list_items(
         df_current_datadicc,
         multilist_saved,
         "multi_list",
@@ -205,10 +205,10 @@ def test_update_list_items_multilist_selected(
         '[36, "Oropouche", 0]]]]'
     )
 
-    df_output, ulist_output = tree.update_list_items(
+    df_output, ulist_output = tree._update_list_items(
         df_current_datadicc, ulist_saved, "user_list", version, language
     )
-    df_output, multilist_output = tree.update_list_items(
+    df_output, multilist_output = tree._update_list_items(
         df_current_datadicc, multilist_saved, "multi_list", version, language
     )
     ulist_expected = "[]"
@@ -387,9 +387,9 @@ def test_update_tree_items_and_stores_no_update(
         ),
     ],
 )
-@mock.patch("bridge.callbacks.tree.update_list_items")
+@mock.patch("bridge.callbacks.tree._update_list_items")
 @mock.patch(
-    "bridge.callbacks.tree.get_checked_template_list",
+    "bridge.callbacks.tree._get_checked_template_list",
     return_value=[["ARChetype Disease CRF", "Covid"]],
 )
 @mock.patch("bridge.callbacks.tree.logger")

@@ -148,7 +148,6 @@ def _get_checked_template_list(
     ):
         if item_checked_list:
             for item_checked in item_checked_list:
-                # output.append([section, item_checked.replace(' ', '_')])
                 output.append([section, item_checked])
     return output
 
