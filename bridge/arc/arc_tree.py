@@ -153,15 +153,15 @@ def _create_tree_item_dataframe(
     df_for_item = df_datadicc.loc[~df_datadicc["mod"].isin(INCLUDE_NOT_SHOW)]
 
     # Deal with units based on ARC version
-    if dynamic_units_conversion:
-        df_for_item = df_for_item.loc[df_datadicc["mod"] != "units"]
-        df_for_item = df_for_item[ROWS_FOR_TREE]
-    else:
-        # Keep mod, Validation = units, as needed for subsequent steps
+    if not dynamic_units_conversion:
+        # Keep (mod = units, Validation = units), as needed for subsequent steps
         df_for_item = df_for_item.loc[
             ~((df_datadicc["mod"] == "units") & (df_datadicc["Validation"] != "units"))
         ]
         df_for_item = df_for_item[ROWS_FOR_TREE + ["Validation"]]
+    else:
+        df_for_item = df_for_item.loc[df_datadicc["mod"] != "units"]
+        df_for_item = df_for_item[ROWS_FOR_TREE]
 
     # counts per (Form, Sec_name, vari)
     base_for_counts = df_for_item[["Form", "Sec_name", "vari"]].copy()

@@ -447,5 +447,296 @@ def test_format_question_text_multi_list():
     assert output == expected
 
 
-def test_create_tree_item_dataframe():
-    pass
+def test_create_tree_item_dataframe_dynamic_false():
+    dynamic_units_conversion = False
+    data = {
+        "Form": [
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+        ],
+        "Sec_name": [
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "MEDICATION PRIOR TO THIS ADMISSION / PRESENTATION",
+        ],
+        "Variable": [
+            "demog_height",
+            "demog_height_units",
+            "demog_height_cm",
+            "demog_height_in",
+            "demog_weight_kg",
+            "drug14_antiviral_route",
+        ],
+        "Type": [
+            "number",
+            "radio",
+            "number",
+            "number",
+            "number",
+            "checkbox",
+        ],
+        "Question": [
+            "Height (select units)",
+            "Height (select units)",
+            "Height (cm)",
+            "Height (in)",
+            "Weight (kg)",
+            "Antiviral administration route",
+        ],
+        "Validation": [
+            "number",
+            "units",
+            "number",
+            "number",
+            "number",
+            None,
+        ],
+        "vari": [
+            "height",
+            "height",
+            "height",
+            "height",
+            "weight",
+            "antiviral",
+        ],
+        "mod": [
+            None,
+            "units",
+            "cm",
+            "in",
+            "kg",
+            "route",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+
+    data_expected = {
+        "Form": [
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+        ],
+        "Sec_name": [
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+        ],
+        "vari": [
+            "height",
+            "height",
+            "height",
+            "height",
+            "weight",
+        ],
+        "mod": [
+            None,
+            "units",
+            "cm",
+            "in",
+            "kg",
+        ],
+        "Question": [
+            "Height (select units)",
+            "Height (select units)",
+            "Height (cm)",
+            "Height (in)",
+            "Weight (kg)",
+        ],
+        "Variable": [
+            "demog_height",
+            "demog_height_units",
+            "demog_height_cm",
+            "demog_height_in",
+            "demog_weight_kg",
+        ],
+        "Type": [
+            "number",
+            "radio",
+            "number",
+            "number",
+            "number",
+        ],
+        "Validation": [
+            "number",
+            "units",
+            "number",
+            "number",
+            "number",
+        ],
+        "_row_order": [
+            0,
+            1,
+            2,
+            3,
+            4,
+        ],
+        "n_in_vari_total": [
+            4,
+            4,
+            4,
+            4,
+            1,
+        ],
+        "first_question": [
+            "Height (select units)",
+            "Height (select units)",
+            "Height (select units)",
+            "Height (select units)",
+            "Weight (kg)",
+        ],
+        "first_variable": [
+            "demog_height",
+            "demog_height",
+            "demog_height",
+            "demog_height",
+            "demog_weight_kg",
+        ],
+    }
+    df_expected = pd.DataFrame(data_expected)
+
+    df_output = arc_tree._create_tree_item_dataframe(
+        df_datadicc, dynamic_units_conversion
+    )
+    assert_frame_equal(df_output, df_expected)
+
+
+def test_create_tree_item_dataframe_dynamic_true():
+    dynamic_units_conversion = True
+    data = {
+        "Form": [
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+        ],
+        "Sec_name": [
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "MEDICATION PRIOR TO THIS ADMISSION / PRESENTATION",
+        ],
+        "Variable": [
+            "demog_height",
+            "demog_height_cm",
+            "demog_height_in",
+            "demog_weight_kg",
+            "drug14_antiviral_route",
+        ],
+        "Type": [
+            "number",
+            "number",
+            "number",
+            "number",
+            "checkbox",
+        ],
+        "Question": [
+            "Height (select units)",
+            "Height (cm)",
+            "Height (in)",
+            "Weight (kg)",
+            "Antiviral administration route",
+        ],
+        "vari": [
+            "height",
+            "height",
+            "height",
+            "weight",
+            "antiviral",
+        ],
+        "mod": [
+            None,
+            "cm",
+            "in",
+            "kg",
+            "route",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+
+    data_expected = {
+        "Form": [
+            "presentation",
+            "presentation",
+            "presentation",
+            "presentation",
+        ],
+        "Sec_name": [
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+            "DEMOGRAPHICS",
+        ],
+        "vari": [
+            "height",
+            "height",
+            "height",
+            "weight",
+        ],
+        "mod": [
+            None,
+            "cm",
+            "in",
+            "kg",
+        ],
+        "Question": [
+            "Height (select units)",
+            "Height (cm)",
+            "Height (in)",
+            "Weight (kg)",
+        ],
+        "Variable": [
+            "demog_height",
+            "demog_height_cm",
+            "demog_height_in",
+            "demog_weight_kg",
+        ],
+        "Type": [
+            "number",
+            "number",
+            "number",
+            "number",
+        ],
+        "_row_order": [
+            0,
+            1,
+            2,
+            3,
+        ],
+        "n_in_vari_total": [
+            3,
+            3,
+            3,
+            1,
+        ],
+        "first_question": [
+            "Height (select units)",
+            "Height (select units)",
+            "Height (select units)",
+            "Weight (kg)",
+        ],
+        "first_variable": [
+            "demog_height",
+            "demog_height",
+            "demog_height",
+            "demog_weight_kg",
+        ],
+    }
+    df_expected = pd.DataFrame(data_expected)
+
+    df_output = arc_tree._create_tree_item_dataframe(
+        df_datadicc, dynamic_units_conversion
+    )
+    assert_frame_equal(df_output, df_expected)

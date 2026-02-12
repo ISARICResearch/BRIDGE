@@ -24,9 +24,12 @@ def translation_dict():
     return translation_dict
 
 
+@mock.patch("bridge.arc.arc_lists.logger")
 @mock.patch("bridge.arc.arc_lists.ArcApiClient.get_dataframe_arc_list_version_language")
 @mock.patch("bridge.arc.arc_lists.arc_translations.get_translations")
-def test_get_list_content(mock_get_translations, mock_list, translation_dict):
+def test_get_list_content(
+    mock_get_translations, mock_list, _mock_logger, translation_dict
+):
     data_list = {
         "Condition": [
             "Asplenia",
@@ -353,9 +356,12 @@ def test_set_cont_lo_no_value():
     assert output_int == expected_int
 
 
+@mock.patch("bridge.arc.arc_lists.logger")
 @mock.patch("bridge.arc.arc_lists.ArcApiClient.get_dataframe_arc_list_version_language")
 @mock.patch("bridge.arc.arc_lists.arc_translations.get_translations")
-def test_get_list_data(mock_get_translations, mock_list, translation_dict):
+def test_get_list_data(
+    mock_get_translations, mock_list, _mock_logger, translation_dict
+):
     data = {
         "Disease": [
             "Adenovirus",
@@ -452,8 +458,9 @@ def test_get_list_data(mock_get_translations, mock_list, translation_dict):
     assert_series_equal(all_rows_output[1], all_rows_expected[1])
 
 
+@mock.patch("bridge.arc.arc_lists.logger")
 @mock.patch("bridge.arc.arc_lists.arc_translations.get_translations")
-def test_get_list_data_no_list(mock_get_translations, translation_dict):
+def test_get_list_data_no_list(mock_get_translations, _mock_logger, translation_dict):
     mock_get_translations.return_value = translation_dict
 
     version = "v1.1.1"
