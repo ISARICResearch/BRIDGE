@@ -29,7 +29,7 @@ pd.options.mode.copy_on_write = True
     ],
     prevent_initial_call=True,
 )
-def on_upload_crf(filename: str, contents: str):
+def on_upload_crf(filename: str, _contents: str):
     if filename:
         try:
             upload_version = re.search(r"v\d_\d_\d", filename).group(0)
@@ -177,7 +177,7 @@ def load_upload_arc_version_language(
     prevent_initial_call=True,
 )
 def update_output_upload_crf(
-    upload_crf_ready: bool,
+    _upload_crf_ready: bool,
     upload_version_data: dict,
     upload_language_data: dict,
     upload_crf_contents: str,
@@ -227,7 +227,7 @@ def update_output_upload_crf(
     df_upload_multilist = df_upload_csv[["Variable", "Multilist Selected"]]
 
     (df_datadicc_selected, ulist_variable_choices) = (
-        update_list_variables_checked_upload(
+        _update_list_variables_checked_upload(
             df_version_lang_datadicc,
             df_upload_ulist,
             upload_version_lang_ulist_saved,
@@ -236,7 +236,7 @@ def update_output_upload_crf(
         )
     )
     (df_datadicc_selected, multilist_variable_choices) = (
-        update_list_variables_checked_upload(
+        _update_list_variables_checked_upload(
             df_datadicc_selected,
             df_upload_multilist,
             upload_version_lang_multilist_saved,
@@ -254,7 +254,7 @@ def update_output_upload_crf(
     )
 
 
-def update_list_variables_checked_upload(
+def _update_list_variables_checked_upload(
     df_datadicc: pd.DataFrame,
     df_list_upload: pd.DataFrame,
     list_saved: str,

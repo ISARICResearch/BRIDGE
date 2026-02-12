@@ -341,7 +341,7 @@ class Form:
         self, df_datadicc: pd.DataFrame, element_list: list, locate_phrase: Callable
     ) -> List:
         """
-        Generates the array of elements for a pdf of several forms from the data_dictionary
+        Generates the array of elements for a PDF of several forms from the data_dictionary
         Function returns array of sections. Each section is an array of Fields
         """
 

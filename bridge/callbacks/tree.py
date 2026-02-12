@@ -48,7 +48,7 @@ def update_tree_items_and_stores(
     version_lang_multilist_saved: str,
 ):
     if upload_crf_ready:
-        return (dash.no_update, dash.no_update, dash.no_update, dash.no_update)
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     ctx = dash.callback_context
     df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
@@ -71,11 +71,11 @@ def update_tree_items_and_stores(
             id="tree_items_container",
             className="tree-item",
         )
-        return (tree_items, dash.no_update, dash.no_update, dash.no_update)
+        return tree_items, dash.no_update, dash.no_update, dash.no_update
 
     logger.info(f"checked_variables: {checked_templates}")
     logger.info(f"grouped_presets: {grouped_presets_dict}")
-    checked_template_list = get_checked_template_list(
+    checked_template_list = _get_checked_template_list(
         grouped_presets_dict, checked_templates
     )
 
@@ -91,7 +91,7 @@ def update_tree_items_and_stores(
                     df_datadicc["Variable"].loc[df_datadicc[checked_key].notnull()]
                 )
 
-            (df_datadicc, ulist_variable_choices) = update_list_items(
+            (df_datadicc, ulist_variable_choices) = _update_list_items(
                 df_datadicc,
                 version_lang_ulist_saved,
                 "user_list",
@@ -100,7 +100,7 @@ def update_tree_items_and_stores(
                 checked_key=checked_key,
             )
 
-            (df_datadicc, multilist_variable_choices) = update_list_items(
+            (df_datadicc, multilist_variable_choices) = _update_list_items(
                 df_datadicc,
                 version_lang_multilist_saved,
                 "multi_list",
@@ -110,11 +110,11 @@ def update_tree_items_and_stores(
             )
 
     else:
-        (df_datadicc, ulist_variable_choices) = update_list_items(
+        (df_datadicc, ulist_variable_choices) = _update_list_items(
             df_datadicc, version_lang_ulist_saved, "user_list", version, language
         )
 
-        (df_datadicc, multilist_variable_choices) = update_list_items(
+        (df_datadicc, multilist_variable_choices) = _update_list_items(
             df_datadicc, version_lang_ulist_saved, "multi_list", version, language
         )
 
@@ -139,7 +139,7 @@ def update_tree_items_and_stores(
     )
 
 
-def get_checked_template_list(
+def _get_checked_template_list(
     grouped_presets_dict: dict, checked_values_list: list
 ) -> list:
     output = []
@@ -148,12 +148,11 @@ def get_checked_template_list(
     ):
         if item_checked_list:
             for item_checked in item_checked_list:
-                # output.append([section, item_checked.replace(' ', '_')])
                 output.append([section, item_checked])
     return output
 
 
-def update_list_items(
+def _update_list_items(
     df_datadicc: pd.DataFrame,
     list_saved: str,
     list_type: str,

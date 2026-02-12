@@ -224,7 +224,7 @@ def get_text_variables_for_env() -> Tuple[str, str]:
         # Only required in some places. Otherwise, use global variables
         text_field = "Text_translation"
         paper_like_field = "Paper-like section_translation"
-    return (text_field, paper_like_field)
+    return text_field, paper_like_field
 
 
 def set_styles() -> (
@@ -253,7 +253,7 @@ def set_styles() -> (
     title_style.leading = 20
     title_style.fontName = REGISTERED_FONT_BOLD
 
-    return (sample_styles_sheet, normal_style, center_style, header_style, title_style)
+    return sample_styles_sheet, normal_style, center_style, header_style, title_style
 
 
 def generate_opener(element_list: list, df_details: pd.DataFrame, db_name: str) -> list:
