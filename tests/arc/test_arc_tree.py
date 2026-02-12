@@ -126,6 +126,87 @@ def test_get_tree_items_with_units(
     assert output == expected
 
 
+@mock.patch("bridge.arc.arc_tree._get_units_parent_units_dataframes")
+@mock.patch("bridge.arc.arc_tree._create_tree_item_dataframe")
+@mock.patch("bridge.arc.arc_core.get_dynamic_units_conversion_bool", return_value=True)
+def test_get_tree_items_with_units_remove_select_units(
+    _mock_dynamic_units_bool,
+    mock_df_tree,
+    mock_get_units,
+    df_tree_units,
+):
+    # I haven't mocked all the functions from arc_tree as it made it too complicated
+    # So some are tested in here, e.g. _add_form_to_tree
+    mock_df_tree.return_value = df_tree_units
+    df_datadicc = pd.DataFrame()  # Not used
+    version = "v1.1.1"  # Not used
+    data_parent = {
+        "Variable": [
+            "demog_height_units",
+        ],
+        "Question": [
+            "Height",
+        ],
+        "Type": [
+            "radio",
+        ],
+    }
+    df_parent = pd.DataFrame.from_dict(data_parent)
+    data_units = {
+        "Variable": [
+            "demog_height_cm",
+            "demog_height_in",
+        ],
+        "Question": [
+            "Height (cm)",
+            "Height (in)",
+        ],
+        "Type": [
+            "number",
+            "number",
+        ],
+    }
+    df_units = pd.DataFrame.from_dict(data_units)
+    mock_get_units.return_value = [df_parent, df_units]
+
+    expected = {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "key": "demog_height_cm",
+                                        "title": "Height (cm)",
+                                    },
+                                    {
+                                        "key": "demog_height_in",
+                                        "title": "Height (in)",
+                                    },
+                                ],
+                                "key": "demog_height_units",
+                                "title": "Height",
+                            }
+                        ],
+                        "key": "PRESENTATION-DEMOGRAPHICS",
+                        "title": "DEMOGRAPHICS",
+                    }
+                ],
+                "key": "PRESENTATION",
+                "title": "PRESENTATION",
+            }
+        ],
+        "key": "ARC",
+        "title": "v1.1.1",
+    }
+
+    output = arc_tree.get_tree_items(df_datadicc, version)
+
+    assert output == expected
+
+
 @pytest.fixture
 def df_tree_single():
     data_tree = {
@@ -483,8 +564,8 @@ def test_create_tree_item_dataframe_dynamic_false():
             "checkbox",
         ],
         "Question": [
-            "Height (select units)",
-            "Height (select units)",
+            "Height",
+            "Height",
             "Height (cm)",
             "Height (in)",
             "Weight (kg)",
@@ -547,8 +628,8 @@ def test_create_tree_item_dataframe_dynamic_false():
             "kg",
         ],
         "Question": [
-            "Height (select units)",
-            "Height (select units)",
+            "Height",
+            "Height",
             "Height (cm)",
             "Height (in)",
             "Weight (kg)",
@@ -589,10 +670,10 @@ def test_create_tree_item_dataframe_dynamic_false():
             1,
         ],
         "first_question": [
-            "Height (select units)",
-            "Height (select units)",
-            "Height (select units)",
-            "Height (select units)",
+            "Height",
+            "Height",
+            "Height",
+            "Height",
             "Weight (kg)",
         ],
         "first_variable": [

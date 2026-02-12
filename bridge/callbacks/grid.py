@@ -259,9 +259,9 @@ def _create_new_row_list(df_selected_variables: pd.DataFrame) -> list:
     return new_row_list
 
 
-def _extract_parenthesis_content(text: str) -> str:
+def _extract_parenthesis_content(text: str) -> str | None:
     match = re.search(r"\(([^)]+)\)$", text)
-    return match.group(1) if match else text
+    return match.group(1) if match else None
 
 
 def _get_include_not_show(
@@ -322,7 +322,7 @@ def _add_select_units_field(
 
 def _get_units_language(
     df_datadicc: pd.DataFrame, dynamic_units_conversion: bool
-) -> str:
+) -> str | None:
     if not dynamic_units_conversion:
         df_units = df_datadicc.loc[df_datadicc["Validation"] == "units"]
     else:
@@ -338,13 +338,35 @@ def _create_grid_units_dataframe(
     df_datadicc: pd.DataFrame,
     selected_variables: pd.Series,
 ) -> pd.DataFrame:
-    df_units = df_datadicc.loc[
-        df_datadicc["select units"]  # True
-        & df_datadicc["Variable"].isin(selected_variables.values)
-        & pd.notnull(df_datadicc["mod"])
+    df_units = df_datadicc.copy()
+    df_units = df_units.loc[
+        df_units["select units"]  # True
+        & df_units["Variable"].isin(selected_variables.values)
+        & pd.notnull(df_units["mod"])
     ]
     df_units["count"] = df_units.groupby(["Sec", "vari"]).transform("size")
     df_units = df_units.reset_index(drop=True)
+    return df_units
+
+
+def _assign_units_answer_options(df_datadicc: pd.DataFrame, df_units: pd.DataFrame, dynamic_units_conversion: bool) -> pd.DataFrame:
+    if not dynamic_units_conversion:
+        # It's possible to correct the unit numbering in the newer ARC versions
+        # E.g. if select labs_glucose_mmoll (1) and labs_glucose_gl (3), but not labs_glucose_mgdl (2)
+        # I'm sure there's a better way of doing this!
+        for _, row in df_units.iterrows():
+            variable = row["Variable"]
+            df_variable = df_datadicc[df_datadicc["Variable"] == variable]
+            units_variable = f"{df_variable['Sec_vari'].values[0]}_units"
+
+            if units_variable in df_datadicc["Variable"].values:
+                unit_name = _extract_parenthesis_content(str(row['Question']))
+                df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
+
+                options_list = df_parent["Answer Options"].values[0].split(" | ")
+                option = [option for option in options_list if option.endswith(f", {unit_name}")][0]
+
+                df_units.loc[df_units["Variable"] == variable, "Answer Options"] = option
     return df_units
 
 
@@ -356,6 +378,7 @@ def _units_transformation(
     df_datadicc = _add_select_units_field(df_datadicc, dynamic_units_conversion)
     units_lang = _get_units_language(df_datadicc, dynamic_units_conversion)
     df_units = _create_grid_units_dataframe(df_datadicc, selected_variables)
+    df_units = _assign_units_answer_options(df_datadicc, df_units, dynamic_units_conversion)
 
     select_unit_rows_list = []
     unit_variables_to_delete = []
@@ -363,23 +386,17 @@ def _units_transformation(
 
     for _, row in df_units.iterrows():
         if row["count"] > 1:
-            matching_rows = df_units[
+            df_matching_rows = df_units[
                 (df_units["Sec"] == row["Sec"]) & (df_units["vari"] == row["vari"])
             ]
 
-            for delete_variable in matching_rows["Variable"]:
+            for delete_variable in df_matching_rows["Variable"].values:
                 unit_variables_to_delete.append(delete_variable)
 
-            max_value = pd.to_numeric(matching_rows["Maximum"], errors="coerce").max()
-            min_value = pd.to_numeric(matching_rows["Minimum"], errors="coerce").min()
+            max_value = pd.to_numeric(df_matching_rows["Maximum"], errors="coerce").max()
+            min_value = pd.to_numeric(df_matching_rows["Minimum"], errors="coerce").min()
 
-            # E.g. Combine units from demog_heigh_cm and demog_height_in
-            options = " | ".join(
-                [
-                    f"{idx + 1},{_extract_parenthesis_content(str(r['Question']))}"
-                    for idx, (_, r) in enumerate(matching_rows.iterrows())
-                ]
-            )
+            options: str = _get_options(df_matching_rows, dynamic_units_conversion)
 
             row_value = row.copy()
             row_value["Variable"] = row["Sec"] + "_" + row["vari"]
@@ -387,7 +404,7 @@ def _units_transformation(
             row_value["Type"] = "text"
             row_value["Maximum"] = max_value
             row_value["Minimum"] = min_value
-            row_value["Question"] = row["Question"].split("(")[0]
+            row_value["Question"] = row["Question"].split("(")[0].rstrip()
             row_value["Validation"] = "number"
 
             row_units = row.copy()
@@ -396,11 +413,18 @@ def _units_transformation(
             row_units["Type"] = "radio"
             row_units["Maximum"] = None
             row_units["Minimum"] = None
-            row_units["Question"] = (
-                (row["Question"].split("(")[0] + "(" + units_lang + ")")
-                if "(" in row["Question"]
-                else row["Question"]
-            )
+
+            if "(" in row["Question"]:
+                if  units_lang:
+                    # E.g. Height (cm) -> Height (select units)
+                    row_units["Question"] = row["Question"].split("(")[0] + "(" + units_lang + ")"
+                else:
+                    # Height (cm) -> Height
+                    row_units["Question"] = row["Question"].split("(")[0].rstrip()
+            else:
+                # Height -> Height
+                row_units["Question"] = row["Question"]
+
             row_units["Validation"] = None
 
             # Row values
@@ -427,6 +451,22 @@ def _units_transformation(
             ),
         )
     return pd.DataFrame(), list()
+
+
+def _get_options(df_matching_rows: pd.DataFrame, dynamic_units_conversion: bool) -> str:
+    # E.g. labs_glucose units fields
+    if not dynamic_units_conversion:
+        # E.g. 1, mmol/L | 3, g/L (mg/dL is numbered 2)
+        options = " | ".join(df_matching_rows["Answer Options"].values)
+    else:
+        # E.g. 1, mmol/L | 2, g/L (old ARC versions don't have the numbering stored)
+        options = " | ".join(
+            [
+                f"{idx + 1}, {_extract_parenthesis_content(str(r['Question']))}"
+                for idx, (_, r) in enumerate(df_matching_rows.iterrows())
+            ]
+        )
+    return options
 
 
 def _get_focused_cell_index(
