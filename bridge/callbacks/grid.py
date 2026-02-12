@@ -349,7 +349,9 @@ def _create_grid_units_dataframe(
     return df_units
 
 
-def _assign_units_answer_options(df_datadicc: pd.DataFrame, df_units: pd.DataFrame, dynamic_units_conversion: bool) -> pd.DataFrame:
+def _assign_units_answer_options(
+    df_datadicc: pd.DataFrame, df_units: pd.DataFrame, dynamic_units_conversion: bool
+) -> pd.DataFrame:
     if not dynamic_units_conversion:
         # It's possible to correct the unit numbering in the newer ARC versions
         # E.g. if select labs_glucose_mmoll (1) and labs_glucose_gl (3), but not labs_glucose_mgdl (2)
@@ -360,13 +362,19 @@ def _assign_units_answer_options(df_datadicc: pd.DataFrame, df_units: pd.DataFra
             units_variable = f"{df_variable['Sec_vari'].values[0]}_units"
 
             if units_variable in df_datadicc["Variable"].values:
-                unit_name = _extract_parenthesis_content(str(row['Question']))
+                unit_name = _extract_parenthesis_content(str(row["Question"]))
                 df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
 
                 options_list = df_parent["Answer Options"].values[0].split(" | ")
-                option = [option for option in options_list if option.endswith(f", {unit_name}")][0]
+                option = [
+                    option
+                    for option in options_list
+                    if option.endswith(f", {unit_name}")
+                ][0]
 
-                df_units.loc[df_units["Variable"] == variable, "Answer Options"] = option
+                df_units.loc[df_units["Variable"] == variable, "Answer Options"] = (
+                    option
+                )
     return df_units
 
 
@@ -378,7 +386,9 @@ def _units_transformation(
     df_datadicc = _add_select_units_field(df_datadicc, dynamic_units_conversion)
     units_lang = _get_units_language(df_datadicc, dynamic_units_conversion)
     df_units = _create_grid_units_dataframe(df_datadicc, selected_variables)
-    df_units = _assign_units_answer_options(df_datadicc, df_units, dynamic_units_conversion)
+    df_units = _assign_units_answer_options(
+        df_datadicc, df_units, dynamic_units_conversion
+    )
 
     select_unit_rows_list = []
     unit_variables_to_delete = []
@@ -393,8 +403,12 @@ def _units_transformation(
             for delete_variable in df_matching_rows["Variable"].values:
                 unit_variables_to_delete.append(delete_variable)
 
-            max_value = pd.to_numeric(df_matching_rows["Maximum"], errors="coerce").max()
-            min_value = pd.to_numeric(df_matching_rows["Minimum"], errors="coerce").min()
+            max_value = pd.to_numeric(
+                df_matching_rows["Maximum"], errors="coerce"
+            ).max()
+            min_value = pd.to_numeric(
+                df_matching_rows["Minimum"], errors="coerce"
+            ).min()
 
             options: str = _get_options(df_matching_rows, dynamic_units_conversion)
 
@@ -415,9 +429,11 @@ def _units_transformation(
             row_units["Minimum"] = None
 
             if "(" in row["Question"]:
-                if  units_lang:
+                if units_lang:
                     # E.g. Height (cm) -> Height (select units)
-                    row_units["Question"] = row["Question"].split("(")[0] + "(" + units_lang + ")"
+                    row_units["Question"] = (
+                        row["Question"].split("(")[0] + "(" + units_lang + ")"
+                    )
                 else:
                     # Height (cm) -> Height
                     row_units["Question"] = row["Question"].split("(")[0].rstrip()
