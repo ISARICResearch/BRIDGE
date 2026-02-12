@@ -756,9 +756,19 @@ def test_create_grid_units_dataframe():
     ],
 )
 def test_checked_updates_for_units_no_change(dynamic_units_conversion):
-    checked = ["a_variable", "a_different_variable_base"]
-    df_datadicc = pd.DataFrame()  # Not used
-    expected = ["a_variable", "a_different_variable_base"]
+    checked = ["demog_height_cm", "demog_weight_in"]
+    data = {
+        "Variable": [
+            "demog_height_cm",
+            "demog_weight_in",
+        ],
+        "Sec_vari": [
+            "demog_height",
+            "demog_weight",
+        ],
+    }
+    df_datadicc = pd.DataFrame.from_dict(data)
+    expected = ["demog_height_cm", "demog_weight_in"]
     output = grid._checked_updates_for_units(
         checked, dynamic_units_conversion, df_datadicc
     )
@@ -782,6 +792,13 @@ def df_datadicc_new_units():
             "number",
             "number",
         ],
+        "Sec_vari": [
+            "labs_glucose",
+            "labs_glucose",
+            "labs_glucose",
+            "labs_glucose",
+            "labs_glucose",
+        ],
     }
     df_datadicc = pd.DataFrame.from_dict(data)
     return df_datadicc
@@ -801,6 +818,12 @@ def df_datadicc_old_units():
             "Random blood glucose (mmol/L)",
             "Random blood glucose (mg/dL)",
             "Random blood glucose (g/L)",
+        ],
+        "Sec_vari": [
+            "labs_glucose",
+            "labs_glucose",
+            "labs_glucose",
+            "labs_glucose",
         ],
     }
     df_datadicc = pd.DataFrame.from_dict(data)

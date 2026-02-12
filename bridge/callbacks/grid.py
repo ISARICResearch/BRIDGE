@@ -118,29 +118,30 @@ def _checked_updates_for_units(
     # labs_glucose / labs_glucose_units is missing from checked and needs to be added
     # Only do this for last checked variable
     last_checked_variable = checked[-1]
-    last_checked_base_var = "_".join(last_checked_variable.split("_")[:-1])
+    base_var = df_datadicc.loc[df_datadicc["Variable"] == last_checked_variable][
+        "Sec_vari"
+    ].values[0]
     no_base_var_checked = len(
-        [variable for variable in checked if last_checked_base_var in variable]
+        [variable for variable in checked if base_var in variable]
     )
+
     if no_base_var_checked > 1:
         if not dynamic_units_conversion:
-            last_checked_units = f"{last_checked_base_var}_units"
+            last_checked_units = f"{base_var}_units"
 
             df_units = df_datadicc.loc[df_datadicc["Validation"] == "units"]
             if last_checked_units in df_units["Variable"].values:
                 if last_checked_units not in checked:
                     checked.append(last_checked_units)
         else:
-            df_datadicc_base_var = df_datadicc[
-                df_datadicc["Variable"] == last_checked_base_var
-            ]
+            df_datadicc_base_var = df_datadicc[df_datadicc["Variable"] == base_var]
             if (
                 df_datadicc_base_var["Question_english"]
                 .str.contains("(select units)", case=False, na=False, regex=False)
                 .values[0]
             ):
-                if last_checked_base_var not in checked:
-                    checked.append(last_checked_base_var)
+                if base_var not in checked:
+                    checked.append(base_var)
 
     if not dynamic_units_conversion:
         # Replace "_units" fields with the original value, e.g. demog_height for demog_height_units
