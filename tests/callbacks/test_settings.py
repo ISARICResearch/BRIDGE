@@ -81,7 +81,7 @@ def test_update_output_files_store():
     return_value=["English", "French"],
 )
 def test_update_language_available_for_version(
-    mock_language_list, mock_dropdown, version_data, expected_output
+    _mock_language_list, _mock_dropdown, version_data, expected_output
 ):
     def run_callback(selected_version_data):
         return settings.update_language_available_for_version(selected_version_data)
@@ -234,9 +234,9 @@ def mock_language_data_return_value():
 )
 @mock.patch("bridge.callbacks.settings.logger")
 def test_store_data_for_selected_version_language_dynamic_version(
-    mock_logger,
+    _mock_logger,
     mock_trigger_id,
-    mock_versions,
+    _mock_versions,
     mock_language_data,
     clicks_version,
     clicks_language,
@@ -297,9 +297,9 @@ def test_store_data_for_selected_version_language_dynamic_version(
 )
 @mock.patch("bridge.callbacks.settings.logger")
 def test_store_data_for_selected_version_language_dynamic_language(
-    mock_logger,
+    _mock_logger,
     mock_trigger_id,
-    mock_versions,
+    _mock_versions,
     mock_language_data,
     clicks_version,
     clicks_language,

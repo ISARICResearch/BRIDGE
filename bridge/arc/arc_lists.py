@@ -355,7 +355,7 @@ class ArcList:
 
         df_arc_list = pd.DataFrame(all_rows_lists).reset_index(drop=True)
 
-        return (df_arc_list, list_variable_choices)
+        return df_arc_list, list_variable_choices
 
     @staticmethod
     def _get_list_option_number(df_list_options: pd.DataFrame, list_option: str) -> int:
@@ -428,7 +428,7 @@ class ArcList:
         other_row["List"] = None
         other_row["mod"] = "otherl3"
 
-        return (dropdown_row, other_row)
+        return dropdown_row, other_row
 
     def _get_list_data(
         self, df_datadicc: pd.DataFrame, list_type: str

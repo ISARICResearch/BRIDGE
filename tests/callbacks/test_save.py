@@ -88,7 +88,7 @@ def test_on_save_click_no_action(
 @mock.patch("bridge.callbacks.save.get_trigger_id", return_value="crf_save")
 @mock.patch("bridge.callbacks.save.get_crf_name", return_value="test_crf")
 @mock.patch("bridge.callbacks.save.get_checked_data_for_list")
-def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
+def test_on_save_click(mock_checked, _mock_crf_name, _mock_trigger_id, mock_date):
     data = {
         "Variable": ["inclu_disease"],
         "Ulist Selected": ["Adenovirus"],
@@ -144,7 +144,7 @@ def test_on_save_click(mock_checked, mock_crf_name, mock_trigger_id, mock_date):
 
 
 @mock.patch("bridge.callbacks.save.get_trigger_id", return_value="crf_not_save")
-def test_on_save_click_wrong_trigger_id(mock_trigger_id):
+def test_on_save_click_wrong_trigger_id(_mock_trigger_id):
     n_clicks = 1
     checked_variables = ["inclu_disease"]
     current_datadicc_saved = ""

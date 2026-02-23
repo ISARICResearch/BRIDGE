@@ -65,7 +65,7 @@ def mock_language_json():
 
 
 @mock.patch("bridge.arc.arc_api.logger")
-def test_get_api_response_exception(mock_logger, client_production):
+def test_get_api_response_exception(_mock_logger, client_production):
     class FakeResponse:
         def raise_for_status(self):
             raise RequestException
@@ -76,7 +76,7 @@ def test_get_api_response_exception(mock_logger, client_production):
 
 
 @mock.patch("bridge.arc.arc_api.logger")
-def test_get_api_response(mock_logger, mock_language_json, client_production):
+def test_get_api_response(_mock_logger, mock_language_json, client_production):
     class FakeResponse:
         def raise_for_status(self):
             pass
@@ -92,7 +92,7 @@ def test_get_api_response(mock_logger, mock_language_json, client_production):
 
 @mock.patch("bridge.arc.arc_api.pd.read_csv")
 @mock.patch("bridge.arc.arc_api.logger")
-def test_write_to_dataframe_csv(mock_logger, mock_read_csv, data_path):
+def test_write_to_dataframe_csv(_mock_logger, mock_read_csv, data_path):
     data = {
         "Variable": [
             "subjid",
@@ -108,7 +108,7 @@ def test_write_to_dataframe_csv(mock_logger, mock_read_csv, data_path):
 
 @mock.patch("bridge.arc.arc_api.pd.read_json")
 @mock.patch("bridge.arc.arc_api.logger")
-def test_write_to_dataframe_json(mock_logger, mock_read_json, data_path):
+def test_write_to_dataframe_json(_mock_logger, mock_read_json, data_path):
     data = {
         "Variable": [
             "subjid",
@@ -264,7 +264,7 @@ def test_get_arc_version_sha_development(mock_tag_json, client_development):
 
 @mock.patch("bridge.arc.arc_api.logger")
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
-def test_get_arc_version_sha_exception(mock_tag_json, mock_logger, client_production):
+def test_get_arc_version_sha_exception(mock_tag_json, _mock_logger, client_production):
     tag_json = [
         {
             "commit": {"sha": "7865ffce987395528e9151854aa524db9d9d0361"},

@@ -162,8 +162,8 @@ def display_selected_in_modal(
     prevent_initial_call=True,
 )
 def on_modal_button_click(
-    submit_n_clicks: int,
-    cancel_n_clicks: int,
+    _submit_n_clicks: int,
+    _cancel_n_clicks: int,
     current_datadicc_saved: str,
     modal_title: str,
     modal_options_checked: list,

@@ -5,11 +5,11 @@ from datetime import datetime
 from os.path import join, dirname, abspath
 
 import dash
+import numpy as np
 import pandas as pd
 from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
-from bridge.arc import arc_core
 from bridge.generate_pdf import paper_crf, paper_word
 from bridge.utils.crf_name import get_crf_name
 from bridge.utils.trigger_id import get_trigger_id
@@ -91,7 +91,7 @@ def on_generate_click(
         version = selected_version_data.get("selected_version")
         language = selected_language_data.get("selected_language")
 
-        df_crf = arc_core.generate_crf(selected_variables_from_data)
+        df_crf = _generate_crf(selected_variables_from_data)
         # PDFs
         pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(
             df_crf, version, crf_name, language
@@ -190,3 +190,142 @@ def on_generate_click(
             None,
             None,
         )
+
+
+def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
+    # Create a new list to build the reordered rows
+    new_rows = []
+    used_indices = set()
+
+    # Loop through each row in the original dataframe
+    for index, row in df_datadicc.iterrows():
+        variable = row["Variable"]
+        variable_type = row["Type"]
+
+        # Skip rows that have already been added to the new list
+        if index in used_indices:
+            continue
+
+        # Add the current row to the reordered list
+        new_rows.append(row)
+        used_indices.add(index)
+
+        # If it's a multi_list or dropdown, check for corresponding _otherl2 and _otherl3
+        if variable_type in ["multi_list", "user_list"]:
+            # Extract the prefix (e.g., "drug14_antiviral" from "drug14_antiviral_type")
+            prefix = "_".join(variable.split("_")[:2])
+
+            # Find and add the _otherl2 and _otherl3 rows right after the current one
+            for suffix in ["_otherl2", "_otherl3"]:
+                mask = df_datadicc["Variable"].str.startswith(prefix + suffix)
+                for i in df_datadicc[mask].index:
+                    new_rows.append(df_datadicc.loc[i])
+                    used_indices.add(i)
+
+    # Create the final reordered dataframe
+    df_datadicc = pd.DataFrame(new_rows)
+
+    df_datadicc.loc[df_datadicc["Type"] == "user_list", "Type"] = "radio"
+    df_datadicc.loc[df_datadicc["Type"] == "multi_list", "Type"] = "checkbox"
+    df_datadicc.loc[df_datadicc["Type"] == "list", "Type"] = "radio"
+    df_datadicc = df_datadicc[
+        [
+            "Form",
+            "Section",
+            "Variable",
+            "Type",
+            "Question",
+            "Answer Options",
+            "Validation",
+            "Minimum",
+            "Maximum",
+            "Skip Logic",
+        ]
+    ]
+
+    df_datadicc.columns = [
+        "Form Name",
+        "Section Header",
+        "Variable / Field Name",
+        "Field Type",
+        "Field Label",
+        "Choices, Calculations, OR Slider Labels",
+        "Text Validation Type OR Show Slider Number",
+        "Text Validation Min",
+        "Text Validation Max",
+        "Branching Logic (Show field only if...)",
+    ]
+    redcap_cols = [
+        "Variable / Field Name",
+        "Form Name",
+        "Section Header",
+        "Field Type",
+        "Field Label",
+        "Choices, Calculations, OR Slider Labels",
+        "Field Note",
+        "Text Validation Type OR Show Slider Number",
+        "Text Validation Min",
+        "Text Validation Max",
+        "Identifier?",
+        "Branching Logic (Show field only if...)",
+        "Required Field?",
+        "Custom Alignment",
+        "Question Number (surveys only)",
+        "Matrix Group Name",
+        "Matrix Ranking?",
+        "Field Annotation",
+    ]
+    df_datadicc = df_datadicc.reindex(columns=redcap_cols)
+
+    df_datadicc.loc[
+        df_datadicc["Field Type"].isin(
+            [
+                "date_dmy",
+                "number",
+                "integer",
+                "datetime_dmy",
+            ]
+        ),
+        "Field Type",
+    ] = "text"
+    df_datadicc = df_datadicc.loc[
+        df_datadicc["Field Type"].isin(
+            [
+                "text",
+                "notes",
+                "radio",
+                "dropdown",
+                "calc",
+                "file",
+                "checkbox",
+                "yesno",
+                "truefalse",
+                "descriptive",
+                "slider",
+            ]
+        )
+    ]
+    df_datadicc["Section Header"] = df_datadicc["Section Header"].where(
+        df_datadicc["Section Header"] != df_datadicc["Section Header"].shift(), np.nan
+    )
+    # For the new empty columns, fill NaN values with a default value (in this case an empty string)
+    df_datadicc = df_datadicc.fillna("")
+
+    df_datadicc["Section Header"] = df_datadicc["Section Header"].replace({"": np.nan})
+    df_datadicc = _custom_alignment(df_datadicc)
+
+    return df_datadicc
+
+
+def _custom_alignment(df_datadicc: pd.DataFrame) -> pd.DataFrame:
+    mask = (df_datadicc["Field Type"].isin(["checkbox", "radio"])) & (
+        (
+            df_datadicc["Choices, Calculations, OR Slider Labels"]
+            .str.split("|")
+            .str.len()
+            < 4
+        )
+        & (df_datadicc["Choices, Calculations, OR Slider Labels"].str.len() <= 40)
+    )
+    df_datadicc.loc[mask, "Custom Alignment"] = "RH"
+    return df_datadicc

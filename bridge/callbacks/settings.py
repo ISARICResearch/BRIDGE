@@ -126,7 +126,7 @@ def store_data_for_selected_version_language(
     button_index = json.loads(trigger_id)["index"]
     button_type = json.loads(trigger_id)["type"]
 
-    initial_load = determine_initial_load_boolean(n_clicks_version, n_clicks_language)
+    initial_load = _determine_initial_load_boolean(n_clicks_version, n_clicks_language)
 
     selected_version = None
     selected_language = None
@@ -195,7 +195,7 @@ def store_data_for_selected_version_language(
         )
 
 
-def determine_initial_load_boolean(n_clicks_version, n_clicks_language):
+def _determine_initial_load_boolean(n_clicks_version, n_clicks_language):
     initial_load = False
     n_clicks_version_unique_values = [
         click for click in n_clicks_version if pd.notnull(click)
