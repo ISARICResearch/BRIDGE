@@ -1,4 +1,5 @@
 import json
+from time import perf_counter
 
 import dash
 import dash_bootstrap_components as dbc
@@ -29,6 +30,9 @@ app.title = "BRIDGE"
 server = app.server
 
 logger.info("Starting BRIDGE application")
+
+# Track total ARC/bootstrap load time so startup latency is explicit in logs.
+arc_bootstrap_start = perf_counter()
 
 # Get initial data from ARC
 ARC_VERSION_LIST, ARC_VERSION_LATEST = arc_core.get_arc_versions()
@@ -73,6 +77,13 @@ GROUPED_PRESETS = {}
 for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
+
+logger.info(
+    "ARC bootstrap complete version=%s language=%s total_elapsed_ms=%.3f",
+    ARC_VERSION_LATEST,
+    ARC_LANGUAGE_DEFAULT,
+    (perf_counter() - arc_bootstrap_start) * 1000,
+)
 
 app.layout = MainContent(TREE_ITEMS_DATA).define_app_layout(
     ARC_JSON,

@@ -15,13 +15,24 @@ class ArcList:
     def __init__(self, version: str, language: str):
         self.version = version
         self.language = language
+        self._list_df_cache: dict[str, pd.DataFrame] = {}
+
+    def _get_list_options_df(self, list_name: str) -> pd.DataFrame:
+        normalized_list_name = str(list_name).replace("_", "/")
+        if normalized_list_name not in self._list_df_cache:
+            self._list_df_cache[normalized_list_name] = (
+                ArcApiClient().get_dataframe_arc_list_version_language(
+                    self.version,
+                    self.language,
+                    normalized_list_name,
+                )
+            )
+        return self._list_df_cache[normalized_list_name].copy(deep=True)
 
     def _get_list_choices(
         self, datadicc_row: pd.Series, other_text: str
     ) -> Tuple[str, list]:
-        df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(
-            self.version, self.language, str(datadicc_row["List"]).replace("_", "/")
-        )
+        df_list_options = self._get_list_options_df(str(datadicc_row["List"]))
 
         list_choices = ""
         list_variable_choices_aux = []
@@ -443,11 +454,7 @@ class ArcList:
             if pd.isnull(row["List"]):
                 logger.warning("List without corresponding repository file")
             else:
-                df_list_options = (
-                    ArcApiClient().get_dataframe_arc_list_version_language(
-                        self.version, self.language, str(row["List"]).replace("_", "/")
-                    )
-                )
+                df_list_options = self._get_list_options_df(str(row["List"]))
 
                 l2_choices = ""
                 l1_choices = ""
@@ -498,7 +505,6 @@ class ArcList:
                 (dropdown_row, other_row) = self._get_list_data_dropdown_other_rows(
                     row, translations_for_language, list_type, l2_choices
                 )
-                row["Question"] = row["Question"]
 
                 all_rows_lists.append(row)
                 if row["Variable"] != "inclu_disease":
