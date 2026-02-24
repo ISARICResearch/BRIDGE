@@ -1,5 +1,4 @@
 from os import getenv
-from time import perf_counter
 from time import monotonic
 
 import pandas as pd
@@ -83,15 +82,10 @@ class ArcApiClient:
 
     def get_arc_version_list(self) -> list:
         cache_key = (self.environment,)
-        cache_start = perf_counter()
         cache_entry = _ARC_VERSION_LIST_CACHE.get(cache_key)
         if cache_entry is not None:
             cached_list, cached_at = cache_entry
             if monotonic() - cached_at < ARC_METADATA_CACHE_TTL_SECONDS:
-                logger.debug(
-                    "arc_api.get_arc_version_list cache=HIT elapsed_ms=%.3f",
-                    (perf_counter() - cache_start) * 1000,
-                )
                 return list(cached_list)
 
         if self.environment != "development":
@@ -110,21 +104,11 @@ class ArcApiClient:
                 reverse=True,
             )
         _ARC_VERSION_LIST_CACHE[cache_key] = (list(version_list), monotonic())
-        logger.debug(
-            "arc_api.get_arc_version_list cache=MISS elapsed_ms=%.3f",
-            (perf_counter() - cache_start) * 1000,
-        )
         return version_list
 
     def get_arc_version_sha(self, version: str) -> str:
         cache_key = (self.environment, version)
-        cache_start = perf_counter()
         if cache_key in _VERSION_SHA_CACHE:
-            logger.debug(
-                "arc_api.get_arc_version_sha cache=HIT version=%s elapsed_ms=%.3f",
-                version,
-                (perf_counter() - cache_start) * 1000,
-            )
             return _VERSION_SHA_CACHE[cache_key]
 
         try:
@@ -140,11 +124,6 @@ class ArcApiClient:
                 version_dict = tag_json[0]
                 version_sha = version_dict["sha"]
             _VERSION_SHA_CACHE[cache_key] = version_sha
-            logger.debug(
-                "arc_api.get_arc_version_sha cache=MISS version=%s elapsed_ms=%.3f",
-                version,
-                (perf_counter() - cache_start) * 1000,
-            )
             return version_sha
         except Exception as e:
             logger.error(e)
@@ -154,14 +133,7 @@ class ArcApiClient:
 
     def get_dataframe_arc_sha(self, sha: str, version: str) -> pd.DataFrame:
         cache_key = (self.environment, sha, version)
-        cache_start = perf_counter()
         if cache_key in _ARC_DF_CACHE:
-            logger.debug(
-                "arc_api.get_dataframe_arc_sha cache=HIT version=%s sha=%s elapsed_ms=%.3f",
-                version,
-                sha[:8],
-                (perf_counter() - cache_start) * 1000,
-            )
             return _ARC_DF_CACHE[cache_key].copy(deep=True)
 
         if self.environment != "development":
@@ -180,26 +152,13 @@ class ArcApiClient:
         df = self._write_to_dataframe(url)
         df = df.loc[df["Validation"] != "units"]  # temporal filter
         _ARC_DF_CACHE[cache_key] = df.copy(deep=True)
-        logger.debug(
-            "arc_api.get_dataframe_arc_sha cache=MISS version=%s sha=%s elapsed_ms=%.3f",
-            version,
-            sha[:8],
-            (perf_counter() - cache_start) * 1000,
-        )
         return df.copy(deep=True)
 
     def get_dataframe_arc_version_language(
         self, version: str, language: str
     ) -> pd.DataFrame:
         cache_key = (self.environment, version, language)
-        cache_start = perf_counter()
         if cache_key in _ARC_TRANSLATION_DF_CACHE:
-            logger.debug(
-                "arc_api.get_dataframe_arc_version_language cache=HIT version=%s language=%s elapsed_ms=%.3f",
-                version,
-                language,
-                (perf_counter() - cache_start) * 1000,
-            )
             return _ARC_TRANSLATION_DF_CACHE[cache_key].copy(deep=True)
 
         if self.environment != "development":
@@ -228,27 +187,13 @@ class ArcApiClient:
         if "Validation" in df.columns:
             df = df.loc[df["Validation"] != "units"]  # temporal filter
         _ARC_TRANSLATION_DF_CACHE[cache_key] = df.copy(deep=True)
-        logger.debug(
-            "arc_api.get_dataframe_arc_version_language cache=MISS version=%s language=%s elapsed_ms=%.3f",
-            version,
-            language,
-            (perf_counter() - cache_start) * 1000,
-        )
         return df.copy(deep=True)
 
     def get_dataframe_arc_list_version_language(
         self, version: str, language: str, list_name: str
     ) -> pd.DataFrame:
         cache_key = (self.environment, version, language, list_name)
-        cache_start = perf_counter()
         if cache_key in _ARC_LIST_DF_CACHE:
-            logger.debug(
-                "arc_api.get_dataframe_arc_list_version_language cache=HIT version=%s language=%s list=%s elapsed_ms=%.3f",
-                version,
-                language,
-                list_name,
-                (perf_counter() - cache_start) * 1000,
-            )
             return _ARC_LIST_DF_CACHE[cache_key].copy(deep=True)
 
         if self.environment != "development":
@@ -278,26 +223,13 @@ class ArcApiClient:
         df = self._write_to_dataframe(url)
         df = df.sort_values(by=df.columns[0], ascending=True).reset_index(drop=True)
         _ARC_LIST_DF_CACHE[cache_key] = df.copy(deep=True)
-        logger.debug(
-            "arc_api.get_dataframe_arc_list_version_language cache=MISS version=%s language=%s list=%s elapsed_ms=%.3f",
-            version,
-            language,
-            list_name,
-            (perf_counter() - cache_start) * 1000,
-        )
         return df.copy(deep=True)
 
     def get_arc_language_list_version(self, version: str | None) -> list:
         normalized_version = str(version)
         cache_key = (self.environment, normalized_version)
-        cache_start = perf_counter()
         cache_entry = _ARC_LANGUAGE_LIST_CACHE.get(cache_key)
         if cache_entry is not None:
-            logger.debug(
-                "arc_api.get_arc_language_list_version cache=HIT version=%s elapsed_ms=%.3f",
-                normalized_version,
-                (perf_counter() - cache_start) * 1000,
-            )
             return list(cache_entry)
 
         if self.environment != "development":
@@ -315,11 +247,6 @@ class ArcApiClient:
         else:
             language_list = ["English"]
         _ARC_LANGUAGE_LIST_CACHE[cache_key] = list(language_list)
-        logger.debug(
-            "arc_api.get_arc_language_list_version cache=MISS version=%s elapsed_ms=%.3f",
-            normalized_version,
-            (perf_counter() - cache_start) * 1000,
-        )
         return language_list
 
     def get_dataframe_paper_like_details(

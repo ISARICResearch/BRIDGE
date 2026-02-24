@@ -29,7 +29,6 @@ class Language:
     def get_version_language_related_data(self):
         cache_initial_load = self.initial_load if self.language != "English" else False
         cache_key = (self.version, self.language, cache_initial_load)
-        cache_start = perf_counter()
         if cache_key in _VERSION_LANGUAGE_CACHE:
             (
                 cached_df,
@@ -39,13 +38,6 @@ class Language:
                 cached_ulist_json,
                 cached_multilist_json,
             ) = _VERSION_LANGUAGE_CACHE[cache_key]
-            logger.debug(
-                "language.get_version_language_related_data cache=HIT version=%s language=%s initial_load=%s elapsed_ms=%.3f",
-                self.version,
-                self.language,
-                cache_initial_load,
-                (perf_counter() - cache_start) * 1000,
-            )
             return (
                 cached_df.copy(deep=True),
                 cached_commit,

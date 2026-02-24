@@ -1,6 +1,7 @@
 import io
 import json
 from functools import lru_cache
+from time import perf_counter
 from typing import Tuple
 
 import dash
@@ -10,11 +11,13 @@ import pandas as pd
 from dash import html, Input, Output, State
 
 from bridge.arc import arc_translations, arc_tree
+from bridge.logging.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
 CHECKLIST_STYLE = {"padding": "20px", "maxHeight": "250px", "overflowY": "auto"}
 LIST_GROUP_STYLE = {"maxHeight": "250px", "overflowY": "auto"}
 HIDDEN_STYLE = {"display": "none"}
+logger = setup_logger(__name__)
 
 
 def _build_list_options_mapping(ulist_multilist: list) -> dict:
@@ -104,6 +107,7 @@ def display_selected_in_modal(
         df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
         selected_variable = selected[0]
         if selected_variable in list(df_datadicc["Variable"]):
+            process_start = perf_counter()
             question = (
                 df_datadicc["Question"]
                 .loc[df_datadicc["Variable"] == selected[0]]
@@ -128,6 +132,12 @@ def display_selected_in_modal(
             if selected_variable in list_options_mapping:
                 options, checked_items = build_checklist_dom_from_mapping(
                     list_options_mapping, selected_variable
+                )
+                logger.debug(
+                    "modals.display_selected_in_modal checklist variable=%s options=%s elapsed_ms=%.3f",
+                    selected_variable,
+                    len(options),
+                    (perf_counter() - process_start) * 1000,
                 )
                 return (
                     True,
@@ -155,6 +165,12 @@ def display_selected_in_modal(
                         options.append(dbc.ListGroupItem(ulist_multilist_variable))
                 else:
                     options = []
+                logger.debug(
+                    "modals.display_selected_in_modal static_options variable=%s items=%s elapsed_ms=%.3f",
+                    selected_variable,
+                    len(options),
+                    (perf_counter() - process_start) * 1000,
+                )
                 return (
                     True,
                     question + " [" + selected_variable + "]",

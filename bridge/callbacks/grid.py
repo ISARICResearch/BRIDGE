@@ -159,11 +159,10 @@ def display_checked_in_grid(
     cache_after = _build_grid_payload_cached.cache_info()
     cache_status = "HIT" if cache_after.hits > cache_before.hits else "MISS"
     logger.debug(
-        "grid.display_checked_in_grid payload_cache %s checked_count=%s elapsed_ms=%.3f cache_info=%s",
+        "grid.display_checked_in_grid payload_cache=%s checked_count=%s elapsed_ms=%.3f",
         cache_status,
         checked_count,
         (perf_counter() - cache_start) * 1000,
-        cache_after,
     )
 
     focused_cell_index = get_focused_cell_index(

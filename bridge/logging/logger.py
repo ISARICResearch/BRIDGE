@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 from logging.handlers import TimedRotatingFileHandler
@@ -17,5 +18,7 @@ def setup_logger(name: str = None):
         for handler in handlers:
             handler.setFormatter(formatter)
             logger.addHandler(handler)
-        logger.setLevel(logging.INFO)  # Or DEBUG for verbose output
+        log_level_name = os.getenv("BRIDGE_LOG_LEVEL", "INFO").upper()
+        log_level = getattr(logging, log_level_name, logging.INFO)
+        logger.setLevel(log_level)
     return logger
