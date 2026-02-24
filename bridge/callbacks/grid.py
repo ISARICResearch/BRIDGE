@@ -1,4 +1,6 @@
 import io
+from functools import lru_cache
+from time import perf_counter
 from typing import Tuple
 
 import dash
@@ -7,6 +9,123 @@ from dash import Input, Output, State
 
 from bridge.arc import arc_core
 from bridge.generate_pdf.form import Form
+from bridge.logging.logger import setup_logger
+
+logger = setup_logger(__name__)
+
+
+@lru_cache(maxsize=256)
+def _build_grid_payload_cached(
+    current_datadicc_saved: str, checked_tuple: tuple
+) -> Tuple[list, str, int]:
+    df_current_datadicc = pd.read_json(
+        io.StringIO(current_datadicc_saved), orient="split"
+    )
+
+    checked = list(checked_tuple)
+    row_data = []
+    df_selected_variables = pd.DataFrame()
+    if checked:
+        selected_dependency_lists = (
+            df_current_datadicc["Dependencies"]
+            .loc[df_current_datadicc["Variable"].isin(checked)]
+            .tolist()
+        )
+        flat_selected_dependency = set()
+        for sublist in selected_dependency_lists:
+            flat_selected_dependency.update(sublist)
+        all_selected = set(checked).union(flat_selected_dependency)
+        df_selected_variables = df_current_datadicc.loc[
+            df_current_datadicc["Variable"].isin(all_selected)
+        ]
+
+        df_selected_variables = arc_core.get_include_not_show(
+            df_selected_variables["Variable"], df_current_datadicc
+        )
+
+        (arc_var_units_selected, delete_this_variables_with_units) = (
+            arc_core.get_select_units(
+                df_selected_variables["Variable"], df_current_datadicc
+            )
+        )
+        if arc_var_units_selected is not None:
+            df_selected_variables = arc_core.add_transformed_rows(
+                df_selected_variables,
+                arc_var_units_selected,
+                arc_core.get_variable_order(df_current_datadicc),
+            )
+            if len(delete_this_variables_with_units) > 0:
+                df_selected_variables = df_selected_variables.loc[
+                    ~df_selected_variables["Variable"].isin(
+                        delete_this_variables_with_units
+                    )
+                ]
+
+        last_form, last_section = None, None
+        new_rows = []
+        df_selected_variables = df_selected_variables.fillna("")
+        form = Form()
+        for _, row in df_selected_variables.iterrows():
+            if row["Form"] != last_form:
+                new_rows.append(
+                    {
+                        "Question": f"{row['Form'].upper()}",
+                        "Answer Options": "",
+                        "IsSeparator": True,
+                        "SeparatorType": "form",
+                    }
+                )
+                last_form = str(row["Form"])
+
+            if row["Section"] != last_section and row["Section"] != "":
+                new_rows.append(
+                    {
+                        "Question": f"{row['Section'].upper()}",
+                        "Answer Options": "",
+                        "IsSeparator": True,
+                        "SeparatorType": "section",
+                    }
+                )
+                last_section = str(row["Section"])
+
+            if row["Type"] == "descriptive":
+                new_row = row.to_dict()
+                new_row["IsDescriptive"] = True
+                new_row["Answer Options"] = ""
+                new_row["IsSeparator"] = False
+                new_rows.append(new_row)
+                continue
+
+            if row["Type"] in [
+                "radio",
+                "dropdown",
+                "checkbox",
+                "list",
+                "user_list",
+                "multi_list",
+            ]:
+                row["Answer Options"] = form.format_choices(
+                    row["Answer Options"], row["Type"]
+                )
+            elif row["Validation"] == "date_dmy":
+                row["Answer Options"] = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
+            else:
+                row["Answer Options"] = form.line_placeholder
+
+            new_row = row.to_dict()
+            new_row["IsSeparator"] = False
+            new_rows.append(new_row)
+
+        selected_variables_for_table_visualization = pd.DataFrame(new_rows)
+        selected_variables_for_table_visualization = (
+            selected_variables_for_table_visualization.loc[
+                selected_variables_for_table_visualization["Type"] != "group"
+            ]
+        )
+        row_data = selected_variables_for_table_visualization.to_dict(orient="records")
+
+    selected_json = df_selected_variables.to_json(date_format="iso", orient="split")
+    return row_data, selected_json, len(df_selected_variables)
 
 
 @dash.callback(
@@ -28,134 +147,44 @@ from bridge.generate_pdf.form import Form
 def display_checked_in_grid(
     checked: list, current_datadicc_saved: str, focused_cell_index: int
 ) -> Tuple[list, str, bool, int]:
-    df_current_datadicc = pd.read_json(
-        io.StringIO(current_datadicc_saved), orient="split"
+    callback_start = perf_counter()
+    checked_count = len(checked) if checked else 0
+
+    checked_tuple = tuple(checked) if checked else tuple()
+    cache_before = _build_grid_payload_cached.cache_info()
+    cache_start = perf_counter()
+    row_data, selected_json, selected_rows_count = _build_grid_payload_cached(
+        current_datadicc_saved, checked_tuple
+    )
+    cache_after = _build_grid_payload_cached.cache_info()
+    cache_status = "HIT" if cache_after.hits > cache_before.hits else "MISS"
+    logger.debug(
+        "grid.display_checked_in_grid payload_cache %s checked_count=%s elapsed_ms=%.3f cache_info=%s",
+        cache_status,
+        checked_count,
+        (perf_counter() - cache_start) * 1000,
+        cache_after,
     )
 
-    row_data = []
-
-    df_selected_variables = pd.DataFrame()
-    if checked:
-        selected_dependency_lists = (
-            df_current_datadicc["Dependencies"]
-            .loc[df_current_datadicc["Variable"].isin(checked)]
-            .tolist()
-        )
-        flat_selected_dependency = set()
-        for sublist in selected_dependency_lists:
-            flat_selected_dependency.update(sublist)
-        all_selected = set(checked).union(flat_selected_dependency)
-        df_selected_variables = df_current_datadicc.loc[
-            df_current_datadicc["Variable"].isin(all_selected)
-        ]
-
-        ## REDCAP Pipeline
-        df_selected_variables = arc_core.get_include_not_show(
-            df_selected_variables["Variable"], df_current_datadicc
-        )
-
-        # Select Units Transformation
-        (arc_var_units_selected, delete_this_variables_with_units) = (
-            arc_core.get_select_units(
-                df_selected_variables["Variable"], df_current_datadicc
-            )
-        )
-        if arc_var_units_selected is not None:
-            df_selected_variables = arc_core.add_transformed_rows(
-                df_selected_variables,
-                arc_var_units_selected,
-                arc_core.get_variable_order(df_current_datadicc),
-            )
-            if len(delete_this_variables_with_units) > 0:
-                # This remove all the unit variables that were included in a select unit type question
-                df_selected_variables = df_selected_variables.loc[
-                    ~df_selected_variables["Variable"].isin(
-                        delete_this_variables_with_units
-                    )
-                ]
-
-        last_form, last_section = None, None
-        new_rows = []
-        df_selected_variables = df_selected_variables.fillna("")
-        for index, row in df_selected_variables.iterrows():
-            # Add form separator
-            if row["Form"] != last_form:
-                new_rows.append(
-                    {
-                        "Question": f"{row['Form'].upper()}",
-                        "Answer Options": "",
-                        "IsSeparator": True,
-                        "SeparatorType": "form",
-                    }
-                )
-                last_form = str(row["Form"])
-
-            # Add section separator
-            if row["Section"] != last_section and row["Section"] != "":
-                new_rows.append(
-                    {
-                        "Question": f"{row['Section'].upper()}",
-                        "Answer Options": "",
-                        "IsSeparator": True,
-                        "SeparatorType": "section",
-                    }
-                )
-                last_section = str(row["Section"])
-
-            if row["Type"] == "descriptive":
-                new_row = row.to_dict()
-                new_row["IsDescriptive"] = True
-
-                new_row["Answer Options"] = ""
-                new_row["IsSeparator"] = False
-                new_rows.append(new_row)
-                continue
-
-                # Process the actual row
-            if row["Type"] in [
-                "radio",
-                "dropdown",
-                "checkbox",
-                "list",
-                "user_list",
-                "multi_list",
-            ]:
-                formatted_choices = Form().format_choices(
-                    row["Answer Options"], row["Type"]
-                )
-                row["Answer Options"] = formatted_choices
-
-            elif row["Validation"] == "date_dmy":
-                date_str = "[_D_][_D_]/[_M_][_M_]/[_2_][_0_][_Y_][_Y_]"
-                row["Answer Options"] = date_str
-
-            else:
-                row["Answer Options"] = Form().line_placeholder
-
-            # Add the processed row to new_rows
-            new_row = row.to_dict()
-            new_row["IsSeparator"] = False
-            new_rows.append(new_row)
-
-        # Update selected variables with new rows including separators
-        selected_variables_for_table_visualization = pd.DataFrame(new_rows)
-        selected_variables_for_table_visualization = (
-            selected_variables_for_table_visualization.loc[
-                selected_variables_for_table_visualization["Type"] != "group"
-            ]
-        )
-        # Convert to dictionary for row_data
-        row_data = selected_variables_for_table_visualization.to_dict(orient="records")
-
-    focused_cell_index = get_focused_cell_index(row_data, focused_cell_index, checked)
+    focused_cell_index = get_focused_cell_index(
+        row_data, focused_cell_index, list(checked) if checked else []
+    )
 
     focused_cell_run_callback = False
     if type(focused_cell_index) is int:
         focused_cell_run_callback = True
 
+    logger.debug(
+        "grid.display_checked_in_grid done total_ms=%.3f row_data=%s selected_json_rows=%s focused_cell_index=%s",
+        (perf_counter() - callback_start) * 1000,
+        len(row_data),
+        selected_rows_count,
+        focused_cell_index,
+    )
+
     return (
         row_data,
-        df_selected_variables.to_json(date_format="iso", orient="split"),
+        selected_json,
         focused_cell_run_callback,
         focused_cell_index,
     )
@@ -165,16 +194,19 @@ def get_focused_cell_index(
     row_data: list, focused_cell_index: int, checked: list
 ) -> int:
     if checked:
+        checked = list(checked)
         df_row_data = pd.DataFrame(row_data)
         df_row_data["Question"] = df_row_data["Question"].str.split(":").str[0]
 
         latest_checked_variable = checked[-1]
-        while (
+        while checked and (
             latest_checked_variable.isupper()
             or latest_checked_variable not in df_row_data["Variable"].values
         ):
             # Exclude headers and fields not in data (e.g. units)
             checked.pop()
+            if not checked:
+                return focused_cell_index
             latest_checked_variable = checked[-1]
 
         df_row_data_variable = df_row_data[

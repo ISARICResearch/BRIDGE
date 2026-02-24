@@ -411,6 +411,32 @@ def test_display_selected_in_modal(
     assert output == expected_output
 
 
+def test_build_checklist_dom_from_mapping_is_cached():
+    modals._build_checklist_dom_from_mapping_cached.cache_clear()
+    options_mapping = {
+        "inclu_disease": (
+            ("1", "Adenovirus", 0),
+            ("10", "Dengue", 1),
+            ("33", "Mpox", 1),
+        )
+    }
+
+    output_1 = modals.build_checklist_dom_from_mapping(options_mapping, "inclu_disease")
+    output_2 = modals.build_checklist_dom_from_mapping(options_mapping, "inclu_disease")
+    cache_info = modals._build_checklist_dom_from_mapping_cached.cache_info()
+
+    assert output_1 == output_2
+    assert output_1 == (
+        [
+            {"label": "1, Adenovirus", "value": "1_Adenovirus"},
+            {"label": "10, Dengue", "value": "10_Dengue"},
+            {"label": "33, Mpox", "value": "33_Mpox"},
+        ],
+        ["10_Dengue", "33_Mpox"],
+    )
+    assert cache_info.hits == 1
+
+
 def get_output_display_selected_in_modal(
     selected,
     ulist_variable_choices_saved,

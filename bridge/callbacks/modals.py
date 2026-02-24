@@ -1,5 +1,6 @@
 import io
 import json
+from functools import lru_cache
 from typing import Tuple
 
 import dash
@@ -10,6 +11,61 @@ from dash import html, Input, Output, State
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.utils.trigger_id import get_trigger_id
+
+CHECKLIST_STYLE = {"padding": "20px", "maxHeight": "250px", "overflowY": "auto"}
+LIST_GROUP_STYLE = {"maxHeight": "250px", "overflowY": "auto"}
+HIDDEN_STYLE = {"display": "none"}
+
+
+def _build_list_options_mapping(ulist_multilist: list) -> dict:
+    options_mapping = {}
+    for variable_name, variable_options in ulist_multilist:
+        options_mapping[str(variable_name)] = tuple(
+            (str(option[0]), str(option[1]), int(option[2]))
+            for option in variable_options
+        )
+    return options_mapping
+
+
+def _freeze_list_options_mapping(options_mapping: dict) -> tuple:
+    return tuple(sorted(options_mapping.items()))
+
+
+@lru_cache(maxsize=512)
+def _build_checklist_dom_from_mapping_cached(
+    frozen_options_mapping: tuple, selected_variable: str
+) -> tuple:
+    options_mapping = dict(frozen_options_mapping)
+    selected_options = options_mapping.get(selected_variable)
+    if selected_options is None:
+        return (), ()
+
+    options = []
+    checked_items = []
+    for option_code, option_name, is_selected in selected_options:
+        option_value = f"{option_code}_{option_name}"
+        options.append((f"{option_code}, {option_name}", option_value))
+        if is_selected == 1:
+            checked_items.append(option_value)
+
+    return tuple(options), tuple(checked_items)
+
+
+def build_checklist_dom_from_mapping(
+    options_mapping: dict, selected_variable: str
+) -> Tuple[list, list]:
+    options_data, checked_items_data = _build_checklist_dom_from_mapping_cached(
+        _freeze_list_options_mapping(options_mapping),
+        selected_variable,
+    )
+    options = [{"label": label, "value": value} for label, value in options_data]
+    checked_items = list(checked_items_data)
+    return options, checked_items
+
+
+@lru_cache(maxsize=512)
+def _split_answer_options(answer_options: str) -> tuple:
+    return tuple(answer_options.split("|"))
 
 
 @dash.callback(
@@ -44,6 +100,7 @@ def display_selected_in_modal(
         ulist = json.loads(ulist_variable_choices_saved)
         multilist = json.loads(multilist_variable_choices_saved)
         ulist_multilist = ulist + multilist
+        list_options_mapping = _build_list_options_mapping(ulist_multilist)
         df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
         selected_variable = selected[0]
         if selected_variable in list(df_datadicc["Variable"]):
@@ -68,47 +125,22 @@ def display_selected_in_modal(
                 .iloc[0]
             )
 
-            ulist_multilist_names = [item[0] for item in ulist_multilist]
-            if selected_variable in ulist_multilist_names:
-                for ulist_multilist_item in ulist_multilist:
-                    ulist_multilist_name = ulist_multilist_item[0]
-                    if ulist_multilist_name == selected_variable:
-                        options = []
-                        checked_items = []
-                        for ulist_multilist_variable in ulist_multilist_item[1]:
-                            options.append(
-                                {
-                                    "label": str(ulist_multilist_variable[0])
-                                    + ", "
-                                    + ulist_multilist_variable[1],
-                                    "value": str(ulist_multilist_variable[0])
-                                    + "_"
-                                    + ulist_multilist_variable[1],
-                                }
-                            )
-                            if ulist_multilist_variable[2] == 1:
-                                checked_items.append(
-                                    str(ulist_multilist_variable[0])
-                                    + "_"
-                                    + ulist_multilist_variable[1]
-                                )
-
-                        return (
-                            True,
-                            question + " [" + selected_variable + "]",
-                            definition,
-                            completion,
-                            skip_logic,
-                            {
-                                "padding": "20px",
-                                "maxHeight": "250px",
-                                "overflowY": "auto",
-                            },
-                            {"display": "none"},
-                            options,
-                            checked_items,
-                            [],
-                        )
+            if selected_variable in list_options_mapping:
+                options, checked_items = build_checklist_dom_from_mapping(
+                    list_options_mapping, selected_variable
+                )
+                return (
+                    True,
+                    question + " [" + selected_variable + "]",
+                    definition,
+                    completion,
+                    skip_logic,
+                    CHECKLIST_STYLE,
+                    HIDDEN_STYLE,
+                    options,
+                    checked_items,
+                    [],
+                )
             else:
                 options = []
                 answer_options = (
@@ -117,7 +149,9 @@ def display_selected_in_modal(
                     .iloc[0]
                 )
                 if isinstance(answer_options, str):
-                    for ulist_multilist_variable in answer_options.split("|"):
+                    for ulist_multilist_variable in _split_answer_options(
+                        answer_options
+                    ):
                         options.append(dbc.ListGroupItem(ulist_multilist_variable))
                 else:
                     options = []
@@ -127,14 +161,14 @@ def display_selected_in_modal(
                     definition,
                     completion,
                     skip_logic,
-                    {"display": "none"},
-                    {"maxHeight": "250px", "overflowY": "auto"},
+                    HIDDEN_STYLE,
+                    LIST_GROUP_STYLE,
                     [],
                     [],
                     options,
                 )
 
-    return False, "", "", "", "", {"display": "none"}, {"display": "none"}, [], [], []
+    return False, "", "", "", "", HIDDEN_STYLE, HIDDEN_STYLE, [], [], []
 
 
 @dash.callback(
