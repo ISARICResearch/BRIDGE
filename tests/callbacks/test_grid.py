@@ -62,10 +62,10 @@ def test_display_checked_in_grid(_mock_perf, mock_build, mock_focused, checked):
 
 
 def get_output_display_checked_in_grid(
-        checked_variables, current_datadicc, focused_cell, version_data
+    checked_variables, current_datadicc, focused_cell, version_data
 ):
     def run_callback(
-            checked, current_datadicc_saved, focused_cell_index, selected_version_data
+        checked, current_datadicc_saved, focused_cell_index, selected_version_data
     ):
         return grid.display_checked_in_grid(
             checked, current_datadicc_saved, focused_cell_index, selected_version_data
@@ -88,17 +88,19 @@ def get_output_display_checked_in_grid(
     [
         (None, None, False),
         (np.nan, np.nan, False),
-        ('', '', False),
+        ("", "", False),
         (0, 0, True),
     ],
 )
 @mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
 def test_get_focused_cell_index_checked_empty(
-        _mock_latest_checked, focused_cell_index, expected_index, expected_bool
+    _mock_latest_checked, focused_cell_index, expected_index, expected_bool
 ):
     row_data = []
     checked = []
-    (output_index, output_bool) = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
+    (output_index, output_bool) = grid._get_focused_cell_index(
+        row_data, focused_cell_index, checked
+    )
     if expected_bool:
         assert output_index == expected_index
     else:
@@ -107,7 +109,7 @@ def test_get_focused_cell_index_checked_empty(
 
 @mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
 def test_get_focused_cell_index(
-        mock_latest_checked,
+    mock_latest_checked,
 ):
     mock_latest_checked.return_value = "demog_height"
     row_data = [
@@ -119,7 +121,9 @@ def test_get_focused_cell_index(
     focused_cell_index = 3
     checked = ["demog_height", "demog_height_cm", "demog_height_in"]
     expected_index = 2
-    (output_index, output_bool) = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
+    (output_index, output_bool) = grid._get_focused_cell_index(
+        row_data, focused_cell_index, checked
+    )
     assert output_index == expected_index
     assert output_bool
 
@@ -136,11 +140,11 @@ def test_get_focused_cell_index(
 @mock.patch("bridge.callbacks.grid._units_transformation")
 @mock.patch("bridge.callbacks.grid._get_include_not_show")
 def test_create_selected_dataframe(
-        _mock_include,
-        mock_units,
-        mock_transformed_rows,
-        _mock_order,
-        dynamic_units_conversion,
+    _mock_include,
+    mock_units,
+    mock_transformed_rows,
+    _mock_order,
+    dynamic_units_conversion,
 ):
     data_datadicc = {
         "Variable": [
@@ -556,11 +560,11 @@ def test_get_include_not_show():
 @mock.patch("bridge.callbacks.grid._get_units_language")
 @mock.patch("bridge.callbacks.grid._add_select_units_field")
 def test_units_transformation_no_data(
-        _mock_select_units,
-        _mock_language,
-        _mock_units_dataframe,
-        _mock_answers,
-        _mock_options,
+    _mock_select_units,
+    _mock_language,
+    _mock_units_dataframe,
+    _mock_answers,
+    _mock_options,
 ):
     selected_variables = pd.Series()
     df_datadicc = pd.DataFrame()
@@ -580,11 +584,11 @@ def test_units_transformation_no_data(
 @mock.patch("bridge.callbacks.grid._get_units_language", return_value="select units")
 @mock.patch("bridge.callbacks.grid._add_select_units_field")
 def test_units_transformation(
-        mock_select_units,
-        _mock_language,
-        mock_units_dataframe,
-        mock_answers,
-        _mock_options,
+    mock_select_units,
+    _mock_language,
+    mock_units_dataframe,
+    mock_answers,
+    _mock_options,
 ):
     data = [
         "demog_height",
@@ -708,11 +712,11 @@ def test_units_transformation(
 @mock.patch("bridge.callbacks.grid._get_units_language", return_value=None)
 @mock.patch("bridge.callbacks.grid._add_select_units_field")
 def test_units_transformation_remove_select_units(
-        mock_select_units,
-        _mock_language,
-        mock_units_dataframe,
-        mock_answers,
-        _mock_options,
+    mock_select_units,
+    _mock_language,
+    mock_units_dataframe,
+    mock_answers,
+    _mock_options,
 ):
     data = [
         "demog_height",
@@ -1071,7 +1075,7 @@ def df_datadicc_old_units():
 
 
 def test_checked_updates_for_units_all_units_checked_dynamic_units_false(
-        df_datadicc_new_units,
+    df_datadicc_new_units,
 ):
     checked = [
         "labs_glucose_units",
@@ -1093,7 +1097,7 @@ def test_checked_updates_for_units_all_units_checked_dynamic_units_false(
 
 
 def test_checked_updates_for_units_all_units_checked_dynamic_units_true(
-        df_datadicc_old_units,
+    df_datadicc_old_units,
 ):
     checked = [
         "labs_glucose",
@@ -1122,7 +1126,7 @@ def test_checked_updates_for_units_all_units_checked_dynamic_units_true(
     ],
 )
 def test_checked_updates_for_units_two_units(
-        dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
+    dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
 ):
     checked = [
         "labs_glucose_mmoll",
@@ -1155,7 +1159,7 @@ def test_checked_updates_for_units_two_units(
     ],
 )
 def test_checked_updates_for_units_one_unit(
-        dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
+    dynamic_units_conversion, df_datadicc_new_units, df_datadicc_old_units
 ):
     checked = [
         "labs_glucose_mgdl",
