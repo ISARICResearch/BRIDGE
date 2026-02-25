@@ -29,7 +29,7 @@ def test_get_checked_template_list():
         "UserGenerated": ["Oropouche"],
     }
     checked_values_list = [["Covid"], ["ARI"], [], [], []]
-    output = tree.get_checked_template_list(grouped_presets_dict, checked_values_list)
+    output = tree._get_checked_template_list(grouped_presets_dict, checked_values_list)
     expected = [["ARChetype Disease CRF", "Covid"], ["ARChetype Syndromic CRF", "ARI"]]
     assert output == expected
 
@@ -87,7 +87,7 @@ def df_mock_list():
     return_value=[],
 )
 def test_update_list_items_ulist_checked_otherl2(
-    mock_list, mock_get_translations, df_mock_list
+    mock_list, _mock_get_translations, df_mock_list
 ):
     mock_list.return_value = df_mock_list
     version = "v1.1.2"
@@ -118,7 +118,7 @@ def test_update_list_items_ulist_checked_otherl2(
         '[56, "Abnormal weight loss", 0]]]]'
     )
 
-    df_output, ulist_output = tree.update_list_items(
+    df_output, ulist_output = tree._update_list_items(
         df_current_datadicc,
         ulist_saved,
         "user_list",
@@ -126,7 +126,7 @@ def test_update_list_items_ulist_checked_otherl2(
         language,
         checked_key=checked_key,
     )
-    df_output, multilist_output = tree.update_list_items(
+    df_output, multilist_output = tree._update_list_items(
         df_current_datadicc,
         multilist_saved,
         "multi_list",
@@ -174,7 +174,7 @@ def test_update_list_items_ulist_checked_otherl2(
     return_value=[],
 )
 def test_update_list_items_multilist_selected(
-    mock_list, mock_get_translations, df_mock_list
+    mock_list, _mock_get_translations, df_mock_list
 ):
     mock_list.return_value = df_mock_list
     version = "v1.1.2"
@@ -205,10 +205,10 @@ def test_update_list_items_multilist_selected(
         '[36, "Oropouche", 0]]]]'
     )
 
-    df_output, ulist_output = tree.update_list_items(
+    df_output, ulist_output = tree._update_list_items(
         df_current_datadicc, ulist_saved, "user_list", version, language
     )
-    df_output, multilist_output = tree.update_list_items(
+    df_output, multilist_output = tree._update_list_items(
         df_current_datadicc, multilist_saved, "multi_list", version, language
     )
     ulist_expected = "[]"
@@ -342,7 +342,7 @@ def test_update_tree_items_and_stores_upload_crf_ready():
 @mock.patch("bridge.callbacks.tree.html.Div", return_value=["Just for checking"])
 @mock.patch("bridge.callbacks.tree.arc_tree.get_tree_items")
 def test_update_tree_items_and_stores_no_update(
-    mock_get_tree_items, mock_html_div, trigger, checked_variables
+    _mock_get_tree_items, _mock_html_div, trigger, checked_variables
 ):
     upload_crf_ready = False
     current_datadicc_saved = (
@@ -387,19 +387,19 @@ def test_update_tree_items_and_stores_no_update(
         ),
     ],
 )
-@mock.patch("bridge.callbacks.tree.update_list_items")
+@mock.patch("bridge.callbacks.tree._update_list_items")
 @mock.patch(
-    "bridge.callbacks.tree.get_checked_template_list",
+    "bridge.callbacks.tree._get_checked_template_list",
     return_value=[["ARChetype Disease CRF", "Covid"]],
 )
 @mock.patch("bridge.callbacks.tree.logger")
 @mock.patch("bridge.callbacks.tree.html.Div", return_value=["Just for checking"])
 @mock.patch("bridge.callbacks.tree.arc_tree.get_tree_items")
 def test_update_tree_items_and_stores(
-    mock_get_tree_items,
-    mock_html_div,
-    mock_logger,
-    mock_template_list,
+    _mock_get_tree_items,
+    _mock_html_div,
+    _mock_logger,
+    _mock_template_list,
     mock_update_for_template,
     trigger,
     checked_variables,

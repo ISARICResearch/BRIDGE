@@ -375,7 +375,7 @@ def _sanitize_key(text: str) -> str:
 
 def _generate_guide_content(df_datadicc: pd.DataFrame) -> list:
     """
-    Generates the completion guide from a data_dictionary json.
+    Generates the completion guide from a data_dictionary JSON.
     """
 
     element_list = []

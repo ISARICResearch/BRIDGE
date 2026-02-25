@@ -13,7 +13,6 @@ from bridge.logging.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
 logger = setup_logger(__name__)
-ARC_VERSION_LIST, _ARC_VERSION_LATEST = arc_core.get_arc_versions()
 
 
 @dash.callback(
@@ -137,13 +136,14 @@ def store_data_for_selected_version_language(
     button_index = json.loads(trigger_id)["index"]
     button_type = json.loads(trigger_id)["type"]
 
-    initial_load = determine_initial_load_boolean(n_clicks_version, n_clicks_language)
+    initial_load = _determine_initial_load_boolean(n_clicks_version, n_clicks_language)
 
     selected_version = None
     selected_language = None
 
     if button_type == "dynamic-version":
-        selected_version = ARC_VERSION_LIST[button_index]
+        arc_version_list, _arc_version_latest = arc_core.get_arc_versions()
+        selected_version = arc_version_list[button_index]
         if selected_version_data and selected_version == selected_version_data.get(
             "selected_version", None
         ):
@@ -212,7 +212,7 @@ def store_data_for_selected_version_language(
         )
 
 
-def determine_initial_load_boolean(n_clicks_version, n_clicks_language):
+def _determine_initial_load_boolean(n_clicks_version, n_clicks_language):
     initial_load = False
     n_clicks_version_unique_values = [
         click for click in n_clicks_version if pd.notnull(click)

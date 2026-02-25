@@ -221,10 +221,10 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
 @mock.patch("bridge.callbacks.modals.get_trigger_id", return_value="modal_submit")
 def test_on_modal_button_click_modal_submit(
     mock_trigger_id,
-    mock_get_translations,
+    _mock_get_translations,
     mock_list_choices,
-    mock_get_tree_items,
-    mock_html_div,
+    _mock_get_tree_items,
+    _mock_html_div,
     ulist_variable_choices_saved,
     multilist_variable_choices_saved,
     expected_output,
@@ -383,7 +383,7 @@ def test_display_selected_in_modal_nothing_selected(
     ],
 )
 def test_display_selected_in_modal(
-    mock_list_group_item,
+    _mock_list_group_item,
     selected,
     ulist_variable_choices_saved,
     multilist_variable_choices_saved,

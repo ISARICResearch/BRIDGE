@@ -6,6 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 from requests.exceptions import RequestException
 
+from bridge.arc import arc_api
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
 
 
@@ -65,7 +66,7 @@ def mock_language_json():
 
 
 @mock.patch("bridge.arc.arc_api.logger")
-def test_get_api_response_exception(mock_logger, client_production):
+def test_get_api_response_exception(_mock_logger, client_production):
     class FakeResponse:
         def raise_for_status(self):
             raise RequestException
@@ -76,7 +77,7 @@ def test_get_api_response_exception(mock_logger, client_production):
 
 
 @mock.patch("bridge.arc.arc_api.logger")
-def test_get_api_response(mock_logger, mock_language_json, client_production):
+def test_get_api_response(_mock_logger, mock_language_json, client_production):
     class FakeResponse:
         def raise_for_status(self):
             pass
@@ -92,7 +93,7 @@ def test_get_api_response(mock_logger, mock_language_json, client_production):
 
 @mock.patch("bridge.arc.arc_api.pd.read_csv")
 @mock.patch("bridge.arc.arc_api.logger")
-def test_write_to_dataframe_csv(mock_logger, mock_read_csv, data_path):
+def test_write_to_dataframe_csv(_mock_logger, mock_read_csv, data_path):
     data = {
         "Variable": [
             "subjid",
@@ -108,7 +109,7 @@ def test_write_to_dataframe_csv(mock_logger, mock_read_csv, data_path):
 
 @mock.patch("bridge.arc.arc_api.pd.read_json")
 @mock.patch("bridge.arc.arc_api.logger")
-def test_write_to_dataframe_json(mock_logger, mock_read_json, data_path):
+def test_write_to_dataframe_json(_mock_logger, mock_read_json, data_path):
     data = {
         "Variable": [
             "subjid",
@@ -123,30 +124,60 @@ def test_write_to_dataframe_json(mock_logger, mock_read_json, data_path):
 
 
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
-def test_get_arc_version_list(mock_release_json, client_production):
+def test_get_arc_version_list_no_cache(mock_release_json, client_production):
     release_json = [
-        {"name": "v1.1.4", "tag_name": "v1.1.4"},
-        {"name": "v1.1.3", "tag_name": "v1.1.3"},
-        {"name": "v1.1.2", "tag_name": "v1.1.2"},
-        {"name": "v1.1.1", "tag_name": "v1.1.1"},
         {"name": "v1.1.0", "tag_name": "v1.1.0"},
         {"name": "v1.0.4", "tag_name": "v1.0.4"},
         {"name": "v1.0.0", "tag_name": "v1.0.0"},
     ]
     mock_release_json.return_value = release_json
 
-    expected = [
-        "v1.1.4",
-        "v1.1.3",
-        "v1.1.2",
-        "v1.1.1",
-        "v1.1.0",
-        "v1.0.4",
-        "v1.0.0",
-    ]
-    output = client_production.get_arc_version_list()
+    with mock.patch.object(arc_api, "_ARC_VERSION_LIST_CACHE", {}):
+        expected = [
+            "v1.1.0",
+            "v1.0.4",
+            "v1.0.0",
+        ]
+        output = client_production.get_arc_version_list()
 
-    assert output == expected
+        assert output == expected
+
+
+@mock.patch("bridge.arc.arc_api.monotonic", return_value=1234567890)
+@mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
+def test_get_arc_version_list_with_cache_old(
+    mock_release_json, _mock_mono, client_production
+):
+    release_json = [
+        {"name": "v1.1.0", "tag_name": "v1.1.0"},
+        {"name": "v1.0.4", "tag_name": "v1.0.4"},
+        {"name": "v1.0.0", "tag_name": "v1.0.0"},
+    ]
+    mock_release_json.return_value = release_json
+
+    cache_dict = {("production",): (["v1.0.4", "v1.0.0"], 5)}
+    with mock.patch.object(arc_api, "_ARC_VERSION_LIST_CACHE", cache_dict):
+        expected = [
+            "v1.1.0",
+            "v1.0.4",
+            "v1.0.0",
+        ]
+        output = client_production.get_arc_version_list()
+
+        assert output == expected
+
+
+@mock.patch("bridge.arc.arc_api.monotonic", return_value=0)
+def test_get_arc_version_list_with_cache_not_old(_mock_mono, client_production):
+    cache_dict = {("production",): (["v1.0.4", "v1.0.0"], 5)}
+    with mock.patch.object(arc_api, "_ARC_VERSION_LIST_CACHE", cache_dict):
+        expected = [
+            "v1.0.4",
+            "v1.0.0",
+        ]
+        output = client_production.get_arc_version_list()
+
+        assert output == expected
 
 
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
@@ -264,7 +295,7 @@ def test_get_arc_version_sha_development(mock_tag_json, client_development):
 
 @mock.patch("bridge.arc.arc_api.logger")
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
-def test_get_arc_version_sha_exception(mock_tag_json, mock_logger, client_production):
+def test_get_arc_version_sha_exception(mock_tag_json, _mock_logger, client_production):
     tag_json = [
         {
             "commit": {"sha": "7865ffce987395528e9151854aa524db9d9d0361"},
