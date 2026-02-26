@@ -1,20 +1,18 @@
-# Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY requirements.txt .
-
-# Install dependencies
+COPY pyproject.toml ./
+# Compile requirements.txt from pyproject.toml using pip-tools
+RUN pip install --no-cache-dir pip-tools && \
+    pip-compile --output-file=requirements.txt pyproject.toml
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose the port the app runs on
+# Install the package itself without re-resolving dependencies
+RUN pip install --no-cache-dir --no-deps .
+
 EXPOSE 8050
 
-# Command to run the app using Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server"]
