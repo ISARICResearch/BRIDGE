@@ -83,6 +83,9 @@ def update_output_files_store(checked_values: list) -> list:
         Output("ulist_variable_choices-store", "data", allow_duplicate=True),
         Output("multilist_variable_choices-store", "data", allow_duplicate=True),
         Output("dynamic-units-conversion", "data", allow_duplicate=True),
+        Output("presets-column", "is_in", allow_duplicate=True),
+        Output("settings-column", "is_in", allow_duplicate=True),
+        Output("tree-column", "is_in", allow_duplicate=True),
     ],
     [
         Input({"type": "dynamic-version", "index": dash.ALL}, "n_clicks"),
@@ -119,6 +122,9 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
         )
 
     ctx = dash.callback_context
@@ -132,6 +138,9 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             False,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
             dash.no_update,
             dash.no_update,
             dash.no_update,
@@ -164,6 +173,9 @@ def store_data_for_selected_version_language(
                 dash.no_update,
                 dash.no_update,
                 False,
+                dash.no_update,
+                dash.no_update,
+                dash.no_update,
                 dash.no_update,
                 dash.no_update,
                 dash.no_update,
@@ -208,6 +220,9 @@ def store_data_for_selected_version_language(
             version_ulist_variable_choices,
             version_multilist_variable_choices,
             dynamic_units_conversion,
+            False,  # Collapse the Presets column
+            False,  # Collapse the settings column
+            True,  # Show the tree
         )
     except json.JSONDecodeError:
         return (
@@ -218,6 +233,9 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             False,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
             dash.no_update,
             dash.no_update,
             dash.no_update,

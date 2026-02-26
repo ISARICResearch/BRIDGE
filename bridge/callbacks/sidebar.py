@@ -8,14 +8,20 @@ from bridge.utils.trigger_id import get_trigger_id
 
 @dash.callback(
     [
-        Output("presets-column", "is_in"),
-        Output("settings-column", "is_in"),
-        Output("tree-column", "is_in"),
+        Output("presets-column", "is_in", allow_duplicate=True),
+        Output("settings-column", "is_in", allow_duplicate=True),
+        Output("tree-column", "is_in", allow_duplicate=True),
         Output("settings_icon", "src"),
         Output("preset_icon", "src"),
     ],
-    [Input("toggle-settings-2", "n_clicks"), Input("toggle-settings-1", "n_clicks")],
-    [State("presets-column", "is_in"), State("settings-column", "is_in")],
+    [
+        Input("toggle-settings-2", "n_clicks"),
+        Input("toggle-settings-1", "n_clicks"),
+    ],
+    [
+        State("presets-column", "is_in"),
+        State("settings-column", "is_in"),
+    ],
     prevent_initial_call=True,
 )
 def toggle_columns(
