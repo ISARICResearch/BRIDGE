@@ -5,7 +5,7 @@ from packaging.version import parse
 
 from bridge.arc import arc_translations
 from bridge.arc.arc_api import ArcApiClient
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

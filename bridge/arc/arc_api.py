@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from requests.exceptions import RequestException
 
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -150,7 +150,6 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
-        df = df.loc[df["Validation"] != "units"]  # temporal filter
         _ARC_DF_CACHE[cache_key] = df.copy(deep=True)
         return df.copy(deep=True)
 
@@ -184,8 +183,6 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
-        if "Validation" in df.columns:
-            df = df.loc[df["Validation"] != "units"]  # temporal filter
         _ARC_TRANSLATION_DF_CACHE[cache_key] = df.copy(deep=True)
         return df.copy(deep=True)
 

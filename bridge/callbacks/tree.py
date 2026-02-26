@@ -9,7 +9,7 @@ from dash import html, Input, Output, State
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 pd.options.mode.copy_on_write = True
 
@@ -34,6 +34,7 @@ logger = setup_logger(__name__)
         State("selected-language-store", "data"),
         State("ulist_variable_choices-store", "data"),
         State("multilist_variable_choices-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -46,6 +47,7 @@ def update_tree_items_and_stores(
     selected_language_data: dict,
     version_lang_ulist_saved: str,
     version_lang_multilist_saved: str,
+    dynamic_units_conversion: bool,
 ):
     if upload_crf_ready:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -56,7 +58,9 @@ def update_tree_items_and_stores(
     version = selected_version_data.get("selected_version")
     language = selected_language_data.get("selected_language")
 
-    tree_items_data = arc_tree.get_tree_items(df_datadicc, version)
+    tree_items_data = arc_tree.get_tree_items(
+        df_datadicc, version, dynamic_units_conversion
+    )
 
     if (not ctx.triggered) | (all(not sublist for sublist in checked_templates)):
         tree_items = html.Div(

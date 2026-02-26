@@ -155,7 +155,8 @@ def test_get_arc_version_list_with_cache_old(
     ]
     mock_release_json.return_value = release_json
 
-    cache_dict = {("production",): (["v1.0.4", "v1.0.0"], 5)}
+    cache_key = ("production",)
+    cache_dict = {cache_key: (["v1.0.4", "v1.0.0"], 5)}
     with mock.patch.object(arc_api, "_ARC_VERSION_LIST_CACHE", cache_dict):
         expected = [
             "v1.1.0",
@@ -169,7 +170,8 @@ def test_get_arc_version_list_with_cache_old(
 
 @mock.patch("bridge.arc.arc_api.monotonic", return_value=0)
 def test_get_arc_version_list_with_cache_not_old(_mock_mono, client_production):
-    cache_dict = {("production",): (["v1.0.4", "v1.0.0"], 5)}
+    cache_key = ("production",)
+    cache_dict = {cache_key: (["v1.0.4", "v1.0.0"], 5)}
     with mock.patch.object(arc_api, "_ARC_VERSION_LIST_CACHE", cache_dict):
         expected = [
             "v1.0.4",
@@ -267,6 +269,15 @@ def test_get_arc_version_sha(mock_tag_json, client_production):
     assert output == expected_sha
 
 
+def test_get_arc_version_sha_with_cache(client_production):
+    cache_key = ("production", "v1.1.1")
+    cache_dict = {cache_key: "abc123def4561111"}
+    with mock.patch.object(arc_api, "_VERSION_SHA_CACHE", cache_dict):
+        expected_sha = "abc123def4561111"
+        output = client_production.get_arc_version_sha("v1.1.1")
+        assert output == expected_sha
+
+
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
 def test_get_arc_version_sha_development(mock_tag_json, client_development):
     expected_sha = "000000a"
@@ -347,6 +358,22 @@ def test_get_dataframe_arc_list_version_language(mock_write_to_df, client_produc
     assert_frame_equal(df_output, df_expected)
 
 
+def test_get_dataframe_arc_list_version_language_with_cache(client_production):
+    cache_key = ("production", "v1.1.1", "English", "My List")
+    df_cache = pd.DataFrame(
+        {
+            "Form": ["A form", "B form", "C form"],
+        }
+    )
+    cache_dict = {cache_key: df_cache}
+    with mock.patch.object(arc_api, "_ARC_LIST_DF_CACHE", cache_dict):
+        df_output = client_production.get_dataframe_arc_list_version_language(
+            "v1.1.1", "English", "My List"
+        )
+
+    assert_frame_equal(df_output, df_cache)
+
+
 @mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
 def test_get_dataframe_arc_list_version_language_development(
     mock_write_to_df, client_development
@@ -400,6 +427,14 @@ def test_get_arc_language_list_version(
     assert output == expected
 
 
+def test_get_arc_language_list_version_with_cache(client_production):
+    cache_key = ("production", "v1.1.1")
+    cache_dict = {cache_key: ["a", "b", "c"]}
+    with mock.patch.object(arc_api, "_ARC_LANGUAGE_LIST_CACHE", cache_dict):
+        output = client_production.get_arc_language_list_version("v1.1.1")
+    assert output == ["a", "b", "c"]
+
+
 def test_get_arc_language_list_version_development(client_development):
     version = "v1.1.1"
     expected = [
@@ -421,3 +456,99 @@ def test_get_version_string(client_production):
     expected = "v1.1.1"
     output = client_production.get_version_string(version)
     assert output == expected
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_arc_sha_prod(mock_write_to_df, client_production):
+    client_production.get_dataframe_arc_sha("abc123mysha", "v1.1.1")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC/abc123mysha/ARC.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_arc_sha_dev(mock_write_to_df, client_development):
+    client_development.get_dataframe_arc_sha("abc123mysha", "v1.1.1")
+    url = "https://raw.githubusercontent.com/ISARICResearch/DataPlatform/abc123mysha/ARCH/ARCH1.1.1/ARCH.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+def test_get_dataframe_arc_sha_with_cache(client_production):
+    cache_key = ("production", "abc123mysha", "v1.1.1")
+    df_cache = pd.DataFrame(
+        {
+            "Form": ["A form", "B form", "C form"],
+        }
+    )
+    cache_dict = {cache_key: df_cache}
+    with mock.patch.object(arc_api, "_ARC_DF_CACHE", cache_dict):
+        df_output = client_production.get_dataframe_arc_sha("abc123mysha", "v1.1.1")
+
+    assert_frame_equal(df_output, df_cache)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_arc_version_language_prod(mock_write_to_df, client_production):
+    client_production.get_dataframe_arc_version_language("v1.1.1", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/ARCH.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_arc_version_language_dev(mock_write_to_df, client_development):
+    client_development.get_dataframe_arc_version_language("v1.1.1", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/ARCH1.1.1/ARCH.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+def test_get_dataframe_arc_version_language_with_cache(client_production):
+    cache_key = ("production", "v1.1.1", "English")
+    df_cache = pd.DataFrame(
+        {
+            "Form": ["A form", "B form", "C form"],
+        }
+    )
+    cache_dict = {cache_key: df_cache}
+    with mock.patch.object(arc_api, "_ARC_TRANSLATION_DF_CACHE", cache_dict):
+        df_output = client_production.get_dataframe_arc_version_language(
+            "v1.1.1", "English"
+        )
+
+    assert_frame_equal(df_output, df_cache)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_paper_like_details_prod(mock_write_to_df, client_production):
+    client_production.get_dataframe_paper_like_details("v1.1.1", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/paper_like_details.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_paper_like_details_dev(mock_write_to_df, client_development):
+    client_development.get_dataframe_paper_like_details("v1.1.1", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/ARCH1.1.1/paper_like_details.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_supplemental_phrases_prod(mock_write_to_df, client_production):
+    client_production.get_dataframe_supplemental_phrases("v1.1.1", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/supplemental_phrases.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_supplemental_phrases_dev(
+    mock_write_to_df, mock_release_json, client_development
+):
+    release_json = [
+        {"name": "v1.1.0", "tag_name": "v1.1.2"},
+        {"name": "v1.0.4", "tag_name": "v1.1.1"},
+        {"name": "v1.0.0", "tag_name": "v1.0.0"},
+    ]
+    mock_release_json.return_value = release_json
+
+    client_development.get_dataframe_supplemental_phrases("v1.0.0", "English")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.2/English/supplemental_phrases.csv"
+    mock_write_to_df.assert_called_with(url)

@@ -59,6 +59,7 @@ def test_get_tree_items_with_units(
     mock_df_tree.return_value = df_tree_units
     df_datadicc = pd.DataFrame()  # Not used
     version = "v1.1.1"  # Not used
+    dynamic_units_conversion = False  # Not used
     data_parent = {
         "Variable": [
             "demog_height_units",
@@ -121,7 +122,7 @@ def test_get_tree_items_with_units(
         "title": "v1.1.1",
     }
 
-    output = arc_tree.get_tree_items(df_datadicc, version)
+    output = arc_tree.get_tree_items(df_datadicc, version, dynamic_units_conversion)
 
     assert output == expected
 
@@ -140,6 +141,7 @@ def test_get_tree_items_with_units_remove_select_units(
     mock_df_tree.return_value = df_tree_units
     df_datadicc = pd.DataFrame()  # Not used
     version = "v1.1.1"  # Not used
+    dynamic_units_conversion = False  # Not used
     data_parent = {
         "Variable": [
             "demog_height_units",
@@ -202,7 +204,7 @@ def test_get_tree_items_with_units_remove_select_units(
         "title": "v1.1.1",
     }
 
-    output = arc_tree.get_tree_items(df_datadicc, version)
+    output = arc_tree.get_tree_items(df_datadicc, version, dynamic_units_conversion)
 
     assert output == expected
 
@@ -256,6 +258,7 @@ def test_get_tree_items_no_units_single_var(
     mock_df_tree.return_value = df_tree_single
     df_datadicc = pd.DataFrame()  # Not used
     version = "v1.1.1"  # Not used
+    dynamic_units_conversion = False  # Not used
 
     expected = {
         "children": [
@@ -280,7 +283,7 @@ def test_get_tree_items_no_units_single_var(
         "title": "v1.1.1",
     }
 
-    output = arc_tree.get_tree_items(df_datadicc, version)
+    output = arc_tree.get_tree_items(df_datadicc, version, dynamic_units_conversion)
 
     assert output == expected
 
@@ -364,6 +367,7 @@ def test_get_tree_items_no_units_multiple_vars(
     mock_df_tree.return_value = df_tree_multiple
     df_datadicc = pd.DataFrame()  # Not used
     version = "v1.1.1"  # Not used
+    dynamic_units_conversion = False  # Not used
 
     expected = {
         "children": [
@@ -409,7 +413,7 @@ def test_get_tree_items_no_units_multiple_vars(
         "title": "v1.1.1",
     }
 
-    output = arc_tree.get_tree_items(df_datadicc, version)
+    output = arc_tree.get_tree_items(df_datadicc, version, dynamic_units_conversion)
 
     assert output == expected
 

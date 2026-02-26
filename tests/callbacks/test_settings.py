@@ -95,7 +95,7 @@ def test_update_language_available_for_version(
 
 
 @pytest.mark.parametrize(
-    "trigger, clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
+    "trigger, clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, dynamic_units_conversion, expected_output",
     [
         (
             None,
@@ -105,6 +105,7 @@ def test_update_language_available_for_version(
             None,
             None,
             [],
+            False,
             (
                 dash.no_update,
                 dash.no_update,
@@ -125,6 +126,7 @@ def test_update_language_available_for_version(
             None,
             None,
             [],
+            False,
             (
                 dash.no_update,
                 dash.no_update,
@@ -147,6 +149,7 @@ def test_store_data_for_selected_version_language_no_action(
     selected_version,
     selected_language,
     language_list,
+    dynamic_units_conversion,
     expected_output,
 ):
     output = get_output_store_data_for_selected_version_language(
@@ -156,6 +159,7 @@ def test_store_data_for_selected_version_language_no_action(
         crf_ready,
         selected_version,
         language_list,
+        dynamic_units_conversion,
     )
     assert output == expected_output
 
@@ -179,7 +183,7 @@ def mock_language_data_return_value():
 
 
 @pytest.mark.parametrize(
-    "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
+    "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, dynamic_units_conversion, expected_output",
     [
         (
             [None, 1, None, None],
@@ -188,6 +192,7 @@ def mock_language_data_return_value():
             {"selected_version": "v1.1.1"},
             {"selected_language": "French"},
             ["English", "French"],
+            False,
             (
                 {"selected_version": "v1.1.0"},  # trigger index = 0
                 {"selected_language": "English"},
@@ -200,6 +205,7 @@ def mock_language_data_return_value():
                 True,
                 ["version", "ulist", "variable", "choices"],
                 ["version", "multilist", "variable", "choices"],
+                True,
             ),
         ),
         (
@@ -209,6 +215,7 @@ def mock_language_data_return_value():
             {"selected_version": "v1.1.0"},
             {"selected_language": "English"},
             ["English", "French"],
+            False,
             (
                 dash.no_update,
                 dash.no_update,
@@ -217,6 +224,7 @@ def mock_language_data_return_value():
                 dash.no_update,
                 dash.no_update,
                 False,
+                dash.no_update,
                 dash.no_update,
                 dash.no_update,
             ),
@@ -244,6 +252,7 @@ def test_store_data_for_selected_version_language_dynamic_version(
     selected_version,
     selected_language,
     language_list,
+    dynamic_units_conversion,
     expected_output,
     mock_language_data_return_value,
 ):
@@ -256,12 +265,13 @@ def test_store_data_for_selected_version_language_dynamic_version(
         crf_ready,
         selected_version,
         language_list,
+        dynamic_units_conversion,
     )
     assert output == expected_output
 
 
 @pytest.mark.parametrize(
-    "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, expected_output",
+    "clicks_version, clicks_language, crf_ready, selected_version, selected_language, language_list, dynamic_units_conversion, expected_output",
     [
         (
             [None, None, None, None],
@@ -270,6 +280,7 @@ def test_store_data_for_selected_version_language_dynamic_version(
             {"selected_version": "v1.1.1"},
             {"selected_language": "English"},
             ["English", "French"],
+            False,
             (
                 {"selected_version": "v1.1.1"},
                 {"selected_language": "French"},  # trigger index = 1
@@ -282,6 +293,7 @@ def test_store_data_for_selected_version_language_dynamic_version(
                 True,
                 ["version", "ulist", "variable", "choices"],
                 ["version", "multilist", "variable", "choices"],
+                False,
             ),
         ),
     ],
@@ -302,6 +314,7 @@ def test_store_data_for_selected_version_language_dynamic_language(
     selected_version,
     selected_language,
     language_list,
+    dynamic_units_conversion,
     expected_output,
     mock_language_data_return_value,
 ):
@@ -314,12 +327,19 @@ def test_store_data_for_selected_version_language_dynamic_language(
         crf_ready,
         selected_version,
         language_list,
+        dynamic_units_conversion,
     )
     assert output == expected_output
 
 
 def get_output_store_data_for_selected_version_language(
-    trigger, clicks_version, clicks_language, crf_ready, selected_version, language_list
+    trigger,
+    clicks_version,
+    clicks_language,
+    crf_ready,
+    selected_version,
+    language_list,
+    dynamic_units_conversion,
 ):
     def run_callback(
         n_clicks_version,
@@ -327,6 +347,7 @@ def get_output_store_data_for_selected_version_language(
         upload_crf_ready,
         selected_version_data,
         language_list_data,
+        dynamic_units_bool,
     ):
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
         return settings.store_data_for_selected_version_language(
@@ -335,6 +356,7 @@ def get_output_store_data_for_selected_version_language(
             upload_crf_ready,
             selected_version_data,
             language_list_data,
+            dynamic_units_bool,
         )
 
     ctx = copy_context()
@@ -345,6 +367,7 @@ def get_output_store_data_for_selected_version_language(
         crf_ready,
         selected_version,
         language_list,
+        dynamic_units_conversion,
     )
 
     return output

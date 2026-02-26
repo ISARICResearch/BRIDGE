@@ -9,7 +9,7 @@ from dash import Input, Output, State
 from bridge.arc import arc_core
 from bridge.arc.arc_api import ArcApiClient
 from bridge.callbacks.language import Language
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
 logger = setup_logger(__name__)
@@ -56,7 +56,7 @@ def update_language_available_for_version(selected_version_data: dict):
         for i, language in enumerate(arc_languages)
     ]
     logger.info(
-        "settings.update_language_available_for_version completed version=%s languages=%s total_elapsed_ms=%.3f",
+        "update_language_available_for_version completed version=%s languages=%s total_elapsed_ms=%.3f",
         current_version,
         len(arc_languages),
         (perf_counter() - start) * 1000,
@@ -82,6 +82,7 @@ def update_output_files_store(checked_values: list) -> list:
         Output("templates_checks_ready", "data"),
         Output("ulist_variable_choices-store", "data", allow_duplicate=True),
         Output("multilist_variable_choices-store", "data", allow_duplicate=True),
+        Output("dynamic-units-conversion", "data"),
     ],
     [
         Input({"type": "dynamic-version", "index": dash.ALL}, "n_clicks"),
@@ -91,6 +92,7 @@ def update_output_files_store(checked_values: list) -> list:
     [
         State("selected-version-store", "data"),
         State("language-list-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -100,6 +102,7 @@ def store_data_for_selected_version_language(
     upload_crf_ready: bool,
     selected_version_data: dict,
     language_list_data: list,
+    dynamic_units_conversion: bool,
 ):
     callback_start = perf_counter()
 
@@ -144,6 +147,10 @@ def store_data_for_selected_version_language(
     if button_type == "dynamic-version":
         arc_version_list, _arc_version_latest = arc_core.get_arc_versions()
         selected_version = arc_version_list[button_index]
+        dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(
+            selected_version
+        )
+
         if selected_version_data and selected_version == selected_version_data.get(
             "selected_version", None
         ):
@@ -155,6 +162,7 @@ def store_data_for_selected_version_language(
                 dash.no_update,
                 dash.no_update,
                 False,
+                dash.no_update,
                 dash.no_update,
                 dash.no_update,
             )
@@ -180,7 +188,7 @@ def store_data_for_selected_version_language(
         logger.info(f"selected_language: {selected_language}")
         logger.info(f"version_presets: {version_presets}")
         logger.info(
-            "settings.store_data_for_selected_version_language completed trigger_type=%s version=%s language=%s total_elapsed_ms=%.3f",
+            "store_data_for_selected_version_language completed trigger_type=%s version=%s language=%s total_elapsed_ms=%.3f",
             button_type,
             selected_version,
             selected_language,
@@ -197,6 +205,7 @@ def store_data_for_selected_version_language(
             True,
             version_ulist_variable_choices,
             version_multilist_variable_choices,
+            dynamic_units_conversion,
         )
     except json.JSONDecodeError:
         return (
@@ -207,6 +216,7 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             False,
+            dash.no_update,
             dash.no_update,
             dash.no_update,
         )

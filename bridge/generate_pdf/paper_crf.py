@@ -16,7 +16,7 @@ from bridge.generate_pdf.form import Form
 from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
 from bridge.generate_pdf.opener import generate_opener
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

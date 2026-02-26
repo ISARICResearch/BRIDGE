@@ -11,7 +11,7 @@ import pandas as pd
 from dash import html, Input, Output, State
 
 from bridge.arc import arc_translations, arc_tree
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
 CHECKLIST_STYLE = {"padding": "20px", "maxHeight": "250px", "overflowY": "auto"}
@@ -208,6 +208,7 @@ def display_selected_in_modal(
         State("multilist_variable_choices-store", "data"),
         State("selected-version-store", "data"),
         State("selected-language-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -222,6 +223,7 @@ def on_modal_button_click(
     multilist_variable_choices_saved: str,
     selected_version_data: dict,
     selected_language_data: dict,
+    dynamic_units_conversion: bool,
 ):
     ctx = dash.callback_context
 
@@ -282,7 +284,9 @@ def on_modal_button_click(
 
             checked.append(variable_selected)
 
-            tree_items_data = arc_tree.get_tree_items(df_datadicc, selected_version)
+            tree_items_data = arc_tree.get_tree_items(
+                df_datadicc, selected_version, dynamic_units_conversion
+            )
 
             tree_items = html.Div(
                 dash_treeview_antd.TreeView(

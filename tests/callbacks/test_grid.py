@@ -1349,3 +1349,42 @@ def test_assign_units_answer_options_dynamic_true():
         df_datadicc, df_units, dynamic_units_conversion
     )
     assert_frame_equal(df_output, df_units)
+
+
+@mock.patch("bridge.callbacks.grid._create_new_row_list")
+@mock.patch("bridge.callbacks.grid._create_selected_dataframe")
+@mock.patch("bridge.callbacks.grid._checked_updates_for_units")
+def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
+    current_datadicc_saved = (
+        '{"columns":["Form"], "index":[0], "data":[["presentation"]]}'
+    )
+    checked_tuple = tuple("inclu_disease")
+    dynamic_units_conversion = True
+
+    mock_checked.return_value = ["inclu_disease"]
+    mock_selected_df.return_value = pd.DataFrame(
+        {
+            "Variable": ["inclu_disease", "inclu_disease_otherl3"],
+        }
+    )
+    mock_list.return_value = [
+        {"Answer Options": "Some answer", "Question": "PRESENTATION"},
+        {
+            "Answer Options": "Some other answer",
+            "Question": "Another question",
+            "Type": "group",
+        },
+    ]
+
+    output_list, output_json, output_count = grid._build_grid_payload_cached(
+        current_datadicc_saved, checked_tuple, dynamic_units_conversion
+    )
+
+    assert output_list == [
+        {"Answer Options": "Some answer", "Question": "PRESENTATION", "Type": np.nan}
+    ]
+    assert (
+        output_json
+        == '{"columns":["Variable"],"index":[0,1],"data":[["inclu_disease"],["inclu_disease_otherl3"]]}'
+    )
+    assert output_count == 2

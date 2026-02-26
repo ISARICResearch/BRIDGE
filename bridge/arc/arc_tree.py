@@ -3,8 +3,6 @@ from typing import Tuple
 
 import pandas as pd
 
-from bridge.arc import arc_core
-
 INCLUDE_NOT_SHOW = [
     "otherl3",
     "otherl2",
@@ -32,8 +30,9 @@ ROWS_FOR_TREE = [
 ]
 
 
-def get_tree_items(df_datadicc: pd.DataFrame, version: str) -> dict:
-    dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
+def get_tree_items(
+    df_datadicc: pd.DataFrame, version: str, dynamic_units_conversion: bool
+) -> dict:
     df_tree = _create_tree_item_dataframe(df_datadicc, dynamic_units_conversion)
 
     tree = {"title": version, "key": "ARC", "children": []}

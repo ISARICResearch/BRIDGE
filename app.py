@@ -14,7 +14,7 @@ from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
 from bridge.layout.settings import Settings
 from bridge.layout.sidebar import SideBar
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -42,7 +42,13 @@ ARC_LANGUAGE_DEFAULT = "English"
 DF_ARC, PRESETS, _COMMIT = arc_core.get_arc(ARC_VERSION_LATEST)
 DF_ARC = arc_core.add_required_datadicc_columns(DF_ARC)
 
-TREE_ITEMS_DATA = arc_tree.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
+DYNAMIC_UNITS_CONVERSION = arc_core.get_dynamic_units_conversion_bool(
+    ARC_VERSION_LATEST
+)
+
+TREE_ITEMS_DATA = arc_tree.get_tree_items(
+    DF_ARC, ARC_VERSION_LATEST, DYNAMIC_UNITS_CONVERSION
+)
 
 # List content Transformation
 DF_LISTS, LIST_VARIABLE_LIST = ArcList(
@@ -155,6 +161,7 @@ def main_app():
                 ARC_LANGUAGE_LIST,
                 ARC_VERSION_LATEST,
                 ARC_LANGUAGE_DEFAULT,
+                DYNAMIC_UNITS_CONVERSION,
             ).settings_column,
             SideBar().preset_column,
             MainContent(TREE_ITEMS_DATA).main_content,

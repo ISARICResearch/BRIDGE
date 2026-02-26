@@ -4,7 +4,7 @@ import pandas as pd
 
 from bridge.arc import arc_translations
 from bridge.arc.arc_api import ArcApiClient
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -196,15 +196,15 @@ class ArcList:
     def _append_updated_other_info_list_content(
         datadicc_row: pd.Series,
         iteration_number: int,
-        other_info: pd.DataFrame,
+        df_other_info: pd.DataFrame,
         questions_for_this_list: list,
     ) -> List:
         skip_logic_variable = f'{datadicc_row['Sec']}_{datadicc_row['vari']}_{str(iteration_number)}addi'.replace(
             str(iteration_number), str(iteration_number - 1)
         )
 
-        if len(other_info) > 1:
-            for index, other_info_row in other_info.iterrows():
+        if len(df_other_info) > 1:
+            for index, other_info_row in df_other_info.iterrows():
                 other_info_row_updated = other_info_row.copy()
                 if iteration_number == 0:
                     question_text = (
@@ -224,8 +224,8 @@ class ArcList:
                 other_info_row_updated["vari"] = datadicc_row["vari"]
                 questions_for_this_list.append(other_info_row_updated)
 
-        elif len(other_info) == 1:
-            other_info_row = other_info.iloc[0]
+        elif len(df_other_info) == 1:
+            other_info_row = df_other_info.iloc[0]
             other_info_row_updated = other_info_row.copy()
             if iteration_number == 0:
                 other_info_row_updated["Question"] = (

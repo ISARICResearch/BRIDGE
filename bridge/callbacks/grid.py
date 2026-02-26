@@ -10,9 +10,10 @@ from dash import Input, Output, State
 
 from bridge.arc import arc_core
 from bridge.generate_pdf.form import Form
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
+
 ARC_UNIT_CHANGE_VERSION = "v1.2.1"
 
 INCLUDE_NOT_SHOW = [
@@ -49,15 +50,14 @@ INCLUDE_NOT_SHOW = [
 def _build_grid_payload_cached(
     current_datadicc_saved: str,
     checked_tuple: tuple,
-    selected_version_data: dict,
+    dynamic_units_conversion: bool,
 ) -> Tuple[list, str, int]:
     df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
     checked = list(checked_tuple)
 
+    df_selected_variables = pd.DataFrame()
+    row_data_list = []
     if checked:
-        version = selected_version_data.get("selected_version", None)
-        dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
-
         checked = _checked_updates_for_units(
             checked, dynamic_units_conversion, df_datadicc
         )
@@ -74,9 +74,6 @@ def _build_grid_payload_cached(
             df_table_visualization["Type"] != "group"
         ]
         row_data_list = df_table_visualization.to_dict(orient="records")
-    else:
-        df_selected_variables = pd.DataFrame()
-        row_data_list = []
 
     selected_json = df_selected_variables.to_json(date_format="iso", orient="split")
 
@@ -96,7 +93,7 @@ def _build_grid_payload_cached(
     [
         State("current_datadicc-store", "data"),
         State("focused-cell-index", "data"),
-        State("selected-version-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -104,10 +101,9 @@ def display_checked_in_grid(
     checked: list,
     current_datadicc_saved: str,
     focused_cell_index: int,
-    selected_version_data: dict,
+    dynamic_units_conversion: bool,
 ) -> Tuple[list, str, bool, int]:
     callback_start = perf_counter()
-
     checked_count = len(checked) if checked else 0
     checked_tuple = tuple(checked) if checked else tuple()
 
@@ -115,11 +111,12 @@ def display_checked_in_grid(
     cache_start = perf_counter()
 
     row_data_list, selected_json, selected_rows_count = _build_grid_payload_cached(
-        current_datadicc_saved, checked_tuple, selected_version_data
+        current_datadicc_saved, checked_tuple, dynamic_units_conversion
     )
 
     cache_after = _build_grid_payload_cached.cache_info()
     cache_status = "HIT" if cache_after.hits > cache_before.hits else "MISS"
+
     logger.debug(
         "grid.display_checked_in_grid payload_cache=%s checked_count=%s elapsed_ms=%.3f",
         cache_status,
@@ -403,11 +400,20 @@ def _assign_units_answer_options(
                 df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
 
                 options_list = df_parent["Answer Options"].values[0].split(" | ")
-                option = [
-                    option
-                    for option in options_list
-                    if option.endswith(f", {unit_name}")
-                ][0]
+                try:
+                    option = [
+                        option
+                        for option in options_list
+                        if option.endswith(f", {unit_name}")
+                    ][0]
+                except IndexError:
+                    # Workaround for data discrepancies (should be fixed in ARC)
+                    unit_name = "^".join([unit_name[:-1], unit_name[-1]])
+                    option = [
+                        option
+                        for option in options_list
+                        if option.endswith(f", {unit_name}")
+                    ][0]
 
                 df_units.loc[df_units["Variable"] == variable, "Answer Options"] = (
                     option

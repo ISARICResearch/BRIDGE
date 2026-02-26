@@ -22,7 +22,7 @@ from reportlab.platypus import (
 from reportlab.platypus import Spacer, NextPageTemplate
 
 from bridge.generate_pdf.header_footer import generate_completion_guide_header_footer
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

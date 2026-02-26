@@ -7,7 +7,7 @@ import pandas as pd
 
 from bridge.arc import arc_core, arc_translations
 from bridge.arc.arc_lists import ArcList
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -31,7 +31,7 @@ class Language:
         cache_key = (self.version, self.language, cache_initial_load)
         if cache_key in _VERSION_LANGUAGE_CACHE:
             (
-                cached_df,
+                df_cached,
                 cached_commit,
                 cached_grouped_presets,
                 cached_accordion_items,
@@ -39,7 +39,7 @@ class Language:
                 cached_multilist_json,
             ) = _VERSION_LANGUAGE_CACHE[cache_key]
             return (
-                cached_df.copy(deep=True),
+                df_cached.copy(deep=True),
                 cached_commit,
                 deepcopy(cached_grouped_presets),
                 deepcopy(cached_accordion_items),

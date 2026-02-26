@@ -11,7 +11,7 @@ from dash import html, Input, Output, State
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.callbacks.language import Language
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -173,6 +173,7 @@ def load_upload_arc_version_language(
         State("current_datadicc-store", "data"),
         State("ulist_variable_choices-store", "data"),
         State("multilist_variable_choices-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -184,6 +185,7 @@ def update_output_upload_crf(
     upload_version_lang_datadicc_saved: str,
     upload_version_lang_ulist_saved: str,
     upload_version_lang_multilist_saved: str,
+    dynamic_units_conversion: bool,
 ):
     ctx = dash.callback_context
 
@@ -207,7 +209,7 @@ def update_output_upload_crf(
         io.StringIO(upload_version_lang_datadicc_saved), orient="split"
     )
     tree_items_current_datadicc = arc_tree.get_tree_items(
-        df_version_lang_datadicc, upload_version
+        df_version_lang_datadicc, upload_version, dynamic_units_conversion
     )
 
     tree_items = html.Div(

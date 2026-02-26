@@ -174,6 +174,7 @@ class MainContent:
                 ),
                 dcc.Store(id="focused-cell-index"),
                 dcc.Store(id="focused-cell-run-callback", data=False),
+                dcc.Store(id="dynamic-units-conversion"),
             ]
         )
         return app_layout
