@@ -82,7 +82,7 @@ def update_output_files_store(checked_values: list) -> list:
         Output("templates_checks_ready", "data"),
         Output("ulist_variable_choices-store", "data", allow_duplicate=True),
         Output("multilist_variable_choices-store", "data", allow_duplicate=True),
-        Output("dynamic-units-conversion", "data"),
+        Output("dynamic-units-conversion", "data", allow_duplicate=True),
     ],
     [
         Input({"type": "dynamic-version", "index": dash.ALL}, "n_clicks"),
@@ -118,6 +118,7 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             dash.no_update,
+            dash.no_update,
         )
 
     ctx = dash.callback_context
@@ -131,6 +132,7 @@ def store_data_for_selected_version_language(
             dash.no_update,
             dash.no_update,
             False,
+            dash.no_update,
             dash.no_update,
             dash.no_update,
         )

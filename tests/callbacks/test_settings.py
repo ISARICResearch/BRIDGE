@@ -116,6 +116,7 @@ def test_update_language_available_for_version(
                 dash.no_update,
                 dash.no_update,
                 dash.no_update,
+                dash.no_update,
             ),
         ),
         (
@@ -135,6 +136,7 @@ def test_update_language_available_for_version(
                 dash.no_update,
                 dash.no_update,
                 False,
+                dash.no_update,
                 dash.no_update,
                 dash.no_update,
             ),

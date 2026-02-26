@@ -135,6 +135,7 @@ def test_load_upload_arc_version_language_not_triggered():
         None,
         dash.no_update,
         dash.no_update,
+        dash.no_update,
     )
 
 
@@ -175,6 +176,7 @@ def test_load_upload_arc_version_language_no_update(triggered_trigger):
         None,
         dash.no_update,
         dash.no_update,
+        dash.no_update,
     )
 
 
@@ -208,6 +210,7 @@ def test_load_upload_arc_version_language_json_error(
         dash.no_update,
         False,
         None,
+        dash.no_update,
         dash.no_update,
         dash.no_update,
     )
@@ -267,6 +270,7 @@ def test_load_upload_arc_version_language(mock_error, _mock_logger, triggered_tr
         None,
         version_ulist_variable_choices,
         version_multilist_variable_choices,
+        True,
     )
 
 
