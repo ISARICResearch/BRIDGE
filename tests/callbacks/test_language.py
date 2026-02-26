@@ -5,6 +5,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from bridge.callbacks.language import Language
+from bridge.callbacks import language as callback_language
 
 
 @mock.patch("bridge.callbacks.language.arc_translations.get_arc_translation")
@@ -104,20 +105,21 @@ def test_get_version_language_related_data(
     )
     mock_accordian.return_value = accordian
 
-    (
-        df_output,
-        output_commit,
-        output_presets,
-        output_accordian,
-        output_ulist,
-        output_multilist,
-    ) = Language(version, language).get_version_language_related_data()
-
     expected_presets = {
         "ARChetype Disease CRF": ["Covid", "Dengue", "Mpox"],
         "UserGenerated": ["Oropouche"],
     }
     expected_accordian = [accordian, accordian]
+
+    with mock.patch.object(callback_language, "_VERSION_LANGUAGE_CACHE", {}):
+        (
+            df_output,
+            output_commit,
+            output_presets,
+            output_accordian,
+            output_ulist,
+            output_multilist,
+        ) = Language(version, language).get_version_language_related_data()
 
     assert_frame_equal(df_output, df_version)
     assert output_commit == commit
@@ -125,3 +127,48 @@ def test_get_version_language_related_data(
     assert output_accordian == expected_accordian
     assert output_ulist == json.dumps(ulist_variable_choices)
     assert output_multilist == json.dumps(multilist_variable_choices)
+
+
+def test_get_version_language_related_data_with_cache():
+    version = "v1.2.1"
+    language = "English"
+    cache_key = ("v1.2.1", "English", False)
+
+    df_cached = pd.DataFrame.from_dict(
+        {
+            "Form": ["presentation", "presentation"],
+        }
+    )
+    cached_commit = "abc124"
+    cached_grouped_presets = {"section_1": ["A preset", "Another preset"]}
+    cached_accordion_items = ["some", "items"]
+    cached_ulist_json = "my ulist"
+    cached_multilist_json = "my multilist"
+
+    cache_dict = {
+        cache_key: (
+            df_cached,
+            cached_commit,
+            cached_grouped_presets,
+            cached_accordion_items,
+            cached_ulist_json,
+            cached_multilist_json,
+        )
+    }
+
+    with mock.patch.object(callback_language, "_VERSION_LANGUAGE_CACHE", cache_dict):
+        (
+            df_output,
+            output_commit,
+            output_presets,
+            output_accordian,
+            output_ulist,
+            output_multilist,
+        ) = Language(version, language).get_version_language_related_data()
+
+    assert_frame_equal(df_output, df_cached)
+    assert output_commit == cached_commit
+    assert output_presets == cached_grouped_presets
+    assert output_accordian == cached_accordion_items
+    assert output_ulist == cached_ulist_json
+    assert output_multilist == cached_multilist_json

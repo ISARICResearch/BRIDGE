@@ -9,9 +9,9 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc_translations, arc_tree
+from bridge.arc import arc_translations, arc_tree, arc_core
 from bridge.callbacks.language import Language
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -59,6 +59,7 @@ def on_upload_crf(filename: str, _contents: str):
         Output("crf_name", "value", allow_duplicate=True),
         Output("ulist_variable_choices-store", "data", allow_duplicate=True),
         Output("multilist_variable_choices-store", "data", allow_duplicate=True),
+        Output("dynamic-units-conversion", "data", allow_duplicate=True),
     ],
     [
         Input("upload-version-store", "data"),
@@ -90,6 +91,7 @@ def load_upload_arc_version_language(
             None,
             dash.no_update,
             dash.no_update,
+            dash.no_update,
         )
 
     upload_version = upload_version_data.get("upload_version")
@@ -113,6 +115,7 @@ def load_upload_arc_version_language(
             None,
             dash.no_update,
             dash.no_update,
+            dash.no_update,
         )
 
     try:
@@ -126,6 +129,9 @@ def load_upload_arc_version_language(
         ) = Language(
             upload_version, upload_language
         ).get_version_language_related_data()
+        dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(
+            upload_version
+        )
         logger.info(f"upload_version: {upload_version}")
         logger.info(f"upload_language: {upload_language}")
         return (
@@ -139,6 +145,7 @@ def load_upload_arc_version_language(
             None,
             version_ulist_variable_choices,
             version_multilist_variable_choices,
+            dynamic_units_conversion,
         )
     except json.JSONDecodeError:
         return (
@@ -150,6 +157,7 @@ def load_upload_arc_version_language(
             dash.no_update,
             False,
             None,
+            dash.no_update,
             dash.no_update,
             dash.no_update,
         )
@@ -173,6 +181,7 @@ def load_upload_arc_version_language(
         State("current_datadicc-store", "data"),
         State("ulist_variable_choices-store", "data"),
         State("multilist_variable_choices-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -184,6 +193,7 @@ def update_output_upload_crf(
     upload_version_lang_datadicc_saved: str,
     upload_version_lang_ulist_saved: str,
     upload_version_lang_multilist_saved: str,
+    dynamic_units_conversion: bool,
 ):
     ctx = dash.callback_context
 
@@ -207,7 +217,7 @@ def update_output_upload_crf(
         io.StringIO(upload_version_lang_datadicc_saved), orient="split"
     )
     tree_items_current_datadicc = arc_tree.get_tree_items(
-        df_version_lang_datadicc, upload_version
+        df_version_lang_datadicc, upload_version, dynamic_units_conversion
     )
 
     tree_items = html.Div(

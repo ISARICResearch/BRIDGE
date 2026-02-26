@@ -1,5 +1,7 @@
 import io
 import re
+from functools import lru_cache
+from time import perf_counter
 from typing import Tuple
 
 import dash
@@ -8,7 +10,7 @@ from dash import Input, Output, State
 
 from bridge.arc import arc_core
 from bridge.generate_pdf.form import Form
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -44,6 +46,40 @@ INCLUDE_NOT_SHOW = [
 ]
 
 
+@lru_cache(maxsize=256)
+def _build_grid_payload_cached(
+    current_datadicc_saved: str,
+    checked_tuple: tuple,
+    dynamic_units_conversion: bool,
+) -> Tuple[list, str, int]:
+    df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
+    checked = list(checked_tuple)
+
+    df_selected_variables = pd.DataFrame()
+    row_data_list = []
+    if checked:
+        checked = _checked_updates_for_units(
+            checked, dynamic_units_conversion, df_datadicc
+        )
+
+        df_selected_variables = _create_selected_dataframe(
+            df_datadicc, checked, dynamic_units_conversion
+        )
+
+        new_row_list = _create_new_row_list(df_selected_variables)
+
+        # Update selected variables with new rows including separators
+        df_table_visualization = pd.DataFrame(new_row_list)
+        df_table_visualization = df_table_visualization.loc[
+            df_table_visualization["Type"] != "group"
+        ]
+        row_data_list = df_table_visualization.to_dict(orient="records")
+
+    selected_json = df_selected_variables.to_json(date_format="iso", orient="split")
+
+    return row_data_list, selected_json, len(df_selected_variables)
+
+
 @dash.callback(
     [
         Output("CRF_representation_grid", "rowData", allow_duplicate=True),
@@ -57,7 +93,7 @@ INCLUDE_NOT_SHOW = [
     [
         State("current_datadicc-store", "data"),
         State("focused-cell-index", "data"),
-        State("selected-version-store", "data"),
+        State("dynamic-units-conversion", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -65,46 +101,44 @@ def display_checked_in_grid(
     checked: list,
     current_datadicc_saved: str,
     focused_cell_index: int,
-    selected_version_data: dict,
+    dynamic_units_conversion: bool,
 ) -> Tuple[list, str, bool, int]:
-    df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
+    callback_start = perf_counter()
+    checked_count = len(checked) if checked else 0
+    checked_tuple = tuple(checked) if checked else tuple()
 
-    if checked:
-        version = selected_version_data.get("selected_version", None)
-        dynamic_units_conversion = arc_core.get_dynamic_units_conversion_bool(version)
+    cache_before = _build_grid_payload_cached.cache_info()
+    cache_start = perf_counter()
 
-        checked = _checked_updates_for_units(
-            checked, dynamic_units_conversion, df_datadicc
-        )
-
-        df_selected_variables = _create_selected_dataframe(
-            df_datadicc, checked, dynamic_units_conversion
-        )
-        new_row_list = _create_new_row_list(df_selected_variables)
-
-        # Update selected variables with new rows including separators
-        df_table_visualization = pd.DataFrame(new_row_list)
-        df_table_visualization = df_table_visualization.loc[
-            df_table_visualization["Type"] != "group"
-        ]
-
-        # Convert to dictionary for row_data_list
-        row_data_list = df_table_visualization.to_dict(orient="records")
-    else:
-        df_selected_variables = pd.DataFrame()
-        row_data_list = []
-
-    focused_cell_index = _get_focused_cell_index(
-        row_data_list, focused_cell_index, checked
+    row_data_list, selected_json, selected_rows_count = _build_grid_payload_cached(
+        current_datadicc_saved, checked_tuple, dynamic_units_conversion
     )
 
-    focused_cell_run_callback = False
-    if type(focused_cell_index) is int:
-        focused_cell_run_callback = True
+    cache_after = _build_grid_payload_cached.cache_info()
+    cache_status = "HIT" if cache_after.hits > cache_before.hits else "MISS"
+
+    logger.debug(
+        "grid.display_checked_in_grid payload_cache=%s checked_count=%s elapsed_ms=%.3f",
+        cache_status,
+        checked_count,
+        (perf_counter() - cache_start) * 1000,
+    )
+
+    focused_cell_index, focused_cell_run_callback = _get_focused_cell_index(
+        row_data_list, focused_cell_index, list(checked) if checked else []
+    )
+
+    logger.debug(
+        "grid.display_checked_in_grid done total_ms=%.3f row_data=%s selected_json_rows=%s focused_cell_index=%s",
+        (perf_counter() - callback_start) * 1000,
+        len(row_data_list),
+        selected_rows_count,
+        focused_cell_index,
+    )
 
     return (
         row_data_list,
-        df_selected_variables.to_json(date_format="iso", orient="split"),
+        selected_json,
         focused_cell_run_callback,
         focused_cell_index,
     )
@@ -366,11 +400,20 @@ def _assign_units_answer_options(
                 df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
 
                 options_list = df_parent["Answer Options"].values[0].split(" | ")
-                option = [
-                    option
-                    for option in options_list
-                    if option.endswith(f", {unit_name}")
-                ][0]
+                try:
+                    option = [
+                        option
+                        for option in options_list
+                        if option.endswith(f", {unit_name}")
+                    ][0]
+                except IndexError:
+                    # Workaround for data discrepancies (should be fixed in ARC)
+                    unit_name = "^".join([unit_name[:-1], unit_name[-1]])
+                    option = [
+                        option
+                        for option in options_list
+                        if option.endswith(f", {unit_name}")
+                    ][0]
 
                 df_units.loc[df_units["Variable"] == variable, "Answer Options"] = (
                     option
@@ -487,7 +530,8 @@ def _get_options(df_matching_rows: pd.DataFrame, dynamic_units_conversion: bool)
 
 def _get_focused_cell_index(
     row_data: list, focused_cell_index: int | None, checked: list
-) -> int | None:
+) -> Tuple[int | None, bool]:
+    focused_cell_run_callback = False
     if checked:
         df_row_data = pd.DataFrame(row_data)
         latest_checked_variable = _get_latest_checked_variable(checked, df_row_data)
@@ -496,7 +540,11 @@ def _get_focused_cell_index(
             df_row_data["Variable"] == latest_checked_variable
         ]
         focused_cell_index = df_row_data_variable.index.tolist()[0]
-    return focused_cell_index
+
+    if type(focused_cell_index) is int:
+        focused_cell_run_callback = True
+
+    return focused_cell_index, focused_cell_run_callback
 
 
 def _get_latest_checked_variable(checked: list, df_row_data: pd.DataFrame) -> str:

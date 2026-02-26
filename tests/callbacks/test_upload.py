@@ -135,6 +135,7 @@ def test_load_upload_arc_version_language_not_triggered():
         None,
         dash.no_update,
         dash.no_update,
+        dash.no_update,
     )
 
 
@@ -175,6 +176,7 @@ def test_load_upload_arc_version_language_no_update(triggered_trigger):
         None,
         dash.no_update,
         dash.no_update,
+        dash.no_update,
     )
 
 
@@ -208,6 +210,7 @@ def test_load_upload_arc_version_language_json_error(
         dash.no_update,
         False,
         None,
+        dash.no_update,
         dash.no_update,
         dash.no_update,
     )
@@ -267,6 +270,7 @@ def test_load_upload_arc_version_language(mock_error, _mock_logger, triggered_tr
         None,
         version_ulist_variable_choices,
         version_multilist_variable_choices,
+        True,
     )
 
 
@@ -300,6 +304,7 @@ def test_update_output_upload_crf_not_triggered():
     upload_version_lang_datadicc_saved = None
     upload_version_lang_ulist_saved = None
     upload_version_lang_multilist_saved = None
+    dynamic_units_conversion = None
 
     output = get_output_update_output_upload_crf(
         trigger,
@@ -310,6 +315,7 @@ def test_update_output_upload_crf_not_triggered():
         upload_version_lang_datadicc_saved,
         upload_version_lang_ulist_saved,
         upload_version_lang_multilist_saved,
+        dynamic_units_conversion,
     )
 
     assert output == (
@@ -348,6 +354,7 @@ def test_update_output_upload_crf(_mock_get_tree_items, mock_update, _mock_html_
     )
     upload_version_lang_ulist_saved = None
     upload_version_lang_multilist_saved = None
+    dynamic_units_conversion = False
 
     output = get_output_update_output_upload_crf(
         trigger,
@@ -358,6 +365,7 @@ def test_update_output_upload_crf(_mock_get_tree_items, mock_update, _mock_html_
         upload_version_lang_datadicc_saved,
         upload_version_lang_ulist_saved,
         upload_version_lang_multilist_saved,
+        dynamic_units_conversion,
     )
 
     expected = (
@@ -379,6 +387,7 @@ def get_output_update_output_upload_crf(
     upload_version_lang_datadicc_saved,
     upload_version_lang_ulist_saved,
     upload_version_lang_multilist_saved,
+    dynamic_units_conversion,
 ):
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
@@ -390,6 +399,7 @@ def get_output_update_output_upload_crf(
             upload_version_lang_datadicc_saved,
             upload_version_lang_ulist_saved,
             upload_version_lang_multilist_saved,
+            dynamic_units_conversion,
         )
 
     ctx = copy_context()

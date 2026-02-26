@@ -18,6 +18,7 @@ SELECTED_VERSION_DATA_NONE = None
 SELECTED_LANGUAGE_DATA_NONE = None
 ULIST_SAVED = None
 MULTILIST_SAVED = None
+DYNAMIC_UNIT_CONVERSION_NONE = None
 
 
 def test_get_checked_template_list():
@@ -283,6 +284,7 @@ def get_output_update_tree_items_and_stores(
     selected_language_data,
     ulist_saved,
     multilist_saved,
+    dynamic_units_conversion,
 ):
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
@@ -295,6 +297,7 @@ def get_output_update_tree_items_and_stores(
             selected_language_data,
             ulist_saved,
             multilist_saved,
+            dynamic_units_conversion,
         )
 
     ctx = copy_context()
@@ -314,6 +317,7 @@ def test_update_tree_items_and_stores_upload_crf_ready():
         SELECTED_LANGUAGE_DATA_NONE,
         ULIST_SAVED,
         MULTILIST_SAVED,
+        DYNAMIC_UNIT_CONVERSION_NONE,
     )
     expected = (
         dash.no_update,
@@ -352,6 +356,7 @@ def test_update_tree_items_and_stores_no_update(
     selected_language_data = {"selected_language": "English"}
     ulist_saved = None
     multilist_saved = None
+    dynamic_units_conversion = False
 
     output = get_output_update_tree_items_and_stores(
         trigger,
@@ -363,6 +368,7 @@ def test_update_tree_items_and_stores_no_update(
         selected_language_data,
         ulist_saved,
         multilist_saved,
+        dynamic_units_conversion,
     )
     expected = (
         ["Just for checking"],
@@ -416,6 +422,7 @@ def test_update_tree_items_and_stores(
     selected_language_data = {"selected_language": "English"}
     ulist_saved = None
     multilist_saved = None
+    dynamic_units_conversion = False
 
     mock_ulist = (
         '[["inclu_disease", '
@@ -455,6 +462,7 @@ def test_update_tree_items_and_stores(
             selected_language_data,
             ulist_saved,
             multilist_saved,
+            dynamic_units_conversion,
         )
     )
 

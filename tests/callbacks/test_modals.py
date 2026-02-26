@@ -22,6 +22,7 @@ ULIST_VARIABLE_CHOICES_SAVED_NONE = None
 MULTILIST_VARIABLE_CHOICES_SAVED_NONE = None
 SELECTED_VERSION_DATA_NONE = None
 SELECTED_LANGUAGE_DATA_NONE = None
+DYNAMIC_UNITS_CONVERSION_NONE = None
 
 
 def test_update_list_variables_checked():
@@ -120,6 +121,7 @@ def test_on_modal_button_click_not_triggered():
         MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
         SELECTED_VERSION_DATA_NONE,
         SELECTED_LANGUAGE_DATA_NONE,
+        DYNAMIC_UNITS_CONVERSION_NONE,
     )
     expected = (
         dash.no_update,
@@ -145,6 +147,7 @@ def test_on_modal_button_click_wrong_trigger(mock_trigger_id):
         MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
         SELECTED_VERSION_DATA_NONE,
         SELECTED_LANGUAGE_DATA_NONE,
+        DYNAMIC_UNITS_CONVERSION_NONE,
     )
     expected = (
         dash.no_update,
@@ -170,6 +173,7 @@ def test_on_modal_button_click_modal_cancel(mock_trigger_id):
         MULTILIST_VARIABLE_CHOICES_SAVED_NONE,
         SELECTED_VERSION_DATA_NONE,
         SELECTED_LANGUAGE_DATA_NONE,
+        DYNAMIC_UNITS_CONVERSION_NONE,
     )
     expected = (False, dash.no_update, dash.no_update, dash.no_update, dash.no_update)
     assert output == expected
@@ -240,6 +244,7 @@ def test_on_modal_button_click_modal_submit(
     checked = []
     selected_version_data = {"selected_version": "v1.1.1"}
     selected_language_data = {"selected_language": "English"}
+    dynamic_units_conversion = False  # Not used
 
     mock_list_choices.side_effect = [
         (df_current_datadicc, json.loads(ulist_variable_choices_saved)),
@@ -258,6 +263,7 @@ def test_on_modal_button_click_modal_submit(
         multilist_variable_choices_saved,
         selected_version_data,
         selected_language_data,
+        dynamic_units_conversion,
     )
 
     assert output == expected_output
@@ -275,6 +281,7 @@ def get_output_on_modal_button_click(
     multilist_variable_choices_saved,
     selected_version_data,
     selected_language_data,
+    dynamic_units_conversion,
 ):
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
@@ -289,6 +296,7 @@ def get_output_on_modal_button_click(
             multilist_variable_choices_saved,
             selected_version_data,
             selected_language_data,
+            dynamic_units_conversion,
         )
 
     ctx = copy_context()
@@ -409,6 +417,32 @@ def test_display_selected_in_modal(
         current_datadicc_saved,
     )
     assert output == expected_output
+
+
+def test_build_checklist_dom_from_mapping_is_cached():
+    modals._build_checklist_dom_from_mapping_cached.cache_clear()
+    options_mapping = {
+        "inclu_disease": (
+            ("1", "Adenovirus", 0),
+            ("10", "Dengue", 1),
+            ("33", "Mpox", 1),
+        )
+    }
+
+    output_1 = modals.build_checklist_dom_from_mapping(options_mapping, "inclu_disease")
+    output_2 = modals.build_checklist_dom_from_mapping(options_mapping, "inclu_disease")
+    cache_info = modals._build_checklist_dom_from_mapping_cached.cache_info()
+
+    assert output_1 == output_2
+    assert output_1 == (
+        [
+            {"label": "1, Adenovirus", "value": "1_Adenovirus"},
+            {"label": "10, Dengue", "value": "10_Dengue"},
+            {"label": "33, Mpox", "value": "33_Mpox"},
+        ],
+        ["10_Dengue", "33_Mpox"],
+    )
+    assert cache_info.hits == 1
 
 
 def get_output_display_selected_in_modal(

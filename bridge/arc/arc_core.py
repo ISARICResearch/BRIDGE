@@ -1,9 +1,11 @@
+from time import perf_counter
+
 import pandas as pd
 from packaging.version import parse
 
 from bridge.arc import arc_translations
 from bridge.arc.arc_api import ArcApiClient
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -11,10 +13,23 @@ pd.options.mode.copy_on_write = True
 
 ARC_UNIT_CHANGE_VERSION = "v1.2.1"
 
+_ARC_VERSION_CACHE: dict[str, tuple[pd.DataFrame, list, str]] = {}
+
 
 def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
+    cache_start = perf_counter()
+    if version in _ARC_VERSION_CACHE:
+        cached_df, cached_presets, cached_commit = _ARC_VERSION_CACHE[version]
+        logger.debug(
+            "arc_core.get_arc cache=HIT version=%s elapsed_ms=%.3f",
+            version,
+            (perf_counter() - cache_start) * 1000,
+        )
+        return cached_df.copy(deep=True), list(cached_presets), cached_commit
+
     logger.info(f"version: {version}")
 
+    fetch_start = perf_counter()
     commit_sha = ArcApiClient().get_arc_version_sha(version)
     df_datadicc = ArcApiClient().get_dataframe_arc_sha(commit_sha, version)
 
@@ -40,6 +55,16 @@ def get_arc(version: str) -> tuple[pd.DataFrame, list, str]:
             preset_list.append(parts)
 
         df_datadicc["Question_english"] = df_datadicc["Question"]
+        _ARC_VERSION_CACHE[version] = (
+            df_datadicc.copy(deep=True),
+            list(preset_list),
+            commit_sha,
+        )
+        logger.debug(
+            "arc_core.get_arc cache=MISS version=%s elapsed_ms=%.3f",
+            version,
+            (perf_counter() - fetch_start) * 1000,
+        )
         return df_datadicc, preset_list, commit_sha
     except Exception as e:
         logger.error(e)

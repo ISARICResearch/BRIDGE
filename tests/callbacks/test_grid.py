@@ -9,100 +9,56 @@ from statsmodels.compat.pandas import assert_frame_equal
 from bridge.callbacks import grid
 
 
-@mock.patch("bridge.callbacks.grid._get_focused_cell_index", return_value=0)
-@mock.patch("bridge.callbacks.grid._checked_updates_for_units")
-def test_display_checked_in_grid_checked_empty(
-    _mock_checked_updates, _mock_focused_cell_index
-):
-    checked = []
-    _mock_checked_updates = []
+@pytest.mark.parametrize(
+    "checked",
+    [
+        list(),
+        ["not_empty"],
+    ],
+)
+@mock.patch("bridge.callbacks.grid._get_focused_cell_index")
+@mock.patch("bridge.callbacks.grid._build_grid_payload_cached")
+@mock.patch("bridge.callbacks.grid.perf_counter")
+def test_display_checked_in_grid(_mock_perf, mock_build, mock_focused, checked):
     current_datadicc_saved = (
         '{"columns":["Form", "Variable"],'
         '"index":[0, 1],'
         '"data":[["some_data", "for_the_mock"]]}'
     )
     selected_version_data = {"selected_version": "v1.1.2"}
-    (
-        output_row_data_list,
-        output_variables_json,
-        focused_cell_run_callback,
-        focused_cell_index,
-    ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, 0, selected_version_data
+
+    mock_row_data_list = []
+    mock_selected_json = '{"columns":[],"index":[],"data":[]}'
+    mock_selected_rows_count = 0
+    mock_focused_cell_index = 0
+    mock_focused_cell_run_callback = False
+
+    mock_build.return_value = (
+        mock_row_data_list,
+        mock_selected_json,
+        mock_selected_rows_count,
     )
-
-    expected_row_data_list = []
-    expected_variables_json = '{"columns":[],"index":[],"data":[]}'
-
-    assert output_row_data_list == expected_row_data_list
-    assert output_variables_json == expected_variables_json
-
-
-@mock.patch("bridge.callbacks.grid._get_focused_cell_index", return_value=0)
-@mock.patch("bridge.callbacks.grid._create_new_row_list")
-@mock.patch("bridge.callbacks.grid._create_selected_dataframe")
-@mock.patch("bridge.callbacks.grid._checked_updates_for_units", return_value=[])
-def test_display_checked_in_grid(
-    _mock_checked_updates,
-    mock_selected_dataframe,
-    mock_new_row_list,
-    _mock_focused_index,
-):
-    checked = ["not_empty"]
-    _mock_checked_updates.return_value = ["not_empty"]
-    current_datadicc_saved = (
-        '{"columns":["Form", "Variable"],'
-        '"index":[0, 1],'
-        '"data":[["some_data", "for_the_mock"]]}'
+    mock_build.cache_info.return_value = mock.Mock(
+        hits=10, misses=2, maxsize=128, currsize=5
     )
-    selected_version_data = {"selected_version": "v1.1.2"}
-    data = {
-        "Variable": [
-            "some_more_data",
-        ],
-    }
-    df_selected = pd.DataFrame(data)
-    mock_selected_dataframe.return_value = df_selected
-    mock_new_row_list.return_value = [
-        {
-            "Question": "some dummy data",
-            "Type": "number",
-        },
-        {
-            "Question": "some more dummy data",
-            "Type": "radio",
-        },
-        {
-            "Question": "some group dummy data (to be dropped)",
-            "Type": "group",
-        },
-    ]
+    mock_focused.return_value = (
+        mock_focused_cell_index,
+        mock_focused_cell_run_callback,
+    )
 
     (
         output_row_data_list,
-        output_variables_json,
+        output_selected_json,
         focused_cell_run_callback,
         focused_cell_index,
     ) = get_output_display_checked_in_grid(
-        checked, current_datadicc_saved, 0, selected_version_data
+        checked, current_datadicc_saved, mock_focused_cell_index, selected_version_data
     )
 
-    expected_row_data_list = [
-        {
-            "Question": "some dummy data",
-            "Type": "number",
-        },
-        {
-            "Question": "some more dummy data",
-            "Type": "radio",
-        },
-    ]
-    expected_variables_json = (
-        '{"columns":["Variable"],"index":[0],"data":[["some_more_data"]]}'
-    )
-
-    assert output_row_data_list == expected_row_data_list
-    assert output_variables_json == expected_variables_json
+    assert output_row_data_list == mock_row_data_list
+    assert output_selected_json == mock_selected_json
+    assert not focused_cell_run_callback
+    assert focused_cell_index == mock_focused_cell_index
 
 
 def get_output_display_checked_in_grid(
@@ -128,23 +84,27 @@ def get_output_display_checked_in_grid(
 
 
 @pytest.mark.parametrize(
-    "focused_cell_index, expected_output",
+    "focused_cell_index, expected_index, expected_bool",
     [
-        (None, None),
-        (0, 0),
+        (None, None, False),
+        (np.nan, np.nan, False),
+        ("", "", False),
+        (0, 0, True),
     ],
 )
 @mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
-def test_get_focused_cell_index_no_action(
-    _mock_latest_checked, focused_cell_index, expected_output
+def test_get_focused_cell_index_checked_empty(
+    _mock_latest_checked, focused_cell_index, expected_index, expected_bool
 ):
     row_data = []
     checked = []
-    output = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
-    if expected_output:
-        assert output == expected_output
+    (output_index, output_bool) = grid._get_focused_cell_index(
+        row_data, focused_cell_index, checked
+    )
+    if expected_bool:
+        assert output_index == expected_index
     else:
-        assert not output
+        assert not output_bool
 
 
 @mock.patch("bridge.callbacks.grid._get_latest_checked_variable")
@@ -160,9 +120,12 @@ def test_get_focused_cell_index(
     ]
     focused_cell_index = 3
     checked = ["demog_height", "demog_height_cm", "demog_height_in"]
-    expected = 2
-    output = grid._get_focused_cell_index(row_data, focused_cell_index, checked)
-    assert output == expected
+    expected_index = 2
+    (output_index, output_bool) = grid._get_focused_cell_index(
+        row_data, focused_cell_index, checked
+    )
+    assert output_index == expected_index
+    assert output_bool
 
 
 @pytest.mark.parametrize(
@@ -1386,3 +1349,42 @@ def test_assign_units_answer_options_dynamic_true():
         df_datadicc, df_units, dynamic_units_conversion
     )
     assert_frame_equal(df_output, df_units)
+
+
+@mock.patch("bridge.callbacks.grid._create_new_row_list")
+@mock.patch("bridge.callbacks.grid._create_selected_dataframe")
+@mock.patch("bridge.callbacks.grid._checked_updates_for_units")
+def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
+    current_datadicc_saved = (
+        '{"columns":["Form"], "index":[0], "data":[["presentation"]]}'
+    )
+    checked_tuple = tuple("inclu_disease")
+    dynamic_units_conversion = True
+
+    mock_checked.return_value = ["inclu_disease"]
+    mock_selected_df.return_value = pd.DataFrame(
+        {
+            "Variable": ["inclu_disease", "inclu_disease_otherl3"],
+        }
+    )
+    mock_list.return_value = [
+        {"Answer Options": "Some answer", "Question": "PRESENTATION"},
+        {
+            "Answer Options": "Some other answer",
+            "Question": "Another question",
+            "Type": "group",
+        },
+    ]
+
+    output_list, output_json, output_count = grid._build_grid_payload_cached(
+        current_datadicc_saved, checked_tuple, dynamic_units_conversion
+    )
+
+    assert output_list == [
+        {"Answer Options": "Some answer", "Question": "PRESENTATION", "Type": np.nan}
+    ]
+    assert (
+        output_json
+        == '{"columns":["Variable"],"index":[0,1],"data":[["inclu_disease"],["inclu_disease_otherl3"]]}'
+    )
+    assert output_count == 2

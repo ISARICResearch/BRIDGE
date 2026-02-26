@@ -1,14 +1,26 @@
 from os import getenv
+from time import monotonic
 
 import pandas as pd
 import requests
 from requests.exceptions import RequestException
 
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 pd.options.mode.copy_on_write = True
+
+_VERSION_SHA_CACHE: dict[tuple[str, str], str] = {}
+_ARC_DF_CACHE: dict[tuple[str, str, str], pd.DataFrame] = {}
+_ARC_TRANSLATION_DF_CACHE: dict[tuple[str, str, str], pd.DataFrame] = {}
+_ARC_LIST_DF_CACHE: dict[tuple[str, str, str, str], pd.DataFrame] = {}
+_ARC_VERSION_LIST_CACHE: dict[tuple[str], tuple[list, float]] = {}
+_ARC_LANGUAGE_LIST_CACHE: dict[tuple[str, str], list] = {}
+
+# Version/language metadata can change over time, so cache with TTL.
+# Default 6 hours; override with ARC_METADATA_CACHE_TTL_SECONDS env var.
+ARC_METADATA_CACHE_TTL_SECONDS = int(getenv("ARC_METADATA_CACHE_TTL_SECONDS", "21600"))
 
 
 class ArcApiClientError(Exception):
@@ -29,7 +41,7 @@ class ArcApiClient:
 
     @staticmethod
     def _get_api_response(data_url: str) -> dict:
-        logger.info(
+        logger.debug(
             "GITHUB_TOKEN is set"
             if getenv("GITHUB_TOKEN")
             else "GITHUB_TOKEN is not set. Making unauthenticated request"
@@ -42,7 +54,7 @@ class ArcApiClient:
 
         try:
             if github_token:
-                logger.info("Making authenticated request to GitHub API")
+                logger.debug("Making authenticated request to GitHub API")
             response = requests.get(data_url, headers=headers)
             response.raise_for_status()
         except RequestException as e:
@@ -69,6 +81,13 @@ class ArcApiClient:
         return df
 
     def get_arc_version_list(self) -> list:
+        cache_key = (self.environment,)
+        cache_entry = _ARC_VERSION_LIST_CACHE.get(cache_key)
+        if cache_entry is not None:
+            cached_list, cached_at = cache_entry
+            if monotonic() - cached_at < ARC_METADATA_CACHE_TTL_SECONDS:
+                return list(cached_list)
+
         if self.environment != "development":
             url = "/".join([self.base_url_api, "ARC", "releases"])
             release_json = self._get_api_response(url)
@@ -84,9 +103,14 @@ class ArcApiClient:
                 ],
                 reverse=True,
             )
+        _ARC_VERSION_LIST_CACHE[cache_key] = (list(version_list), monotonic())
         return version_list
 
     def get_arc_version_sha(self, version: str) -> str:
+        cache_key = (self.environment, version)
+        if cache_key in _VERSION_SHA_CACHE:
+            return _VERSION_SHA_CACHE[cache_key]
+
         try:
             if self.environment != "development":
                 url = "/".join([self.base_url_api, "ARC", "tags"])
@@ -99,6 +123,7 @@ class ArcApiClient:
                 tag_json = self._get_api_response(url)
                 version_dict = tag_json[0]
                 version_sha = version_dict["sha"]
+            _VERSION_SHA_CACHE[cache_key] = version_sha
             return version_sha
         except Exception as e:
             logger.error(e)
@@ -107,6 +132,10 @@ class ArcApiClient:
             )
 
     def get_dataframe_arc_sha(self, sha: str, version: str) -> pd.DataFrame:
+        cache_key = (self.environment, sha, version)
+        if cache_key in _ARC_DF_CACHE:
+            return _ARC_DF_CACHE[cache_key].copy(deep=True)
+
         if self.environment != "development":
             url = "/".join([self.base_url_raw_content, "ARC", sha, "ARC.csv"])
         else:
@@ -121,11 +150,16 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
-        return df
+        _ARC_DF_CACHE[cache_key] = df.copy(deep=True)
+        return df.copy(deep=True)
 
     def get_dataframe_arc_version_language(
         self, version: str, language: str
     ) -> pd.DataFrame:
+        cache_key = (self.environment, version, language)
+        if cache_key in _ARC_TRANSLATION_DF_CACHE:
+            return _ARC_TRANSLATION_DF_CACHE[cache_key].copy(deep=True)
+
         if self.environment != "development":
             url = "/".join(
                 [
@@ -149,11 +183,16 @@ class ArcApiClient:
                 ]
             )
         df = self._write_to_dataframe(url)
-        return df
+        _ARC_TRANSLATION_DF_CACHE[cache_key] = df.copy(deep=True)
+        return df.copy(deep=True)
 
     def get_dataframe_arc_list_version_language(
         self, version: str, language: str, list_name: str
     ) -> pd.DataFrame:
+        cache_key = (self.environment, version, language, list_name)
+        if cache_key in _ARC_LIST_DF_CACHE:
+            return _ARC_LIST_DF_CACHE[cache_key].copy(deep=True)
+
         if self.environment != "development":
             url = "/".join(
                 [
@@ -180,9 +219,16 @@ class ArcApiClient:
             )
         df = self._write_to_dataframe(url)
         df = df.sort_values(by=df.columns[0], ascending=True).reset_index(drop=True)
-        return df
+        _ARC_LIST_DF_CACHE[cache_key] = df.copy(deep=True)
+        return df.copy(deep=True)
 
     def get_arc_language_list_version(self, version: str | None) -> list:
+        normalized_version = str(version)
+        cache_key = (self.environment, normalized_version)
+        cache_entry = _ARC_LANGUAGE_LIST_CACHE.get(cache_key)
+        if cache_entry is not None:
+            return list(cache_entry)
+
         if self.environment != "development":
             url = "/".join(
                 [
@@ -197,6 +243,7 @@ class ArcApiClient:
             language_list = df["name"].to_list()
         else:
             language_list = ["English"]
+        _ARC_LANGUAGE_LIST_CACHE[cache_key] = list(language_list)
         return language_list
 
     def get_dataframe_paper_like_details(

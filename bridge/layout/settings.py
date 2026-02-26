@@ -1,18 +1,26 @@
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
 class Settings:
-    def __init__(self, arc_version_list, arc_language_list, version, language):
+    def __init__(
+        self,
+        arc_version_list,
+        arc_language_list,
+        version,
+        language,
+        dynamic_units_conversion,
+    ):
         self.arc_version_list = arc_version_list
         self.arc_language_list = arc_language_list
 
         self.version = version
         self.language = language
+        self.dynamic_units_conversion = dynamic_units_conversion
 
         self.arc_versions_items = [
             dbc.DropdownMenuItem(version, id={"type": "dynamic-version", "index": i})
@@ -94,6 +102,9 @@ class Settings:
                     style={"margin-bottom": "20px"},
                 ),
                 dcc.Store(id="output-files-store"),
+                dcc.Store(
+                    id="dynamic-units-conversion", data=self.dynamic_units_conversion
+                ),
             ],
             style={"padding": "2rem"},
         )

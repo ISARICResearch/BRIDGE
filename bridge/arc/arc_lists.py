@@ -4,7 +4,7 @@ import pandas as pd
 
 from bridge.arc import arc_translations
 from bridge.arc.arc_api import ArcApiClient
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -15,13 +15,24 @@ class ArcList:
     def __init__(self, version: str, language: str):
         self.version = version
         self.language = language
+        self._list_df_cache: dict[str, pd.DataFrame] = {}
+
+    def _get_list_options_df(self, list_name: str) -> pd.DataFrame:
+        normalized_list_name = str(list_name).replace("_", "/")
+        if normalized_list_name not in self._list_df_cache:
+            self._list_df_cache[normalized_list_name] = (
+                ArcApiClient().get_dataframe_arc_list_version_language(
+                    self.version,
+                    self.language,
+                    normalized_list_name,
+                )
+            )
+        return self._list_df_cache[normalized_list_name].copy(deep=True)
 
     def _get_list_choices(
         self, datadicc_row: pd.Series, other_text: str
     ) -> Tuple[str, list]:
-        df_list_options = ArcApiClient().get_dataframe_arc_list_version_language(
-            self.version, self.language, str(datadicc_row["List"]).replace("_", "/")
-        )
+        df_list_options = self._get_list_options_df(str(datadicc_row["List"]))
 
         list_choices = ""
         list_variable_choices_aux = []
@@ -185,15 +196,15 @@ class ArcList:
     def _append_updated_other_info_list_content(
         datadicc_row: pd.Series,
         iteration_number: int,
-        other_info: pd.DataFrame,
+        df_other_info: pd.DataFrame,
         questions_for_this_list: list,
     ) -> List:
         skip_logic_variable = f'{datadicc_row['Sec']}_{datadicc_row['vari']}_{str(iteration_number)}addi'.replace(
             str(iteration_number), str(iteration_number - 1)
         )
 
-        if len(other_info) > 1:
-            for index, other_info_row in other_info.iterrows():
+        if len(df_other_info) > 1:
+            for index, other_info_row in df_other_info.iterrows():
                 other_info_row_updated = other_info_row.copy()
                 if iteration_number == 0:
                     question_text = (
@@ -213,8 +224,8 @@ class ArcList:
                 other_info_row_updated["vari"] = datadicc_row["vari"]
                 questions_for_this_list.append(other_info_row_updated)
 
-        elif len(other_info) == 1:
-            other_info_row = other_info.iloc[0]
+        elif len(df_other_info) == 1:
+            other_info_row = df_other_info.iloc[0]
             other_info_row_updated = other_info_row.copy()
             if iteration_number == 0:
                 other_info_row_updated["Question"] = (
@@ -443,11 +454,7 @@ class ArcList:
             if pd.isnull(row["List"]):
                 logger.warning("List without corresponding repository file")
             else:
-                df_list_options = (
-                    ArcApiClient().get_dataframe_arc_list_version_language(
-                        self.version, self.language, str(row["List"]).replace("_", "/")
-                    )
-                )
+                df_list_options = self._get_list_options_df(str(row["List"]))
 
                 l2_choices = ""
                 l1_choices = ""
@@ -498,7 +505,6 @@ class ArcList:
                 (dropdown_row, other_row) = self._get_list_data_dropdown_other_rows(
                     row, translations_for_language, list_type, l2_choices
                 )
-                row["Question"] = row["Question"]
 
                 all_rows_lists.append(row)
                 if row["Variable"] != "inclu_disease":

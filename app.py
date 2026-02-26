@@ -1,4 +1,5 @@
 import json
+from time import perf_counter
 
 import dash
 import dash_bootstrap_components as dbc
@@ -13,7 +14,7 @@ from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar
 from bridge.layout.settings import Settings
 from bridge.layout.sidebar import SideBar
-from bridge.logging.logger import setup_logger
+from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -30,6 +31,9 @@ server = app.server
 
 logger.info("Starting BRIDGE application")
 
+# Track total ARC/bootstrap load time so startup latency is explicit in logs.
+arc_bootstrap_start = perf_counter()
+
 # Get initial data from ARC
 ARC_VERSION_LIST, ARC_VERSION_LATEST = arc_core.get_arc_versions()
 ARC_LANGUAGE_LIST = ArcApiClient().get_arc_language_list_version(ARC_VERSION_LATEST)
@@ -38,7 +42,13 @@ ARC_LANGUAGE_DEFAULT = "English"
 DF_ARC, PRESETS, _COMMIT = arc_core.get_arc(ARC_VERSION_LATEST)
 DF_ARC = arc_core.add_required_datadicc_columns(DF_ARC)
 
-TREE_ITEMS_DATA = arc_tree.get_tree_items(DF_ARC, ARC_VERSION_LATEST)
+DYNAMIC_UNITS_CONVERSION = arc_core.get_dynamic_units_conversion_bool(
+    ARC_VERSION_LATEST
+)
+
+TREE_ITEMS_DATA = arc_tree.get_tree_items(
+    DF_ARC, ARC_VERSION_LATEST, DYNAMIC_UNITS_CONVERSION
+)
 
 # List content Transformation
 DF_LISTS, LIST_VARIABLE_LIST = ArcList(
@@ -73,6 +83,13 @@ GROUPED_PRESETS = {}
 for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
+
+logger.info(
+    "ARC bootstrap complete version=%s language=%s total_elapsed_ms=%.3f",
+    ARC_VERSION_LATEST,
+    ARC_LANGUAGE_DEFAULT,
+    (perf_counter() - arc_bootstrap_start) * 1000,
+)
 
 app.layout = MainContent(TREE_ITEMS_DATA).define_app_layout(
     ARC_JSON,
@@ -144,6 +161,7 @@ def main_app():
                 ARC_LANGUAGE_LIST,
                 ARC_VERSION_LATEST,
                 ARC_LANGUAGE_DEFAULT,
+                DYNAMIC_UNITS_CONVERSION,
             ).settings_column,
             SideBar().preset_column,
             MainContent(TREE_ITEMS_DATA).main_content,
