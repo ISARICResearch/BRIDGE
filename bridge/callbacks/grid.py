@@ -51,7 +51,7 @@ def _build_grid_payload_cached(
     current_datadicc_saved: str,
     checked_tuple: tuple,
     dynamic_units_conversion: bool,
-) -> Tuple[list, str, int]:
+) -> Tuple[tuple, list, str, int]:
     df_datadicc = pd.read_json(io.StringIO(current_datadicc_saved), orient="split")
     checked = list(checked_tuple)
 
@@ -77,7 +77,7 @@ def _build_grid_payload_cached(
 
     selected_json = df_selected_variables.to_json(date_format="iso", orient="split")
 
-    return row_data_list, selected_json, len(df_selected_variables)
+    return tuple(checked), row_data_list, selected_json, len(df_selected_variables)
 
 
 @dash.callback(
@@ -110,7 +110,7 @@ def display_checked_in_grid(
     cache_before = _build_grid_payload_cached.cache_info()
     cache_start = perf_counter()
 
-    row_data_list, selected_json, selected_rows_count = _build_grid_payload_cached(
+    checked_tuple, row_data_list, selected_json, selected_rows_count = _build_grid_payload_cached(
         current_datadicc_saved, checked_tuple, dynamic_units_conversion
     )
 
@@ -125,7 +125,7 @@ def display_checked_in_grid(
     )
 
     focused_cell_index, focused_cell_run_callback = _get_focused_cell_index(
-        row_data_list, focused_cell_index, list(checked) if checked else []
+        row_data_list, focused_cell_index, list(checked_tuple) if checked_tuple else []
     )
 
     logger.debug(
