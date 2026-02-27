@@ -2,7 +2,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from statsmodels.compat.pandas import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 from bridge.arc import arc_tree
 
