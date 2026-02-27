@@ -27,6 +27,7 @@ def test_display_checked_in_grid(_mock_perf, mock_build, mock_focused, checked):
     )
     selected_version_data = {"selected_version": "v1.1.2"}
 
+    mock_checked = []
     mock_row_data_list = []
     mock_selected_json = '{"columns":[],"index":[],"data":[]}'
     mock_selected_rows_count = 0
@@ -34,6 +35,7 @@ def test_display_checked_in_grid(_mock_perf, mock_build, mock_focused, checked):
     mock_focused_cell_run_callback = False
 
     mock_build.return_value = (
+        mock_checked,
         mock_row_data_list,
         mock_selected_json,
         mock_selected_rows_count,
@@ -1358,7 +1360,7 @@ def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
     current_datadicc_saved = (
         '{"columns":["Form"], "index":[0], "data":[["presentation"]]}'
     )
-    checked_tuple = tuple("inclu_disease")
+    checked_tuple = tuple(["inclu_disease"])
     dynamic_units_conversion = True
 
     mock_checked.return_value = ["inclu_disease"]
@@ -1376,10 +1378,13 @@ def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
         },
     ]
 
-    output_list, output_json, output_count = grid._build_grid_payload_cached(
-        current_datadicc_saved, checked_tuple, dynamic_units_conversion
+    output_checked, output_list, output_json, output_count = (
+        grid._build_grid_payload_cached(
+            current_datadicc_saved, checked_tuple, dynamic_units_conversion
+        )
     )
 
+    assert output_checked == tuple(["inclu_disease"])
     assert output_list == [
         {"Answer Options": "Some answer", "Question": "PRESENTATION", "Type": np.nan}
     ]

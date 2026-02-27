@@ -110,8 +110,10 @@ def display_checked_in_grid(
     cache_before = _build_grid_payload_cached.cache_info()
     cache_start = perf_counter()
 
-    checked_tuple, row_data_list, selected_json, selected_rows_count = _build_grid_payload_cached(
-        current_datadicc_saved, checked_tuple, dynamic_units_conversion
+    checked_tuple, row_data_list, selected_json, selected_rows_count = (
+        _build_grid_payload_cached(
+            current_datadicc_saved, checked_tuple, dynamic_units_conversion
+        )
     )
 
     cache_after = _build_grid_payload_cached.cache_info()
