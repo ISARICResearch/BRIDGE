@@ -172,7 +172,7 @@ class ArcList:
     ) -> pd.Series:
         other_row = datadicc_row.copy()
         other_row["Variable"] = (
-            f'{datadicc_row['Sec']}_{datadicc_row['vari']}_{str(iteration_number)}otherl2'
+            f'{datadicc_row['Variable']}_{str(iteration_number)}otherl2'
         )
         other_row["Answer Options"] = None
         other_row["Type"] = "text"
@@ -402,7 +402,7 @@ class ArcList:
 
         dropdown_row = row.copy()
         other_row = row.copy()
-        dropdown_row["Variable"] = f'{row['Sec']}_{row['vari']}_otherl2'
+        dropdown_row["Variable"] = f'{row['Variable']}_otherl2'
         dropdown_row["Answer Options"] = l2_choices
         dropdown_row["Type"] = "dropdown"
         dropdown_row["Validation"] = "autocomplete"
@@ -425,14 +425,14 @@ class ArcList:
         else:
             dropdown_row["Skip Logic"] = f"[{row['Variable']}]='88'"
 
-        other_row["Variable"] = f'{row['Sec']}_{row['vari']}_otherl3'
+        other_row["Variable"] = f'{row['Variable']}_otherl3'
         other_row["Answer Options"] = None
         other_row["Type"] = "text"
         other_row["Maximum"] = None
         other_row["Minimum"] = None
 
         if row["Variable"] != "inclu_disease":
-            other_row["Skip Logic"] = f"[{row['Sec']}_{row['vari']}_otherl2]='88'"
+            other_row["Skip Logic"] = f"[{row['Variable']}_otherl2]='88'"
         else:
             other_row["Skip Logic"] = f"[{row['Variable']}]='88'"
 
