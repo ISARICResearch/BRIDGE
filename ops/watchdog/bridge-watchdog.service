@@ -1,0 +1,9 @@
+[Unit]
+Description=BRIDGE watchdog
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=APP_URL=http://127.0.0.1/
+ExecStart=/usr/local/bin/bridge-watchdog.sh
