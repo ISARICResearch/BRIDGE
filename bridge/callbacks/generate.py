@@ -110,6 +110,10 @@ def on_generate_click(
         ].apply(
             lambda x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>'
         )
+        df_crf.loc[
+            df_crf['Text Validation Type OR Show Slider Number'] == 'units',
+            'Text Validation Type OR Show Slider Number'
+        ] = np.nan
         if language != "English":
             df_crf["Form Name"] = df_crf["Form Name"].apply(lambda x: unidecode(str(x)))
         df_crf.to_csv(csv_data_dict_buffer, index=False, encoding="utf8")
