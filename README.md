@@ -1,7 +1,8 @@
 # BRIDGE
 
 [![pre-commit](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml)
-[![pre-commit](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml)
+[![Run unit tests](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml)
+[![Codecov](https://codecov.io/gh/ISARICResearch/BRIDGE/graph/badge.svg?token=NOW9MD1TQZ)](https://codecov.io/gh/ISARICResearch/BRIDGE)
 [![Docker Build and Test](https://github.com/ISARICResearch/BRIDGE/actions/workflows/build.yaml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/build.yaml)
 
 ISARIC BRIDGE is a web-based application designed to operationalize [ISARIC ARC](https://github.com/ISARICResearch/ARC) and edit any ISARIC CRF and tailor it to outbreaks particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a REDCap database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
