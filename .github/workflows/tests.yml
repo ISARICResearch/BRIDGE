@@ -26,4 +26,4 @@ jobs:
           pip install pytest pytest-cov pytest-mock
       - name: Run coverage
         run: |
-          pytest --cov --cov-report term-missing
+          pytest --cov --cov-report term-missing --cov-report=xml
