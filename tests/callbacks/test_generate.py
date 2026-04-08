@@ -23,7 +23,7 @@ from bridge.callbacks import generate
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
         (
             1,
@@ -34,7 +34,7 @@ from bridge.callbacks import generate
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
     ],
 )
