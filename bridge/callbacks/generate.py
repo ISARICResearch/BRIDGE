@@ -19,7 +19,25 @@ pd.options.mode.copy_on_write = True
 CONFIG_DIR = join(
     dirname(dirname(dirname(abspath(__file__)))), "assets", "config_files"
 )
+
+ASSETS_DIR = join(dirname(dirname(dirname(abspath(__file__)))), "assets")
+
 XML_FILE_NAME = "ISARIC Clinical Characterisation Setup"
+CHIKUNGUNYA_PDF_FILE = "chik_das.pdf"
+
+
+def _load_asset_file_bytes(filename: str) -> bytes:
+    file_path = join(ASSETS_DIR, filename)
+    with open(file_path, "rb") as f:
+        return f.read()
+
+
+def _has_chikunguny_template(checked_presets: list) -> bool:
+    return any(
+        "chikungunya" in str(template).lower()
+        for template in (checked_presets or [])
+        if template is not None
+    )
 
 
 @dash.callback(
@@ -30,6 +48,7 @@ XML_FILE_NAME = "ISARIC Clinical Characterisation Setup"
         Output("download-projectxml-pdf", "data"),
         Output("download-paperlike-pdf", "data"),
         Output("download-paperlike-docx", "data"),
+        Output("download-chikungunya-pdf", "data"),
     ],
     [
         Input("crf_generate", "n_clicks"),
@@ -58,142 +77,126 @@ def on_generate_click(
     ctx = dash.callback_context
 
     if not n_clicks:
-        # Return empty or initial state if button hasn't been clicked
-        return (
-            "",
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        return ("", None, None, None, None, None, None)
 
     if not any(json.loads(json_data).values()):
-        # Nothing ticked
-        return (
-            "",
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        return ("", None, None, None, None, None, None)
 
     trigger_id = get_trigger_id(ctx)
 
-    if trigger_id == "crf_generate":
-        date = datetime.today().strftime("%Y-%m-%d")
-        crf_name = get_crf_name(crf_name, checked_presets)
+    if trigger_id != "crf_generate":
+        return ("", None, None, None, None, None, None)
 
-        selected_variables_from_data = pd.read_json(
-            io.StringIO(json_data), orient="split"
-        )
-        version = selected_version_data.get("selected_version")
-        language = selected_language_data.get("selected_language")
+    date = datetime.today().strftime("%Y-%m-%d")
+    crf_name = get_crf_name(crf_name, checked_presets)
 
-        df_crf = _generate_crf(selected_variables_from_data)
-        # PDFs
-        pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(
-            df_crf, version, crf_name, language
-        )
-        pdf_completion_guide = paper_crf.generate_completion_guide(
-            selected_variables_from_data, version, crf_name
-        )
+    selected_variables_from_data = pd.read_json(io.StringIO(json_data), orient="split")
+    version = selected_version_data.get("selected_version")
+    language = selected_language_data.get("selected_language")
 
-        # WORD
-        word_bytes = paper_word.df_to_word(df_crf)
+    df_crf = _generate_crf(selected_variables_from_data)
 
-        # CSV
-        csv_data_dict_buffer = io.BytesIO()
-        df_crf.loc[df_crf["Field Type"] == "descriptive", "Field Label"] = df_crf.loc[
-            df_crf["Field Type"] == "descriptive", "Field Label"
-        ].apply(
-            lambda x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>'
-        )
+    # PDFs
+    pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(
+        df_crf, version, crf_name, language
+    )
+    pdf_completion_guide = paper_crf.generate_completion_guide(
+        selected_variables_from_data, version, crf_name
+    )
+
+    # WORD
+    word_bytes = paper_word.df_to_word(df_crf)
+
+    # CSV
+    csv_data_dict_buffer = io.BytesIO()
+    df_crf.loc[df_crf["Field Type"] == "descriptive", "Field Label"] = df_crf.loc[
+        df_crf["Field Type"] == "descriptive", "Field Label"
+    ].apply(
+        lambda x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>'
+    )
+    if "sympt_dn4_result" in df_crf["Variable / Field Name"].values:
         df_crf.loc[
-            df_crf["Text Validation Type OR Show Slider Number"] == "units",
-            "Text Validation Type OR Show Slider Number",
-        ] = np.nan
-        if language != "English":
-            df_crf["Form Name"] = df_crf["Form Name"].apply(lambda x: unidecode(str(x)))
-        df_crf.to_csv(csv_data_dict_buffer, index=False, encoding="utf8")
-        csv_data_dict_buffer.seek(0)
+            df_crf["Variable / Field Name"] == "sympt_dn4_result",
+            "Field Annotation",
+        ] = "@CALCTEXT(if([sympt_dn4_pain]='1',if([sympt_dn4_score]>=4,'Neuropathic pain','No neuropathic pain'),''))"
 
-        # XML
-        xml_file_name = f"{XML_FILE_NAME}_{language}.xml"
-        xml_file_path = f"{CONFIG_DIR}/{xml_file_name}"
-        with open(xml_file_path, "rb") as file:
-            xml_content = file.read()
+    if language != "English":
+        df_crf["Form Name"] = df_crf["Form Name"].apply(lambda x: unidecode(str(x)))
+    df_crf.to_csv(csv_data_dict_buffer, index=False, encoding="utf8")
+    csv_data_dict_buffer.seek(0)
 
-        is_safari = (
-            browser_info and "Safari" in browser_info and "Chrome" not in browser_info
-        )
+    # XML
+    xml_file_name = f"{XML_FILE_NAME}_{language}.xml"
+    xml_file_path = f"{CONFIG_DIR}/{xml_file_name}"
+    with open(xml_file_path, "rb") as file:
+        xml_content = file.read()
 
-        include_csv = "redcap_csv" in output_files
-        include_pdf_paper = "paper_like" in output_files
-        include_xml = "redcap_xml" in output_files
-        include_word = "paper_word" in output_files
+    is_safari = (
+        browser_info and "Safari" in browser_info and "Chrome" not in browser_info
+    )
 
-        if is_safari:
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-                if include_csv:
-                    zip_file.writestr(
-                        f"{crf_name}_DataDictionary_{date}.csv",
-                        csv_data_dict_buffer.getvalue(),
-                    )
-                if include_pdf_paper:
-                    zip_file.writestr(
-                        f"{crf_name}_Completion_Guide_{date}.pdf", pdf_completion_guide
-                    )
-                    zip_file.writestr(
-                        f"{crf_name}_paperlike_{date}.pdf", pdf_paperlike_crf
-                    )
-                if include_word:
-                    zip_file.writestr(f"{crf_name}_CRFreview_{date}.docx", word_bytes)
-                if include_xml:
-                    zip_file.writestr(xml_file_name, xml_content)
+    include_csv = "redcap_csv" in output_files
+    include_pdf_paper = "paper_like" in output_files
+    include_xml = "redcap_xml" in output_files
+    include_word = "paper_word" in output_files
 
-            zip_buffer.seek(0)
-            return (
-                "",
-                dcc.send_bytes(zip_buffer.getvalue(), f"{crf_name}_bundle_{date}.zip"),
-                None,
-                None,
-                None,
-                None,
-            )
+    include_chikunguny_pdf = _has_chikunguny_template(checked_presets)
+    chikunguny_pdf_bytes = (
+        _load_asset_file_bytes(CHIKUNGUNYA_PDF_FILE) if include_chikunguny_pdf else None
+    )
 
+    if is_safari:
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+            if include_csv:
+                zip_file.writestr(
+                    f"{crf_name}_DataDictionary_{date}.csv",
+                    csv_data_dict_buffer.getvalue(),
+                )
+            if include_pdf_paper:
+                zip_file.writestr(
+                    f"{crf_name}_Completion_Guide_{date}.pdf", pdf_completion_guide
+                )
+                zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_paperlike_crf)
+            if include_word:
+                zip_file.writestr(f"{crf_name}_CRFreview_{date}.docx", word_bytes)
+            if include_xml:
+                zip_file.writestr(xml_file_name, xml_content)
+            if include_chikunguny_pdf:
+                zip_file.writestr(CHIKUNGUNYA_PDF_FILE, chikunguny_pdf_bytes)
+
+        zip_buffer.seek(0)
         return (
             "",
-            dcc.send_bytes(
-                csv_data_dict_buffer.getvalue(), f"{crf_name}_DataDictionary_{date}.csv"
-            )
-            if include_csv
-            else None,
-            dcc.send_bytes(
-                pdf_completion_guide, f"{crf_name}_Completion_Guide_{date}.pdf"
-            )
-            if include_pdf_paper
-            else None,
-            dcc.send_bytes(xml_content, xml_file_name) if include_xml else None,
-            dcc.send_bytes(pdf_paperlike_crf, f"{crf_name}_paperlike_{date}.pdf")
-            if include_pdf_paper
-            else None,
-            dcc.send_bytes(word_bytes, f"{crf_name}_CRFreview_{date}.docx")
-            if include_word
-            else None,
+            dcc.send_bytes(zip_buffer.getvalue(), f"{crf_name}_bundle_{date}.zip"),
+            None,
+            None,
+            None,
+            None,
+            None,
         )
 
-    else:
-        return (
-            "",
-            None,
-            None,
-            None,
-            None,
-            None,
+    return (
+        "",
+        dcc.send_bytes(
+            csv_data_dict_buffer.getvalue(), f"{crf_name}_DataDictionary_{date}.csv"
         )
+        if include_csv
+        else None,
+        dcc.send_bytes(pdf_completion_guide, f"{crf_name}_Completion_Guide_{date}.pdf")
+        if include_pdf_paper
+        else None,
+        dcc.send_bytes(xml_content, xml_file_name) if include_xml else None,
+        dcc.send_bytes(pdf_paperlike_crf, f"{crf_name}_paperlike_{date}.pdf")
+        if include_pdf_paper
+        else None,
+        dcc.send_bytes(word_bytes, f"{crf_name}_CRFreview_{date}.docx")
+        if include_word
+        else None,
+        dcc.send_bytes(chikunguny_pdf_bytes, CHIKUNGUNYA_PDF_FILE)
+        if include_chikunguny_pdf
+        else None,
+    )
 
 
 def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
@@ -280,6 +283,11 @@ def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
         "Field Annotation",
     ]
     df_datadicc = df_datadicc.reindex(columns=redcap_cols)
+    if "sympt_dn4_result" in df_datadicc["Variable / Field Name"].values:
+        df_datadicc.loc[
+            df_datadicc["Variable / Field Name"] == "sympt_dn4_result",
+            "Field Annotation",
+        ] = "@CALCTEXT(if([sympt_dn4_pain]='1',if([sympt_dn4_score]>=4,'Neuropathic pain','No neuropathic pain'),''))"
 
     df_datadicc.loc[
         df_datadicc["Field Type"].isin(
@@ -309,6 +317,12 @@ def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
             ]
         )
     ]
+
+    df_datadicc.loc[
+        df_datadicc["Text Validation Type OR Show Slider Number"] == "units",
+        "Text Validation Type OR Show Slider Number",
+    ] = np.nan
+
     df_datadicc["Section Header"] = df_datadicc["Section Header"].where(
         df_datadicc["Section Header"] != df_datadicc["Section Header"].shift(), np.nan
     )
