@@ -116,10 +116,13 @@ def on_generate_click(
     ].apply(
         lambda x: f'<div class="rich-text-field-label"><h5 style="text-align: center;"><span style="color: #236fa1;">{x}</span></h5></div>'
     )
-    df_crf.loc[
-        df_crf["Text Validation Type OR Show Slider Number"] == "units",
-        "Text Validation Type OR Show Slider Number",
-    ] = np.nan
+    if "sympt_dn4_result" in df_crf["Variable / Field Name"].values:
+        df_crf.loc[
+            df_crf["Variable / Field Name"] == "sympt_dn4_result",
+            "Field Annotation",
+        ] = "@CALCTEXT(if([sympt_dn4_pain]='1',if([sympt_dn4_score]>=4,'Neuropathic pain','No neuropathic pain'),''))"
+
+
     if language != "English":
         df_crf["Form Name"] = df_crf["Form Name"].apply(lambda x: unidecode(str(x)))
     df_crf.to_csv(csv_data_dict_buffer, index=False, encoding="utf8")
@@ -289,6 +292,11 @@ def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
         "Field Annotation",
     ]
     df_datadicc = df_datadicc.reindex(columns=redcap_cols)
+    if "sympt_dn4_result" in df_datadicc["Variable / Field Name"].values:
+        df_datadicc.loc[
+            df_datadicc["Variable / Field Name"] == "sympt_dn4_result",
+            "Field Annotation",
+        ] = "@CALCTEXT(if([sympt_dn4_pain]='1',if([sympt_dn4_score]>=4,'Neuropathic pain','No neuropathic pain'),''))"
 
     df_datadicc.loc[
         df_datadicc["Field Type"].isin(
@@ -318,6 +326,13 @@ def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
             ]
         )
     ]
+
+    
+    df_datadicc.loc[
+        df_datadicc["Text Validation Type OR Show Slider Number"] == "units",
+        "Text Validation Type OR Show Slider Number",
+    ] = np.nan
+
     df_datadicc["Section Header"] = df_datadicc["Section Header"].where(
         df_datadicc["Section Header"] != df_datadicc["Section Header"].shift(), np.nan
     )
