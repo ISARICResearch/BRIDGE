@@ -23,7 +23,7 @@ CONFIG_DIR = join(
 ASSETS_DIR = join(dirname(dirname(dirname(abspath(__file__)))), "assets")
 
 XML_FILE_NAME = "ISARIC Clinical Characterisation Setup"
-CHIKUNGUNYA_PDF_FILE = "chik_das.pdf"  
+CHIKUNGUNYA_PDF_FILE = "chik_das.pdf"
 
 
 def _load_asset_file_bytes(filename: str) -> bytes:
@@ -48,7 +48,7 @@ def _has_chikunguny_template(checked_presets: list) -> bool:
         Output("download-projectxml-pdf", "data"),
         Output("download-paperlike-pdf", "data"),
         Output("download-paperlike-docx", "data"),
-        Output("download-chikungunya-pdf", "data"),  
+        Output("download-chikungunya-pdf", "data"),
     ],
     [
         Input("crf_generate", "n_clicks"),
@@ -90,9 +90,7 @@ def on_generate_click(
     date = datetime.today().strftime("%Y-%m-%d")
     crf_name = get_crf_name(crf_name, checked_presets)
 
-    selected_variables_from_data = pd.read_json(
-        io.StringIO(json_data), orient="split"
-    )
+    selected_variables_from_data = pd.read_json(io.StringIO(json_data), orient="split")
     version = selected_version_data.get("selected_version")
     language = selected_language_data.get("selected_language")
 
@@ -122,7 +120,6 @@ def on_generate_click(
             "Field Annotation",
         ] = "@CALCTEXT(if([sympt_dn4_pain]='1',if([sympt_dn4_score]>=4,'Neuropathic pain','No neuropathic pain'),''))"
 
-
     if language != "English":
         df_crf["Form Name"] = df_crf["Form Name"].apply(lambda x: unidecode(str(x)))
     df_crf.to_csv(csv_data_dict_buffer, index=False, encoding="utf8")
@@ -145,9 +142,7 @@ def on_generate_click(
 
     include_chikunguny_pdf = _has_chikunguny_template(checked_presets)
     chikunguny_pdf_bytes = (
-        _load_asset_file_bytes(CHIKUNGUNYA_PDF_FILE)
-        if include_chikunguny_pdf
-        else None
+        _load_asset_file_bytes(CHIKUNGUNYA_PDF_FILE) if include_chikunguny_pdf else None
     )
 
     if is_safari:
@@ -162,9 +157,7 @@ def on_generate_click(
                 zip_file.writestr(
                     f"{crf_name}_Completion_Guide_{date}.pdf", pdf_completion_guide
                 )
-                zip_file.writestr(
-                    f"{crf_name}_paperlike_{date}.pdf", pdf_paperlike_crf
-                )
+                zip_file.writestr(f"{crf_name}_paperlike_{date}.pdf", pdf_paperlike_crf)
             if include_word:
                 zip_file.writestr(f"{crf_name}_CRFreview_{date}.docx", word_bytes)
             if include_xml:
@@ -190,9 +183,7 @@ def on_generate_click(
         )
         if include_csv
         else None,
-        dcc.send_bytes(
-            pdf_completion_guide, f"{crf_name}_Completion_Guide_{date}.pdf"
-        )
+        dcc.send_bytes(pdf_completion_guide, f"{crf_name}_Completion_Guide_{date}.pdf")
         if include_pdf_paper
         else None,
         dcc.send_bytes(xml_content, xml_file_name) if include_xml else None,
@@ -327,7 +318,6 @@ def _generate_crf(df_datadicc: pd.DataFrame) -> pd.DataFrame:
         )
     ]
 
-    
     df_datadicc.loc[
         df_datadicc["Text Validation Type OR Show Slider Number"] == "units",
         "Text Validation Type OR Show Slider Number",
