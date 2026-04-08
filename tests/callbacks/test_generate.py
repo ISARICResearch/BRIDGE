@@ -82,15 +82,7 @@ def test_on_generate_click_no_action(
         (
             {"selected_language": "French"},
             "Safari/537.36",
-            (
-                "",
-                "UEsDBBQAAAAAANJmQVvCdv2k",
-                None,
-                None,
-                None,
-                None,
-                None
-            ),
+            ("", "UEsDBBQAAAAAANJmQVvCdv2k", None, None, None, None, None),
         ),
     ],
 )
