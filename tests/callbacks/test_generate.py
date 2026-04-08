@@ -23,7 +23,7 @@ from bridge.callbacks import generate
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
         (
             1,
@@ -34,7 +34,7 @@ from bridge.callbacks import generate
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
     ],
 )
@@ -76,19 +76,13 @@ def test_on_generate_click_no_action(
                 "UEsDBBQAAAAAANJmQVvCdv2k",
                 "UEsDBBQAAAAAANJmQVvCdv2k",
                 "UEsDBBQAAAAAANJmQVvCdv2k",
+                None,
             ),
         ),
         (
             {"selected_language": "French"},
             "Safari/537.36",
-            (
-                "",
-                "UEsDBBQAAAAAANJmQVvCdv2k",
-                None,
-                None,
-                None,
-                None,
-            ),
+            ("", "UEsDBBQAAAAAANJmQVvCdv2k", None, None, None, None, None),
         ),
     ],
 )
@@ -174,7 +168,7 @@ def test_on_generate_click(
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
     ],
 )
