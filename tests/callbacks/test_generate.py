@@ -76,6 +76,7 @@ def test_on_generate_click_no_action(
                 "UEsDBBQAAAAAANJmQVvCdv2k",
                 "UEsDBBQAAAAAANJmQVvCdv2k",
                 "UEsDBBQAAAAAANJmQVvCdv2k",
+                None,
             ),
         ),
         (
@@ -174,7 +175,7 @@ def test_on_generate_click(
             None,
             None,
             None,
-            ("", None, None, None, None, None),
+            ("", None, None, None, None, None, None),
         ),
     ],
 )
