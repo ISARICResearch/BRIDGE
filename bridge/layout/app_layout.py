@@ -150,6 +150,7 @@ class MainContent:
                 dcc.Download(id="download-projectxml-pdf"),
                 dcc.Download(id="download-paperlike-pdf"),
                 dcc.Download(id="download-paperlike-docx"),
+                dcc.Download(id="download-chikungunya-pdf"),
                 dcc.Download(id="save-crf"),
                 Modals.variable_information_modal(),
                 dcc.Loading(
