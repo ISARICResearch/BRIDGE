@@ -89,6 +89,7 @@ def test_on_generate_click_no_action(
                 None,
                 None,
                 None,
+                None
             ),
         ),
     ],
