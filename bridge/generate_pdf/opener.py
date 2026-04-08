@@ -46,7 +46,7 @@ class ElementList:
         title_text = self.df_details[self.df_details[PAPER_LIKE_FIELD] == "Title"][
             self.text_field
         ].values[0]
-        title_text = title_text.replace("CORE", self.db_name).upper()
+        title_text = str(title_text).replace("CORE", str(self.db_name)).upper()
         element_list.append(Paragraph(title_text, self.title_style))
         element_list.append(Paragraph("<br/><br/>"))
         return element_list
