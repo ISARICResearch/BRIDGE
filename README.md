@@ -1,5 +1,6 @@
 # BRIDGE
 
+[![CodeQL](https://github.com/ISARICResearch/BRIDGE/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/github-code-scanning/codeql)
 [![pre-commit](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml)
 [![Run unit tests](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml)
 [![Codecov](https://codecov.io/gh/ISARICResearch/BRIDGE/graph/badge.svg?token=NOW9MD1TQZ)](https://codecov.io/gh/ISARICResearch/BRIDGE)
