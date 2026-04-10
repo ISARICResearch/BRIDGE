@@ -4,8 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "isaric-bridge"
-version = "0.1.0"
+dynamic = ["version"]
 description = "ISARIC BRIDGE web application"
+
+# All current contributors
+authors = [
+    { name = "Laura Thomson", email = "laura.thomson@dtc.ox.ac.uk" },
+    { name = "Sara Duque-Vallejo", email = "sara.duquevallejo@ndm.ox.ac.uk" },
+    { name = "Alasdair Wilson", email = "alasdair.wilson@ndm.ox.ac.uk" },
+    { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" },
+    { name = "Esteban Garcia-Gallo", email = "esteban.garcia@ndm.ox.ac.uk" },
+    { name = "Tom Edinburgh", email = "tom.edinburgh@ndm.ox.ac.uk" }
+]
+
+# All current project admins
+maintainers = [
+    { name = "Alasdair Wilson", email = "alasdair.wilson@ndm.ox.ac.uk" },
+    { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" }
+]
+
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE.md" }
@@ -25,12 +42,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+pre-commit = [
   "pre-commit",
+]
+
+test = [
   "pytest",
   "pytest-cov",
   "pytest-mock",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "bridge.__version__"}
 
 [tool.setuptools]
 include-package-data = true
