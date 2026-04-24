@@ -2,7 +2,7 @@ name: Docker Build and Test
 
 on:
   workflow_run:
-    workflows: Run unit tests
+    workflows: Tests and Coverage
     types:
       - completed
   push:

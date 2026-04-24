@@ -50,6 +50,26 @@ BRIDGE enables users to select variables from the ARC versions that are saved in
 
 You can find instructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
 
+## Managing Dependencies
+
+The top-level Python dependencies of BRIDGE can be found in the [project TOML dependencies](https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml#L12) section. The dependencies listed in the optional dependency groups are separate from the top-level dependencies, and are purely for development and/or testing. A `requirements.txt`, containing only the top-level dependencies, does not exist, but can easily be generated locally, from the project TOML, using, for example, the `pip-compile` tool from [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/):
+```shell
+pip-compile -o requirements.txt pyproject.toml
+```
+or a more advanced package manager such as [Astral `uv`](https://docs.astral.sh/uv):
+```shell
+uv export -v --format requirements.txt -o requirements.txt
+```
+A different dependency file format such as [`pylock.toml`](https://github.com/ISARICResearch/BRIDGE/blob/main/pylock.toml), with full dependency file hashes, can also be generated, for example, with `uv`, using:
+```shell
+uv export -v --format pylock.toml -o pylock.toml
+```
+This version of the `pylock.toml` will only contain the top-level dependencies - if all development and/or optional dependencies are also required this can be achieved with `uv lock` using the `--all-groups` flag. To install from a `pylock.toml` with `uv` you can use:
+```shell
+uv pip install -r pylock.toml
+```
+For further information consult the [`uv` documentation](https://docs.astral.sh/uv/).
+
 ## Contributors
 
 - Esteban Garcia-Gallo - [esteban.garcia@ndm.ox.ac.uk](mailto:esteban.garcia@ndm.ox.ac.uk)
