@@ -13,7 +13,6 @@ INCLUDE_NOT_SHOW = [
     "warn",
     "warn2",
     "warn3",
-    "add",
     "vol",
     "txt",
     "calc",

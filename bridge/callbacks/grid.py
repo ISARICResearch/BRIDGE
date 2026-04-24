@@ -25,7 +25,6 @@ INCLUDE_NOT_SHOW = [
     "warn2",
     "warn3",
     "units",
-    "add",
     "vol",
     "0item",
     "0otherl2",
