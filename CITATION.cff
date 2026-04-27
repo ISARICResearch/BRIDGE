@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "BRIDGE"
+authors:
+
+- family-names: "Garcia"
+  given-names: "Esteban"
+- family-names: "Duque"
+  given-names: "Sara"
+- family-names: "Wilson"
+  given-names: "Alasdair"
+- family-names: "Murthy"
+  given-names: "Sandeep"
+- family-names: "Thomson"
+  given-names: "Laura"
+- family-names: "Merson"
+  given-names: "Laura"
