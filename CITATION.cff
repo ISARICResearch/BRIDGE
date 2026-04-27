@@ -32,12 +32,16 @@ url: 'https://github.com/ISARICResearch/BRIDGE'
 abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks
 keywords:
     - isaric
+    - bridge
     - infectious disease
     - pandemic
     - disease outbreak
     - clinical epidemiology
     - disease outbreak response
+    - analysis and research compendium
+    - arc
     - case report form
+    - crf
     - data capture
 license: MIT
 version: 1.3.0
