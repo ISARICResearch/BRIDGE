@@ -424,37 +424,38 @@ def _assign_units_answer_options(
                 df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
 
                 options_list = df_parent["Answer Options"].values[0].split(" | ")
-                if len(options_list) > 2:
-                    # Only required when more than two options
+
+                if "L/min más alto" in options_list:
+                    print("test")
+
+                if len(options_list) > 2 and len(df_units) < len(options_list):
+                    # Only required when more than two options, and if number selected is less than number of options
                     try:
-                        option = [
+                        option_out = [
                             option
                             for option in options_list
                             if option.endswith(f", {unit_name}")
                         ][0]
                         df_units.loc[
                             df_units["Variable"] == variable, "Answer Options"
-                        ] = option
+                        ] = option_out
 
                     except IndexError:
                         # Workaround for data discrepancies (should be corrected in ARC)
-                        # Works if a ^ is missing in the Choices
-                        unit_name_updated = "^".join([unit_name[:-1], unit_name[-1]])
-                        try:
-                            option = [
+                        for unit_name_updated in [
+                            unit_name.lower(),
+                            "^".join([unit_name[:-1], unit_name[-1]]),
+                        ]:
+                            option_out = [
                                 option
                                 for option in options_list
                                 if option.endswith(f", {unit_name_updated}")
-                            ][0]
-                            df_units.loc[
-                                df_units["Variable"] == variable, "Answer Options"
-                            ] = option
-
-                        except IndexError:
-                            # E.g. option = '3, L/min más alto'; option_list = ['1, mmol/l', '2, mg/dl', '3 g/L']
-                            # Not raising this. The options will be joined later (with the wrong numbering)
-                            msg = f"Unable to determine order of units | options_list: {options_list} | unit_name: {unit_name}"
-                            logger.warning(msg)
+                            ]
+                            if option_out:
+                                df_units.loc[
+                                    df_units["Variable"] == variable, "Answer Options"
+                                ] = option_out[0]
+                                break
 
     return df_units
 
