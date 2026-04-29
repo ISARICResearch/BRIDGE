@@ -1,8 +1,8 @@
 # BRIDGE
 
 [![CodeQL](https://github.com/ISARICResearch/BRIDGE/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/github-code-scanning/codeql)
-[![pre-commit](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/lint.yml)
-[![Tests and Coverage](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/tests.yml)
+[![pre-commit](https://github.com/ISARICResearch/BRIDGE/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/pre-commit.yml)
+[![Tests and Coverage](https://github.com/ISARICResearch/BRIDGE/actions/workflows/test.yml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/test.yml)
 [![Codecov](https://codecov.io/gh/ISARICResearch/BRIDGE/graph/badge.svg?token=NOW9MD1TQZ)](https://codecov.io/gh/ISARICResearch/BRIDGE)
 [![Docker Build and Test](https://github.com/ISARICResearch/BRIDGE/actions/workflows/build.yaml/badge.svg)](https://github.com/ISARICResearch/BRIDGE/actions/workflows/build.yaml)
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
