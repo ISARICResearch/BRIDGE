@@ -4,11 +4,61 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "isaric-bridge"
-version = "0.1.0"
-description = "ISARIC BRIDGE web application"
+dynamic = ["version"]
+description = "ISARIC BRIDGE Web Application"
+
+# All current contributors
+authors = [
+    { name = "Laura Thomson", email = "laura.thomson@dtc.ox.ac.uk" },
+    { name = "Sara Duque-Vallejo", email = "sara.duquevallejo@ndm.ox.ac.uk" },
+    { name = "Alasdair Wilson", email = "alasdair.wilson@dtc.ox.ac.uk" },
+    { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" },
+    { name = "Esteban Garcia-Gallo", email = "esteban.garcia@ndm.ox.ac.uk" },
+    { name = "Tom Edinburgh", email = "tom.edinburgh@ndm.ox.ac.uk" }
+]
+
+# All current project admins
+maintainers = [
+    { name = "Alasdair Wilson", email = "alasdair.wilson@dtc.ox.ac.uk" },
+    { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" }
+]
+
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE.md" }
+
+# These keywords have been taken from the available ISARIC documentation,
+# and arent't comprehensive or standardised.
+keywords = [
+    "isaric",
+    "bridge",
+    "infectious disease",
+    "pandemic",
+    "disease outbreak",
+    "clinical epidemiology",
+    "disease outbreak response",
+    "analysis and research compendium",
+    "arc",
+    "case report form",
+    "crf",
+    "data capture",
+]
+
+# Not strictly required as this isn't a public Python package, but still good
+# to have.
+classifiers = [
+        "Environment :: Web Environment",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Development Status :: 5 - Production/Stable",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+]
+
 dependencies = [
   "dash==2.17.0",
   "dash-bootstrap-components==1.7.1",
@@ -25,12 +75,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+pre-commit = [
   "pre-commit",
+]
+
+test = [
   "pytest",
   "pytest-cov",
   "pytest-mock",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "bridge.__version__"}
 
 [tool.setuptools]
 include-package-data = true
