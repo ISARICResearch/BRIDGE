@@ -439,9 +439,7 @@ def _assign_units_answer_options(
                     except IndexError:
                         # Workaround for data discrepancies (should be corrected in ARC)
                         # Works if a ^ is missing in the Choices
-                        unit_name_updated = "^".join(
-                            [unit_name[:-1], unit_name[-1]]
-                        )
+                        unit_name_updated = "^".join([unit_name[:-1], unit_name[-1]])
                         try:
                             option = [
                                 option
