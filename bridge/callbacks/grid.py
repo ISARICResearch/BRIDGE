@@ -385,7 +385,9 @@ def _create_grid_units_dataframe(
 
 
 def _assign_units_answer_options(
-    df_datadicc: pd.DataFrame, df_units: pd.DataFrame, dynamic_units_conversion: bool
+    df_datadicc: pd.DataFrame,
+    df_units: pd.DataFrame,
+    dynamic_units_conversion: bool,
 ) -> pd.DataFrame:
     """
     This function makes sure that "Answer Options" are numbered correctly.
@@ -412,50 +414,58 @@ def _assign_units_answer_options(
     Ideally a better approach should be worked out (possibly with an update to ARC).
     This is prone to breaking, particularly with translations.
     """
-    if not dynamic_units_conversion:
-        # Only possible for new(er) versions of ARC
-        for _, row in df_units.iterrows():
-            variable = row["Variable"]
-            df_variable = df_datadicc[df_datadicc["Variable"] == variable]
-            units_variable = f"{df_variable['Sec_vari'].values[0]}_units"
+    if dynamic_units_conversion:
+        return df_units
 
-            if units_variable in df_datadicc["Variable"].values:
-                unit_name = _extract_parenthesis_content(str(row["Question"]))
-                df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
+    for idx, row in df_units.iterrows():
+        variable = row["Variable"]
 
-                options_list = df_parent["Answer Options"].values[0].split(" | ")
+        df_variable = df_datadicc[df_datadicc["Variable"] == variable]
+        if df_variable.empty:
+            continue
 
-                if "L/min más alto" in options_list:
-                    print("test")
+        base_var = df_variable["Sec_vari"].values[0]
+        units_variable = f"{base_var}_units"
 
-                if len(options_list) > 2 and len(df_units) < len(options_list):
-                    # Only required when more than two options, and if number selected is less than number of options
-                    try:
-                        option_out = [
-                            option
-                            for option in options_list
-                            if option.endswith(f", {unit_name}")
-                        ][0]
-                        df_units.loc[
-                            df_units["Variable"] == variable, "Answer Options"
-                        ] = option_out
+        if units_variable not in df_datadicc["Variable"].values:
+            continue
 
-                    except IndexError:
-                        # Workaround for data discrepancies (should be corrected in ARC)
-                        for unit_name_updated in [
-                            unit_name.lower(),
-                            "^".join([unit_name[:-1], unit_name[-1]]),
-                        ]:
-                            option_out = [
-                                option
-                                for option in options_list
-                                if option.endswith(f", {unit_name_updated}")
-                            ]
-                            if option_out:
-                                df_units.loc[
-                                    df_units["Variable"] == variable, "Answer Options"
-                                ] = option_out[0]
-                                break
+        unit_name = _extract_parenthesis_content(str(row["Question"]))
+        if not unit_name:
+            continue
+
+        df_parent = df_datadicc[df_datadicc["Variable"] == units_variable]
+        options_raw = df_parent["Answer Options"].values[0]
+
+        if not isinstance(options_raw, str):
+            continue
+
+        options_list = options_raw.split(" | ")
+
+        # Only process when needed
+        if not (len(options_list) > 2 and len(df_units) < len(options_list)):
+            continue
+
+        # Try matching in order of likelihood
+        candidates = [
+            unit_name,
+            unit_name.lower(),
+            "^".join([unit_name[:-1], unit_name[-1]])
+            if len(unit_name) > 1
+            else unit_name,
+        ]
+
+        match = None
+        for candidate in candidates:
+            for option in options_list:
+                if option.endswith(f", {candidate}"):
+                    match = option
+                    break
+            if match:
+                break
+
+        if match:
+            df_units.at[idx, "Answer Options"] = match
 
     return df_units
 
