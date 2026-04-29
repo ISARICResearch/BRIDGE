@@ -1245,9 +1245,13 @@ def test_get_latest_checked_variable_multiple_checked_plus_header():
     assert output == expected
 
 
-def test_get_options_dynamic_false():
+def test_get_options_with_answer_options():
     dynamic_units_conversion = False
     data = {
+        "Question": [
+            "Random blood glucose (mmol/L)",
+            "Random blood glucose (g/L)",
+        ],
         "Answer Options": [
             "1, mmol/L",
             "3, g/L",
@@ -1261,12 +1265,16 @@ def test_get_options_dynamic_false():
     assert output == expected
 
 
-def test_get_options_dynamic_true():
+def test_get_options_no_answer_options():
     dynamic_units_conversion = True
     data = {
         "Question": [
             "Random blood glucose (mmol/L)",
             "Random blood glucose (g/L)",
+        ],
+        "Answer Options": [
+            None,
+            None,
         ],
     }
     df_matching_rows = pd.DataFrame(data)
