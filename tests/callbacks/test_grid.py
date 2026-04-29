@@ -1401,3 +1401,68 @@ def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
         == '{"columns":["Variable"],"index":[0,1],"data":[["inclu_disease"],["inclu_disease_otherl3"]]}'
     )
     assert output_count == 2
+
+
+def test_assign_units_answer_options_first_fallback(monkeypatch):
+    dynamic_units_conversion = False
+
+    df_datadicc = pd.DataFrame(
+        {
+            "Variable": ["var", "var_units"],
+            "Sec_vari": ["var", "var"],
+            "Answer Options": [
+                None,  # for "var"
+                "1, a | 2, b | 3, c^m",  # for "var_units"
+            ],
+        }
+    )
+
+    df_units = pd.DataFrame(
+        {
+            "Variable": ["var"],
+            "Question": ["Something (cm)"],
+        }
+    )
+
+    monkeypatch.setattr(
+        "bridge.callbacks.grid._extract_parenthesis_content", lambda x: "cm"
+    )
+
+    result = grid._assign_units_answer_options(
+        df_datadicc, df_units.copy(), dynamic_units_conversion
+    )
+
+    assert result["Answer Options"].iloc[0] == "3, c^m"
+
+
+@mock.patch("bridge.callbacks.grid.logger")
+def test_assign_units_answer_options_logs_warning(mock_logger, monkeypatch):
+    dynamic_units_conversion = False
+
+    df_datadicc = pd.DataFrame(
+        {
+            "Variable": ["var", "var_units"],
+            "Sec_vari": ["var", "var"],
+            "Answer Options": [
+                None,
+                "1, a | 2, b | 3, d",  # no match at all
+            ],
+        }
+    )
+
+    df_units = pd.DataFrame(
+        {
+            "Variable": ["var"],
+            "Question": ["Something (cm)"],
+        }
+    )
+
+    monkeypatch.setattr(
+        "bridge.callbacks.grid._extract_parenthesis_content", lambda x: "cm"
+    )
+
+    grid._assign_units_answer_options(
+        df_datadicc, df_units.copy(), dynamic_units_conversion
+    )
+
+    assert mock_logger.warning.called
