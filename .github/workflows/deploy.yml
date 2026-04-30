@@ -60,12 +60,20 @@ jobs:
           # 1) write the indented heredoc to a temp file (keeps linter happy)
           cat > /tmp/ssm-script.indented <<INDENTED
               #!/bin/bash -eux
-              trap 'echo "Error on line $LINENO"; exit 1' ERR
+              trap 'echo "Error on line \$LINENO"; exit 1' ERR
 
               aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin "${ECR_REPO}"
 
-              docker stop isaric-bridge 2>/dev/null || true
-              docker rm -v isaric-bridge 2>/dev/null || true
+              if docker container inspect isaric-bridge >/dev/null 2>&1; then
+                docker stop isaric-bridge >/dev/null 2>&1 || true
+                docker rm -fv isaric-bridge
+              fi
+
+              if docker container inspect isaric-bridge >/dev/null 2>&1; then
+                echo "Existing isaric-bridge container is still present after cleanup"
+                docker ps -a --filter "name=^/isaric-bridge$"
+                exit 1
+              fi
 
               docker pull "${ECR_REPO}:latest"
               docker run -d --restart unless-stopped --name isaric-bridge \
