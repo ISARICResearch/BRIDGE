@@ -85,6 +85,21 @@ test = [
   "pytest-mock",
 ]
 
+docs = [
+  "Sphinx",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "sphinx-gallery",
+  "sphinx-design",
+  "myst-parser",
+  "pylint",
+  "furo",
+  "numpydoc",
+  "nb2plots",
+  "jupyter-sphinx",
+]
+
+
 [tool.setuptools.dynamic]
 version = {attr = "bridge.__version__"}
 
