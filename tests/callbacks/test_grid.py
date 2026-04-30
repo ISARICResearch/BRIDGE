@@ -1245,9 +1245,13 @@ def test_get_latest_checked_variable_multiple_checked_plus_header():
     assert output == expected
 
 
-def test_get_options_dynamic_false():
+def test_get_options_with_answer_options():
     dynamic_units_conversion = False
     data = {
+        "Question": [
+            "Random blood glucose (mmol/L)",
+            "Random blood glucose (g/L)",
+        ],
         "Answer Options": [
             "1, mmol/L",
             "3, g/L",
@@ -1261,12 +1265,16 @@ def test_get_options_dynamic_false():
     assert output == expected
 
 
-def test_get_options_dynamic_true():
+def test_get_options_no_answer_options():
     dynamic_units_conversion = True
     data = {
         "Question": [
             "Random blood glucose (mmol/L)",
             "Random blood glucose (g/L)",
+        ],
+        "Answer Options": [
+            None,
+            None,
         ],
     }
     df_matching_rows = pd.DataFrame(data)
@@ -1393,3 +1401,96 @@ def test_build_grid_payload_cached(mock_checked, mock_selected_df, mock_list):
         == '{"columns":["Variable"],"index":[0,1],"data":[["inclu_disease"],["inclu_disease_otherl3"]]}'
     )
     assert output_count == 2
+
+
+def test_assign_units_answer_options_fallback_lower(monkeypatch):
+    dynamic_units_conversion = False
+
+    df_datadicc = pd.DataFrame(
+        {
+            "Variable": ["var", "var_units"],
+            "Sec_vari": ["var", "var"],
+            "Answer Options": [
+                None,
+                "1, cm | 2, mm | 3, ml",  # lowercase units
+            ],
+        }
+    )
+
+    df_units = pd.DataFrame(
+        {
+            "Variable": ["var"],
+            "Question": ["Something (ML)"],  # uppercase -> won't match directly
+        }
+    )
+
+    monkeypatch.setattr(
+        "bridge.callbacks.grid._extract_parenthesis_content", lambda x: "ML"
+    )
+
+    result = grid._assign_units_answer_options(
+        df_datadicc, df_units.copy(), dynamic_units_conversion
+    )
+
+    # Should match via .lower() fallback
+    assert result["Answer Options"].iloc[0] == "3, ml"
+
+
+def test_assign_units_answer_options_fallback_caret(monkeypatch):
+    dynamic_units_conversion = False
+
+    df_datadicc = pd.DataFrame(
+        {
+            "Variable": ["var", "var_units"],
+            "Sec_vari": ["var", "var"],
+            "Answer Options": [None, "1, a | 2, b | 3, c^m"],
+        }
+    )
+
+    df_units = pd.DataFrame(
+        {
+            "Variable": ["var"],
+            "Question": ["Something (cm)"],
+        }
+    )
+
+    monkeypatch.setattr(
+        "bridge.callbacks.grid._extract_parenthesis_content", lambda x: "cm"
+    )
+
+    result = grid._assign_units_answer_options(
+        df_datadicc, df_units.copy(), dynamic_units_conversion
+    )
+
+    assert result["Answer Options"].iloc[0] == "3, c^m"
+
+
+def test_assign_units_answer_options_no_match(monkeypatch):
+    dynamic_units_conversion = False
+
+    df_datadicc = pd.DataFrame(
+        {
+            "Variable": ["var", "var_units"],
+            "Sec_vari": ["var", "var"],
+            "Answer Options": [None, "1, a | 2, b | 3, d"],
+        }
+    )
+
+    df_units = pd.DataFrame(
+        {
+            "Variable": ["var"],
+            "Question": ["Something (cm)"],
+            "Answer Options": [None],  # initial value
+        }
+    )
+
+    monkeypatch.setattr(
+        "bridge.callbacks.grid._extract_parenthesis_content", lambda x: "cm"
+    )
+
+    result = grid._assign_units_answer_options(
+        df_datadicc, df_units.copy(), dynamic_units_conversion
+    )
+
+    # No match → should remain unchanged
+    assert pd.isna(result["Answer Options"].iloc[0])
