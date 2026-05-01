@@ -10,3 +10,6 @@ __pycache__
 build/
 dist/
 *.egg-info/
+
+# Sphinx stuff to ignore
+_build/
