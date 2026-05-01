@@ -23,10 +23,6 @@ authors:
     family-names: Edinburgh
     email: tom.edinburgh@ndm.ox.ac.uk
     orcid: 0000-0002-3599-7133
-  - name-particle: Sandeep Rajkumar
-    family-names: Murthy
-    email: sandeep.murthy@ndm.ox.ac.uk
-    orcid: 0009-0006-8277-9389
 repository-code: 'https://github.com/ISARICResearch/BRIDGE'
 url: 'https://github.com/ISARICResearch/BRIDGE'
 abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks
@@ -44,5 +40,5 @@ keywords:
     - crf
     - data capture
 license: MIT
-version: 1.3.0
-date-released: 2026-28-04
+version: 1.2
+date-released: 2026-06-03
