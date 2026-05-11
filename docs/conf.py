@@ -235,6 +235,19 @@ html_theme_options = {
         },
     ],
 }
+
+# Override the default sidebar listing by commenting out the ethical ads sidebar.
+html_sidebars = {
+    "**": [
+        "sidebar/scroll-start.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/navigation.html",
+        #"sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+    ]
+}
+
 # Force pygments style in dark mode back to the light variant
 pygments_dark_style = "tango"
 
