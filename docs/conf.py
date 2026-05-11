@@ -238,7 +238,7 @@ html_theme_options = {
 # Force pygments style in dark mode back to the light variant
 pygments_dark_style = "tango"
 
-html_logo = '_static/isaric-logo.png'
+html_logo = "_static/isaric-logo.png"
 
 # Relative path (from the ``docs`` folder) to the static files folder - so
 # ``_static`` should be one level below ``docs``.
