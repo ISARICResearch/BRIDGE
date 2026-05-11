@@ -32,7 +32,7 @@ Key features include:
 
 - **Flexibility for outbreaks**: CRFs can be rapidly adapted to the context of new or re-emerging diseases, ensuring timely deployment during health emergencies.
 
-BRIDGE is openly available to the research community under the Creative Commons Attribution-ShareAlike 4.0 International license. While contributions are limited to authorized individuals, the app is freely accessible for use by others, provided they adhere to the terms of this license, including attribution and the sharing of derivative works under the
+BRIDGE is openly available to the research community under the [MIT license](https://opensource.org/license/mit). While contributions are limited to authorized individuals, the app is freely accessible for use by others, provided they adhere to the terms of this license, including attribution and the sharing of derivative works under the
 same terms.
 
 BRIDGE enables users to select variables from the ARC versions that are saved in the ARC folder within the repository. It also allows the selection of templates included in these versions and supports the generation of the following files:
