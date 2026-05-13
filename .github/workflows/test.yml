@@ -1,9 +1,6 @@
 name: Tests and Coverage
 
 on:
-  workflow_run:
-    workflows: [pre-commit]
-    types: [completed]
   push:
     branches: [main]
   pull_request:
@@ -12,9 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 30
     strategy:
       matrix:
