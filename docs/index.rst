@@ -3,14 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-BRIDGE documentation
+BRIDGE Documentation
 ====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor ARC CRFs to an outbreak's particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
 
+Further documentation about BRIDGE will be added here.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+BRIDGE is licensed under the open source compliant `MIT license <https://opensource.org/license/mit>`_.
+
+.. image:: _static/osi-badge-light.svg
+   :target: https://opensource.org/license/mit
+   :height: 200px
+   :width:  200px

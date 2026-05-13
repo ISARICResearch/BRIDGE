@@ -8,7 +8,9 @@
 [![Docs](https://app.readthedocs.org/projects/isaric-bridge/badge/?version=latest)](https://app.readthedocs.org/projects/isaric-bridge/builds/?version__slug=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-ISARIC BRIDGE is a web-based application designed to operationalize [ISARIC ARC](https://github.com/ISARICResearch/ARC) and edit any ISARIC CRF and tailor it to outbreaks particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a REDCap database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
+ISARIC BRIDGE is a web-based [application](https://bridge.isaric.org) designed to operationalize [ISARIC ARC](https://github.com/ISARICResearch/ARC) and edit any ISARIC CRF and tailor it to outbreaks particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a REDCap database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
+
+BRIDGE project documentation can be found [here](https://isaric-bridge.readthedocs.io/en/latest/index.html) - currently, the content is minimal, but more content will be added over time.
 
 ## About BRIDGE
 
@@ -32,7 +34,7 @@ Key features include:
 
 - **Flexibility for outbreaks**: CRFs can be rapidly adapted to the context of new or re-emerging diseases, ensuring timely deployment during health emergencies.
 
-BRIDGE is openly available to the research community under the Creative Commons Attribution-ShareAlike 4.0 International license. While contributions are limited to authorized individuals, the app is freely accessible for use by others, provided they adhere to the terms of this license, including attribution and the sharing of derivative works under the
+BRIDGE is openly available to the research community under the [MIT license](https://opensource.org/license/mit). While contributions are limited to authorized individuals, the app is freely accessible for use by others, provided they adhere to the terms of this license, including attribution and the sharing of derivative works under the
 same terms.
 
 BRIDGE enables users to select variables from the ARC versions that are saved in the ARC folder within the repository. It also allows the selection of templates included in these versions and supports the generation of the following files:

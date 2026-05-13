@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "isaric-bridge"
 dynamic = ["version"]
-description = "ISARIC BRIDGE Web Application"
+description = "A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks."
 
 # All current contributors
 authors = [
