@@ -17,6 +17,7 @@ from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
 from bridge.generate_pdf.opener import generate_opener
 from bridge.utils.logger import setup_logger
+from bridge.utils.utils import clean_dataframe
 
 logger = setup_logger(__name__)
 
@@ -39,6 +40,10 @@ registerFontFamily(REGISTERED_FONT, normal=REGISTERED_FONT, bold=REGISTERED_FONT
 def generate_paperlike_pdf(
     df_datadicc: pd.DataFrame, version: str, db_name: str, language: str
 ) -> bytes:
+    # Clean the dataframe by removing any HTML characters and also removing
+    # non-standard / non-textual Unicode characters.
+    df_datadicc = clean_dataframe(df_datadicc)
+
     buffer = BytesIO()
     df_datadicc = df_datadicc[~df_datadicc["Field Label"].str.startswith((">", "->"))]
     preg_flag = 0

@@ -95,7 +95,6 @@ def on_generate_click(
     language = selected_language_data.get("selected_language")
 
     df_crf = _generate_crf(selected_variables_from_data)
-    df_crf=pd.read_csv("C:/Users/sduquevallejo/Downloads/hanta6_DD.csv")
 
     # PDFs
     pdf_paperlike_crf = paper_crf.generate_paperlike_pdf(
