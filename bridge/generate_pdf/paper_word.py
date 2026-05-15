@@ -5,6 +5,9 @@ import pandas as pd
 from docx import Document
 from docx.shared import Pt
 
+from bridge.utils.utils import clean_dataframe
+
+
 MAX_CHOICES_SHOWN = 10
 
 
@@ -154,6 +157,10 @@ def df_to_word(df: pd.DataFrame) -> bytes:
     y devuelve los bytes del documento.
     """
     df = df.copy()
+    # Clean the dataframe by removing any HTML characters and also removing
+    # non-standard / non-textual Unicode characters.
+    df = clean_dataframe(df)
+
     df = df.fillna("")
 
     c_form = pick_col(df, ["Form Name", "form_name", "Form"])

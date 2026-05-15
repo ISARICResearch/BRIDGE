@@ -60,6 +60,7 @@ classifiers = [
 ]
 
 dependencies = [
+  "click>=8.1",
   "dash==2.17.0",
   "dash-bootstrap-components==1.7.1",
   "dash_ag_grid==32.3.2",
@@ -99,6 +100,9 @@ docs = [
   "jupyter-sphinx",
 ]
 
+[project.scripts]
+generate-paperlike-crf-pdf = "bridge.cli:generate_paperlike_crf_pdf"
+generate-paperlike-crf-word = "bridge.cli:generate_paperlike_crf_word"
 
 [tool.setuptools.dynamic]
 version = {attr = "bridge.__version__"}
