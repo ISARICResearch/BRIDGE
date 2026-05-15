@@ -114,3 +114,8 @@ include-package-data = true
 where = ["."]
 include = ["bridge*"]
 namespaces = true
+
+[tool.coverage.run]
+omit = [
+    "bridge/cli.py",
+    ]
