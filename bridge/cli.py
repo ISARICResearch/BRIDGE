@@ -7,7 +7,6 @@ __all__ = [
 # -- IMPORTS --
 
 # -- Standard libraries --
-import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -20,8 +19,10 @@ import pandas as pd
 import bridge.generate_pdf.paper_crf as paper_crf
 import bridge.generate_pdf.paper_word as paper_word
 
+from bridge.utils.logger import setup_logger
 
-logger = logging.getLogger(__file__)
+
+logger = setup_logger(__name__)
 
 
 @click.command
