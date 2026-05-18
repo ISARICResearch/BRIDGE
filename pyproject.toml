@@ -118,4 +118,4 @@ namespaces = true
 [tool.coverage.run]
 omit = [
     "bridge/cli.py",
-    ]
+]

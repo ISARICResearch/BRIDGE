@@ -30,12 +30,42 @@ logger = logging.getLogger(__file__)
     required=True,
     help="Path (absolute or relative) to the data dictionary CSV",
 )
-@click.option("--arc-version", default="1.2.2", required=False, help="ARC version")
-@click.option("--db-name", required=False, help="DB name")
-@click.option("--language", default="English", required=False, help="Language")
-@click.option("--output-path", required=False, help="Path to write the PDF file")
+@click.option(
+    "--paperlike-details-csv",
+    required=False,
+    help="Optional path (absolute or relative) to a custom paperlike form details CSV",
+)
+@click.option(
+    "--supplemental-phrases-csv",
+    required=False,
+    help="Optional path (absolute or relative) to a custom supplemental phrases CSV",
+)
+@click.option(
+    "--arc-version",
+    default="1.2.2",
+    required=False,
+    help="Optional ARC version if not using custom paperlike details and supplemental phrases, defaults to the latest",
+)
+@click.option(
+    "--db-name",
+    required=False,
+    help="Optional REDCap project DB name, defaults to an empty string",
+)
+@click.option(
+    "--language",
+    default="English",
+    required=False,
+    help="Optional PDF language, defaults to English",
+)
+@click.option(
+    "--output-path",
+    required=False,
+    help="Optional path to write the PDF file, defaults to ./output/CRF-<db_name>-<arc_version>-{language}-{timestamp}.pdf",
+)
 def generate_paperlike_crf_pdf(
     data_dictionary_csv: str,
+    paperlike_details_csv: str | None = None,
+    supplemental_phrases_csv: str | None = None,
     arc_version: str | None = "1.2.2",
     db_name: str | None = "",
     language: str | None = "English",
@@ -45,8 +75,14 @@ def generate_paperlike_crf_pdf(
 
     Parameters
     ----------
-    data_dictionary_sv : str
-            The local path to the data dictionary CSV file.
+    data_dictionary_csv : str
+        The local path to the data dictionary CSV file.
+
+    paperlike_details_csv : str, default=None
+        Optional paperlike form details CSV, defaults to ``None``.
+
+    supplemental_phrases_csv : str, default=None
+        Optional supplemental phrases CSV, defaults to ``None``.
 
     arc_version : str, default="1.2.2"
             Optional ARC version string, defaults to the current latest version
@@ -71,13 +107,32 @@ def generate_paperlike_crf_pdf(
     # Load the data dictionary
     data_dictionary = pd.read_csv(Path(data_dictionary_csv).resolve())
 
-    # Call the Bridge function to get the CRF PDF
-    pdf = paper_crf.generate_paperlike_pdf(
-        df_datadicc=data_dictionary,
-        version=arc_version,
-        db_name=db_name,
-        language=language,
-    )
+    # Main conditional logic to support ARC vs non-ARC loading of paperlike
+    # form details and supplemental phrases.
+    if not (paperlike_details_csv and supplemental_phrases_csv):
+        # Call the Bridge function to get the CRF PDF with ARC-based logic, as
+        # at least one of the user-defined paperlike form details and
+        # supplemental phrases CSVs must be null at this point. The function
+        # defines a default ARC version of ``"1.2.2"`` so the ARC version will
+        # never be null here.
+        pdf = paper_crf.generate_paperlike_pdf(
+            df_datadicc=data_dictionary,
+            version=arc_version,
+            db_name=db_name,
+            language=language,
+        )
+    else:
+        # Load the user-defined paperlike details and supplmental phrases CSVs
+        paperlike_details = pd.read_csv(paperlike_details_csv)
+        supplemental_phrases = pd.read_csv(supplemental_phrases_csv)
+        # Call the Bridge function to get the CRF PDF with non-ARC logic
+        pdf = paper_crf.generate_paperlike_pdf(
+            df_datadicc=data_dictionary,
+            paperlike_details=paperlike_details,
+            supplemental_phrases=supplemental_phrases,
+            db_name=db_name,
+            language=language,
+        )
 
     logger.info(f"Paperlike CRF PDF (size {sys.getsizeof(pdf)} bytes) generated.")
 

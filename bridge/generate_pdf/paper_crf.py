@@ -38,8 +38,45 @@ registerFontFamily(REGISTERED_FONT, normal=REGISTERED_FONT, bold=REGISTERED_FONT
 
 
 def generate_paperlike_pdf(
-    df_datadicc: pd.DataFrame, version: str, db_name: str, language: str
+    df_datadicc: pd.DataFrame,
+    version: str | None = "1.2.2",
+    db_name: str | None = "",
+    language: str | None = "English",
+    paperlike_details: pd.DataFrame | None = None,
+    supplemental_phrases: pd.DataFrame | None = None,
 ) -> bytes:
+    """:py:class:`bytes` : Returns a paperlike CRF PDF.
+
+    The paperlike form details and supplemental phrases can be user-defined,
+    i.e., loaded as local CSVs, or if either of these is empty, then they
+    are loaded from ARC using the ARC ``version``.
+
+    Parameters
+    ----------
+    df_datadicc : pd.DataFrame
+        The incoming data dictionary.
+
+    version : str, default=``"1.2.2"``
+        Optional ARC version string, defaults to the latest.
+
+    db_name : str, default=""
+        Optional associated REDCap project database name, defaults to an
+        empty string.
+
+    language : str, default="English"
+        Optional PDF publication language, defaults to ``"English"``.
+
+    paperlike_details : pd.DataFrame, default=None
+        Optional user-defined dataframe defining the paperlike CRF output
+        details, defaults to ``None``. If this is null then the paperlike
+        details are loaded from ARC.
+
+    supplemental_phrases : pd.DataFrame, default=None
+        Optional user-defined dataframe containing supplemental phrases,
+        defaults to ``None``. If this is null then the supplemental phrases
+        are laoded from ARC.
+
+    """
     # Clean the dataframe by removing any HTML characters and also removing
     # non-standard / non-textual Unicode characters.
     df_datadicc = clean_dataframe(df_datadicc)
@@ -55,23 +92,42 @@ def generate_paperlike_pdf(
     ):
         preg_flag = 1
 
-    details = ArcApiClient().get_dataframe_paper_like_details(version, language)
-
-    if preg_flag == 0:
-        details = details.loc[
-            (details["Paper-like section"] != "PREGNANCY FORM")
-            & (details["Paper-like section"] != "NEONATE FORM")
-        ]
-
-        mask = details["Paper-like section"] == "Timing /Events"
-
-        details.loc[mask, "Text_translation"] = (
-            "Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study"
+    # The logic here is to load the paperlike form details and supplemental
+    # phrases from ARC only if either of the user-defined arguments for these
+    # dataframes is null.
+    if (
+        (isinstance(paperlike_details, pd.DataFrame) and paperlike_details.empty)
+        or (
+            not isinstance(paperlike_details, pd.DataFrame)
+            and paperlike_details is None
+        )
+        or (
+            isinstance(supplemental_phrases, pd.DataFrame)
+            and supplemental_phrases.empty
+        )
+        or (
+            not isinstance(supplemental_phrases, pd.DataFrame)
+            and supplemental_phrases is None
+        )
+    ):
+        paperlike_details = ArcApiClient().get_dataframe_paper_like_details(
+            version, language
+        )
+        supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(
+            version, language
         )
 
-    supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(
-        version, language
-    )
+    if preg_flag == 0:
+        paperlike_details = paperlike_details.loc[
+            (paperlike_details["Paper-like section"] != "PREGNANCY FORM")
+            & (paperlike_details["Paper-like section"] != "NEONATE FORM")
+        ]
+
+        mask = paperlike_details["Paper-like section"] == "Timing /Events"
+
+        paperlike_details.loc[mask, "Text_translation"] = (
+            "Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study"
+        )
 
     # Locate the phrase in the supplemental phrases DataFrame
     def locate_phrase(variable: str) -> dict:
@@ -99,7 +155,7 @@ def generate_paperlike_pdf(
     )
 
     element_list = []
-    element_list = generate_opener(element_list, details, db_name)
+    element_list = generate_opener(element_list, paperlike_details, db_name)
     df_datadicc["Section Header"] = df_datadicc["Section Header"].replace({"": np.nan})
     element_list = Form().generate_form(df_datadicc, element_list, locate_phrase)
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
