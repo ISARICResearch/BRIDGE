@@ -25,11 +25,15 @@ logger = logging.getLogger(__file__)
 
 
 @click.command
-@click.argument("data-dictionary-csv", required=True)
-@click.argument("arc-version", required=False)
-@click.argument("db-name", required=False)
-@click.argument("language", required=False)
-@click.argument("output_path", required=False)
+@click.option(
+    "--data-dictionary-csv",
+    required=True,
+    help="Path (absolute or relative) to the data dictionary CSV",
+)
+@click.option("--arc-version", default="1.2.2", required=False, help="ARC version")
+@click.option("--db-name", required=False, help="DB name")
+@click.option("--language", default="English", required=False, help="Language")
+@click.option("--output-path", required=False, help="Path to write the PDF file")
 def generate_paperlike_crf_pdf(
     data_dictionary_csv: str,
     arc_version: str | None = "1.2.2",
@@ -77,13 +81,15 @@ def generate_paperlike_crf_pdf(
 
     logger.info(f"Paperlike CRF PDF (size {sys.getsizeof(pdf)} bytes) generated.")
 
-    datetime_str = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
     if not output_path:
         Path("output").mkdir()
         output_path = Path("output").joinpath(
-            f"CRF-{db_name}-{arc_version}-{language}-{datetime_str}.pdf"
+            f"CRF-{db_name}-{arc_version}-{language}-{timestamp}.pdf"
         )
+    else:
+        output_path = Path(output_path).resolve()
 
     output_path.write_bytes(pdf)
 
@@ -93,8 +99,12 @@ def generate_paperlike_crf_pdf(
 
 
 @click.command
-@click.argument("data-dictionary-csv", required=True)
-@click.argument("output_path", required=False)
+@click.option(
+    "--data-dictionary-csv",
+    required=True,
+    help="Path (absolute or relative) to the data dictionary CSV",
+)
+@click.option("--output-path", required=False, help="Path to write the Word file")
 def generate_paperlike_crf_word(
     data_dictionary_csv: str, output_path: str | Path | None = None
 ) -> bytes:
@@ -125,11 +135,13 @@ def generate_paperlike_crf_word(
         f"Paperlike CRF Word document (size {sys.getsizeof(word)} bytes) generated."
     )
 
-    datetime_str = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
     if not output_path:
         Path("output").mkdir()
-        output_path = Path("output").joinpath(f"CRF-{datetime_str}.docx")
+        output_path = Path("output").joinpath(f"CRF-{timestamp}.docx")
+    else:
+        output_path = output_path.resolve()
 
     output_path.write_bytes(word)
 
