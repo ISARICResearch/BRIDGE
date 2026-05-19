@@ -11,7 +11,6 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate
 
-from bridge.arc.arc_api import ArcApiClientError
 from bridge.arc.arc_core import ArcApiClient
 from bridge.generate_pdf.form import Form
 from bridge.generate_pdf.guide import generate_guide_doc
@@ -50,7 +49,7 @@ def generate_paperlike_pdf(
 
     The paperlike form details and supplemental phrases can be user-defined,
     i.e., loaded as local CSVs, or, if either of these is empty, they are
-    loaded from ARC using the ARC ``version``.
+    loaded from ARC using the ARC ``version`` and ``language``.
 
     Parameters
     ----------
@@ -113,15 +112,9 @@ def generate_paperlike_pdf(
     if (
         isinstance(paperlike_details, pd.DataFrame) and paperlike_details.empty
     ) or paperlike_details is None:
-        try:
-            paperlike_details = arc_api_client.get_dataframe_paper_like_details(
-                version, language
-            )
-        except ArcApiClientError as e:
-            raise ArcApiClientError(
-                "Could not find paperlike details CSV for ARC version "
-                f'"{version}" and language "{language}"'
-            ) from e
+        paperlike_details = arc_api_client.get_dataframe_paper_like_details(
+            version, language
+        )
 
     if preg_flag == 0:
         paperlike_details = paperlike_details.loc[
@@ -138,15 +131,9 @@ def generate_paperlike_pdf(
     if (
         isinstance(supplemental_phrases, pd.DataFrame) and supplemental_phrases.empty
     ) or supplemental_phrases is None:
-        try:
-            supplemental_phrases = arc_api_client.get_dataframe_supplemental_phrases(
-                version, language
-            )
-        except ArcApiClientError as e:
-            raise ArcApiClientError(
-                "Could not find supplemental phrases CSV for ARC version "
-                f'"{version}" and language "{language}"'
-            ) from e
+        supplemental_phrases = arc_api_client.get_dataframe_supplemental_phrases(
+            version, language
+        )
 
     # Locate the phrase in the supplemental phrases DataFrame
     def locate_phrase(variable: str) -> dict:

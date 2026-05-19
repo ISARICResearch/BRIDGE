@@ -249,62 +249,78 @@ class ArcApiClient:
     def get_dataframe_paper_like_details(
         self, version: str, language: str
     ) -> pd.DataFrame:
-        if self.environment != "development":
-            url = "/".join(
-                [
-                    self.base_url_raw_content,
-                    "ARC-Translations",
-                    "main",
-                    self.get_arch_version_string(version),
-                    language,
-                    "paper_like_details.csv",
-                ]
-            )
+        try:
+            if self.environment != "development":
+                url = "/".join(
+                    [
+                        self.base_url_raw_content,
+                        "ARC-Translations",
+                        "main",
+                        self.get_arch_version_string(version),
+                        language,
+                        "paper_like_details.csv",
+                    ]
+                )
+            else:
+                url = "/".join(
+                    [
+                        self.base_url_raw_content,
+                        "DataPlatform",
+                        "main",
+                        "ARCH",
+                        self.get_arch_version_string(version),
+                        "paper_like_details.csv",
+                    ]
+                )
+            df = self._write_to_dataframe(url)
+        except ArcApiClientError as e:
+            raise ArcApiClientError(
+                "Could not find paperlike details CSV for ARC version "
+                f'"{version}" and language "{language}"'
+            ) from e
         else:
-            url = "/".join(
-                [
-                    self.base_url_raw_content,
-                    "DataPlatform",
-                    "main",
-                    "ARCH",
-                    self.get_arch_version_string(version),
-                    "paper_like_details.csv",
-                ]
-            )
-        df = self._write_to_dataframe(url)
-        return df
+            return df
 
     def get_dataframe_supplemental_phrases(
         self, version: str, language: str
     ) -> pd.DataFrame:
-        if self.environment != "development":
-            url = "/".join(
-                [
-                    self.base_url_raw_content,
-                    "ARC-Translations",
-                    "main",
-                    self.get_arch_version_string(version),
-                    language,
-                    "supplemental_phrases.csv",
+        try:
+            if self.environment != "development":
+                url = "/".join(
+                    [
+                        self.base_url_raw_content,
+                        "ARC-Translations",
+                        "main",
+                        self.get_arch_version_string(version),
+                        language,
+                        "supplemental_phrases.csv",
+                    ]
+                )
+            else:
+                # Use the latest ARC one
+                url = "/".join([self.base_url_api, "ARC", "releases"])
+                release_json = self._get_api_response(url)
+                version_list = [
+                    release_dict["tag_name"] for release_dict in release_json
                 ]
-            )
+                url = "/".join(
+                    [
+                        self.base_url_raw_content,
+                        "ARC-Translations",
+                        "main",
+                        self.get_arch_version_string(max(version_list)),
+                        language,
+                        "supplemental_phrases.csv",
+                    ]
+                )
+            df = self._write_to_dataframe(url)
+        except ArcApiClientError as e:
+            raise ArcApiClientError(
+                "Could not find paperlike details CSV for ARC version "
+                f'"{version}" and language "{language}"'
+            ) from e
         else:
-            # Use the latest ARC one
-            url = "/".join([self.base_url_api, "ARC", "releases"])
-            release_json = self._get_api_response(url)
-            version_list = [release_dict["tag_name"] for release_dict in release_json]
-            url = "/".join(
-                [
-                    self.base_url_raw_content,
-                    "ARC-Translations",
-                    "main",
-                    self.get_arch_version_string(max(version_list)),
-                    language,
-                    "supplemental_phrases.csv",
-                ]
-            )
-        df = self._write_to_dataframe(url)
-        return df
+            return df
 
     @staticmethod
     def get_arch_version_string(version: str) -> str:
