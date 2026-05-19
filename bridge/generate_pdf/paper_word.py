@@ -123,14 +123,16 @@ def format_answer(ftype, choices_raw, is_date_field):
     return ["__________"]
 
 
-def should_skip_row(row, c_var, c_type, c_label):
+def should_skip_row(row, c_var, c_type, c_label, include_descriptive_row=False):
     varname = str(row.get(c_var, "") or "").strip().lower()
     ftype = str(row.get(c_type, "") or "").strip().lower()
     label = str(row.get(c_label, "") or "").strip()
 
     # Ignorar descriptive
-    if ftype == "descriptive":
+    if ftype == "descriptive" and not include_descriptive_row:
         return True
+    elif ftype == "descriptive" and include_descriptive_row:
+        return False
 
     # Ignorar labels que empiezan con >
     if label.startswith(">"):
@@ -151,7 +153,7 @@ def should_skip_row(row, c_var, c_type, c_label):
     return False
 
 
-def df_to_word(df: pd.DataFrame) -> bytes:
+def df_to_word(df: pd.DataFrame, include_descriptive_rows=False) -> bytes:
     """
     Genera un .docx tipo 'paper-like' a partir de un DataFrame REDCap-style
     y devuelve los bytes del documento.
@@ -198,7 +200,13 @@ def df_to_word(df: pd.DataFrame) -> bytes:
     table = None
 
     for _, row in df.iterrows():
-        if should_skip_row(row, c_var, c_type, c_label):
+        if should_skip_row(
+            row,
+            c_var,
+            c_type,
+            c_label,
+            include_descriptive_row=include_descriptive_rows,
+        ):
             continue
 
         form = str(row.get(c_form, "") or "").strip()

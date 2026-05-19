@@ -6,9 +6,9 @@
 BRIDGE Documentation
 ====================
 
-`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor ARC CRFs to an outbreak's particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
+`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor ARC CRFs to an outbreak's particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides via library functions - there are made available as command-line project scripts that are described in more detail :ref:`here <cli>`.
 
-Further documentation about BRIDGE will be added here.
+More documentation on BRIDGE and its features will be added here over time. For current content see the linked pages.
 
 BRIDGE is licensed under the open source compliant `MIT license <https://opensource.org/license/mit>`_.
 
@@ -16,3 +16,9 @@ BRIDGE is licensed under the open source compliant `MIT license <https://opensou
    :target: https://opensource.org/license/mit
    :height: 200px
    :width:  200px
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Table of Contents:
+
+   sources/cli
