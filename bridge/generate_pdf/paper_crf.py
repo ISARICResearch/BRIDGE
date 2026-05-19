@@ -90,6 +90,9 @@ def generate_paperlike_pdf(
         The PDF file bytes object.
 
     """
+    # Set up an ARC API client
+    arc_api_client = ArcApiClient()
+
     # Clean the dataframe by removing any HTML characters and also removing
     # non-standard / non-textual Unicode characters.
     data_dictionary = clean_dataframe(data_dictionary)
@@ -111,7 +114,7 @@ def generate_paperlike_pdf(
         isinstance(paperlike_details, pd.DataFrame) and paperlike_details.empty
     ) or paperlike_details is None:
         try:
-            paperlike_details = ArcApiClient().get_dataframe_paper_like_details(
+            paperlike_details = arc_api_client.get_dataframe_paper_like_details(
                 version, language
             )
         except ArcApiClientError as e:
@@ -136,7 +139,7 @@ def generate_paperlike_pdf(
         isinstance(supplemental_phrases, pd.DataFrame) and supplemental_phrases.empty
     ) or supplemental_phrases is None:
         try:
-            supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(
+            supplemental_phrases = arc_api_client.get_dataframe_supplemental_phrases(
                 version, language
             )
         except ArcApiClientError as e:

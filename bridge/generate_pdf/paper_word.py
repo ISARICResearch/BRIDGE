@@ -106,7 +106,7 @@ def format_answer(ftype, choices_raw, is_date_field):
         return ["Calculated value (read-only)"]
 
     if ft in ("descriptive",):
-        return [""]
+        return ["Descriptive Field"]
 
     if choices:
         shown = choices[:MAX_CHOICES_SHOWN]
@@ -185,10 +185,6 @@ def df_to_word(df: pd.DataFrame, include_descriptive_rows=False) -> bytes:
     c_branch = pick_col(
         df, ["Branching Logic (Show field only if...)", "branching_logic", "Logic"]
     )
-
-    # Si existe la columna de tipo, eliminamos descriptive desde el inicio
-    if c_type in df.columns:
-        df = df[df[c_type].astype(str).str.lower().ne("descriptive")]
 
     doc = Document()
     style = doc.styles["Normal"]
