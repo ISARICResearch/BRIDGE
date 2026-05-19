@@ -92,6 +92,7 @@ docs = [
   "sphinx-copybutton",
   "sphinx-gallery",
   "sphinx-design",
+  "sphinxcontrib-email",
   "myst-parser",
   "pylint",
   "furo",

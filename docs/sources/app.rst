@@ -1,17 +1,19 @@
 .. _app:
 
-The BRIDGE App
-==============
+Using the BRIDGE App
+====================
 
-The BRIDGE app can be used online at https://bridge.isaric.org, or you can build your local version and run it via Docker using the following instructions:
+The BRIDGE app can be used online at https://bridge.isaric.org, or you can build your own local version and run it (via Docker) using the following instructions:
 
-1. Checkout the BRIDGE Git branch on which you want to run the app - usually this will be the ``main`` branch, and if you've got access to a command line shell the way you can do this using:
+1. Checkout the local BRIDGE Git branch on which you want to build and run the app - usually this will be the ``main`` branch, but it could also be any feature or fix branch. If you have access to a command line shell you can do this using:
 
 .. code:: shell
 
-   git branch -v
+   git checkout <target branch name>
 
-If you're not on the target stash any working changes using :command:`git stash` and checkout the target using :code:`git checkout <target branch name>`.
+.. note::
+
+   If you have any unsaved/unstaged/uncommited changes on your current branch then you need to decide whether to discard these or stash them somewhere (:command:`git stash`) before switching to the target branch.
 
 2. Build the Docker image (named ``isaric-bridge``) on the branch using:
 

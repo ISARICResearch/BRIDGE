@@ -25,28 +25,29 @@ After using the scripts, it is advisable to uninstall the editable project insta
 Generate Paperlike CRF PDF
 --------------------------
 
-The :program:`generate-paperlike-crf-pdf` script can generate a paperlike CRF in PDF format given a local data dictionary CSV and either an `ARC <isaric-arc.readthedocs.io>`_ version string or custom local CSVs for the paperlike form details and supplemental phrases. An optional output file path, including the filename with extension, can also be provided: if it is not then the output file is written to timestamped PDF file in an ``output`` subfolder created in the working directory. The script help context can be accessed using the `--help` option and an excerpt is displayed below:
+The :program:`generate-paperlike-crf-pdf` script can generate a paperlike CRF in PDF format given a local data dictionary CSV and either an `ARC <isaric-arc.readthedocs.io>`_ version string or custom local CSVs for the paperlike form details and supplemental phrases. An optional output file path, including the filename with extension, can also be provided: if it is not then the output file is written to timestamped PDF file in an ``output`` subfolder created in the working directory. The script help context can be accessed using the ``--help`` option and an excerpt is displayed below:
 
 .. code:: shell
 
    Options:
      --data-dictionary-csv TEXT      Path (absolute or relative) to the data
                                      dictionary CSV  [required]
+     --arc-version TEXT              Optional ARC version if not using custom
+                                     paperlike details and supplemental phrases,
+                                     defaults to the latest (currently `1.2.2`)
+     --redcap-db-name TEXT           Optional REDCap project DB name, defaults to
+                                     `Generic`
+     --language TEXT                 Optional PDF language, defaults to English
      --paperlike-details-csv TEXT    Optional path (absolute or relative) to a
                                      custom paperlike form details CSV
      --supplemental-phrases-csv TEXT
                                      Optional path (absolute or relative) to a
                                      custom supplemental phrases CSV
-     --arc-version TEXT              Optional ARC version if not using custom
-                                     paperlike details and supplemental phrases,
-                                     defaults to the latest
-     --db-name TEXT                  Optional REDCap project DB name, defaults to
-                                     an empty string
-     --language TEXT                 Optional PDF language, defaults to English
      --output-path TEXT              Optional path to write the PDF file,
-                                     defaults to ./output/CRF-<db_name>-<arc_vers
-                                     ion>-{language}-{timestamp}.pdf
+                                     defaults to ./output/CRF-<redcap_db_name>-{l
+                                     anguage}-{timestamp}.pdf
      --help                          Show this message and exit.
+
 
 The data dictionary CSV is required, while all other arguments are optional: if custom local CSV filepaths for **both** the paperlike form details and supplemental phrases are provided then these are used, otherwise ARC is used with the given (or default) version.
 
@@ -64,7 +65,7 @@ An example run is given below to generate a Hantavirus CRF PDF in Spanish, where
 Generate Paperlike CRF Word
 ---------------------------
 
-The :program:`generate-paperlike-crf-word` script can generate a paperlike CRF in Word format given a local data dictionary CSV and optional output file path. If no output file path is provided then the output file is written to timestamped Word (``docx``) file in an ``output`` subfolder created in the working directory.The script help context can be accessed using the `--help` option and an excerpt is displayed below:
+The :program:`generate-paperlike-crf-word` script can generate a paperlike CRF in Word format given a local data dictionary CSV and optional output file path. If no output file path is provided then the output file is written to timestamped Word (``docx``) file in an ``output`` subfolder created in the working directory.The script help context can be accessed using the ``--help`` option and an excerpt is displayed below:
 
 .. code:: shell
 
@@ -72,9 +73,10 @@ The :program:`generate-paperlike-crf-word` script can generate a paperlike CRF i
      --data-dictionary-csv TEXT  Path (absolute or relative) to the data
                                  dictionary CSV  [required]
      --include-descriptive-rows  Include source rows with descriptive field type
-     --output-path TEXT          Optional path to write the Word file, defaults to
-                                 ./output/CRF-{timestamp}.docx
+     --output-path TEXT          Optional path to write the Word file, defaults
+                                 to ./output/CRF-<timestamp>.docx
      --help                      Show this message and exit.
+
 
 The data dictionary CSV is required, while the output file path is optional:
 
