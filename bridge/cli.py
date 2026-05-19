@@ -151,15 +151,16 @@ def generate_paperlike_crf_pdf(
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
     if not output_path:
-        Path("output").mkdir()
+        if not Path("output").exists():
+            Path("output").mkdir()
         output_path = (
             Path("output").joinpath(
                 f"CRF-{redcap_db_name}-{arc_version}-{language}-{timestamp}.pdf"
             )
-            if not (paperlike_details_csv and supplemental_phrases_csv) else
-            Path("output").joinpath(
+            if not (paperlike_details_csv and supplemental_phrases_csv)
+            else Path("output").joinpath(
                 f"CRF-{redcap_db_name}-{language}-{timestamp}.pdf"
-            ) 
+            )
         )
     else:
         output_path = Path(output_path).resolve()
@@ -233,7 +234,8 @@ def generate_paperlike_crf_word(
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
     if not output_path:
-        Path("output").mkdir()
+        if not Path("output").exists():
+            Path("output").mkdir()
         output_path = Path("output").joinpath(f"CRF-{timestamp}.docx")
     else:
         output_path = Path(output_path).resolve()

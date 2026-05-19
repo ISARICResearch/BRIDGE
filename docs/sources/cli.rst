@@ -54,10 +54,10 @@ An example run is given below to generate a Hantavirus CRF PDF in Spanish, where
 
 .. code:: shell
 
-$ generate-paperlike-crf-pdf --data-dictionary-csv ~/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15.csv --db-name "HANTA" --language Spanish
-2026-05-19 06:55:50 [INFO] bridge.cli: Data dictionary /Users/smurthy/Downloads/CCPUKHantavirus_DataDictionary_2026-05-19.csv loaded with 586 rows.
-2026-05-19 12:23:10 [INFO] bridge.cli: Paperlike CRF PDF (size 1818075 bytes) generated.
-2026-05-19 12:23:10 [INFO] bridge.cli: Paperlike CRF PDF written to file /Users/smurthy/Documents/srm/BRIDGE/output/Hanta-paperlike-crf-arc1.2.2-es.pdf.
+$ generate-paperlike-crf-pdf --data-dictionary-csv ~/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15\(in\).csv --arc-version 1.2.2 --redcap-db-name "HANTA" --language Spanish
+2026-05-19 07:25:24 [INFO] bridge.cli: Data dictionary /Users/smurthy/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15(in).csv loaded with 586 rows.
+2026-05-19 07:25:25 [INFO] bridge.cli: Paperlike CRF PDF (size 1818080 bytes) generated.
+2026-05-19 07:25:25 [INFO] bridge.cli: Paperlike CRF PDF written to file output/CRF-HANTA-1.2.2-Spanish-2026-05-19-072525.pdf.
 
 .. _cli.generate-paperlike-crf-word:
 
@@ -76,13 +76,13 @@ Options:
                               ./output/CRF-{timestamp}.docx
   --help                      Show this message and exit.
 
-The data dictionary CSV is required, while the output file path is optional: 
+The data dictionary CSV is required, while the output file path is optional:
 
 An example run is given below to generate an Ebola CRF Word document in English:
 
 .. code:: shell
 
-$ generate-paperlike-crf-word --data-dictionary-csv ~/Downloads/Ebola_DataDictionary_2026-05-18.csv
-2026-05-19 06:55:50 [INFO] bridge.cli: Data dictionary /Users/smurthy/Downloads/Ebola_DataDictionary_2026-05-18.csv loaded with 236 rows.
-2026-05-19 06:55:50 [INFO] bridge.cli: Paperlike CRF Word document (size 43593 bytes) generated, with option to include descriptive rows set to True.
-2026-05-19 06:55:50 [INFO] bridge.cli: Paperlike CRF Word document written to file /Users/smurthy/Documents/srm/dev/BRIDGE/output/Ebola-CRF-202605190900.docx
+$ generate-paperlike-crf-word --data-dictionary-csv ~/Downloads/BundibugyoEbolaPARTNERSTEST_DataDictionary_2026-05-18.csv --include-descriptive-rows
+2026-05-19 07:25:32 [INFO] bridge.cli: Data dictionary /Users/smurthy/Downloads/BundibugyoEbolaPARTNERSTEST_DataDictionary_2026-05-18.csv loaded with 236 rows.
+2026-05-19 07:25:32 [INFO] bridge.cli: Paperlike CRF Word document (size 43593 bytes) generated, with option to include descriptive rows set to True.
+2026-05-19 07:25:32 [INFO] bridge.cli: Paperlike CRF Word document written to file output/CRF-2026-05-19-072532.docx.
