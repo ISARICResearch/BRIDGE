@@ -75,7 +75,7 @@ def generate_paperlike_crf_pdf(
     supplemental_phrases_csv: str | None = None,
     output_path: str | None = None,
 ) -> bytes:
-    """:py:class:`bytes` : Generates a PDF of the paperlike CRF.
+    """:py:class:`bytes` : Returns a PDF of the paperlike CRF.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def generate_paperlike_crf_pdf(
     Returns
     -------
     bytes
-            The PDF object as bytes.
+            The CRF PDF object as bytes.
     """
     # Load the data dictionary
     data_dictionary = pd.read_csv(Path(data_dictionary_csv).resolve())
@@ -195,7 +195,7 @@ def generate_paperlike_crf_word(
     include_descriptive_rows: bool = False,
     output_path: str | Path | None = None,
 ) -> bytes:
-    """:py:class:`bytes` : Generates a Word document (``.docx``) of the paperlike CRF.
+    """:py:class:`bytes` : Returns a Word document (``.docx``) of the paperlike CRF.
 
     Parameters
     ----------
@@ -213,7 +213,7 @@ def generate_paperlike_crf_word(
     Returns
     -------
     bytes
-            The Word document object as bytes.
+            The CRF Word document object as bytes.
     """
     # Load the data dictionary
     data_dictionary = pd.read_csv(Path(data_dictionary_csv).resolve())
