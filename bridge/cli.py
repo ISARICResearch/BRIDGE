@@ -183,7 +183,7 @@ def generate_paperlike_crf_pdf(
     required=False,
     is_flag=True,
     default=False,
-    help="Include source rows with descriptive field type",
+    help="Include source rows with descriptive field type, defaults to `False`",
 )
 @click.option(
     "--output-path",
