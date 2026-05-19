@@ -1,0 +1,12 @@
+variable,text
+select,Select
+specify,Specify
+specify_other,Specify other
+specify_other_infection,Specify other infection the individual is suspected/confirmed to have
+other_agent,other agents administered while hospitalised or at discharge
+select_additional,Select additional
+any_additional,Any additional
+other,Other
+units,Units
+if,If
+if_completeForm,"If Yes, complete the form"
