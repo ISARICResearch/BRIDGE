@@ -517,24 +517,66 @@ def test_get_dataframe_arc_version_language_with_cache(client_production):
 
 
 @mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
-def test_get_dataframe_paper_like_details_prod(mock_write_to_df, client_production):
+def test_get_dataframe_paper_like_details_prod__no_api_client_error(
+    mock_write_to_df, client_production
+):
     client_production.get_dataframe_paper_like_details("v1.1.1", "English")
     url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/paper_like_details.csv"
     mock_write_to_df.assert_called_with(url)
 
 
+@mock.patch(
+    "bridge.arc.arc_api.ArcApiClient._write_to_dataframe", side_effect=ArcApiClientError
+)
+def test_get_dataframe_paper_like_details_prod__api_client_error_caught_and_raised(
+    mock_write_to_df, client_production
+):
+    with pytest.raises(ArcApiClientError):
+        client_production.get_dataframe_paper_like_details("v1.1.1", "English")
+        url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/paper_like_details.csv"
+        mock_write_to_df.assert_called_with(url)
+
+
 @mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
-def test_get_dataframe_paper_like_details_dev(mock_write_to_df, client_development):
+def test_get_dataframe_paper_like_details_dev__no_api_client_error(
+    mock_write_to_df, client_development
+):
     client_development.get_dataframe_paper_like_details("v1.1.1", "English")
     url = "https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/ARCH1.1.1/paper_like_details.csv"
     mock_write_to_df.assert_called_with(url)
 
 
+@mock.patch(
+    "bridge.arc.arc_api.ArcApiClient._write_to_dataframe", side_effect=ArcApiClientError
+)
+def test_get_dataframe_paper_like_details_dev__api_client_error_caught_and_raised(
+    mock_write_to_df, client_development
+):
+    with pytest.raises(ArcApiClientError):
+        client_development.get_dataframe_paper_like_details("v1.1.1", "English")
+        url = "https://raw.githubusercontent.com/ISARICResearch/DataPlatform/main/ARCH/ARCH1.1.1/paper_like_details.csv"
+        mock_write_to_df.assert_called_with(url)
+
+
 @mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
-def test_get_dataframe_supplemental_phrases_prod(mock_write_to_df, client_production):
+def test_get_dataframe_supplemental_phrases_prod__no_api_client_error(
+    mock_write_to_df, client_production
+):
     client_production.get_dataframe_supplemental_phrases("v1.1.1", "English")
     url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/supplemental_phrases.csv"
     mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch(
+    "bridge.arc.arc_api.ArcApiClient._write_to_dataframe", side_effect=ArcApiClientError
+)
+def test_get_dataframe_supplemental_phrases_prod__api_client_error_caught_and_raised(
+    mock_write_to_df, client_production
+):
+    with pytest.raises(ArcApiClientError):
+        client_production.get_dataframe_supplemental_phrases("v1.1.1", "English")
+        url = "https://raw.githubusercontent.com/ISARICResearch/ARC-Translations/main/ARCH1.1.1/English/supplemental_phrases.csv"
+        mock_write_to_df.assert_called_with(url)
 
 
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")

@@ -17,6 +17,7 @@ from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
 from bridge.generate_pdf.opener import generate_opener
 from bridge.utils.logger import setup_logger
+from bridge.utils.utils import clean_dataframe
 
 logger = setup_logger(__name__)
 
@@ -37,36 +38,102 @@ registerFontFamily(REGISTERED_FONT, normal=REGISTERED_FONT, bold=REGISTERED_FONT
 
 
 def generate_paperlike_pdf(
-    df_datadicc: pd.DataFrame, version: str, db_name: str, language: str
+    data_dictionary: pd.DataFrame,
+    version: str | None = "1.2.2",
+    db_name: str | None = "Generic",
+    language: str | None = "English",
+    paperlike_details: pd.DataFrame | None = None,
+    supplemental_phrases: pd.DataFrame | None = None,
 ) -> bytes:
+    """:py:class:`bytes` : Returns a paperlike CRF PDF.
+
+    The paperlike form details and supplemental phrases can be user-defined,
+    i.e., loaded as local CSVs, or, if either of these is empty, they are
+    loaded from ARC using the ARC ``version`` and ``language``.
+
+    Parameters
+    ----------
+    data_dictionary : pd.DataFrame
+        The incoming data dictionary.
+
+    version : str, default=``"1.2.2"``
+        Optional ARC version string, defaults to the latest.
+
+    db_name : str, default="Generic"
+        Optional associated REDCap project database name, defaults to
+        ``"Generic"``.
+
+    language : str, default="English"
+        Optional PDF publication language, defaults to ``"English"``.
+
+    paperlike_details : pd.DataFrame, default=None
+        Optional user-defined dataframe defining the paperlike CRF output
+        details, defaults to ``None``. If this is null then the paperlike
+        details are loaded from ARC.
+
+    supplemental_phrases : pd.DataFrame, default=None
+        Optional user-defined dataframe containing supplemental phrases,
+        defaults to ``None``. If this is null then the supplemental phrases
+        are loaded from ARC.
+
+    Raises
+    ------
+    bridge.arc.arc_api.ArcApiClientError
+        If either the paperlike form details or supplemental phrases CSVs
+        cannot be found for the given combination of ARC version and language,
+        when ARC is being used as the source for these.
+
+    Returns
+    -------
+    bytes
+        The PDF file bytes object.
+
+    """
+    # Set up an ARC API client
+    arc_api_client = ArcApiClient()
+
+    # Clean the dataframe by removing any HTML characters and also removing
+    # non-standard / non-textual Unicode characters.
+    data_dictionary = clean_dataframe(data_dictionary)
+
     buffer = BytesIO()
-    df_datadicc = df_datadicc[~df_datadicc["Field Label"].str.startswith((">", "->"))]
+    data_dictionary = data_dictionary[
+        ~data_dictionary["Field Label"].str.startswith((">", "->"))
+    ]
     preg_flag = 0
 
     if (
-        df_datadicc["Form Name"]
+        data_dictionary["Form Name"]
         .str.contains("neonate|pregnancy", case=False, na=False)
         .any()
     ):
         preg_flag = 1
 
-    details = ArcApiClient().get_dataframe_paper_like_details(version, language)
+    if (
+        isinstance(paperlike_details, pd.DataFrame) and paperlike_details.empty
+    ) or paperlike_details is None:
+        paperlike_details = arc_api_client.get_dataframe_paper_like_details(
+            version, language
+        )
 
     if preg_flag == 0:
-        details = details.loc[
-            (details["Paper-like section"] != "PREGNANCY FORM")
-            & (details["Paper-like section"] != "NEONATE FORM")
+        paperlike_details = paperlike_details.loc[
+            (paperlike_details["Paper-like section"] != "PREGNANCY FORM")
+            & (paperlike_details["Paper-like section"] != "NEONATE FORM")
         ]
 
-        mask = details["Paper-like section"] == "Timing /Events"
+        mask = paperlike_details["Paper-like section"] == "Timing /Events"
 
-        details.loc[mask, "Text_translation"] = (
+        paperlike_details.loc[mask, "Text_translation"] = (
             "Hospital admission / initial assessment | Admission to ICU (if applicable) | Research sample taken (optional) | As per site protocol (optional) | Discharge / death / end of study"
         )
 
-    supplemental_phrases = ArcApiClient().get_dataframe_supplemental_phrases(
-        version, language
-    )
+    if (
+        isinstance(supplemental_phrases, pd.DataFrame) and supplemental_phrases.empty
+    ) or supplemental_phrases is None:
+        supplemental_phrases = arc_api_client.get_dataframe_supplemental_phrases(
+            version, language
+        )
 
     # Locate the phrase in the supplemental phrases DataFrame
     def locate_phrase(variable: str) -> dict:
@@ -94,9 +161,11 @@ def generate_paperlike_pdf(
     )
 
     element_list = []
-    element_list = generate_opener(element_list, details, db_name)
-    df_datadicc["Section Header"] = df_datadicc["Section Header"].replace({"": np.nan})
-    element_list = Form().generate_form(df_datadicc, element_list, locate_phrase)
+    element_list = generate_opener(element_list, paperlike_details, db_name)
+    data_dictionary["Section Header"] = data_dictionary["Section Header"].replace(
+        {"": np.nan}
+    )
+    element_list = Form().generate_form(data_dictionary, element_list, locate_phrase)
     header_footer_partial = partial(generate_paperlike_header_footer, title=db_name)
 
     try:
@@ -114,10 +183,10 @@ def generate_paperlike_pdf(
 
 
 def generate_completion_guide(
-    df_datadicc: pd.DataFrame, version: str, db_name: str
+    data_dictionary: pd.DataFrame, version: str, db_name: str
 ) -> bytes:
-    df_datadicc = df_datadicc.copy()
+    data_dictionary = data_dictionary.copy()
     buffer = BytesIO()
-    generate_guide_doc(df_datadicc, version, db_name, buffer)
+    generate_guide_doc(data_dictionary, version, db_name, buffer)
     buffer.seek(0)
     return buffer.getvalue()

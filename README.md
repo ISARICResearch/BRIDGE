@@ -51,7 +51,13 @@ BRIDGE enables users to select variables from the ARC versions that are saved in
 
 ## How to Use BRIDGE
 
-You can find instructions about how to use BRIDGE in our [Getting started with BRIDGE Guide](https://isaricresearch.github.io/Training/bridge_starting.html). BRIDGE is a web-based application and ISARIC hosts a live version of this using the current version of the codebase. The link to this can be found in the Getting started guide. We expect users to access BRIDGE through this web-based application rather than through the source code. However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
+You can find instructions about how to use BRIDGE in the [documentation](https://isaric-bridge.readthedocs.io/en/latest/sources/app.html).
+
+However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
+
+## Command Line Interface (CLI)
+
+BRIDGE provides two simple command line scripts / executables for generate paperlike CRFs in PDF and Word formats. These are described in more detail in the [documentation](https://isaric-bridge.readthedocs.io/en/latest/sources/cli.html).
 
 ## Project TOML & Managing Dependencies
 

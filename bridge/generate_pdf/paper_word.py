@@ -5,6 +5,9 @@ import pandas as pd
 from docx import Document
 from docx.shared import Pt
 
+from bridge.utils.utils import clean_dataframe
+
+
 MAX_CHOICES_SHOWN = 10
 
 
@@ -56,50 +59,110 @@ def branching_other(txt):
     return bool(RE_88.search(str(txt or "")))
 
 
+def is_other_choice(label):
+    return str(label).strip().lower() == "other"
+
+
 def format_answer(ftype, choices_raw, is_date_field):
     ft = str(ftype or "").lower().strip()
+
     if is_date_field:
         return ["[DD-MM-YYY]"]
+
     choices = [clean_choice_label(x) for x in split_choices(choices_raw)]
+
     if ft in ("radio", "dropdown", "select"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [
-                " ".join(f"○ {c}" for c in shown)
-                + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
-            ]
+            rendered = []
+            for c in shown:
+                if is_other_choice(c):
+                    rendered.append("○ Other ____________")
+                else:
+                    rendered.append(f"○ {c}")
+            if len(choices) > MAX_CHOICES_SHOWN:
+                rendered.append("...↓")
+            return [" ".join(rendered)]
         return ["○ ________"]
+
     if ft in ("checkbox", "check box", "checks"):
         if choices:
             shown = choices[:MAX_CHOICES_SHOWN]
-            return [
-                " ".join(f"☐ {c}" for c in shown)
-                + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
-            ]
+            rendered = []
+            for c in shown:
+                if is_other_choice(c):
+                    rendered.append("☐ Other ____________")
+                else:
+                    rendered.append(f"☐ {c}")
+            if len(choices) > MAX_CHOICES_SHOWN:
+                rendered.append("...↓")
+            return [" ".join(rendered)]
         return ["☐ ________"]
+
     if ft in ("text", "notes", "textarea"):
         return ["__________"]
+
     if ft in ("calc", "calculation"):
         return ["Calculated value (read-only)"]
-    if ft in ("descriptive"):
-        return [""]
+
+    if ft in ("descriptive",):
+        return ["Descriptive Field"]
 
     if choices:
         shown = choices[:MAX_CHOICES_SHOWN]
-        return [
-            " ".join(f"- {c}" for c in shown)
-            + (" ...↓" if len(choices) > MAX_CHOICES_SHOWN else "")
-        ]
+        rendered = []
+        for c in shown:
+            if is_other_choice(c):
+                rendered.append("- Other ____________")
+            else:
+                rendered.append(f"- {c}")
+        if len(choices) > MAX_CHOICES_SHOWN:
+            rendered.append("...↓")
+        return [" ".join(rendered)]
+
     return ["__________"]
 
 
-def df_to_word(df: pd.DataFrame) -> bytes:
+def should_skip_row(row, c_var, c_type, c_label, include_descriptive_row=False):
+    varname = str(row.get(c_var, "") or "").strip().lower()
+    ftype = str(row.get(c_type, "") or "").strip().lower()
+    label = str(row.get(c_label, "") or "").strip()
+
+    # Ignorar descriptive
+    if ftype == "descriptive" and not include_descriptive_row:
+        return True
+    elif ftype == "descriptive" and include_descriptive_row:
+        return False
+
+    # Ignorar labels que empiezan con >
+    if label.startswith(">"):
+        return True
+
+    # Ignorar sufijos especiales
+    skip_suffixes = (
+        "otherl2",
+        "otherl3",
+        "_oth",
+        "addi",
+        "item",
+    )
+
+    if varname.endswith(skip_suffixes):
+        return True
+
+    return False
+
+
+def df_to_word(df: pd.DataFrame, include_descriptive_rows=False) -> bytes:
     """
     Genera un .docx tipo 'paper-like' a partir de un DataFrame REDCap-style
     y devuelve los bytes del documento.
     """
-
     df = df.copy()
+    # Clean the dataframe by removing any HTML characters and also removing
+    # non-standard / non-textual Unicode characters.
+    df = clean_dataframe(df)
+
     df = df.fillna("")
 
     c_form = pick_col(df, ["Form Name", "form_name", "Form"])
@@ -123,10 +186,6 @@ def df_to_word(df: pd.DataFrame) -> bytes:
         df, ["Branching Logic (Show field only if...)", "branching_logic", "Logic"]
     )
 
-    # skip descriptive
-    if c_type in df.columns:
-        df = df[~df[c_label].str.contains(">")]
-
     doc = Document()
     style = doc.styles["Normal"]
     style.font.name = "Calibri"
@@ -137,6 +196,15 @@ def df_to_word(df: pd.DataFrame) -> bytes:
     table = None
 
     for _, row in df.iterrows():
+        if should_skip_row(
+            row,
+            c_var,
+            c_type,
+            c_label,
+            include_descriptive_row=include_descriptive_rows,
+        ):
+            continue
+
         form = str(row.get(c_form, "") or "").strip()
 
         raw_section = str(row.get(c_section, "") or "").strip()

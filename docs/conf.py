@@ -73,6 +73,7 @@ extensions = [
     "sphinx.ext.autodoc",
     #'sphinx.ext.autosectionlabel',
     #'sphinx.ext.autosummary',
+    "sphinxcontrib.email",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.duration",
@@ -119,6 +120,10 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     #'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 }
+
+# Obfuscate all mailto links in the docs sources, instead using the `email`
+# role from `sphinxcontrib-email`.
+email_automode = True
 
 # Static template paths
 templates_path = ["_templates"]

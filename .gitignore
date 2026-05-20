@@ -11,5 +11,7 @@ build/
 dist/
 *.egg-info/
 
+.DS_Store
+
 # Sphinx stuff to ignore
 _build/
