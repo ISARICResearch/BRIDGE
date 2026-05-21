@@ -3,18 +3,18 @@
 Command Line Interface (CLI)
 ============================
 
-BRIDGE contains two command line **project scripts** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
+BRIDGE contains two command line **project scripts/executables** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
 
 .. code:: shell
 
    pip install -e .
 
-This will install the project locally in a package named ``isaric-bridge``, and set up two scripts for command line use:
+This will install the project locally in a package named ``isaric-bridge``, and set up two executables for command line use:
 
 - :program:`generate-paperlike-crf-pdf` - Generates a paperlike CRF in PDF format.
 - :program:`generate-paperlike-crf-word` - Generates a paperlike CRF in Word format.
 
-After using the scripts, it is advisable to uninstall the editable project installation using:
+After using the executables, it is advisable to uninstall the editable project installation using:
 
 .. code:: shell
 
@@ -25,7 +25,7 @@ After using the scripts, it is advisable to uninstall the editable project insta
 Generate Paperlike CRF PDF
 --------------------------
 
-The :program:`generate-paperlike-crf-pdf` script can generate a paperlike CRF in PDF format given a local data dictionary CSV and either an `ARC <isaric-arc.readthedocs.io>`_ version string or custom local CSVs for the paperlike form details and supplemental phrases. An optional output file path, including the filename with extension, can also be provided: if it is not then the output file is written to timestamped PDF file in an ``output`` subfolder created in the working directory. The script help context can be accessed using the ``--help`` option and an excerpt is displayed below:
+The :program:`generate-paperlike-crf-pdf`  generates a paperlike CRF in PDF format given a local data dictionary CSV and either an `ARC <isaric-arc.readthedocs.io>`_ version string or custom local CSVs for the paperlike form details and supplemental phrases. An optional output file path, including the filename with extension, can also be provided: if not then the output file is written to a timestamped PDF file in an ``output`` subfolder in the working directory. The executable help context can be accessed using the ``--help`` option and an excerpt is displayed below:
 
 .. code:: shell
 
@@ -44,8 +44,8 @@ The :program:`generate-paperlike-crf-pdf` script can generate a paperlike CRF in
                                      Optional path (absolute or relative) to a
                                      custom supplemental phrases CSV
      --output-path TEXT              Optional path to write the PDF file,
-                                     defaults to ./output/CRF-<redcap_db_name>-{l
-                                     anguage}-{timestamp}.pdf
+                                     defaults to ./output/CRF-<redcap_db_name>-<l
+                                     anguage>-<timestamp>.pdf
      --help                          Show this message and exit.
 
 
@@ -68,7 +68,7 @@ An example run is given below to generate a Hantavirus CRF PDF in Spanish, where
 Generate Paperlike CRF Word
 ---------------------------
 
-The :program:`generate-paperlike-crf-word` script can generate a paperlike CRF in Word format given a local data dictionary CSV and optional output file path. If no output file path is provided then the output file is written to timestamped Word (``docx``) file in an ``output`` subfolder created in the working directory.The script help context can be accessed using the ``--help`` option and an excerpt is displayed below:
+The :program:`generate-paperlike-crf-word` executable can generate a paperlike CRF in Word format given a local data dictionary CSV and an optional output file path. If no output file path is provided then the output file is written to a timestamped Word (``docx``) file in an ``output`` subfolder in the working directory. The executable help context can be accessed using the ``--help`` option and an excerpt is displayed below:
 
 .. code:: shell
 

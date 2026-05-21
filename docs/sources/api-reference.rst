@@ -10,3 +10,9 @@ BRIDGE API reference. This is currently limited to just the CLI - other librarie
    :caption: Contents:
 
    bridge/cli
+
+Indices and Search
+==================
+
+* :ref:`genindex`
+* :ref:`search`

@@ -64,7 +64,7 @@ logger = setup_logger(__name__)
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the PDF file, defaults to ./output/CRF-<redcap_db_name>-{language}-{timestamp}.pdf",
+    help="Optional path to write the PDF file, defaults to ./output/CRF-<redcap_db_name>-<language>-<YYYYMMDD timestamp>.pdf",
 )
 def generate_paperlike_crf_pdf(
     data_dictionary_csv: str,
@@ -188,7 +188,7 @@ def generate_paperlike_crf_pdf(
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the Word file, defaults to ./output/CRF-<timestamp>.docx",
+    help="Optional path to write the Word file, defaults to ./output/CRF-<YYYYMMDD timestamp>.docx",
 )
 def generate_paperlike_crf_word(
     data_dictionary_csv: str,
