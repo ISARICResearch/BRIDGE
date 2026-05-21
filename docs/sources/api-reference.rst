@@ -10,7 +10,7 @@ BRIDGE API reference. This is currently limited to just the CLI - other librarie
    :caption: Contents:
 
    bridge/cli
-   module-sources/bridge.cli 
+   module-sources/bridge.cli
 
 Indices and Search
 ==================
