@@ -10,6 +10,8 @@ BRIDGE Documentation
 
 The documentation is currently limited to an :doc:`app user guide <sources/app>`, a :doc:`CLI user guide <sources/cli>` and an :doc:`API reference <sources/api-reference>` - more features and guides will be added here over time.
 
+The latest release is |vrelease| - download it from |github_release_target|.
+
 BRIDGE is licensed under the `Open Source Initiative (OSI) <https://opensource.org>`_-compliant `MIT license <https://opensource.org/license/mit>`_.
 
 .. image:: _static/osi-badge-light.svg

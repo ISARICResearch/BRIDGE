@@ -57,7 +57,16 @@ language = "en"
 # Set primary domain to null
 primary_domain = None
 
-# Global substitutions - not required
+# Global substitutions available in every source page - not all used
+rst_epilog = f"""
+.. |author|                 replace:: **{author}**
+.. |copyright|              replace:: **{copyright}**
+.. |project|                replace:: **{project}**
+.. |project_description|    replace:: {description}
+.. |release|                replace:: **{release}**
+.. |vrelease|               replace:: **{release}**
+.. |github_release_target|  replace:: https://github.com/ISARICResearch/{project}/releases/tag/{release}
+"""
 
 # Publish author(s)
 show_authors = True
@@ -239,6 +248,7 @@ html_theme_options = {
             "class": "",
         },
     ],
+    "sidebar_hide_name": True,
 }
 
 # Override the default sidebar listing by commenting out the ethical ads sidebar.
