@@ -3,7 +3,7 @@
 Command Line Interface (CLI)
 ============================
 
-BRIDGE contains two command line **project scripts/executables** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
+BRIDGE contains two command line **project scripts/executables/entry points** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
 
 .. code:: shell
 
@@ -14,11 +14,15 @@ This will install the project locally in a package named ``isaric-bridge``, and 
 - :program:`generate-paperlike-crf-pdf` - Generates a paperlike CRF in PDF format.
 - :program:`generate-paperlike-crf-word` - Generates a paperlike CRF in Word format.
 
-After using the executables, it is advisable to uninstall the editable project installation using:
+These are described in more detail below. After using the executables, it is advisable to uninstall the editable project installation using:
 
 .. code:: shell
 
    pip uninstall -y isaric-bridge
+
+.. note::
+
+   For more information on project CLI executables see `this <https://setuptools.pypa.io/en/latest/userguide/entry_point.html>`_ and `this <https://packaging.python.org/en/latest/specifications/entry-points/#entry-points>`_.
 
 .. _cli.generate-paperlike-crf-pdf:
 
