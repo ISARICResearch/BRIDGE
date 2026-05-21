@@ -13,7 +13,7 @@ The BRIDGE app can be used online at https://bridge.isaric.org, or you can build
 
 .. note::
 
-   If you have any unsaved/unstaged/uncommited changes on your current branch then you can stage and commit these, or discard (:command:`git reset`) or stash them somewhere (:command:`git stash`), before switching to the target branch.
+   If you have any unsaved/unstaged/uncommited changes on your current branch then you can either stage and commit these (a combination of :command:`git add` and :command:`git commit`), or discard (:command:`git reset`) or stash them somewhere (:command:`git stash`), before switching to the target branch.
 
 2. Build the Docker image (named ``isaric-bridge``) on the branch using:
 

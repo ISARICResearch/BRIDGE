@@ -12,8 +12,7 @@ BRIDGE API reference. This is currently limited to just the CLI - other librarie
    bridge/cli
    module-sources/bridge.cli
 
-Indices and Search
-==================
+Indices
+=======
 
-* :ref:`genindex`
-* :ref:`search`
+* :ref:`Index of all module members <genindex>`
