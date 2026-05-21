@@ -1,8 +1,8 @@
-.. _bridge.cli:
+.. _bridge.cli-source:
 
-==============
-``bridge.cli``
-==============
+=====================
+``bridge.cli`` Source
+=====================
 
 .. literalinclude:: ../../../bridge/cli.py
    :linenos:
