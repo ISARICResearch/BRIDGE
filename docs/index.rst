@@ -6,9 +6,11 @@
 BRIDGE Documentation
 ====================
 
-`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor ARC CRFs to an outbreak's particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides via library functions - there are made available as command-line project scripts that are described in more detail :ref:`here <cli>`.
+`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks.
 
-The documentation is currently limited to an :doc:`app user guide <sources/app>`, a :doc:`CLI user guide <sources/cli>` and an :doc:`API reference <sources/api-reference>` - more services, features and guides will be documented here over time.
+By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of CRFs for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides via library functions - there are also made available as command-line/console project scripts that are described in more detail :ref:`here <cli>`.
+
+See the :doc:`quickstart guide <sources/getting-started>` to start using BRIDGE, and the linked pages below for more information on features and code.
 
 BRIDGE is licensed under the `Open Source Initiative (OSI) <https://opensource.org>`_-compliant `MIT license <https://opensource.org/license/mit>`_.
 
@@ -21,14 +23,8 @@ BRIDGE is licensed under the `Open Source Initiative (OSI) <https://opensource.o
    :maxdepth: 1
    :caption: Table of Contents:
 
+   sources/getting-started
    sources/app
    sources/cli
    sources/api-reference
    sources/contributors
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

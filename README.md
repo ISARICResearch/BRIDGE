@@ -10,7 +10,7 @@
 
 ISARIC BRIDGE is a web-based [application](https://bridge.isaric.org) designed to operationalize [ISARIC ARC](https://github.com/ISARICResearch/ARC) and edit any ISARIC CRF and tailor it to outbreaks particular context. By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of Case Report Forms (CRFs) for each disease and specific research context. It generates the data dictionary and XML needed to create a REDCap database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides.
 
-BRIDGE project documentation can be found [here](https://isaric-bridge.readthedocs.io/en/latest/index.html) - currently, the content is minimal, but more content will be added over time.
+BRIDGE project documentation can be found [here](https://isaric-bridge.readthedocs.io/en/latest/index.html).
 
 ## About BRIDGE
 
@@ -53,7 +53,7 @@ BRIDGE enables users to select variables from the ARC versions that are saved in
 
 You can find instructions about how to use BRIDGE in the [documentation](https://isaric-bridge.readthedocs.io/en/latest/sources/app.html).
 
-However, if you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
+If you encounter any issues or would like to contribute improvements, please feel free to submit an [issue](https://github.com/ISARICResearch/BRIDGE/issues) on this repository or email us at: [data@isaric.org](mailto:data@isaric.org).
 
 ## Command Line Interface (CLI)
 
@@ -61,7 +61,7 @@ BRIDGE provides two simple command line scripts / executables for generate paper
 
 ## Project TOML & Managing Dependencies
 
-Project metadata, including information about authors, maintainers, dependencies, are contained in the [`pyproject.toml`](https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml). This is a key file that should be maintained: any changes affecting project metadata, including dependencies, should be staged and committed in the normal way.
+Project metadata, including information about authors, maintainers, dependencies, are contained in the [`pyproject.toml`](https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml). This file should be maintained: any changes affecting project metadata, including dependencies, should be staged and committed in the normal way.
 
 There are groups of optional dependencies (listed in the `[optional-dependencies]` section), which are purely for development and/or testing. A `requirements.txt` containing the app dependencies does not exist, but can easily be generated locally, from the project TOML, using, for example, the `pip-compile` tool from [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/):
 ```shell
@@ -87,6 +87,16 @@ For further information consult the [`uv` documentation](https://docs.astral.sh/
 ## Versioning and Releases
 
 Versioning will be managed via the `bridge/__init__.py` file, and the goal is to follow some kind of semantic versioning. Currently, releases are manually prepared and published to [GitHub](https://github.com/ISARICResearch/BRIDGE/releases) and Zenodo - this process may be automated in the future. The last (GitHub) release was [`v1.2`](https://github.com/ISARICResearch/BRIDGE/releases/tag/v1.2).
+
+## Documentation
+
+BRIDGE project documentation is available at https://isaric-bridge.readthedocs.io. It is built with [Sphinx](https://www.sphinx-doc.org/en/) from content and configuration defined in the [`docs`](https://github.com/ISARICResearch/BRIDGE/tree/main/docs) subfolder, and is deployed to [ReadTheDocs](https://readthedocs.org).
+
+The documentation can be built locally by checking out a Git branch of interest, and running:
+```shell
+make -C docs html
+```
+from the project root, and then using a browser to open the `index.html` page in `docs/_build`. Changes to content can be made in the `docs/.rst` or `docs/sources/*.rst` files, and changes in configuration can be made in the `docs/conf.py` file. Any changes should be staged and version controlled in the normal way as with changes to code.
 
 ## Contributors
 

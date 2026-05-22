@@ -16,7 +16,6 @@ import click
 import pandas as pd
 
 # -- Internal libraries --
-
 import bridge.generate_pdf.paper_crf as paper_crf
 import bridge.generate_pdf.paper_word as paper_word
 
@@ -64,7 +63,7 @@ logger = setup_logger(__name__)
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the PDF file, defaults to ./output/CRF-<redcap_db_name>-{language}-{timestamp}.pdf",
+    help="Optional path to write the PDF file, defaults to ./output/CRF-<redcap_db_name>-<language>-<YYYYMMDD timestamp>.pdf",
 )
 def generate_paperlike_crf_pdf(
     data_dictionary_csv: str,
@@ -150,6 +149,8 @@ def generate_paperlike_crf_pdf(
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
+    # Create the output folder if it doesn't exist, and form the output file
+    # path.
     if not output_path:
         if not Path("output").exists():
             Path("output").mkdir()
@@ -165,6 +166,7 @@ def generate_paperlike_crf_pdf(
     else:
         output_path = Path(output_path).resolve()
 
+    # Write the PDF document to the output file, before returning it.
     output_path.write_bytes(pdf)
 
     logger.info(f"Paperlike CRF PDF written to file {output_path}.")
@@ -188,7 +190,7 @@ def generate_paperlike_crf_pdf(
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the Word file, defaults to ./output/CRF-<timestamp>.docx",
+    help="Optional path to write the Word file, defaults to ./output/CRF-<YYYYMMDD timestamp>.docx",
 )
 def generate_paperlike_crf_word(
     data_dictionary_csv: str,
@@ -233,6 +235,8 @@ def generate_paperlike_crf_word(
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
+    # Create the output folder if it doesn't exist, and form the output file
+    # path.
     if not output_path:
         if not Path("output").exists():
             Path("output").mkdir()
@@ -240,6 +244,7 @@ def generate_paperlike_crf_word(
     else:
         output_path = Path(output_path).resolve()
 
+    # Write the Word document to the output file, before returning it.
     output_path.write_bytes(word)
 
     logger.info(f"Paperlike CRF Word document written to file {output_path}.")
