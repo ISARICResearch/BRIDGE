@@ -32,8 +32,7 @@ from bridge import __version__
 author = "ISARIC"
 copyright = f"ISARIC, {datetime.now().year}"
 description = """
-              A web-based application designed to operationalize ARC and edit
-              any ISARIC CRF and tailor it to outbreaks particular context.
+              A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks.
               """
 github_url = "https://github.com"
 github_repo = f"{github_url}/ISARICResearch/BRIDGE"
@@ -41,6 +40,7 @@ github_version = "main"
 # pypi_project = ''
 project = bridge.__name__.upper()
 release = f"v{__version__}"
+public_app_url = "https://bridge.isaric.org"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -66,6 +66,7 @@ rst_epilog = f"""
 .. |release|                replace:: **{release}**
 .. |vrelease|               replace:: **{release}**
 .. |github_release_target|  replace:: https://github.com/ISARICResearch/{project}/releases/tag/{release}
+.. |public_app_url|         replace:: {public_app_url}
 """
 
 # Publish author(s)
@@ -93,6 +94,7 @@ extensions = [
     #'sphinx.ext.linkcode',
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    "sphinxext.remoteliteralinclude",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
@@ -168,6 +170,8 @@ doctest_global_setup = "import bridge"
 todo_include_todos = True
 
 # -- Project file data variables ---------------------------------------------
+
+html_title = f"BRIDGE {release}"
 
 # HTML global context for templates
 html_context = {
@@ -248,7 +252,6 @@ html_theme_options = {
             "class": "",
         },
     ],
-    "sidebar_hide_name": True,
 }
 
 # Override the default sidebar listing by commenting out the ethical ads sidebar.

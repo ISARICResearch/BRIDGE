@@ -3,7 +3,7 @@
 Command Line Interface (CLI)
 ============================
 
-BRIDGE contains two command line **project scripts/executables/entry points** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
+BRIDGE contains a very simple command line interface (CLI), currently providing two command line **project scripts/executables/entry points** (defined in the ``[project.scripts]`` section of the `project TOML <https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml>`_) for paperlike CRF generation in PDF and Word formats, that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
 
 .. code:: shell
 
