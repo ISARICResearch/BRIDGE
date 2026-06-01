@@ -26,7 +26,23 @@ from bridge.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-@click.command
+@click.group("bridge-cli")
+def bridge_cli(): ...
+
+
+@bridge_cli.group("arc")
+def arc(): ...
+
+
+@bridge_cli.group("crf")
+def crf(): ...
+
+
+@crf.group("paperlike-pdf")
+def paperlike_pdf(): ...
+
+
+@paperlike_pdf.command("generate")
 @click.option(
     "--data-dictionary-csv",
     required=True,
@@ -174,7 +190,11 @@ def generate_paperlike_crf_pdf(
     return pdf
 
 
-@click.command
+@crf.group("paperlike-word")
+def paperlike_word(): ...
+
+
+@paperlike_word.command("generate")
 @click.option(
     "--data-dictionary-csv",
     required=True,
