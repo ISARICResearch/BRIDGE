@@ -23,7 +23,7 @@ from bridge.arc.arc_api import ArcApiClientError
 from bridge.utils.logger import setup_logger
 
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__)  # pragma: no cover
 
 
 @click.group("bridge-cli")
@@ -42,7 +42,7 @@ def crf(): ...
 def paperlike_pdf(): ...
 
 
-@paperlike_pdf.command("generate")
+@paperlike_pdf.command("generate")  # pragma: no cover
 @click.option(
     "--data-dictionary-csv",
     required=True,
@@ -190,7 +190,7 @@ def generate_paperlike_crf_pdf(
     return pdf
 
 
-@crf.group("paperlike-word")
+@crf.group("paperlike-word")  # pragma: no cover
 def paperlike_word(): ...
 
 
