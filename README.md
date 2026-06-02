@@ -61,9 +61,9 @@ BRIDGE provides two simple command line scripts / executables for generate paper
 
 ## Project TOML & Managing Dependencies
 
-Project metadata, including information about authors, maintainers, dependencies, are contained in the [`pyproject.toml`](https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml). This file should be maintained: any changes affecting project metadata, including dependencies, should be staged and committed in the normal way.
+Project metadata, including information about authors, maintainers, dependencies, are contained in the [`pyproject.toml`](https://github.com/ISARICResearch/BRIDGE/blob/main/pyproject.toml). Any changes affecting project metadata in this file, including dependencies, should be staged and committed in the normal way.
 
-There are groups of optional dependencies (listed in the `[optional-dependencies]` section), which are purely for development and/or testing. A `requirements.txt` containing the app dependencies does not exist, but can easily be generated locally, from the project TOML, using, for example, the `pip-compile` tool from [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/):
+There are groups of optional dependencies (listed in the `[optional-dependencies]` section), which are purely for development, documentation and/or testing. A `requirements.txt` containing the app dependencies does not exist, but can easily be generated locally, from the project TOML, using, for example, the `pip-compile` tool from [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/):
 ```shell
 pip-compile -o requirements.txt pyproject.toml
 ```
