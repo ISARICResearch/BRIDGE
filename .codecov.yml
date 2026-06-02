@@ -1,6 +1,20 @@
+codecov:
+  require_ci_to_pass: true
+
 coverage:
+  precision: 2
+  round: down
+  range: "40...90"
   status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
     patch:
       default:
-        target: 50%
-        threshold: 5
+        # Enforce patch coverage on PRs, but do not fail direct commits on main.
+        only_pulls: true
+        target: auto
+
+ignore:
+  - "assets/*"
