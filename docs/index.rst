@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-BRIDGE Documentation
-====================
+ISARIC BRIDGE
+=============
 
 `BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks.
 
