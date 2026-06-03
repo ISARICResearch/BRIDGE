@@ -18,9 +18,7 @@ This will install the project locally in a package named ``isaric-bridge``, and 
    └── crf
        ├── paperlike-pdf
        │   └── generate
-       ├── paperlike-word
-       │   └── generate
-       └── completion-guide
+       └── paperlike-word
            └── generate
 
 There are two main command groups, :program:`arc`, which is not implemented, and :program:`crf`, which contains three (sub)commands described in more detail below.
