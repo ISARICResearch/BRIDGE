@@ -15,13 +15,14 @@ This will install the project locally in a package named ``isaric-bridge``, and 
 
    bridge-cli
    ├── arc
-   └── crf
-       ├── paperlike-pdf
-       │   └── generate
-       └── paperlike-word
-           └── generate
+   ├── crf
+   │   ├── paperlike-pdf
+   │   │   └── generate
+   │   └── paperlike-word
+   │       └── generate
+   └── version
 
-There are two main command groups, :program:`arc`, which is not implemented, and :program:`crf`, which contains three (sub)commands described in more detail below.
+There are two main command groups, :program:`arc`, which is not implemented, and :program:`crf`, which contains two (sub)commands described in more detail below. The CLI will be extended, and more commands added, over time.
 
 To avoid conflicts while running other command-line workflows, such as when running unit tests, you can uninstall the editable project installation when you're done running the CLI:
 
@@ -118,3 +119,15 @@ An example run is given below to generate an Ebola CRF Word document in English:
    2026-06-02 15:31:02 [INFO] bridge.cli: Generating paperlike CRF Word document using data dictionary CSV "/Users/smurthy/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15(in).csv" with the following parameters: include descriptive rows: "False".
    2026-06-02 15:31:02 [INFO] bridge.cli: Paperlike CRF Word document (size 49371 bytes) generated, with option to include descriptive rows set to False.
    2026-06-02 15:31:02 [INFO] bridge.cli: Paperlike CRF Word document written to file /Users/smurthy/Documents/srm/dev/BRIDGE/output/CCPUKHantavirus_DataDictionary_2026-05-15(in)-2026-06-02-153102.docx.
+
+.. _cli-version:
+
+:program:`version`
+------------------
+
+The :program:`version` command displays the current BRIDGE (GitHub) release version:
+
+.. code:: shell
+
+   $ bridge-cli version
+   1.2

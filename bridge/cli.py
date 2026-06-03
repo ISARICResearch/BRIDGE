@@ -19,6 +19,7 @@ import pandas as pd
 import bridge.generate_pdf.paper_crf as paper_crf
 import bridge.generate_pdf.paper_word as paper_word
 
+from bridge import __version__
 from bridge.arc.arc_api import ArcApiClientError
 from bridge.utils.logger import setup_logger
 
@@ -304,3 +305,17 @@ def generate_paperlike_crf_word(
     logger.info(f"Paperlike CRF Word document written to file {output_path}.")
 
     return word
+
+
+@bridge_cli.command(
+    "version", short_help="Displays the current BRIDGE (GitHub) release version."
+)  # pragma: no cover
+def version() -> str:
+    """Displays the current BRIDGE (GitHub) release version.
+
+    Returns
+    -------
+    str
+        The latest BRIDGE (GitHub) release version.
+    """
+    click.echo(__version__)
