@@ -80,7 +80,11 @@ An example run is given below to generate a Hantavirus CRF PDF in Spanish, where
 
 .. code:: shell
 
-   $ bridge-cli crf paperlike-pdf generate --data-dictionary-csv ~/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15\(in\).csv --arc-version 1.2.2 --redcap-db-name HANTA --language Spanish
+   $ bridge-cli crf paperlike-pdf generate \
+                                  --data-dictionary-csv ~/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15\(in\).csv \
+                                  --arc-version 1.2.2 \
+                                  --redcap-db-name HANTA \
+                                  --language Spanish
    2026-06-02 15:53:58 [INFO] bridge.cli: Data dictionary /Users/smurthy/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15(in).csv loaded with 586 rows.
    2026-06-02 15:53:58 [INFO] bridge.cli: Generating paperlike CRF PDF using data dictionary CSV "/Users/smurthy/Downloads/CCPUKHantavirus_DataDictionary_2026-05-15(in).csv" with the following parameters: REDCap project database name "HANTA", ARC version "1.2.2", language "Spanish".
    2026-06-02 15:53:59 [INFO] bridge.cli: Paperlike CRF PDF (size 1818069 bytes) generated.
