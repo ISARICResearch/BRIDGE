@@ -103,8 +103,7 @@ docs = [
 ]
 
 [project.scripts]
-generate-paperlike-crf-pdf = "bridge.cli:generate_paperlike_crf_pdf"
-generate-paperlike-crf-word = "bridge.cli:generate_paperlike_crf_word"
+bridge-cli = "bridge.cli:bridge_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "bridge.__version__"}

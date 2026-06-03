@@ -19,14 +19,33 @@ import pandas as pd
 import bridge.generate_pdf.paper_crf as paper_crf
 import bridge.generate_pdf.paper_word as paper_word
 
+from bridge import __version__
 from bridge.arc.arc_api import ArcApiClientError
 from bridge.utils.logger import setup_logger
 
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__)  # pragma: no cover
 
 
-@click.command
+@click.group("bridge-cli", help="BRIDGE command line interface (CLI).")
+def bridge_cli(): ...
+
+
+@bridge_cli.group("arc", help="ARC-related commands. Not implemented.")
+def arc(): ...
+
+
+@bridge_cli.group("crf", help="Case report form (CRF)-related commands.")
+def crf(): ...
+
+
+@crf.group("paperlike-pdf", help="Commands relating to paperlike PDFs of CRFs.")
+def paperlike_pdf(): ...
+
+
+@paperlike_pdf.command(
+    "generate", help="Generates a paperlike PDF of the given CRF."
+)  # pragma: no cover
 @click.option(
     "--data-dictionary-csv",
     required=True,
@@ -63,7 +82,7 @@ logger = setup_logger(__name__)
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the PDF file, defaults to ./output/CRF-<redcap_db_name>-<language>-<YYYYMMDD timestamp>.pdf",
+    help="Optional target path, including filename with `.pdf` extension, to write the PDF file",
 )
 def generate_paperlike_crf_pdf(
     data_dictionary_csv: str,
@@ -74,7 +93,7 @@ def generate_paperlike_crf_pdf(
     supplemental_phrases_csv: str | None = None,
     output_path: str | None = None,
 ) -> bytes:
-    """:py:class:`bytes` : Returns a PDF of the paperlike CRF.
+    """:py:class:`bytes` : Generates and returns a PDF of the paperlike CRF.
 
     Parameters
     ----------
@@ -86,7 +105,7 @@ def generate_paperlike_crf_pdf(
             ``"1.2.2"`` (as of 15.05.2026).
 
     redcap_db_name : str, default=""
-            Optional REDCap database name, defaults to ``""``.
+            Optional REDCap database name, defaults to ``"Generic"``.
 
     language : str, default="English"
             Optional PDF language setting, defaults to ``"English"``.
@@ -108,7 +127,8 @@ def generate_paperlike_crf_pdf(
             The CRF PDF object as bytes.
     """
     # Load the data dictionary
-    data_dictionary = pd.read_csv(Path(data_dictionary_csv).resolve())
+    data_dictionary_csv = Path(data_dictionary_csv).resolve()
+    data_dictionary = pd.read_csv(data_dictionary_csv)
 
     logger.info(
         f"Data dictionary {data_dictionary_csv} loaded with {len(data_dictionary)} rows."
@@ -123,6 +143,13 @@ def generate_paperlike_crf_pdf(
         # defines a default ARC version of ``"1.2.2"`` so the ARC version will
         # never be null here.
         try:
+            logger.info(
+                "Generating paperlike CRF PDF using data dictionary CSV "
+                f'"{data_dictionary_csv}" with the following parameters: '
+                f'REDCap project database name "{redcap_db_name}", '
+                f'ARC version "{arc_version}", '
+                f'language "{language}".'
+            )
             pdf = paper_crf.generate_paperlike_pdf(
                 data_dictionary=data_dictionary,
                 version=arc_version,
@@ -137,6 +164,14 @@ def generate_paperlike_crf_pdf(
         paperlike_details = pd.read_csv(paperlike_details_csv)
         supplemental_phrases = pd.read_csv(supplemental_phrases_csv)
         # Call the Bridge function to get the CRF PDF with non-ARC logic
+        logger.info(
+            "Generating paperlike CRF PDF using data dictionary CSV "
+            f'"{data_dictionary_csv}" with the following parameters: '
+            f'REDCap project database name "{redcap_db_name}", '
+            f'language "{language}", '
+            f'custom paperlike details CSV "{paperlike_details_csv}", '
+            f'custom supplemental phrases CSV "{supplemental_phrases_csv}".'
+        )
         pdf = paper_crf.generate_paperlike_pdf(
             data_dictionary=data_dictionary,
             db_name=redcap_db_name,
@@ -154,14 +189,17 @@ def generate_paperlike_crf_pdf(
     if not output_path:
         if not Path("output").exists():
             Path("output").mkdir()
+        output_filename = data_dictionary_csv.stem
         output_path = (
-            Path("output").joinpath(
-                f"CRF-{redcap_db_name}-{arc_version}-{language}-{timestamp}.pdf"
+            Path("output")
+            .resolve()
+            .joinpath(
+                f"{output_filename}-{redcap_db_name}-{arc_version}-{language}-{timestamp}.pdf"
             )
             if not (paperlike_details_csv and supplemental_phrases_csv)
-            else Path("output").joinpath(
-                f"CRF-{redcap_db_name}-{language}-{timestamp}.pdf"
-            )
+            else Path("output")
+            .resolve()
+            .joinpath(f"{output_filename}-{redcap_db_name}-{language}-{timestamp}.pdf")
         )
     else:
         output_path = Path(output_path).resolve()
@@ -174,7 +212,15 @@ def generate_paperlike_crf_pdf(
     return pdf
 
 
-@click.command
+@crf.group(
+    "paperlike-word", help="Commands relating to paperlike Word documents of CRFs."
+)  # pragma: no cover
+def paperlike_word(): ...
+
+
+@paperlike_word.command(
+    "generate", help="Generates a paperlike Word document of the given CRF."
+)
 @click.option(
     "--data-dictionary-csv",
     required=True,
@@ -190,14 +236,14 @@ def generate_paperlike_crf_pdf(
 @click.option(
     "--output-path",
     required=False,
-    help="Optional path to write the Word file, defaults to ./output/CRF-<YYYYMMDD timestamp>.docx",
+    help="Optional target path, including filename with `.docx` extension, to write the Word file",
 )
 def generate_paperlike_crf_word(
     data_dictionary_csv: str,
     include_descriptive_rows: bool = False,
     output_path: str | Path | None = None,
 ) -> bytes:
-    """:py:class:`bytes` : Returns a Word document (``.docx``) of the paperlike CRF.
+    """:py:class:`bytes` : Generates and returns a Word document (``.docx``) of the paperlike CRF.
 
     Parameters
     ----------
@@ -218,13 +264,19 @@ def generate_paperlike_crf_word(
             The CRF Word document object as bytes.
     """
     # Load the data dictionary
-    data_dictionary = pd.read_csv(Path(data_dictionary_csv).resolve())
+    data_dictionary_csv = Path(data_dictionary_csv).resolve()
+    data_dictionary = pd.read_csv(data_dictionary_csv)
 
     logger.info(
         f"Data dictionary {data_dictionary_csv} loaded with {len(data_dictionary)} rows."
     )
 
     # Call the Bridge function to get the CRF Word document.
+    logger.info(
+        "Generating paperlike CRF Word document using data dictionary CSV "
+        f'"{data_dictionary_csv}" with the following parameters: '
+        f'include descriptive rows: "{include_descriptive_rows}".'
+    )
     word = paper_word.df_to_word(
         data_dictionary, include_descriptive_rows=include_descriptive_rows
     )
@@ -240,7 +292,10 @@ def generate_paperlike_crf_word(
     if not output_path:
         if not Path("output").exists():
             Path("output").mkdir()
-        output_path = Path("output").joinpath(f"CRF-{timestamp}.docx")
+        output_filename = data_dictionary_csv.stem
+        output_path = (
+            Path("output").resolve().joinpath(f"{output_filename}-{timestamp}.docx")
+        )
     else:
         output_path = Path(output_path).resolve()
 
@@ -250,3 +305,17 @@ def generate_paperlike_crf_word(
     logger.info(f"Paperlike CRF Word document written to file {output_path}.")
 
     return word
+
+
+@bridge_cli.command(
+    "version", short_help="Displays the current BRIDGE (GitHub) release version."
+)  # pragma: no cover
+def version() -> str:
+    """Displays the current BRIDGE (GitHub) release version.
+
+    Returns
+    -------
+    str
+        The latest BRIDGE (GitHub) release version.
+    """
+    click.echo(__version__)

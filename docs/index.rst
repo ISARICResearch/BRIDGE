@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-BRIDGE Documentation
-====================
+ISARIC BRIDGE
+=============
 
-`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is a web-based `application <https://bridge.isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks.
+`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is an open source web-based `application <https://bridge.isaric.org>`_ developed by `ISARIC <https://isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks.
 
 By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of CRFs for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides via library functions - there are also made available as command-line/console project scripts that are described in more detail :ref:`here <cli>`.
 
@@ -24,7 +24,5 @@ BRIDGE is licensed under the `Open Source Initiative (OSI) <https://opensource.o
    :caption: Table of Contents:
 
    sources/getting-started
-   sources/app
    sources/cli
-   sources/api-reference
    sources/contributors
