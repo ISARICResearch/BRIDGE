@@ -79,8 +79,10 @@ def update_tree_items_and_stores(
 
     logger.info(f"checked_variables: {checked_templates}")
     logger.info(f"grouped_presets: {grouped_presets_dict}")
-    checked_template_list = _get_checked_template_list(
-        grouped_presets_dict, checked_templates
+
+    # Extract the trigger info to get both section and template names
+    checked_template_list = _get_checked_template_list_from_context(
+        ctx, grouped_presets_dict, checked_templates
     )
 
     checked = []
@@ -143,16 +145,37 @@ def update_tree_items_and_stores(
     )
 
 
-def _get_checked_template_list(
-    grouped_presets_dict: dict, checked_values_list: list
+def _get_checked_template_list_from_context(
+    ctx, grouped_presets_dict: dict, checked_values_list: list
 ) -> list:
+    """Extract checked templates from callback context, handling both Switches and Checklists."""
     output = []
-    for section, item_checked_list in zip(
-        grouped_presets_dict.keys(), checked_values_list
-    ):
-        if item_checked_list:
-            for item_checked in item_checked_list:
-                output.append([section, item_checked])
+
+    # Get the trigger that caused this callback
+    if ctx.triggered:
+        trigger_id = json.loads(ctx.triggered[0]["prop_id"].split(".")[0])
+        section = trigger_id.get("index", "").split("_")[
+            0
+        ]  # Extract section from index
+
+        # For Switch components, the index is "section_template_name"
+        if "_" in trigger_id.get("index", ""):
+            parts = trigger_id["index"].rsplit(
+                "_", 1
+            )  # Split from right to handle names with underscores
+            if len(parts) == 2:
+                section, template_name = parts
+                if ctx.triggered[0]["value"]:  # Only add if switch is ON
+                    output.append([section, template_name])
+        else:
+            # For Checklist components, item_checked_list is a list of selected items
+            for section, item_checked_list in zip(
+                grouped_presets_dict.keys(), checked_values_list
+            ):
+                if item_checked_list and isinstance(item_checked_list, list):
+                    for item_checked in item_checked_list:
+                        output.append([section, item_checked])
+
     return output
 
 
