@@ -8,7 +8,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
-from dash import html, Input, Output, State, callback_context, ALL
+from dash import html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.utils.logger import setup_logger
@@ -381,36 +381,94 @@ def update_list_variables_checked(
 @dash.callback(
     Output({"type": "template-info-btn", "index": ALL}, "style"),
     Input({"type": "template_check", "index": ALL}, "value"),
-    State({"type": "template_check", "index": ALL}, "id"),
+    [
+        State({"type": "template_check", "index": ALL}, "id"),
+        State("grouped_presets-store", "data"),
+    ],
     prevent_initial_call=True,
 )
-def toggle_template_info_icon_visibility(switch_values: list, switch_ids: list) -> list:
+def toggle_template_info_icon_visibility(
+    switch_values: list, switch_ids: list, grouped_presets: dict
+) -> list:
     """Show info icon only when template switch is ON in ARChetype Disease CRF."""
-    # Map template name to ON/OFF status
+    # Create a mapping of template_name -> is_on for ARChetype templates
     template_status = {}
 
     for switch_id, is_on in zip(switch_ids, switch_values):
-        index_str = switch_id.get("index", "")
+        index_str = (
+            switch_id.get("index", "")
+            if isinstance(switch_id, dict)
+            else str(switch_id)
+        )
         # Extract template name from "ARChetype Disease CRF_Covid"
         if "ARChetype Disease CRF_" in index_str:
             template_name = index_str.split("ARChetype Disease CRF_", 1)[1]
             template_status[template_name] = is_on
 
-    # Get info button IDs from callback context
-    info_button_ids = callback_context.outputs_list[0]["id"]
+    # Get the list of ARChetype templates from grouped_presets
+    archetype_templates = grouped_presets.get("ARChetype Disease CRF", [])
 
-    # Return styles - show icon if corresponding template is ON
-    return [
-        {
-            "background": "none",
-            "border": "none",
-            "cursor": "pointer",
-            "fontSize": "16px",
-            "padding": "0 8px",
-            "marginLeft": "auto",
-            "display": "block"
-            if template_status.get(btn_id.get("index"), False)
-            else "none",
-        }
-        for btn_id in info_button_ids
-    ]
+    # Build style for each info button, in the same order as templates
+    styles = []
+    for template_name in archetype_templates:
+        styles.append(
+            {
+                "background": "none",
+                "border": "none",
+                "cursor": "pointer",
+                "fontSize": "16px",
+                "padding": "0 8px",
+                "marginLeft": "auto",
+                "display": "block"
+                if template_status.get(template_name, False)
+                else "none",
+            }
+        )
+
+    return styles
+
+
+@dash.callback(
+    [
+        Output("crf_metadata_modal", "is_open"),
+        Output("crf_metadata_modal_title", "children"),
+        Output("crf_metadata_modal_body", "children"),
+    ],
+    [
+        Input({"type": "template-info-btn", "index": ALL}, "n_clicks"),
+        Input("crf_metadata_modal_close", "n_clicks"),
+    ],
+    [
+        State({"type": "template-info-btn", "index": ALL}, "id"),
+    ],
+    prevent_initial_call=True,
+)
+def display_crf_metadata_modal(
+    info_btn_clicks: list, close_btn_clicks: int, info_btn_ids: list
+) -> tuple:
+    """Open CRF metadata modal when info icon is clicked, close on close button."""
+    ctx = dash.callback_context
+
+    if not ctx.triggered:
+        return False, "", ""
+
+    trigger_id = ctx.triggered[0]["prop_id"]
+    trigger_value = ctx.triggered[0]["value"]
+
+    # Handle close button
+    if "crf_metadata_modal_close" in trigger_id:
+        return False, dash.no_update, dash.no_update
+
+    # Handle info icon click - only proceed if n_clicks > 0
+    if "template-info-btn" in trigger_id and trigger_value and trigger_value > 0:
+        # Extract template name from the button ID
+        button_info = json.loads(trigger_id.split(".")[0])
+        template_name = button_info.get("index", "Unknown")
+
+        return (
+            True,  # Open modal
+            template_name,  # Header: template name
+            "Metadata",  # Body: placeholder text
+        )
+
+    return False, dash.no_update, dash.no_update

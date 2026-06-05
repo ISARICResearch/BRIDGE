@@ -153,6 +153,7 @@ class MainContent:
                 dcc.Download(id="download-chikungunya-pdf"),
                 dcc.Download(id="save-crf"),
                 Modals.variable_information_modal(),
+                Modals.crf_metadata_modal(),
                 dcc.Loading(
                     id="loading-generate",
                     type="default",
