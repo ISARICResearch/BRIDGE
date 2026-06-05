@@ -16,22 +16,48 @@ _VERSION_LANGUAGE_CACHE: dict[tuple[str, str, bool], tuple] = {}
 
 
 class Language:
+    """A class defining language-related callbacks for CRF translations."""
+
     def __init__(self, version: str, language: str, initial_load: bool = False):
+        """Initialiser.
+
+        Parameters
+        ----------
+        version : str
+            ARC version.
+
+        language : str
+            CRF language
+
+        initial_load : bool, default=False
+            Optional setting to perform initial loading, defaults to ``False``.
+        """
         self.version = version
         self.language = language
         self.initial_load = initial_load
 
     def get_dataframe_arc_language(self, df_version: pd.DataFrame) -> pd.DataFrame:
+        """Get ARC language dataframe.
+
+        Parameters
+        ----------
+        df_version : pandas.DataFrame
+            ARC version dataframe.
+
+        Returns
+        -------
+        pandas.DataFrame
+            ARC language version dataframe.
+        """
         df_version_language = arc_translations.get_arc_translation(
             self.language, self.version, df_version
         )
         return df_version_language
 
     def build_accordion_item_children(
-        self, section: str, preset_names: list
+        self, section: str, preset_names: list[str]
     ) -> dbc.Checklist | html.Div:
-        """
-        Build accordion item children based on section type.
+        """Build accordion item children based on section type.
 
         Parameters
         ----------
@@ -99,6 +125,13 @@ class Language:
             )
 
     def build_accordion_items(self) -> list[dbc.AccordionItem]:
+        """Build accordion items.
+
+        Returns
+        -------
+        list
+            List of accordion items.
+        """
         return [
             dbc.AccordionItem(
                 title=section,
@@ -112,7 +145,16 @@ class Language:
             for section, preset_names in self.grouped_presets.items()
         ]
 
-    def get_version_language_related_data(self):
+    def get_version_language_related_data(self) -> tuple:
+        """:py:class:`tuple` : Returns version language related data as a tuple.
+
+        Returns
+        -------
+        tuple
+            A tuple of the version language (as a dataframe), ARC commit SHA,
+            the grouped presets dict, accordion items, and the ``ulist`` choices
+            and ``multilist`` choices.
+        """
         cache_initial_load = self.initial_load if self.language != "English" else False
         cache_key = (self.version, self.language, cache_initial_load)
         if cache_key in _VERSION_LANGUAGE_CACHE:
