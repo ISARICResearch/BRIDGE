@@ -8,7 +8,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
-from dash import html, Input, Output, State
+from dash import html, Input, Output, State, callback_context, ALL
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.utils.logger import setup_logger
@@ -376,3 +376,41 @@ def update_list_variables_checked(
         df_current_datadicc,
         json.dumps(variable_choices_list),
     )
+
+
+@dash.callback(
+    Output({"type": "template-info-btn", "index": ALL}, "style"),
+    Input({"type": "template_check", "index": ALL}, "value"),
+    State({"type": "template_check", "index": ALL}, "id"),
+    prevent_initial_call=True,
+)
+def toggle_template_info_icon_visibility(switch_values: list, switch_ids: list) -> list:
+    """Show info icon only when template switch is ON in ARChetype Disease CRF."""
+    # Map template name to ON/OFF status
+    template_status = {}
+
+    for switch_id, is_on in zip(switch_ids, switch_values):
+        index_str = switch_id.get("index", "")
+        # Extract template name from "ARChetype Disease CRF_Covid"
+        if "ARChetype Disease CRF_" in index_str:
+            template_name = index_str.split("ARChetype Disease CRF_", 1)[1]
+            template_status[template_name] = is_on
+
+    # Get info button IDs from callback context
+    info_button_ids = callback_context.outputs_list[0]["id"]
+
+    # Return styles - show icon if corresponding template is ON
+    return [
+        {
+            "background": "none",
+            "border": "none",
+            "cursor": "pointer",
+            "fontSize": "16px",
+            "padding": "0 8px",
+            "marginLeft": "auto",
+            "display": "block"
+            if template_status.get(btn_id.get("index"), False)
+            else "none",
+        }
+        for btn_id in info_button_ids
+    ]
