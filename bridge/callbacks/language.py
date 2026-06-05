@@ -33,12 +33,17 @@ class Language:
         """
         Build accordion item children based on section type.
 
-        Args:
-            section: The section name (e.g., "ARChetype Disease CRF")
-            preset_names: List of template names in this section
+        Parameters
+        ----------
+        section : str
+            The section name (e.g., "ARChetype Disease CRF")
+        preset_names : list
+            List of template names in this section
 
-        Returns:
-            dbc.Checklist for regular sections, html.Div with sliders and info icons for ARChetype
+        Returns
+        -------
+        dbc.Checklist
+            For regular sections, html.Div with sliders and info icons for ARChetype
         """
         if section == "ARChetype Disease CRF":
             # For ARChetype Disease CRF: use sliders with conditional info icons
