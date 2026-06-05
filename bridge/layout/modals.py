@@ -61,3 +61,26 @@ class Modals:
             is_open=False,
             size="xl",
         )
+
+    @staticmethod
+    def crf_metadata_modal():
+        """Modal for displaying CRF template metadata."""
+        return dbc.Modal(
+            [
+                dbc.ModalHeader(
+                    dbc.ModalTitle("CRF Metadata", id="crf_metadata_modal_title")
+                ),
+                dbc.ModalBody([html.Div("Metadata", id="crf_metadata_modal_body")]),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Close",
+                        id="crf_metadata_modal_close",
+                        className="ms-auto",
+                        n_clicks=0,
+                    )
+                ),
+            ],
+            id="crf_metadata_modal",
+            is_open=False,
+            size="lg",
+        )
