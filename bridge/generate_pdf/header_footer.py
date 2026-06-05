@@ -7,7 +7,7 @@ from reportlab.platypus.doctemplate import SimpleDocTemplate
 CURRENT_DATE = datetime.now()
 FORMATTED_DATE = CURRENT_DATE.strftime("%d%b%y").upper()
 ISARIC_LOGO = "assets/ISARIC_logo.png"
-LICENSE_TEXT = "Licensed under a Creative Commons Attribution-ShareAlike 4.0 International License by ISARIC on behalf of the University of Oxford."
+LICENSE_TEXT = "Licensed under the MIT license by ISARIC on behalf of the University of Oxford."
 
 
 def set_paperlike_header_content(canvas: Canvas):

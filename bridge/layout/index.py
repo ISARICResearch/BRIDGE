@@ -701,10 +701,10 @@ class Index:
                                 [
                                     html.P(
                                         [
-                                            "Licensed under a ",
+                                            "Licensed under the ",
                                             html.A(
-                                                "Creative Commons Attribution-ShareAlike 4.0",
-                                                href="https://creativecommons.org/licenses/by-sa/4.0/",
+                                                "MIT License",
+                                                href="https://opensource.org/license/mit",
                                                 target="_blank",
                                             ),
                                             " International License by ",
