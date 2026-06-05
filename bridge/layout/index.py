@@ -707,7 +707,7 @@ class Index:
                                                 href="https://opensource.org/license/mit",
                                                 target="_blank",
                                             ),
-                                            " International License by ",
+                                            " by ",
                                             html.A(
                                                 "ISARIC",
                                                 href="https://isaric.org/",
