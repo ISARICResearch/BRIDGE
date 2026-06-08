@@ -16,9 +16,9 @@ The release process is not currently automated (there is no GitHub release workf
 2. Create the release on GitHub: Releases → Draft a new release, while ensuring that
 
    - the release title follows the convention `v<semantic version number>`, e.g. `v1.3.0`, and **don't** include the repository or package name
-   - creating a Git tag matching `v<semantic version number>`
-   - setting `main` as the target branch for the release
-   - selecting `"Latest"` as the release label.
+   - a Git tag matching `v<semantic version number>` is created
+   - `main` is set as the target branch for the release
+   - the release label is set to `"Latest"`
 
 The Release notes option can be used to automatically generate release notes, and can be very useful. Release binaries or other artifacts such as Python wheels (in `.whl` file format) are optional.
 
