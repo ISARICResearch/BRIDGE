@@ -3,7 +3,7 @@ import json
 import importlib.resources
 import zipfile
 from datetime import datetime
-from os.path import join, dirname, abspath
+from os.path import join
 
 import dash
 import numpy as np

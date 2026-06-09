@@ -14,7 +14,9 @@ class Index:
                             [
                                 dbc.Col(
                                     html.Img(
-                                        src=dash.get_asset_url("images/ISARIC_logo_wh.png"),
+                                        src=dash.get_asset_url(
+                                            "images/ISARIC_logo_wh.png"
+                                        ),
                                         height="100px",
                                     )
                                 ),
@@ -93,7 +95,9 @@ class Index:
                                     dbc.Col(
                                         [
                                             html.Img(
-                                                src=dash.get_asset_url("images/home_main.png"),
+                                                src=dash.get_asset_url(
+                                                    "images/home_main.png"
+                                                ),
                                                 style={"width": "100%"},
                                             )
                                         ],

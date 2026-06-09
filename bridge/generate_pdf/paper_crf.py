@@ -1,7 +1,7 @@
 import importlib.resources
 from functools import partial
 from io import BytesIO
-from os.path import join, dirname, abspath
+from os.path import join
 
 import numpy as np
 import pandas as pd
