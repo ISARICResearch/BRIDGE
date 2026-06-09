@@ -31,10 +31,10 @@ def toggle_columns(
 
     trigger_id = get_trigger_id(ctx)
 
-    settings_on = dash.get_asset_url("settings_on.png")
-    settings_off = dash.get_asset_url("settings_off.png")
-    preset_on = dash.get_asset_url("preset_on.png")
-    preset_off = dash.get_asset_url("preset_off.png")
+    settings_on = dash.get_asset_url("images/settings_on.png")
+    settings_off = dash.get_asset_url("images/settings_off.png")
+    preset_on = dash.get_asset_url("images/preset_on.png")
+    preset_off = dash.get_asset_url("images/preset_off.png")
 
     # Initialize the state of icons
     preset_icon_img = preset_off

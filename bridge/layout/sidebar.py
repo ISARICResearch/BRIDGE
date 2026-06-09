@@ -5,8 +5,8 @@ from dash import html
 
 class SideBar:
     def __init__(self):
-        self.settings_off = dash.get_asset_url("settings_off.png")
-        self.preset_off = dash.get_asset_url("preset_off.png")
+        self.settings_off = dash.get_asset_url("images/settings_off.png")
+        self.preset_off = dash.get_asset_url("images/preset_off.png")
 
         self.sidebar = html.Div(
             [

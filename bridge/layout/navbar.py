@@ -5,7 +5,7 @@ from dash import html
 
 class NavBar:
     def __init__(self):
-        self.isaric_logo = dash.get_asset_url("ISARIC_logo_wh.png")
+        self.isaric_logo = dash.get_asset_url("bridge/images/ISARIC_logo_wh.png")
 
         self.navbar = dbc.Navbar(
             dbc.Container(

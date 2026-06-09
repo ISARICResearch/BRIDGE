@@ -1,3 +1,4 @@
+import importlib.resources
 from datetime import datetime
 
 from reportlab.lib.units import inch
@@ -6,7 +7,9 @@ from reportlab.platypus.doctemplate import SimpleDocTemplate
 
 CURRENT_DATE = datetime.now()
 FORMATTED_DATE = CURRENT_DATE.strftime("%d%b%y").upper()
-ISARIC_LOGO = "assets/ISARIC_logo.png"
+ASSETS_PATH = importlib.resources.files("bridge") / "assets"
+IMAGES_PATH = ASSETS_PATH / "images"
+ISARIC_LOGO = IMAGES_PATH / "ISARIC_logo.png"
 LICENSE_TEXT = (
     "Licensed under the MIT license by ISARIC on behalf of the University of Oxford."
 )

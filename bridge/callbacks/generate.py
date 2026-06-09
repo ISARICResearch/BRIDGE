@@ -1,5 +1,6 @@
 import io
 import json
+import importlib.resources
 import zipfile
 from datetime import datetime
 from os.path import join, dirname, abspath
@@ -16,11 +17,9 @@ from bridge.utils.trigger_id import get_trigger_id
 
 pd.options.mode.copy_on_write = True
 
-CONFIG_DIR = join(
-    dirname(dirname(dirname(abspath(__file__)))), "assets", "config_files"
-)
-
-ASSETS_DIR = join(dirname(dirname(dirname(abspath(__file__)))), "assets")
+PKG_PATH = importlib.resources.files("bridge")
+ASSETS_DIR = PKG_PATH / "assets"
+CONFIG_DIR = ASSETS_DIR / "config_files"
 
 XML_FILE_NAME = "ISARIC Clinical Characterisation Setup"
 CHIKUNGUNYA_PDF_FILE = "chik_das.pdf"
