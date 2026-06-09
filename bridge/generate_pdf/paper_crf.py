@@ -27,7 +27,7 @@ REGISTERED_FONT_BOLD = "DejaVuSans-Bold"
 
 PKG_PATH = importlib.resources.files("bridge")
 ASSETS_DIR_FULL = PKG_PATH / "assets"
-FONTS_DIR_FULL = ASSETS_DIR_FULL / "fonts"
+FONTS_DIR_FULL = str(ASSETS_DIR_FULL / "fonts")
 
 pdfmetrics.registerFont(
     TTFont(REGISTERED_FONT, join(FONTS_DIR_FULL, f"{REGISTERED_FONT}.ttf"))
