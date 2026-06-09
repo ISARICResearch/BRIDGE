@@ -117,7 +117,7 @@ include = ["bridge*"]
 namespaces = true
 
 [tool.setuptools.package-data]
-"bridge" = ["assets/*"]
+"bridge" = ["assets/*", "assets/*/*"]
 
 [tool.coverage.run]
 omit = [
