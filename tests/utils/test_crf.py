@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from bridge.utils.crf_name import get_crf_name
+from bridge.utils.crf import get_crf_name
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,7 @@ from bridge.utils.crf_name import get_crf_name
         (None, [[], [], ["Oropouche"], [], []], "Oropouche"),
     ],
 )
-@mock.patch("bridge.utils.crf_name.logger")
+@mock.patch("bridge.utils.crf.logger")
 def test_get_crf_name(_mock_logger, name, checked, expected_output):
     def run_callback(crf_name, checked_values):
         return get_crf_name(crf_name, checked_values)
