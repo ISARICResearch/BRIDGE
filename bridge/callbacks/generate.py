@@ -12,7 +12,7 @@ from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
 from bridge.generate_pdf import paper_crf, paper_word
-from bridge.utils.crf_name import get_crf_name
+from bridge.utils.crf import get_crf_name
 from bridge.utils.trigger_id import get_trigger_id
 
 pd.options.mode.copy_on_write = True
