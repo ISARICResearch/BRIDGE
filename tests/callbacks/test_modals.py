@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from dash._callback_context import context_value
 from dash._utils import AttributeDict
+from dash import dcc, html
 from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import modals
@@ -105,6 +106,107 @@ def test_update_list_variables_checked():
 
     assert str_output == json.dumps(list_expected)
     assert_frame_equal(df_output, df_expected)
+
+
+def test__build_crf_metadata_modal_tabbed_body():
+    test_template_name = "test crf"
+    expected = html.Div(
+        [
+            html.H1("Test Crf"),
+            dcc.Tabs(
+                id="crf-metadata-modal-tabbed-body",
+                value="test crf|project-overview-tab",
+                children=[
+                    dcc.Tab(
+                        label="Project Overview",
+                        value="test crf|project-overview-tab",
+                    ),
+                    dcc.Tab(
+                        label="Scientific Scope",
+                        value="test crf|scientific-scope-tab",
+                    ),
+                    dcc.Tab(
+                        label="Governance & Contributors",
+                        value="test crf|governance-and-contributors-tab",
+                    ),
+                    dcc.Tab(
+                        label="Documentation & Discoverability",
+                        value="test crf|documentation-and-discoverability-tab",
+                    ),
+                ],
+            ),
+            html.Div(id="crf-metadata-modal-body-tab-content"),
+        ]
+    )
+
+    received = modals._build_crf_metadata_modal_tabbed_body(test_template_name)
+    assert str(received) == str(expected)
+
+
+def test__build_crf_metadata_modal_project_overview_tab(arc_1_3_0__crf_metadata):
+    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    expected = dcc.Markdown(
+        f"""
+        - **Description** - {dengue_metadata['Description']}
+        - **Study Type** - {dengue_metadata['Study type']}
+        - **Version** - {dengue_metadata['Version']}
+        - **Publication Date** - {dengue_metadata['Date of publication/release']}
+        """
+    )
+    received = modals._build_crf_metadata_modal_project_overview_tab(dengue_metadata)
+    assert str(received) == str(expected)
+
+
+def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_3_0__crf_metadata):
+    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    expected = dcc.Markdown(
+        f"""
+        - **Research Questions** - {dengue_metadata['Research questions']}
+        - **Target Population** - {dengue_metadata['Target population']}
+        - **Inclusion Criteria** - {dengue_metadata['Inclusion Criteria']}
+        - **Exclusion Criteria** - {dengue_metadata['Exclusion Criteria']}
+        - **Pathogen/Agent** - {dengue_metadata['Pathogen or agent']}
+        - **Syndrome** - {dengue_metadata['Syndrome / clinical presentation']}
+        - **Setting** - {dengue_metadata['Setting']}
+        - **Geographic Scope** - {dengue_metadata['Geographic scope']}
+        """
+    )
+    received = modals._build_crf_metadata_modal_scientific_scope_tab(dengue_metadata)
+    assert str(received) == str(expected)
+
+
+def test__build_crf_metadata_modal_governance_and_contributors_tab(
+    arc_1_3_0__crf_metadata,
+):
+    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    expected = dcc.Markdown(
+        f"""
+        - **Authors** - {dengue_metadata['Authors']}
+        - **Approvers** - {dengue_metadata['Approvers']}
+        - **Institutions** - {dengue_metadata['Institutions']}
+        - **Contact** - {dengue_metadata['Contact First Name']} {dengue_metadata['Contact Last Name']} {dengue_metadata['Contact email']}
+        """
+    )
+    received = modals._build_crf_metadata_modal_governance_and_contributors_tab(
+        dengue_metadata
+    )
+    assert str(received) == str(expected)
+
+
+def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
+    arc_1_3_0__crf_metadata,
+):
+    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    expected = dcc.Markdown(
+        f"""
+        - **Keywords** - {dengue_metadata['Keywords']}
+        - **Relevant Links** - {dengue_metadata['Relevant resources']}
+        """
+    )
+    received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
+        dengue_metadata
+    )
+    assert str(received) == str(expected)
 
 
 def test_on_modal_button_click_not_triggered():
