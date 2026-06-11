@@ -162,7 +162,7 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
 
 
 def _build_crf_metadata_modal_tab_content(
-    template_name: str, tab_id: str, selected_version: str
+    template_name: str, selected_version: str, tab_id: str
 ) -> dash.html.Div:
     arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
     try:
@@ -624,5 +624,5 @@ def display_crf_metadata_modal_body_selected_tab(
     logger.info(f'Tab display for ARChetype Disease CRF - "{template_name}"')
 
     return _build_crf_metadata_modal_tab_content(
-        template_name, tab_id, selected_version
+        template_name, selected_version, tab_id
     )
