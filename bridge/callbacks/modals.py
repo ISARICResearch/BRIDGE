@@ -1,5 +1,6 @@
 import io
 import json
+import string
 from functools import lru_cache
 from time import perf_counter
 from typing import Tuple
@@ -8,9 +9,10 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
-from dash import html, Input, Output, State, ALL
+from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
+from bridge.arc.arc_api import ArcApiClient
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -64,6 +66,138 @@ def build_checklist_dom_from_mapping(
     options = [{"label": label, "value": value} for label, value in options_data]
     checked_items = list(checked_items_data)
     return options, checked_items
+
+
+def _build_crf_metadata_modal_tabbed_body(template_name: str) -> dash.html.Div:
+    return html.Div(
+        [
+            html.H1(f"{string.capwords(template_name)}"),
+            dcc.Tabs(
+                id="crf-metadata-modal-tabbed-body",
+                value=f"{template_name}|project-overview-tab",
+                children=[
+                    dcc.Tab(
+                        label="Project Overview",
+                        value=f"{template_name}|project-overview-tab",
+                    ),
+                    dcc.Tab(
+                        label="Scientific Scope",
+                        value=f"{template_name}|scientific-scope-tab",
+                    ),
+                    dcc.Tab(
+                        label="Governance & Contributors",
+                        value=f"{template_name}|governance-and-contributors-tab",
+                    ),
+                    dcc.Tab(
+                        label="Documentation & Discoverability",
+                        value=f"{template_name}|documentation-and-discoverability-tab",
+                    ),
+                ],
+            ),
+            html.Div(id="crf-metadata-modal-body-tab-content"),
+        ]
+    )
+
+
+def _build_crf_metadata_modal_project_overview_tab(
+    template_metadata: pd.Series,
+) -> dash.html.Div:
+    tm = template_metadata
+
+    return dcc.Markdown(
+        f"""
+        - **Description** - {tm['Description']}
+        - **Study Type** - {tm['Study type']}
+        - **Version** - {tm['Version']}
+        - **Publication Date** - {tm['Date of publication/release']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_scientific_scope_tab(
+    template_metadata: pd.Series,
+) -> dash.html.Div:
+    tm = template_metadata
+
+    return dcc.Markdown(
+        f"""
+        - **Research Questions** - {tm['Research questions']}
+        - **Target Population** - {tm['Target population']}
+        - **Inclusion Criteria** - {tm['Inclusion Criteria']}
+        - **Exclusion Criteria** - {tm['Exclusion Criteria']}
+        - **Pathogen/Agent** - {tm['Pathogen or agent']}
+        - **Syndrome** - {tm['Syndrome / clinical presentation']}
+        - **Setting** - {tm['Setting']}
+        - **Geographic Scope** - {tm['Geographic scope']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_governance_and_contributors_tab(
+    template_metadata: pd.DataFrame,
+) -> dash.html.Div:
+    tm = template_metadata
+
+    return dcc.Markdown(
+        f"""
+        - **Authors** - {tm['Authors']}
+        - **Approvers** - {tm['Approvers']}
+        - **Institutions** - {tm['Institutions']}
+        - **Contact** - {tm['Contact First Name']} {tm['Contact Last Name']} {tm['Contact email']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_documentation_and_discoverability_tab(
+    template_metadata: pd.DataFrame,
+) -> dash.html.Div:
+    tm = template_metadata
+
+    return dcc.Markdown(
+        f"""
+        - **Keywords** - {tm['Keywords']}
+        - **Relevant Links** - {tm['Relevant resources']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_tab_content(
+    template_name: str, tab_id: str, selected_version: str
+) -> dash.html.Div:
+    arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+    try:
+        template_metadata = arc_crf_metadata[
+            arc_crf_metadata["Title of CRF"]
+            .str.split("_")
+            .str[-1]
+            .str.lower()
+            .str.endswith(template_name.lower())
+        ].iloc[0]
+    except IndexError:
+        rowfill = dict(
+            zip(
+                arc_crf_metadata.columns.tolist(),
+                ["Unknown"] * len(arc_crf_metadata.columns),
+            )
+        )
+        rowfill["Title of CRF"] = template_name
+        template_metadata = pd.DataFrame(rowfill, index=range(1)).iloc[0]
+
+    if tab_id == "project-overview-tab":
+        return _build_crf_metadata_modal_project_overview_tab(template_metadata)
+    elif tab_id == "scientific-scope-tab":
+        return _build_crf_metadata_modal_scientific_scope_tab(template_metadata)
+    elif tab_id == "governance-and-contributors-tab":
+        return _build_crf_metadata_modal_governance_and_contributors_tab(
+            template_metadata
+        )
+    elif tab_id == "documentation-and-discoverability-tab":
+        return _build_crf_metadata_modal_documentation_and_discoverability_tab(
+            template_metadata
+        )
+
+    # In case the tab ID is not one of the expected four
+    return html.Div()
 
 
 @lru_cache(maxsize=512)
@@ -465,10 +599,30 @@ def display_crf_metadata_modal(
         button_info = json.loads(trigger_id.split(".")[0])
         template_name = button_info.get("index", "Unknown")
 
+        # The tabbed CRF template metadata div
+        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(template_name)
+
         return (
             True,  # Open modal
-            template_name,  # Header: template name
-            "Metadata",  # Body: placeholder text
+            template_name,  # Template name
+            crf_metadata_body,  # Body
         )
 
     return False, dash.no_update, dash.no_update
+
+
+@dash.callback(
+    Output("crf-metadata-modal-body-tab-content", "children"),
+    Input("crf-metadata-modal-tabbed-body", "value"),
+    State("selected-version-store", "data"),
+)
+def display_crf_metadata_modal_body_selected_tab(
+    template_and_tab_id: str, selected_version_data: dict
+) -> dash.html.Div:
+    template_name, tab_id = template_and_tab_id.split("|")
+    selected_version = selected_version_data.get("selected_version")
+    logger.info(f'Tab display for ARChetype Disease CRF - "{template_name}"')
+
+    return _build_crf_metadata_modal_tab_content(
+        template_name, tab_id, selected_version
+    )

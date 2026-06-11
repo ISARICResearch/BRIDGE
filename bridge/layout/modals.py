@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import html, dcc
 
 
 class Modals:
@@ -70,7 +70,39 @@ class Modals:
                 dbc.ModalHeader(
                     dbc.ModalTitle("CRF Metadata", id="crf_metadata_modal_title")
                 ),
-                dbc.ModalBody([html.Div("Metadata", id="crf_metadata_modal_body")]),
+                dbc.ModalBody(
+                    [
+                        html.Div(
+                            [
+                                html.H1(""),
+                                dcc.Tabs(
+                                    id="crf-metadata-modal-tabbed-body",
+                                    value="project-overview-tab",
+                                    children=[
+                                        dcc.Tab(
+                                            label="Project Overview",
+                                            value="project-overview-tab",
+                                        ),
+                                        dcc.Tab(
+                                            label="Scientific Scope",
+                                            value="scientific-scope-tab",
+                                        ),
+                                        dcc.Tab(
+                                            label="Governance & Contributors",
+                                            value="governance-and-contributors-tab",
+                                        ),
+                                        dcc.Tab(
+                                            label="Documentation & Discoverability",
+                                            value="documentation-and-discoverability-tab",
+                                        ),
+                                    ],
+                                ),
+                                html.Div(id="crf-metadata-modal-body-tab-content"),
+                            ],
+                            id="crf_metadata_modal_body",
+                        )
+                    ]
+                ),
                 dbc.ModalFooter(
                     dbc.Button(
                         "Close",
