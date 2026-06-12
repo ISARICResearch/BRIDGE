@@ -566,6 +566,179 @@ def get_output_display_selected_in_modal(
     return output
 
 
+def get_output_display_crf_metadata_modal(
+    trigger, info_btn_clicks, close_btn_clicks, info_btn_ids
+):
+    # import ipdb; ipdb.set_trace()
+    def run_callback():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
+        return modals.display_crf_metadata_modal(
+            info_btn_clicks, close_btn_clicks, info_btn_ids
+        )
+
+    ctx = copy_context()
+    output = ctx.run(run_callback)
+    return output
+
+
+@pytest.mark.parametrize(
+    "trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, expected_output",
+    [
+        # ARChetype Disease CRF preset modal - test input when no option is selected
+        (
+            None,
+            [0, 0, 0, 0, 0, 0],
+            0,
+            [
+                {"type": "template-info-btn", "index": "Covid"},
+                {"type": "template-info-btn", "index": "H5Nx"},
+                {"type": "template-info-btn", "index": "Dengue"},
+                {"type": "template-info-btn", "index": "Chikungunya"},
+                {"type": "template-info-btn", "index": "Mpox"},
+                {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
+            ],
+            (False, "", ""),
+        ),
+        # ARChetype Disease CRF preset modal - test input when the Covid option is selected and the modal is opened
+        (
+            [
+                {
+                    "prop_id": '{"index":"Covid","type":"template-info-btn"}.n_clicks',
+                    "value": 1,
+                }
+            ],
+            [1, 0, 0, 0, 0, 0],
+            0,
+            [
+                {"type": "template-info-btn", "index": "Covid"},
+                {"type": "template-info-btn", "index": "H5Nx"},
+                {"type": "template-info-btn", "index": "Dengue"},
+                {"type": "template-info-btn", "index": "Chikungunya"},
+                {"type": "template-info-btn", "index": "Mpox"},
+                {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
+            ],
+            (
+                True,
+                "Covid",
+                html.Div(
+                    [
+                        html.H1("Covid"),
+                        dcc.Tabs(
+                            children=[
+                                dcc.Tab(
+                                    label="Project Overview",
+                                    value="Covid|project-overview-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Scientific Scope",
+                                    value="Covid|scientific-scope-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Governance & Contributors",
+                                    value="Covid|governance-and-contributors-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Documentation & Discoverability",
+                                    value="Covid|documentation-and-discoverability-tab",
+                                ),
+                            ],
+                            id="crf-metadata-modal-tabbed-body",
+                            value="Covid|project-overview-tab",
+                        ),
+                        html.Div(id="crf-metadata-modal-body-tab-content"),
+                    ]
+                ),
+            ),
+        ),
+        # ARChetype Disease CRF preset modal - test input when both the Covid and Dengue options
+        # are selected but the Dengue modal is opened
+        (
+            [
+                {
+                    "prop_id": '{"index":"Dengue","type":"template-info-btn"}.n_clicks',
+                    "value": 1,
+                }
+            ],
+            [1, 0, 1, 0, 0, 0],
+            0,
+            [
+                {"type": "template-info-btn", "index": "Covid"},
+                {"type": "template-info-btn", "index": "H5Nx"},
+                {"type": "template-info-btn", "index": "Dengue"},
+                {"type": "template-info-btn", "index": "Chikungunya"},
+                {"type": "template-info-btn", "index": "Mpox"},
+                {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
+            ],
+            (
+                True,
+                "Dengue",
+                html.Div(
+                    [
+                        html.H1("Dengue"),
+                        dcc.Tabs(
+                            children=[
+                                dcc.Tab(
+                                    label="Project Overview",
+                                    value="Dengue|project-overview-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Scientific Scope",
+                                    value="Dengue|scientific-scope-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Governance & Contributors",
+                                    value="Dengue|governance-and-contributors-tab",
+                                ),
+                                dcc.Tab(
+                                    label="Documentation & Discoverability",
+                                    value="Dengue|documentation-and-discoverability-tab",
+                                ),
+                            ],
+                            id="crf-metadata-modal-tabbed-body",
+                            value="Dengue|project-overview-tab",
+                        ),
+                        html.Div(id="crf-metadata-modal-body-tab-content"),
+                    ]
+                ),
+            ),
+        ),
+        # ARChetype Disease CRF preset modal - test input when both the Covid and Dengue options
+        # are selected, and the Dengue modal is opened and then closed.
+        (
+            [{"prop_id": "crf_metadata_modal_close.n_clicks", "value": 1}],
+            [1, 0, 1, 0, 0, 0],
+            1,
+            [
+                {"type": "template-info-btn", "index": "Covid"},
+                {"type": "template-info-btn", "index": "H5Nx"},
+                {"type": "template-info-btn", "index": "Dengue"},
+                {"type": "template-info-btn", "index": "Chikungunya"},
+                {"type": "template-info-btn", "index": "Mpox"},
+                {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
+            ],
+            (False, dash.no_update, dash.no_update),
+        ),
+    ],
+)
+def test_display_crf_metadata_modal(
+    trigger,
+    info_btn_clicks: list,
+    close_btn_clicks: int | list,
+    info_btn_ids: list,
+    expected_output: tuple,
+):
+    received_open_modal, received_template_name, received_div_output = (
+        get_output_display_crf_metadata_modal(
+            trigger, info_btn_clicks, close_btn_clicks, info_btn_ids
+        )
+    )
+    expected_open_modal, expected_template_name, expected_div_output = expected_output
+
+    assert received_open_modal == expected_open_modal
+    assert received_template_name == expected_template_name
+    assert str(received_div_output) == str(expected_div_output)
+
+
 @pytest.mark.parametrize(
     "switch_values, switch_ids, grouped_presets, expected_styles",
     [
