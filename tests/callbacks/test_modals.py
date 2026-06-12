@@ -564,3 +564,213 @@ def get_output_display_selected_in_modal(
     ctx = copy_context()
     output = ctx.run(run_callback)
     return output
+
+
+@pytest.mark.parametrize(
+    "switch_values, switch_ids, grouped_presets, expected_styles",
+    [
+        # ARChetype Disease CRF presets - test input for Covid-only selection
+        (
+            [True, False, False, False, False, False, [], [], [], [], [], [], [], []],
+            [
+                {"type": "template_check", "index": "ARChetype Disease CRF_Covid"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_H5Nx"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_Dengue"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Chikungunya",
+                },
+                {"type": "template_check", "index": "ARChetype Disease CRF_Mpox"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
+                },
+                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Recommended Outcomes"},
+                {"type": "template_check", "index": "Populations"},
+                {"type": "template_check", "index": "Populations"},
+            ],
+            {
+                "ARChetype Disease CRF": [
+                    "Covid",
+                    "H5Nx",
+                    "Dengue",
+                    "Chikungunya",
+                    "Mpox",
+                    "Mpox Pregnancy and Paediatric",
+                ],
+                "ARChetype Syndromic CRF": ["ARI", "VHF"],
+                "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+                "Recommended Outcomes": ["Dengue"],
+                "Populations": ["Paediatric", "Pregnancy"],
+            },
+            [
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "block",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+            ],
+        ),
+        # ARChetype Disease CRF presets - test input for Covid and Dengue selections
+        (
+            [True, False, True, False, False, False, [], [], [], [], [], [], [], []],
+            [
+                {"type": "template_check", "index": "ARChetype Disease CRF_Covid"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_H5Nx"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_Dengue"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Chikungunya",
+                },
+                {"type": "template_check", "index": "ARChetype Disease CRF_Mpox"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
+                },
+                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Score"},
+                {"type": "template_check", "index": "Recommended Outcomes"},
+                {"type": "template_check", "index": "Populations"},
+                {"type": "template_check", "index": "Populations"},
+            ],
+            {
+                "ARChetype Disease CRF": [
+                    "Covid",
+                    "H5Nx",
+                    "Dengue",
+                    "Chikungunya",
+                    "Mpox",
+                    "Mpox Pregnancy and Paediatric",
+                ],
+                "ARChetype Syndromic CRF": ["ARI", "VHF"],
+                "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+                "Recommended Outcomes": ["Dengue"],
+                "Populations": ["Paediatric", "Pregnancy"],
+            },
+            [
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "block",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "block",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+            ],
+        ),
+    ],
+)
+def test_toggle_template_info_icon_visibility(
+    switch_values: list,
+    switch_ids: list,
+    grouped_presets: dict,
+    expected_styles: list[dict],
+):
+    received_styles = modals.toggle_template_info_icon_visibility(
+        switch_values, switch_ids, grouped_presets
+    )
+
+    assert received_styles == expected_styles

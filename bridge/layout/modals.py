@@ -100,6 +100,7 @@ class Modals:
                                 html.Div(id="crf-metadata-modal-body-tab-content"),
                             ],
                             id="crf_metadata_modal_body",
+                            style={"overflow": "scroll"},
                         )
                     ]
                 ),
