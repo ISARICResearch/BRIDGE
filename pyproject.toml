@@ -116,6 +116,9 @@ where = ["."]
 include = ["bridge*"]
 namespaces = true
 
+[tool.setuptools.package-data]
+"bridge" = ["assets/*", "assets/*/*"]
+
 [tool.coverage.run]
 omit = [
     "bridge/cli.py",

@@ -14,7 +14,9 @@ class Index:
                             [
                                 dbc.Col(
                                     html.Img(
-                                        src=dash.get_asset_url("ISARIC_logo_wh.png"),
+                                        src=dash.get_asset_url(
+                                            "images/ISARIC_logo_wh.png"
+                                        ),
                                         height="100px",
                                     )
                                 ),
@@ -93,7 +95,9 @@ class Index:
                                     dbc.Col(
                                         [
                                             html.Img(
-                                                src=dash.get_asset_url("home_main.png"),
+                                                src=dash.get_asset_url(
+                                                    "images/home_main.png"
+                                                ),
                                                 style={"width": "100%"},
                                             )
                                         ],
@@ -184,7 +188,7 @@ class Index:
                                                     ),
                                                     dbc.CardImg(
                                                         src=dash.get_asset_url(
-                                                            "card1.png"
+                                                            "images/card1.png"
                                                         ),
                                                         bottom=True,
                                                         className="card-img-small",
@@ -220,7 +224,7 @@ class Index:
                                                     ),
                                                     dbc.CardImg(
                                                         src=dash.get_asset_url(
-                                                            "card2.png"
+                                                            "images/card2.png"
                                                         ),
                                                         bottom=True,
                                                         className="card-img-small",
@@ -256,7 +260,7 @@ class Index:
                                                     ),
                                                     dbc.CardImg(
                                                         src=dash.get_asset_url(
-                                                            "card3.png"
+                                                            "images/card3.png"
                                                         ),
                                                         bottom=True,
                                                         className="card-img-small",
@@ -291,7 +295,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "FIOCRUZ_logo.png"
+                                                                    "images/FIOCRUZ_logo.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -310,7 +314,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "global_health.png"
+                                                                    "images/global_health.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -329,7 +333,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "puc_rio.png"
+                                                                    "images/puc_rio.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -355,7 +359,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "CONTAGIO_Logo.jpg"
+                                                                    "images/CONTAGIO_Logo.jpg"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -374,7 +378,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "LONG_CCCC.png"
+                                                                    "images/LONG_CCCC.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -393,7 +397,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "penta_col.jpg"
+                                                                    "images/penta_col.jpg"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -412,7 +416,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "VERDI_Logo.jpg"
+                                                                    "images/VERDI_Logo.jpg"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -431,7 +435,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "UCL_logo.png"
+                                                                    "images/UCL_logo.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -468,7 +472,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "wellcome-logo.png"
+                                                                    "images/wellcome-logo.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -487,7 +491,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "billmelinda-logo.png"
+                                                                    "images/billmelinda-logo.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -506,7 +510,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "uk-international-logo.png"
+                                                                    "images/uk-international-logo.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -525,7 +529,7 @@ class Index:
                                                         [
                                                             html.Img(
                                                                 src=dash.get_asset_url(
-                                                                    "FundedbytheEU.png"
+                                                                    "images/FundedbytheEU.png"
                                                                 ),
                                                                 className="img-fluid",
                                                                 style={
@@ -563,7 +567,7 @@ class Index:
                                                         [
                                                             dbc.CardImg(
                                                                 src=dash.get_asset_url(
-                                                                    "arc_logo.png"
+                                                                    "images/arc_logo.png"
                                                                 ),
                                                                 top=True,
                                                             ),
@@ -606,7 +610,7 @@ class Index:
                                                         [
                                                             dbc.CardImg(
                                                                 src=dash.get_asset_url(
-                                                                    "fhirflat_logo.png"
+                                                                    "images/fhirflat_logo.png"
                                                                 ),
                                                                 top=True,
                                                             ),
@@ -648,7 +652,7 @@ class Index:
                                                         [
                                                             dbc.CardImg(
                                                                 src=dash.get_asset_url(
-                                                                    "vertex_logo.png"
+                                                                    "images/vertex_logo.png"
                                                                 ),
                                                                 top=True,
                                                             ),

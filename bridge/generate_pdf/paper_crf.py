@@ -1,6 +1,7 @@
+import importlib.resources
 from functools import partial
 from io import BytesIO
-from os.path import join, dirname, abspath
+from os.path import join
 
 import numpy as np
 import pandas as pd
@@ -24,8 +25,9 @@ logger = setup_logger(__name__)
 REGISTERED_FONT = "DejaVuSans"
 REGISTERED_FONT_BOLD = "DejaVuSans-Bold"
 
-ASSETS_DIR_FULL = join(dirname(dirname(dirname(abspath(__file__)))), "assets")
-FONTS_DIR_FULL = join(ASSETS_DIR_FULL, "fonts")
+PKG_PATH = importlib.resources.files("bridge")
+ASSETS_DIR_FULL = PKG_PATH / "assets"
+FONTS_DIR_FULL = str(ASSETS_DIR_FULL / "fonts")
 
 pdfmetrics.registerFont(
     TTFont(REGISTERED_FONT, join(FONTS_DIR_FULL, f"{REGISTERED_FONT}.ttf"))

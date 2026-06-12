@@ -17,7 +17,6 @@ class TestGeneratePaperlikePdf:
         arc_1_2_2__english__paperlike_crf_details,
         arc_1_2_2__english__supplemental_phrases,
     ):
-        # import ipdb;ipdb.set_trace()
         data_dictionary = ccpuk_hantavirus_data_dictionary_2026
         mock_arc_api_client = mock.MagicMock()
         mock_arc_api_client.get_dataframe_paper_like_details.return_value = (

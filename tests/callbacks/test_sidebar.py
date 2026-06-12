@@ -5,10 +5,10 @@ import pytest
 
 from bridge.callbacks import sidebar
 
-SETTINGS_ON = "settings_on.png"
-SETTINGS_OFF = "settings_off.png"
-PRESET_ON = "preset_on.png"
-PRESET_OFF = "preset_off.png"
+SETTINGS_ON = "images/settings_on.png"
+SETTINGS_OFF = "images/settings_off.png"
+PRESET_ON = "images/preset_on.png"
+PRESET_OFF = "images/preset_off.png"
 
 
 class ConditionalMock:
