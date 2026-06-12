@@ -94,8 +94,16 @@ def _build_crf_metadata_modal_tabbed_body(template_name: str) -> dash.html.Div:
                     ),
                 ],
             ),
-            html.Div(id="crf-metadata-modal-body-tab-content"),
-        ]
+            html.Div(
+                id="crf-metadata-modal-body-tab-content",
+                style={
+                    "width": "800px",
+                    "height": "350px",
+                    "overflow-x": "hidden",
+                    "white-space": "normal",
+                },
+            ),
+        ],
     )
 
 
