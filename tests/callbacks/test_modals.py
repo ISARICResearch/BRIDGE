@@ -135,7 +135,15 @@ def test__build_crf_metadata_modal_tabbed_body():
                     ),
                 ],
             ),
-            html.Div(id="crf-metadata-modal-body-tab-content"),
+            html.Div(
+                id="crf-metadata-modal-body-tab-content",
+                style={
+                    "width": "800px",
+                    "height": "350px",
+                    "overflow-x": "hidden",
+                    "white-space": "normal",
+                },
+            ),
         ]
     )
 
@@ -645,7 +653,15 @@ def get_output_display_crf_metadata_modal(
                             id="crf-metadata-modal-tabbed-body",
                             value="Covid|project-overview-tab",
                         ),
-                        html.Div(id="crf-metadata-modal-body-tab-content"),
+                        html.Div(
+                            id="crf-metadata-modal-body-tab-content",
+                            style={
+                                "width": "800px",
+                                "height": "350px",
+                                "overflow-x": "hidden",
+                                "white-space": "normal",
+                            },
+                        ),
                     ]
                 ),
             ),
@@ -697,7 +713,15 @@ def get_output_display_crf_metadata_modal(
                             id="crf-metadata-modal-tabbed-body",
                             value="Dengue|project-overview-tab",
                         ),
-                        html.Div(id="crf-metadata-modal-body-tab-content"),
+                        html.Div(
+                            id="crf-metadata-modal-body-tab-content",
+                            style={
+                                "width": "800px",
+                                "height": "350px",
+                                "overflow-x": "hidden",
+                                "white-space": "normal",
+                            },
+                        ),
                     ]
                 ),
             ),
