@@ -524,6 +524,9 @@ def update_list_variables_checked(
 def toggle_template_info_icon_visibility(
     switch_values: list, switch_ids: list, grouped_presets: dict
 ) -> list:
+    logger.info(f"switch_values={switch_values}")
+    logger.info(f"switch_ids={switch_ids}")
+    logger.info(f"grouped_presets={grouped_presets}")
     """Show info icon only when template switch is ON in ARChetype Disease CRF."""
     # Create a mapping of template_name -> is_on for ARChetype templates
     template_status = {}
@@ -558,6 +561,8 @@ def toggle_template_info_icon_visibility(
                 else "none",
             }
         )
+
+    logger.info(f"styles={styles}")
 
     return styles
 
