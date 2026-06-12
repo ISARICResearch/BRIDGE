@@ -97,12 +97,19 @@ class Modals:
                                         ),
                                     ],
                                 ),
-                                html.Div(id="crf-metadata-modal-body-tab-content"),
+                                html.Div(
+                                    id="crf-metadata-modal-body-tab-content",
+                                    style={
+                                        "width": "800px",
+                                        "height": "350px",
+                                        "overflow-x": "hidden",
+                                        "white-space": "normal",
+                                    },
+                                ),
                             ],
                             id="crf_metadata_modal_body",
-                            style={"overflow": "scroll"},
                         )
-                    ]
+                    ],
                 ),
                 dbc.ModalFooter(
                     dbc.Button(
@@ -116,4 +123,5 @@ class Modals:
             id="crf_metadata_modal",
             is_open=False,
             size="lg",
+            scrollable=True,
         )
