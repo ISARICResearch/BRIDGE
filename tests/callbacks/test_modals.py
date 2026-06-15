@@ -139,7 +139,7 @@ def test__build_crf_metadata_modal_tabbed_body():
                 id="crf-metadata-modal-body-tab-content",
                 style={
                     "width": "800px",
-                    "height": "350px",
+                    "height": "250px",
                     "overflow-x": "hidden",
                     "white-space": "normal",
                 },
@@ -657,7 +657,7 @@ def get_output_display_crf_metadata_modal(
                             id="crf-metadata-modal-body-tab-content",
                             style={
                                 "width": "800px",
-                                "height": "350px",
+                                "height": "250px",
                                 "overflow-x": "hidden",
                                 "white-space": "normal",
                             },
@@ -717,7 +717,7 @@ def get_output_display_crf_metadata_modal(
                             id="crf-metadata-modal-body-tab-content",
                             style={
                                 "width": "800px",
-                                "height": "350px",
+                                "height": "250px",
                                 "overflow-x": "hidden",
                                 "white-space": "normal",
                             },
