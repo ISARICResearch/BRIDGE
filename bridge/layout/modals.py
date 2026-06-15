@@ -101,7 +101,7 @@ class Modals:
                                     id="crf-metadata-modal-body-tab-content",
                                     style={
                                         "width": "800px",
-                                        "height": "350px",
+                                        "height": "250px",
                                         "overflow-x": "hidden",
                                         "white-space": "normal",
                                     },
