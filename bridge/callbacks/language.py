@@ -3,6 +3,7 @@ from copy import deepcopy
 from time import perf_counter
 
 import dash_bootstrap_components as dbc
+from dash import html
 import pandas as pd
 
 from bridge.arc import arc_core, arc_translations
@@ -15,18 +16,145 @@ _VERSION_LANGUAGE_CACHE: dict[tuple[str, str, bool], tuple] = {}
 
 
 class Language:
+    """A class defining language-related callbacks for CRF translations."""
+
     def __init__(self, version: str, language: str, initial_load: bool = False):
+        """Initialiser.
+
+        Parameters
+        ----------
+        version : str
+            ARC version.
+
+        language : str
+            CRF language
+
+        initial_load : bool, default=False
+            Optional setting to perform initial loading, defaults to ``False``.
+        """
         self.version = version
         self.language = language
         self.initial_load = initial_load
 
     def get_dataframe_arc_language(self, df_version: pd.DataFrame) -> pd.DataFrame:
+        """Get ARC language dataframe.
+
+        Parameters
+        ----------
+        df_version : pandas.DataFrame
+            ARC version dataframe.
+
+        Returns
+        -------
+        pandas.DataFrame
+            ARC language version dataframe.
+        """
         df_version_language = arc_translations.get_arc_translation(
             self.language, self.version, df_version
         )
         return df_version_language
 
-    def get_version_language_related_data(self):
+    def build_accordion_item_children(
+        self, section: str, preset_names: list[str]
+    ) -> dbc.Checklist | html.Div:
+        """Build accordion item children based on section type.
+
+        Parameters
+        ----------
+        section : str
+            The section name (e.g., "ARChetype Disease CRF")
+        preset_names : list
+            List of template names in this section
+
+        Returns
+        -------
+        dbc.Checklist
+            For regular sections, html.Div with sliders and info icons for ARChetype
+        """
+        if section == "ARChetype Disease CRF":
+            # For ARChetype Disease CRF: use sliders with conditional info icons
+            return html.Div(
+                [
+                    html.Div(
+                        [
+                            dbc.Switch(
+                                id={
+                                    "type": "template_check",
+                                    "index": f"{section}_{preset_name}",
+                                },
+                                label=preset_name,
+                                value=False,
+                            ),
+                            html.Button(
+                                "ℹ️",
+                                id={"type": "template-info-btn", "index": preset_name},
+                                n_clicks=0,
+                                style={
+                                    "background": "none",
+                                    "border": "none",
+                                    "cursor": "pointer",
+                                    "fontSize": "16px",
+                                    "padding": "0 8px",
+                                    "marginLeft": "auto",
+                                    "display": "none",  # Hidden by default
+                                },
+                                className="template-info-button",
+                            ),
+                        ],
+                        id={"type": "template-item-container", "index": preset_name},
+                        style={
+                            "display": "flex",
+                            "justifyContent": "space-between",
+                            "alignItems": "center",
+                            "padding": "8px 0",
+                        },
+                    )
+                    for preset_name in preset_names
+                ]
+            )
+        else:
+            # For other sections: use standard checklist
+            return dbc.Checklist(
+                options=[
+                    {"label": preset_name, "value": preset_name}
+                    for preset_name in preset_names
+                ],
+                value=[],
+                id={"type": "template_check", "index": section},
+                switch=True,
+            )
+
+    def build_accordion_items(self) -> list[dbc.AccordionItem]:
+        """Build accordion items.
+
+        Returns
+        -------
+        list
+            List of accordion items.
+        """
+        return [
+            dbc.AccordionItem(
+                title=section,
+                children=html.Div(
+                    [
+                        self.build_accordion_item_children(section, [preset_name])
+                        for preset_name in preset_names
+                    ]
+                ),
+            )
+            for section, preset_names in self.grouped_presets.items()
+        ]
+
+    def get_version_language_related_data(self) -> tuple:
+        """:py:class:`tuple` : Returns version language related data as a tuple.
+
+        Returns
+        -------
+        tuple
+            A tuple of the version language (as a dataframe), ARC commit SHA,
+            the grouped presets dict, accordion items, and the ``ulist`` choices
+            and ``multilist`` choices.
+        """
         cache_initial_load = self.initial_load if self.language != "English" else False
         cache_key = (self.version, self.language, cache_initial_load)
         if cache_key in _VERSION_LANGUAGE_CACHE:
@@ -88,29 +216,15 @@ class Language:
             arc_core.get_variable_order(df_version_language),
         )
 
-        grouped_presets = {}
+        self.grouped_presets = {}
         for section, preset_name in presets:
-            grouped_presets.setdefault(section, []).append(preset_name)
+            self.grouped_presets.setdefault(section, []).append(preset_name)
 
-        accordion_items = [
-            dbc.AccordionItem(
-                title=section,
-                children=dbc.Checklist(
-                    options=[
-                        {"label": preset_name, "value": preset_name}
-                        for preset_name in preset_names
-                    ],
-                    value=[],
-                    id={"type": "template_check", "index": section},
-                    switch=True,
-                ),
-            )
-            for section, preset_names in grouped_presets.items()
-        ]
+        accordion_items = self.build_accordion_items()
         output = (
             df_version_language,
             commit,
-            grouped_presets,
+            self.grouped_presets,
             accordion_items,
             json.dumps(ulist_variable_choices),
             json.dumps(multilist_variable_choices),
