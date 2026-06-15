@@ -30,6 +30,11 @@ class NavBar:
                         style={"textDecoration": "none", "color": "white"},
                     ),
                     html.A(
+                        dbc.NavbarBrand("About BRIDGE"),
+                        href="/about",
+                        style={"textDecoration": "none", "color": "white"},
+                    ),
+                    html.A(
                         dbc.NavbarBrand("Getting started with BRIDGE"),
                         href="https://isaricresearch.github.io/Training/bridge_starting.html",
                         style={"textDecoration": "none", "color": "white"},
