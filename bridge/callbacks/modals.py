@@ -98,7 +98,7 @@ def _build_crf_metadata_modal_tabbed_body(template_name: str) -> dash.html.Div:
                 id="crf-metadata-modal-body-tab-content",
                 style={
                     "width": "800px",
-                    "height": "350px",
+                    "height": "250px",
                     "overflow-x": "hidden",
                     "white-space": "normal",
                 },
@@ -532,9 +532,6 @@ def update_list_variables_checked(
 def toggle_template_info_icon_visibility(
     switch_values: list, switch_ids: list, grouped_presets: dict
 ) -> list:
-    logger.info(f"switch_values={switch_values}")
-    logger.info(f"switch_ids={switch_ids}")
-    logger.info(f"grouped_presets={grouped_presets}")
     """Show info icon only when template switch is ON in ARChetype Disease CRF."""
     # Create a mapping of template_name -> is_on for ARChetype templates
     template_status = {}
