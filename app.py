@@ -22,6 +22,13 @@ app = dash.Dash(
     __name__,
     assets_url_path="assets",
     assets_folder="bridge/assets",
+    external_scripts=[
+        {
+            "src": "https://plausible-oxrse.fly.dev/js/script.js",
+            "defer": True,
+            "data-domain": "bridge.isaric.org",
+        }
+    ],
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
         "https://use.fontawesome.com/releases/v5.8.1/css/all.css",
