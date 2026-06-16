@@ -10,7 +10,7 @@ from bridge.arc import arc_core, arc_tree
 from bridge.arc.arc_api import ArcApiClient
 from bridge.arc.arc_lists import ArcList
 from bridge.layout.app_layout import MainContent
-from bridge.layout.index import Index
+from bridge.layout.about import about_page
 from bridge.layout.navbar import NavBar
 from bridge.layout.settings import Settings
 from bridge.layout.sidebar import SideBar
@@ -146,18 +146,36 @@ app.clientside_callback(
 
 @app.callback(Output("page-content", "children"), Input("url", "pathname"))
 def display_page(pathname):
-    if pathname == "/":
-        return Index().home_page()
-    else:
+    if pathname in (None, "/", "/main"):
         return main_app()
+    if pathname == "/about":
+        return about_page()
+    return html.Div(
+        [
+            NavBar().navbar,
+            dbc.Container(
+                [
+                    html.H1("Page not found"),
+                    html.P("Use / or /main to open the CRF builder."),
+                    html.P(
+                        [
+                            "Supporting information is available at ",
+                            html.A("/about", href="/about"),
+                            ".",
+                        ]
+                    ),
+                ],
+                className="py-4",
+            ),
+        ]
+    )
 
 
 @app.callback(Output("url", "pathname"), Input("start-button", "n_clicks"))
 def start_app(n_clicks):
     if n_clicks is None:
         return "/"
-    else:
-        return "/main"
+    return "/"
 
 
 def main_app():
