@@ -71,58 +71,54 @@ class Language:
         dbc.Checklist
             For regular sections, html.Div with sliders and info icons for ARChetype
         """
-        if section == "ARChetype Disease CRF":
-            # For ARChetype Disease CRF: use sliders with conditional info icons
-            return html.Div(
-                [
-                    html.Div(
-                        [
-                            dbc.Switch(
-                                id={
-                                    "type": "template_check",
-                                    "index": f"{section}_{preset_name}",
-                                },
-                                label=preset_name,
-                                value=False,
-                            ),
-                            html.Button(
-                                "ℹ️",
-                                id={"type": "template-info-btn", "index": preset_name},
-                                n_clicks=0,
-                                style={
-                                    "background": "none",
-                                    "border": "none",
-                                    "cursor": "pointer",
-                                    "fontSize": "16px",
-                                    "padding": "0 8px",
-                                    "marginLeft": "auto",
-                                    "display": "none",  # Hidden by default
-                                },
-                                className="template-info-button",
-                            ),
-                        ],
-                        id={"type": "template-item-container", "index": preset_name},
-                        style={
-                            "display": "flex",
-                            "justifyContent": "space-between",
-                            "alignItems": "center",
-                            "padding": "8px 0",
-                        },
-                    )
-                    for preset_name in preset_names
-                ]
-            )
-        else:
-            # For other sections: use standard checklist
-            return dbc.Checklist(
-                options=[
-                    {"label": preset_name, "value": preset_name}
-                    for preset_name in preset_names
-                ],
-                value=[],
-                id={"type": "template_check", "index": section},
-                switch=True,
-            )
+        # For each section we have sliders with info icons that are hidden by
+        # default on the initial loading, but can be toggled ON/OFF (via a callback)
+        # depending on whether the section is listed in the ARC CRF metadata CSV
+        return html.Div(
+            [
+                html.Div(
+                    [
+                        dbc.Switch(
+                            id={
+                                "type": "template_check",
+                                "index": f"{section}_{preset_name}",
+                            },
+                            label=preset_name,
+                            value=False,
+                        ),
+                        html.Button(
+                            "ℹ️",
+                            id={
+                                "type": "template-info-btn",
+                                "index": f"{section}_{preset_name}",
+                            },
+                            n_clicks=0,
+                            style={
+                                "background": "none",
+                                "border": "none",
+                                "cursor": "pointer",
+                                "fontSize": "16px",
+                                "padding": "0 8px",
+                                "marginLeft": "auto",
+                                "display": "none",  # Hidden by default
+                            },
+                            className="template-info-button",
+                        ),
+                    ],
+                    id={
+                        "type": "template-item-container",
+                        "index": f"{section}_{preset_name}",
+                    },
+                    style={
+                        "display": "flex",
+                        "justifyContent": "space-between",
+                        "alignItems": "center",
+                        "padding": "8px 0",
+                    },
+                )
+                for preset_name in preset_names
+            ]
+        )
 
     def build_accordion_items(self) -> list[dbc.AccordionItem]:
         """Build accordion items.

@@ -132,6 +132,7 @@ class MainContent:
         multilist_variable_json,
         grouped_presets_json,
         arc_language_list,
+        arc_crf_metadata_json,
     ):
         app_layout = html.Div(
             [
@@ -143,6 +144,7 @@ class MainContent:
                 dcc.Store(id="grouped_presets-store", data=grouped_presets_json),
                 dcc.Store(id="tree_items_data-store", data=grouped_presets_json),
                 dcc.Store(id="templates_checks_ready", data=False),
+                dcc.Store(id="arc-crf-metadata", data=arc_crf_metadata_json),
                 dcc.Location(id="url", refresh=False),
                 html.Div(id="page-content"),
                 dcc.Download(id="download-dataframe-csv"),

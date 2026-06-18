@@ -68,29 +68,31 @@ def build_checklist_dom_from_mapping(
     return options, checked_items
 
 
-def _build_crf_metadata_modal_tabbed_body(template_name: str) -> dash.html.Div:
+def _build_crf_metadata_modal_tabbed_body(template_id: str) -> dash.html.Div:
+    template_name = template_id.split("_")[-1]
+
     return html.Div(
         [
             html.H1(f"{string.capwords(template_name)}"),
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
-                value=f"{template_name}|project-overview-tab",
+                value=f"{template_id}|project-overview-tab",
                 children=[
                     dcc.Tab(
                         label="Project Overview",
-                        value=f"{template_name}|project-overview-tab",
+                        value=f"{template_id}|project-overview-tab",
                     ),
                     dcc.Tab(
                         label="Scientific Scope",
-                        value=f"{template_name}|scientific-scope-tab",
+                        value=f"{template_id}|scientific-scope-tab",
                     ),
                     dcc.Tab(
                         label="Governance & Contributors",
-                        value=f"{template_name}|governance-and-contributors-tab",
+                        value=f"{template_id}|governance-and-contributors-tab",
                     ),
                     dcc.Tab(
                         label="Documentation & Discoverability",
-                        value=f"{template_name}|documentation-and-discoverability-tab",
+                        value=f"{template_id}|documentation-and-discoverability-tab",
                     ),
                 ],
             ),
@@ -170,16 +172,13 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
 
 
 def _build_crf_metadata_modal_tab_content(
-    template_name: str, selected_version: str, tab_id: str
+    template_id: str, selected_version: str, tab_id: str
 ) -> dash.html.Div:
     arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+
     try:
         template_metadata = arc_crf_metadata[
-            arc_crf_metadata["Title of CRF"]
-            .str.split("_")
-            .str[-1]
-            .str.lower()
-            .str.endswith(template_name.lower())
+            arc_crf_metadata["Title of CRF"] == template_id
         ].iloc[0]
     except IndexError:
         rowfill = dict(
@@ -188,7 +187,7 @@ def _build_crf_metadata_modal_tab_content(
                 ["Unknown"] * len(arc_crf_metadata.columns),
             )
         )
-        rowfill["Title of CRF"] = template_name
+        rowfill["Title of CRF"] = template_id
         template_metadata = pd.DataFrame(rowfill, index=range(1)).iloc[0]
 
     if tab_id == "project-overview-tab":
@@ -526,14 +525,23 @@ def update_list_variables_checked(
     [
         State({"type": "template_check", "index": ALL}, "id"),
         State("grouped_presets-store", "data"),
+        State("arc-crf-metadata", "data"),
     ],
     prevent_initial_call=True,
 )
 def toggle_template_info_icon_visibility(
-    switch_values: list, switch_ids: list, grouped_presets: dict
-) -> list:
-    """Show info icon only when template switch is ON in ARChetype Disease CRF."""
-    # Create a mapping of template_name -> is_on for ARChetype templates
+    switch_values: list,
+    switch_ids: list,
+    grouped_presets: dict,
+    arc_crf_metadata_json: str,
+) -> tuple:
+    arc_crf_metadata = pd.read_json(io.StringIO(arc_crf_metadata_json), orient="split")
+    info_icon_sections = (
+        arc_crf_metadata["Title of CRF"].str.split("_").str[0].unique().tolist()
+    )
+
+    """Show info icon only when template switch is ON for the template"""
+    # Create a mapping of template_name -> is_on for section templates
     template_status = {}
 
     for switch_id, is_on in zip(switch_ids, switch_values):
@@ -542,17 +550,15 @@ def toggle_template_info_icon_visibility(
             if isinstance(switch_id, dict)
             else str(switch_id)
         )
-        # Extract template name from "ARChetype Disease CRF_Covid"
-        if "ARChetype Disease CRF_" in index_str:
-            template_name = index_str.split("ARChetype Disease CRF_", 1)[1]
-            template_status[template_name] = is_on
-
-    # Get the list of ARChetype templates from grouped_presets
-    archetype_templates = grouped_presets.get("ARChetype Disease CRF", [])
+        section, template_name = index_str.split("_")
+        if section in info_icon_sections:
+            template_status[(section, template_name)] = is_on
+        else:
+            template_status[(section, template_name)] = False
 
     # Build style for each info button, in the same order as templates
     styles = []
-    for template_name in archetype_templates:
+    for (section, template_name), status in template_status.items():
         styles.append(
             {
                 "background": "none",
@@ -561,15 +567,12 @@ def toggle_template_info_icon_visibility(
                 "fontSize": "16px",
                 "padding": "0 8px",
                 "marginLeft": "auto",
-                "display": "block"
-                if template_status.get(template_name, False)
-                else "none",
+                "display": "block" if status else "none",
             }
         )
 
-    logger.info(f"styles={styles}")
-
     return styles
+    # return styles, arc_crf_metadata.to_json(date_format="iso", orient="split")
 
 
 @dash.callback(
@@ -607,14 +610,13 @@ def display_crf_metadata_modal(
     if "template-info-btn" in trigger_id and trigger_value and trigger_value > 0:
         # Extract template name from the button ID
         button_info = json.loads(trigger_id.split(".")[0])
-        template_name = button_info.get("index", "Unknown")
-
+        template_id = button_info.get("index", "Unknown")
         # The tabbed CRF template metadata div
-        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(template_name)
+        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(template_id)
 
         return (
             True,  # Open modal
-            template_name,  # Template name
+            template_id,  # Template ID, which is "<section name>_<template name>"
             crf_metadata_body,  # Body
         )
 
@@ -629,10 +631,8 @@ def display_crf_metadata_modal(
 def display_crf_metadata_modal_body_selected_tab(
     template_and_tab_id: str, selected_version_data: dict
 ) -> dash.html.Div:
-    template_name, tab_id = template_and_tab_id.split("|")
+    template_id, tab_id = template_and_tab_id.split("|")
     selected_version = selected_version_data.get("selected_version")
-    logger.info(f'Tab display for ARChetype Disease CRF - "{template_name}"')
+    logger.info(f'Tab display for "{template_id}"')
 
-    return _build_crf_metadata_modal_tab_content(
-        template_name, selected_version, tab_id
-    )
+    return _build_crf_metadata_modal_tab_content(template_id, selected_version, tab_id)
