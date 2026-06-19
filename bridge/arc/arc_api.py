@@ -334,23 +334,27 @@ class ArcApiClient:
         -------
         pandas.DataFrame
             The CRF metadata.
+
+        Raises
+        ------
+        bridge.arc.arc_api.ArcApiClientError
+            In case of a non-matching ARC version or a request error.
         """
         try:
-            # Use the latest ARC one
-            # url = "/".join([self.base_url_api, "ARC", "releases"])
-            # release_json = self._get_api_response(url)
-            # version_list = [release_dict["tag_name"] for release_dict in release_json]
-            # url = "/".join(
-            #    [
-            #        self.base_url_raw_content,
-            #        "ARC-Translations",
-            #        "main",
-            #        self.get_arch_version_string(max(version_list)),
-            #        "English",
-            #        "crf_metadata.csv",
-            #    ]
-            # )
-            url = "https://raw.githubusercontent.com/ISARICResearch/ARC/refs/heads/main/crf_metadata.csv"
+            # Try to fetch the CSV from the given release refs:
+            #
+            #   https://raw.githubusercontent.com/ISARICResearch/ARC/refs/tags/<version>/crf_metadata.csv
+            #
+            url = "/".join(
+                [
+                    self.base_url_raw_content,
+                    "ARC",
+                    "refs",
+                    "tags",
+                    version,
+                    "crf_metadata.csv",
+                ]
+            )
             df = self._write_to_dataframe(url)
         except ArcApiClientError as e:
             raise ArcApiClientError(
