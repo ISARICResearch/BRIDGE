@@ -162,7 +162,12 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
     template_metadata: pd.DataFrame,
 ) -> dash.html.Div:
     tm = template_metadata
-
+    try:
+        tm["Relevant resources"]
+    except KeyError:
+        tm["Relevant resources"] = tm[
+            "Related documents, protocols, repositories, websites, publication"
+        ]
     return dcc.Markdown(
         f"""
         - **Keywords** - {tm['Keywords']}
@@ -197,6 +202,7 @@ def _build_crf_metadata_modal_tab_content(
             "Contact email",
             "Keywords",
             "Relevant resources",
+            "Related documents, protocols, repositories, websites, publication",
         ]
         rowfill = dict(
             zip(
