@@ -151,8 +151,8 @@ def test__build_crf_metadata_modal_tabbed_body():
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_project_overview_tab(arc_1_3_0__crf_metadata):
-    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+def test__build_crf_metadata_modal_project_overview_tab(arc_1_4_0__crf_metadata):
+    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
     expected = dcc.Markdown(
         f"""
         - **Description** - {dengue_metadata['Description']}
@@ -165,8 +165,8 @@ def test__build_crf_metadata_modal_project_overview_tab(arc_1_3_0__crf_metadata)
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_3_0__crf_metadata):
-    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_4_0__crf_metadata):
+    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
     expected = dcc.Markdown(
         f"""
         - **Research Questions** - {dengue_metadata['Research questions']}
@@ -184,9 +184,9 @@ def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_3_0__crf_metadata)
 
 
 def test__build_crf_metadata_modal_governance_and_contributors_tab(
-    arc_1_3_0__crf_metadata,
+    arc_1_4_0__crf_metadata,
 ):
-    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
     expected = dcc.Markdown(
         f"""
         - **Authors** - {dengue_metadata['Authors']}
@@ -202,9 +202,9 @@ def test__build_crf_metadata_modal_governance_and_contributors_tab(
 
 
 def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
-    arc_1_3_0__crf_metadata,
+    arc_1_4_0__crf_metadata,
 ):
-    dengue_metadata = arc_1_3_0__crf_metadata.iloc[1]
+    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
     expected = dcc.Markdown(
         f"""
         - **Keywords** - {dengue_metadata['Keywords']}
@@ -577,7 +577,6 @@ def get_output_display_selected_in_modal(
 def get_output_display_crf_metadata_modal(
     trigger, info_btn_clicks, close_btn_clicks, info_btn_ids
 ):
-    # import ipdb; ipdb.set_trace()
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
         return modals.display_crf_metadata_modal(
@@ -782,14 +781,14 @@ def test_display_crf_metadata_modal(
                     "type": "template_check",
                     "index": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
                 },
-                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
-                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Recommended Outcomes"},
-                {"type": "template_check", "index": "Populations"},
-                {"type": "template_check", "index": "Populations"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_ARI"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_VHF"},
+                {"type": "template_check", "index": "Score_CharlsonCI"},
+                {"type": "template_check", "index": "Score_mSOFA"},
+                {"type": "template_check", "index": "Score_mSOFA Dengue"},
+                {"type": "template_check", "index": "Recommended Outcomes_Dengue"},
+                {"type": "template_check", "index": "Populations_Paediatric"},
+                {"type": "template_check", "index": "Populations_Pregnancy"},
             ],
             {
                 "ARChetype Disease CRF": [
@@ -814,6 +813,78 @@ def test_display_crf_metadata_modal(
                     "padding": "0 8px",
                     "marginLeft": "auto",
                     "display": "block",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
                 },
                 {
                     "background": "none",
@@ -878,14 +949,14 @@ def test_display_crf_metadata_modal(
                     "type": "template_check",
                     "index": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
                 },
-                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
-                {"type": "template_check", "index": "ARChetype Syndromic CRF"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Score"},
-                {"type": "template_check", "index": "Recommended Outcomes"},
-                {"type": "template_check", "index": "Populations"},
-                {"type": "template_check", "index": "Populations"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_ARI"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_VHF"},
+                {"type": "template_check", "index": "Score_CharlsonCI"},
+                {"type": "template_check", "index": "Score_mSOFA"},
+                {"type": "template_check", "index": "Score_mSOFA Dengue"},
+                {"type": "template_check", "index": "Recommended Outcomes_Dengue"},
+                {"type": "template_check", "index": "Populations_Paediatric"},
+                {"type": "template_check", "index": "Populations_Pregnancy"},
             ],
             {
                 "ARChetype Disease CRF": [
@@ -956,6 +1027,78 @@ def test_display_crf_metadata_modal(
                     "marginLeft": "auto",
                     "display": "none",
                 },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
             ],
         ),
     ],
@@ -965,9 +1108,13 @@ def test_toggle_template_info_icon_visibility(
     switch_ids: list,
     grouped_presets: dict,
     expected_styles: list[dict],
+    arc_1_4_0__crf_metadata,
 ):
     received_styles = modals.toggle_template_info_icon_visibility(
-        switch_values, switch_ids, grouped_presets
+        switch_values,
+        switch_ids,
+        grouped_presets,
+        arc_1_4_0__crf_metadata.to_json(date_format="iso", orient="split"),
     )
 
     assert received_styles == expected_styles
