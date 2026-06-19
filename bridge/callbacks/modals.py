@@ -12,7 +12,7 @@ import pandas as pd
 from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
-from bridge.arc.arc_api import ArcApiClient
+from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -174,21 +174,51 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
 def _build_crf_metadata_modal_tab_content(
     template_id: str, selected_version: str, tab_id: str
 ) -> dash.html.Div:
-    arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
-
-    try:
-        template_metadata = arc_crf_metadata[
-            arc_crf_metadata["Title of CRF"] == template_id
-        ].iloc[0]
-    except IndexError:
+    def create_placeholder_template_metadata(template_id) -> pd.Series:
+        placeholder_columns = [
+            "Title of CRF",
+            "Description",
+            "Study type",
+            "Version",
+            "Date of publication/release",
+            "Research questions",
+            "Target population",
+            "Inclusion Criteria",
+            "Exclusion Criteria",
+            "Pathogen or agent",
+            "Syndrome / clinical presentation",
+            "Setting",
+            "Geographic scope",
+            "Authors",
+            "Approvers",
+            "Institutions",
+            "Contact First Name",
+            "Contact Last Name",
+            "Contact email",
+            "Keywords",
+            "Relevant resources",
+        ]
         rowfill = dict(
             zip(
-                arc_crf_metadata.columns.tolist(),
-                ["Unknown"] * len(arc_crf_metadata.columns),
+                placeholder_columns,
+                ["Unknown"] * len(placeholder_columns),
             )
         )
         rowfill["Title of CRF"] = template_id
-        template_metadata = pd.DataFrame(rowfill, index=range(1)).iloc[0]
+
+        return pd.DataFrame(rowfill, index=range(1)).iloc[0]
+
+    try:
+        arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+    except ArcApiClientError:
+        template_metadata = create_placeholder_template_metadata(template_id)
+    else:
+        try:
+            template_metadata = arc_crf_metadata[
+                arc_crf_metadata["Title of CRF"] == template_id
+            ].iloc[0]
+        except IndexError:
+            template_metadata = create_placeholder_template_metadata(template_id)
 
     if tab_id == "project-overview-tab":
         return _build_crf_metadata_modal_project_overview_tab(template_metadata)

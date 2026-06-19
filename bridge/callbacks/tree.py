@@ -154,9 +154,6 @@ def _get_checked_template_list_from_context(
     # Get the trigger that caused this callback
     if ctx.triggered:
         trigger_id = json.loads(ctx.triggered[0]["prop_id"].split(".")[0])
-        section = trigger_id.get("index", "").split("_")[
-            0
-        ]  # Extract section from index
 
         # For Switch components, the index is "section_template_name"
         if "_" in trigger_id.get("index", ""):
