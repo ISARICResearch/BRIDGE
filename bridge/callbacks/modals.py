@@ -663,6 +663,7 @@ def display_crf_metadata_modal(
     Output("crf-metadata-modal-body-tab-content", "children"),
     Input("crf-metadata-modal-tabbed-body", "value"),
     State("selected-version-store", "data"),
+    prevent_initial_call=True,
 )
 def display_crf_metadata_modal_body_selected_tab(
     template_and_tab_id: str, selected_version_data: dict
