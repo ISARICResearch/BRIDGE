@@ -68,7 +68,9 @@ def build_checklist_dom_from_mapping(
     return options, checked_items
 
 
-def _build_crf_metadata_modal_tabbed_body(selected_version: str, template_id: str) -> dash.html.Div:
+def _build_crf_metadata_modal_tabbed_body(
+    selected_version: str, template_id: str
+) -> dash.html.Div:
     template_name = template_id.split("_")[-1]
 
     return html.Div(
@@ -630,7 +632,7 @@ def display_crf_metadata_modal(
     info_btn_clicks: list,
     close_btn_clicks: int,
     info_btn_ids: list,
-    selected_version_data: dict
+    selected_version_data: dict,
 ) -> tuple:
     """Open CRF metadata modal when info icon is clicked, close on close button."""
     ctx = dash.callback_context
@@ -652,7 +654,9 @@ def display_crf_metadata_modal(
         template_id = button_info.get("index", "Unknown")
         selected_version = selected_version_data.get("selected_version")
         # The tabbed CRF template metadata div
-        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(selected_version, template_id)
+        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(
+            selected_version, template_id
+        )
 
         return (
             True,  # Open modal
@@ -667,9 +671,7 @@ def display_crf_metadata_modal(
     Output("crf-metadata-modal-body-tab-content", "children"),
     Input("crf-metadata-modal-tabbed-body", "value"),
 )
-def display_crf_metadata_modal_body_selected_tab(
-    value_str: str
-) -> dash.html.Div:
+def display_crf_metadata_modal_body_selected_tab(value_str: str) -> dash.html.Div:
     values = value_str.split("|")
     if len(values) == 1:
         selected_version = values[0]

@@ -148,7 +148,9 @@ def test__build_crf_metadata_modal_tabbed_body():
         ]
     )
 
-    received = modals._build_crf_metadata_modal_tabbed_body(test_selected_version, test_template_name)
+    received = modals._build_crf_metadata_modal_tabbed_body(
+        test_selected_version, test_template_name
+    )
     assert str(received) == str(expected)
 
 
@@ -758,7 +760,11 @@ def test_display_crf_metadata_modal(
 ):
     received_open_modal, received_template_name, received_div_output = (
         get_output_display_crf_metadata_modal(
-            trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
+            trigger,
+            info_btn_clicks,
+            close_btn_clicks,
+            info_btn_ids,
+            selected_version_data,
         )
     )
     expected_open_modal, expected_template_name, expected_div_output = expected_output
