@@ -608,7 +608,6 @@ def toggle_template_info_icon_visibility(
         )
 
     return styles
-    # return styles, arc_crf_metadata.to_json(date_format="iso", orient="split")
 
 
 @dash.callback(
