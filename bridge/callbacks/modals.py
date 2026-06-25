@@ -68,7 +68,7 @@ def build_checklist_dom_from_mapping(
     return options, checked_items
 
 
-def _build_crf_metadata_modal_tabbed_body(template_id: str) -> dash.html.Div:
+def _build_crf_metadata_modal_tabbed_body(selected_version: str, template_id: str) -> dash.html.Div:
     template_name = template_id.split("_")[-1]
 
     return html.Div(
@@ -76,23 +76,23 @@ def _build_crf_metadata_modal_tabbed_body(template_id: str) -> dash.html.Div:
             html.H1(f"{string.capwords(template_name)}"),
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
-                value=f"{template_id}|project-overview-tab",
+                value=f"{selected_version}|{template_id}|project-overview-tab",
                 children=[
                     dcc.Tab(
                         label="Project Overview",
-                        value=f"{template_id}|project-overview-tab",
+                        value=f"{selected_version}|{template_id}|project-overview-tab",
                     ),
                     dcc.Tab(
                         label="Scientific Scope",
-                        value=f"{template_id}|scientific-scope-tab",
+                        value=f"{selected_version}|{template_id}|scientific-scope-tab",
                     ),
                     dcc.Tab(
                         label="Governance & Contributors",
-                        value=f"{template_id}|governance-and-contributors-tab",
+                        value=f"{selected_version}|{template_id}|governance-and-contributors-tab",
                     ),
                     dcc.Tab(
                         label="Documentation & Discoverability",
-                        value=f"{template_id}|documentation-and-discoverability-tab",
+                        value=f"{selected_version}|{template_id}|documentation-and-discoverability-tab",
                     ),
                 ],
             ),
@@ -177,7 +177,7 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
 
 
 def _build_crf_metadata_modal_tab_content(
-    template_id: str, selected_version: str, tab_id: str
+    selected_version: str, template_id: str, tab_id: str
 ) -> dash.html.Div:
     def create_placeholder_template_metadata(template_id) -> pd.Series:
         placeholder_columns = [
@@ -623,11 +623,15 @@ def toggle_template_info_icon_visibility(
     ],
     [
         State({"type": "template-info-btn", "index": ALL}, "id"),
+        State("selected-version-store", "data"),
     ],
     prevent_initial_call=True,
 )
 def display_crf_metadata_modal(
-    info_btn_clicks: list, close_btn_clicks: int, info_btn_ids: list
+    info_btn_clicks: list,
+    close_btn_clicks: int,
+    info_btn_ids: list,
+    selected_version_data: dict
 ) -> tuple:
     """Open CRF metadata modal when info icon is clicked, close on close button."""
     ctx = dash.callback_context
@@ -647,8 +651,9 @@ def display_crf_metadata_modal(
         # Extract template name from the button ID
         button_info = json.loads(trigger_id.split(".")[0])
         template_id = button_info.get("index", "Unknown")
+        selected_version = selected_version_data.get("selected_version")
         # The tabbed CRF template metadata div
-        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(template_id)
+        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(selected_version, template_id)
 
         return (
             True,  # Open modal
@@ -662,14 +667,16 @@ def display_crf_metadata_modal(
 @dash.callback(
     Output("crf-metadata-modal-body-tab-content", "children"),
     Input("crf-metadata-modal-tabbed-body", "value"),
-    State("selected-version-store", "data"),
-    prevent_initial_call=True,
 )
 def display_crf_metadata_modal_body_selected_tab(
-    template_and_tab_id: str, selected_version_data: dict
+    value_str: str
 ) -> dash.html.Div:
-    template_id, tab_id = template_and_tab_id.split("|")
-    selected_version = selected_version_data.get("selected_version")
-    logger.info(f'Tab display for "{template_id}"')
+    values = value_str.split("|")
+    if len(values) == 1:
+        selected_version = values[0]
+        template_id = tab_id = ""
+    else:
+        selected_version, template_id, tab_id = values
+    logger.info(f'Tab display for "{template_id}" (version "{selected_version}")')
 
-    return _build_crf_metadata_modal_tab_content(template_id, selected_version, tab_id)
+    return _build_crf_metadata_modal_tab_content(selected_version, template_id, tab_id)

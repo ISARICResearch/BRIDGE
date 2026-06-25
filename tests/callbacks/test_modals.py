@@ -109,29 +109,30 @@ def test_update_list_variables_checked():
 
 
 def test__build_crf_metadata_modal_tabbed_body():
+    test_selected_version = "test_selected_version"
     test_template_name = "test crf"
     expected = html.Div(
         [
             html.H1("Test Crf"),
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
-                value="test crf|project-overview-tab",
+                value="test_selected_version|test crf|project-overview-tab",
                 children=[
                     dcc.Tab(
                         label="Project Overview",
-                        value="test crf|project-overview-tab",
+                        value="test_selected_version|test crf|project-overview-tab",
                     ),
                     dcc.Tab(
                         label="Scientific Scope",
-                        value="test crf|scientific-scope-tab",
+                        value="test_selected_version|test crf|scientific-scope-tab",
                     ),
                     dcc.Tab(
                         label="Governance & Contributors",
-                        value="test crf|governance-and-contributors-tab",
+                        value="test_selected_version|test crf|governance-and-contributors-tab",
                     ),
                     dcc.Tab(
                         label="Documentation & Discoverability",
-                        value="test crf|documentation-and-discoverability-tab",
+                        value="test_selected_version|test crf|documentation-and-discoverability-tab",
                     ),
                 ],
             ),
@@ -147,7 +148,7 @@ def test__build_crf_metadata_modal_tabbed_body():
         ]
     )
 
-    received = modals._build_crf_metadata_modal_tabbed_body(test_template_name)
+    received = modals._build_crf_metadata_modal_tabbed_body(test_selected_version, test_template_name)
     assert str(received) == str(expected)
 
 
@@ -575,12 +576,12 @@ def get_output_display_selected_in_modal(
 
 
 def get_output_display_crf_metadata_modal(
-    trigger, info_btn_clicks, close_btn_clicks, info_btn_ids
+    trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
 ):
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
         return modals.display_crf_metadata_modal(
-            info_btn_clicks, close_btn_clicks, info_btn_ids
+            info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
         )
 
     ctx = copy_context()
@@ -589,7 +590,7 @@ def get_output_display_crf_metadata_modal(
 
 
 @pytest.mark.parametrize(
-    "trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, expected_output",
+    "trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data, expected_output",
     [
         # ARChetype Disease CRF preset modal - test input when no option is selected
         (
@@ -604,6 +605,7 @@ def get_output_display_crf_metadata_modal(
                 {"type": "template-info-btn", "index": "Mpox"},
                 {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
             ],
+            {"selected_version": "test_selected_version"},
             (False, "", ""),
         ),
         # ARChetype Disease CRF preset modal - test input when the Covid option is selected and the modal is opened
@@ -624,6 +626,7 @@ def get_output_display_crf_metadata_modal(
                 {"type": "template-info-btn", "index": "Mpox"},
                 {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
             ],
+            {"selected_version": "test_selected_version"},
             (
                 True,
                 "Covid",
@@ -634,23 +637,23 @@ def get_output_display_crf_metadata_modal(
                             children=[
                                 dcc.Tab(
                                     label="Project Overview",
-                                    value="Covid|project-overview-tab",
+                                    value="test_selected_version|Covid|project-overview-tab",
                                 ),
                                 dcc.Tab(
                                     label="Scientific Scope",
-                                    value="Covid|scientific-scope-tab",
+                                    value="test_selected_version|Covid|scientific-scope-tab",
                                 ),
                                 dcc.Tab(
                                     label="Governance & Contributors",
-                                    value="Covid|governance-and-contributors-tab",
+                                    value="test_selected_version|Covid|governance-and-contributors-tab",
                                 ),
                                 dcc.Tab(
                                     label="Documentation & Discoverability",
-                                    value="Covid|documentation-and-discoverability-tab",
+                                    value="test_selected_version|Covid|documentation-and-discoverability-tab",
                                 ),
                             ],
                             id="crf-metadata-modal-tabbed-body",
-                            value="Covid|project-overview-tab",
+                            value="test_selected_version|Covid|project-overview-tab",
                         ),
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
@@ -684,6 +687,7 @@ def get_output_display_crf_metadata_modal(
                 {"type": "template-info-btn", "index": "Mpox"},
                 {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
             ],
+            {"selected_version": "test_selected_version"},
             (
                 True,
                 "Dengue",
@@ -694,23 +698,23 @@ def get_output_display_crf_metadata_modal(
                             children=[
                                 dcc.Tab(
                                     label="Project Overview",
-                                    value="Dengue|project-overview-tab",
+                                    value="test_selected_version|Dengue|project-overview-tab",
                                 ),
                                 dcc.Tab(
                                     label="Scientific Scope",
-                                    value="Dengue|scientific-scope-tab",
+                                    value="test_selected_version|Dengue|scientific-scope-tab",
                                 ),
                                 dcc.Tab(
                                     label="Governance & Contributors",
-                                    value="Dengue|governance-and-contributors-tab",
+                                    value="test_selected_version|Dengue|governance-and-contributors-tab",
                                 ),
                                 dcc.Tab(
                                     label="Documentation & Discoverability",
-                                    value="Dengue|documentation-and-discoverability-tab",
+                                    value="test_selected_version|Dengue|documentation-and-discoverability-tab",
                                 ),
                             ],
                             id="crf-metadata-modal-tabbed-body",
-                            value="Dengue|project-overview-tab",
+                            value="test_selected_version|Dengue|project-overview-tab",
                         ),
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
@@ -739,6 +743,7 @@ def get_output_display_crf_metadata_modal(
                 {"type": "template-info-btn", "index": "Mpox"},
                 {"type": "template-info-btn", "index": "Mpox Pregnancy and Paediatric"},
             ],
+            {"selected_version": "test_selected_version"},
             (False, dash.no_update, dash.no_update),
         ),
     ],
@@ -748,11 +753,12 @@ def test_display_crf_metadata_modal(
     info_btn_clicks: list,
     close_btn_clicks: int | list,
     info_btn_ids: list,
+    selected_version_data: dict,
     expected_output: tuple,
 ):
     received_open_modal, received_template_name, received_div_output = (
         get_output_display_crf_metadata_modal(
-            trigger, info_btn_clicks, close_btn_clicks, info_btn_ids
+            trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
         )
     )
     expected_open_modal, expected_template_name, expected_div_output = expected_output
