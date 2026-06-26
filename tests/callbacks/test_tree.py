@@ -21,7 +21,7 @@ MULTILIST_SAVED = None
 DYNAMIC_UNIT_CONVERSION_NONE = None
 
 
-def test_get_checked_template_list_from_context_single_selection():
+def test_get_checked_template_list_from_context__single_selection_in_single_section():
     """Test extracting a single checked template from dash callback context."""
     from dash._callback_context import context_value
     from dash._utils import AttributeDict
@@ -45,9 +45,28 @@ def test_get_checked_template_list_from_context_single_selection():
                 "Mpox",
                 "Mpox Pregnancy and Paediatric",
             ],
-            "ARChetype Syndromic CRF": ["ARI"],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
         }
-        checked_values_list = [True, False, False, False, False, False, False]
+        checked_values_list = [
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
 
         # Expect only the last clicked/triggered template (Covid)
         output = tree._get_checked_template_list_from_context(
@@ -60,12 +79,70 @@ def test_get_checked_template_list_from_context_single_selection():
     ctx.run(run_test)
 
 
-def test_get_checked_template_list_from_context_multiple_selections():
+def test_get_checked_template_list_from_context__deselection_with_single_selection_in_single_section():
+    """Test extracting a single checked template from dash callback context."""
+    from dash._callback_context import context_value
+    from dash._utils import AttributeDict
+
+    # Switch context in "ARChetype Disease CRF_Covid" section
+    trigger_info = [
+        {
+            "prop_id": '{"type":"template_check","index":"ARChetype Disease CRF_Covid"}.value',
+            "value": False,
+        }
+    ]
+
+    def run_test():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger_info}))
+        grouped_presets_dict = {
+            "ARChetype Disease CRF": [
+                "Covid",
+                "H5Nx",
+                "Dengue",
+                "Chikungunya",
+                "Mpox",
+                "Mpox Pregnancy and Paediatric",
+            ],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
+        }
+        checked_values_list = [
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
+
+        # Expect only the last clicked/triggered template (Covid)
+        output = tree._get_checked_template_list_from_context(
+            dash.callback_context, grouped_presets_dict, checked_values_list
+        )
+        expected = []
+        assert output == expected
+
+    ctx = copy_context()
+    ctx.run(run_test)
+
+
+def test_get_checked_template_list_from_context__multiple_selections_in_single_section():
     """Test extracting the triggered checked template from dash callback context."""
     from dash._callback_context import context_value
     from dash._utils import AttributeDict
 
-    # Simulate context for a switch in "ARChetype Disease CRF_Dengue" section being clicked
+    # Simulate context for a switch in "ARChetype Disease CRF_Dengue" section selected
     trigger_info = [
         {
             "prop_id": '{"type":"template_check","index":"ARChetype Disease CRF_Dengue"}.value',
@@ -84,16 +161,226 @@ def test_get_checked_template_list_from_context_multiple_selections():
                 "Mpox",
                 "Mpox Pregnancy and Paediatric",
             ],
-            "ARChetype Syndromic CRF": ["ARI"],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
         }
-        # Covid and Dengue are selected, but only Dengue was just clicked
-        checked_values_list = [True, False, True, False, False, False, False]
+        # ARChetype Disease CRF Covid and Dengue are selected, with Dengue selected last
+        checked_values_list = [
+            True,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
 
         output = tree._get_checked_template_list_from_context(
             dash.callback_context, grouped_presets_dict, checked_values_list
         )
         # Expect only the last clicked/triggered template (Dengue)
-        expected = [["ARChetype Disease CRF", "Dengue"]]
+        expected = [
+            ["ARChetype Disease CRF", "Covid"],
+            ["ARChetype Disease CRF", "Dengue"],
+        ]
+        assert output == expected
+
+    ctx = copy_context()
+    ctx.run(run_test)
+
+
+def test_get_checked_template_list_from_context__deselection_with_multiple_selections_in_single_section():
+    """Test extracting the triggered checked template from dash callback context."""
+    from dash._callback_context import context_value
+    from dash._utils import AttributeDict
+
+    # Simulate context for a switch in "ARChetype Disease CRF_Dengue" section selected
+    trigger_info = [
+        {
+            "prop_id": '{"type":"template_check","index":"ARChetype Disease CRF_Dengue"}.value',
+            "value": False,
+        }
+    ]
+
+    def run_test():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger_info}))
+        grouped_presets_dict = {
+            "ARChetype Disease CRF": [
+                "Covid",
+                "H5Nx",
+                "Dengue",
+                "Chikungunya",
+                "Mpox",
+                "Mpox Pregnancy and Paediatric",
+            ],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
+        }
+        # ARChetype Disease CRF Covid and Dengue are pre-selected, with Dengue deselected last
+        checked_values_list = [
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
+
+        output = tree._get_checked_template_list_from_context(
+            dash.callback_context, grouped_presets_dict, checked_values_list
+        )
+        # Expect only the last clicked/triggered template (Dengue)
+        expected = [
+            ["ARChetype Disease CRF", "Covid"],
+        ]
+        assert output == expected
+
+    ctx = copy_context()
+    ctx.run(run_test)
+
+
+def test_get_checked_template_list_from_context__multiple_selections_across_multiple_sections():
+    """Test extracting the triggered checked template from dash callback context."""
+    from dash._callback_context import context_value
+    from dash._utils import AttributeDict
+
+    # Simulate context for a switch in "ARChetype Syndromic CRF_ARI" selected
+    trigger_info = [
+        {
+            "prop_id": '{"type":"template_check","index":"ARChetype Syndromic CRF_ARI"}.value',
+            "value": True,
+        }
+    ]
+
+    def run_test():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger_info}))
+        grouped_presets_dict = {
+            "ARChetype Disease CRF": [
+                "Covid",
+                "H5Nx",
+                "Dengue",
+                "Chikungunya",
+                "Mpox",
+                "Mpox Pregnancy and Paediatric",
+            ],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
+        }
+        # ARChetype Disease CRF Covid and Dengue, and ARChetype Syndromic CRF
+        # ARI, are selected, with ARChetype Syndromic CRF ARI selected last
+        checked_values_list = [
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
+
+        output = tree._get_checked_template_list_from_context(
+            dash.callback_context, grouped_presets_dict, checked_values_list
+        )
+        # Expect only the last clicked/triggered template (Dengue)
+        expected = [
+            ["ARChetype Disease CRF", "Covid"],
+            ["ARChetype Disease CRF", "H5Nx"],
+            ["ARChetype Syndromic CRF", "ARI"],
+        ]
+        assert output == expected
+
+    ctx = copy_context()
+    ctx.run(run_test)
+
+
+def test_get_checked_template_list_from_context__deselection_with_multiple_selections_across_multiple_sections():
+    """Test extracting the triggered checked template from dash callback context."""
+    from dash._callback_context import context_value
+    from dash._utils import AttributeDict
+
+    # Simulate context for a switch in "ARChetype Syndromic CRF_H5Nx" being deselected
+    trigger_info = [
+        {
+            "prop_id": '{"type":"template_check","index":"ARChetype Disease CRF_H5Nx"}.value',
+            "value": False,
+        }
+    ]
+
+    def run_test():
+        context_value.set(AttributeDict(**{"triggered_inputs": trigger_info}))
+        grouped_presets_dict = {
+            "ARChetype Disease CRF": [
+                "Covid",
+                "H5Nx",
+                "Dengue",
+                "Chikungunya",
+                "Mpox",
+                "Mpox Pregnancy and Paediatric",
+            ],
+            "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis"],
+            "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+            "Recommended Outcomes": ["Dengue"],
+            "Populations": ["Paediatric", "Pregnancy"],
+        }
+        # ARChetype Disease CRF Covid and Dengue, and ARChetype Syndromic CRF
+        # ARI, are pre-selected, with ARChetype Disease CRF H5Nx deselected last
+        checked_values_list = [
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ]
+
+        output = tree._get_checked_template_list_from_context(
+            dash.callback_context, grouped_presets_dict, checked_values_list
+        )
+        # Expect only the last clicked/triggered template (Dengue)
+        expected = [
+            ["ARChetype Disease CRF", "Covid"],
+            ["ARChetype Syndromic CRF", "ARI"],
+        ]
         assert output == expected
 
     ctx = copy_context()

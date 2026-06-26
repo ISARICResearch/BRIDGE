@@ -77,14 +77,14 @@ def update_tree_items_and_stores(
         )
         return tree_items, dash.no_update, dash.no_update, dash.no_update
 
-    logger.info(f"checked_variables: {checked_templates}")
+    logger.info(f"checked_templates: {checked_templates}")
     logger.info(f"grouped_presets: {grouped_presets_dict}")
 
     # Extract the trigger info to get both section and template names
     checked_template_list = _get_checked_template_list_from_context(
         ctx, grouped_presets_dict, checked_templates
     )
-
+    logger.info(f"checked_template_list={checked_template_list}")
     checked = []
     ulist_variable_choices = []
     multilist_variable_choices = []
@@ -153,17 +153,18 @@ def _get_checked_template_list_from_context(
 
     # Get the trigger that caused this callback
     if ctx.triggered:
-        trigger_id = json.loads(ctx.triggered[0]["prop_id"].split(".")[0])
-
-        # For Switch components, the index is "section_template_name"
-        if "_" in trigger_id.get("index", ""):
-            parts = trigger_id["index"].rsplit(
-                "_", 1
-            )  # Split from right to handle names with underscores
-            if len(parts) == 2:
-                section, template_name = parts
-                if ctx.triggered[0]["value"]:  # Only add if switch is ON
-                    output.append([section, template_name])
+        # Flatten the group presets dict to create ordered (section, preset) pairs
+        flattened_group_presets_dict = [
+            (k, v) for k, values in grouped_presets_dict.items() for v in values
+        ]
+        for (section, preset), preset_checked in zip(
+            flattened_group_presets_dict, checked_values_list
+        ):
+            # Loop over a zip of the flattened group presets dict with the
+            # checked value indicators list, and add every pair that is checked
+            # to the output list.
+            if preset_checked:
+                output.append([section, preset])
         else:
             # For Checklist components, item_checked_list is a list of selected items
             for section, item_checked_list in zip(
