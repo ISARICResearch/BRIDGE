@@ -89,7 +89,9 @@ def clean_dataframe(dataframe: pandas.DataFrame) -> pandas.DataFrame:
     return dataframe.map(strip_html).map(strip_nonstandard_unicode_chars)
 
 
-def generate_hyperlink_tags(comma_separated_urls: str, new_page_target: bool = True) -> typing.Generator[str, None, None]:
+def generate_hyperlink_tags(
+    comma_separated_urls: str, new_page_target: bool = True
+) -> typing.Generator[str, None, None]:
     """:py:class:`typing.Generator` : A sequence of HTML hyperlink tags with new page targets.
 
     Parameters
@@ -98,13 +100,13 @@ def generate_hyperlink_tags(comma_separated_urls: str, new_page_target: bool = T
         A comma-separated string of URLs.
 
     new_page_target : bool, default=True
-        Optionally set the tags to open in a new page, defaults to ``True``. 
+        Optionally set the tags to open in a new page, defaults to ``True``.
 
     Yields
     ------
     str
         HTML hyperlink
     """
-    target_attrib = 'target="_blank"' if new_page_target else ''
-    for url in map(str.strip, comma_separated_urls.split(',')):
+    target_attrib = 'target="_blank"' if new_page_target else ""
+    for url in map(str.strip, comma_separated_urls.split(",")):
         yield f'<a href="{url}" {target_attrib}>{url}</a>'

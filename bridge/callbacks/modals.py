@@ -172,10 +172,10 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
             "Related documents, protocols, repositories, websites, publication"
         ]
 
-    if tm['Relevant resources'].lower() == "unknown":
+    if tm["Relevant resources"].lower() == "unknown":
         return f"""
         - **Keywords** - {tm['Keywords']}
-        - **Relevant Links** - Unknown 
+        - **Relevant Links** - Unknown
         """
 
     return dcc.Markdown(
