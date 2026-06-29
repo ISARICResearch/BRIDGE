@@ -17,6 +17,8 @@ def get_selected_crf_presets(
 ) -> tuple[tuple[str, str]]:
     """:py:class:`tuple` : A tuple of selected CRF presets organised by section name.
 
+    .. note:: A tuple is returned to keep the output immutable.
+
     Parameters
     ----------
     grouped_presets : dict
