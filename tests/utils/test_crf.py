@@ -105,8 +105,10 @@ def test_get_selected_crf_presets(
 @mock.patch("bridge.utils.crf.logger")
 def test_get_crf_name(_mock_logger, name, checked, grouped_presets, expected_output):
     def run_callback(crf_name, checked_values, grouped_presets):
-        return get_crf_name(crf_name, checked_values, grouped_presets=grouped_presets)
+        return get_crf_name(
+            crf_name, checked_values, grouped_presets=(grouped_presets or None)
+        )
 
     ctx = copy_context()
-    output = ctx.run(run_callback, name, checked, grouped_presets=grouped_presets)
+    output = ctx.run(run_callback, name, checked, grouped_presets)
     assert output == expected_output
