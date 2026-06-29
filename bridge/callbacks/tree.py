@@ -10,6 +10,7 @@ from dash import html, Input, Output, State
 from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient
 from bridge.utils.logger import setup_logger
+from bridge.utils.crf import get_selected_crf_presets
 
 pd.options.mode.copy_on_write = True
 
@@ -148,33 +149,9 @@ def update_tree_items_and_stores(
 def _get_checked_template_list_from_context(
     ctx, grouped_presets_dict: dict, checked_values_list: list
 ) -> list:
-    """Extract checked templates from callback context, handling both Switches and Checklists."""
-    output = []
-
     # Get the trigger that caused this callback
     if ctx.triggered:
-        # Flatten the group presets dict to create ordered (section, preset) pairs
-        flattened_group_presets_dict = [
-            (k, v) for k, values in grouped_presets_dict.items() for v in values
-        ]
-        for (section, preset), preset_checked in zip(
-            flattened_group_presets_dict, checked_values_list
-        ):
-            # Loop over a zip of the flattened group presets dict with the
-            # checked value indicators list, and add every pair that is checked
-            # to the output list.
-            if preset_checked:
-                output.append([section, preset])
-        else:
-            # For Checklist components, item_checked_list is a list of selected items
-            for section, item_checked_list in zip(
-                grouped_presets_dict.keys(), checked_values_list
-            ):
-                if item_checked_list and isinstance(item_checked_list, list):
-                    for item_checked in item_checked_list:
-                        output.append([section, item_checked])
-
-    return output
+        return get_selected_crf_presets(grouped_presets_dict, checked_values_list)
 
 
 def _update_list_items(

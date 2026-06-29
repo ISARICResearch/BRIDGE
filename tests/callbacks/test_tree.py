@@ -69,10 +69,14 @@ def test_get_checked_template_list_from_context__single_selection_in_single_sect
         ]
 
         # Expect only the last clicked/triggered template (Covid)
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
-        expected = [["ARChetype Disease CRF", "Covid"]]
+        expected = [
+            ("ARChetype Disease CRF", "Covid"),
+        ]
         assert output == expected
 
     ctx = copy_context()
@@ -127,8 +131,10 @@ def test_get_checked_template_list_from_context__deselection_with_single_selecti
         ]
 
         # Expect only the last clicked/triggered template (Covid)
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
         expected = []
         assert output == expected
@@ -185,13 +191,15 @@ def test_get_checked_template_list_from_context__multiple_selections_in_single_s
             False,
         ]
 
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
         # Expect only the last clicked/triggered template (Dengue)
         expected = [
-            ["ARChetype Disease CRF", "Covid"],
-            ["ARChetype Disease CRF", "Dengue"],
+            ("ARChetype Disease CRF", "Covid"),
+            ("ARChetype Disease CRF", "Dengue"),
         ]
         assert output == expected
 
@@ -247,12 +255,14 @@ def test_get_checked_template_list_from_context__deselection_with_multiple_selec
             False,
         ]
 
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
         # Expect only the last clicked/triggered template (Dengue)
         expected = [
-            ["ARChetype Disease CRF", "Covid"],
+            ("ARChetype Disease CRF", "Covid"),
         ]
         assert output == expected
 
@@ -309,14 +319,16 @@ def test_get_checked_template_list_from_context__multiple_selections_across_mult
             False,
         ]
 
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
         # Expect only the last clicked/triggered template (Dengue)
         expected = [
-            ["ARChetype Disease CRF", "Covid"],
-            ["ARChetype Disease CRF", "H5Nx"],
-            ["ARChetype Syndromic CRF", "ARI"],
+            ("ARChetype Disease CRF", "Covid"),
+            ("ARChetype Disease CRF", "H5Nx"),
+            ("ARChetype Syndromic CRF", "ARI"),
         ]
         assert output == expected
 
@@ -373,13 +385,15 @@ def test_get_checked_template_list_from_context__deselection_with_multiple_selec
             False,
         ]
 
-        output = tree._get_checked_template_list_from_context(
-            dash.callback_context, grouped_presets_dict, checked_values_list
+        output = list(
+            tree._get_checked_template_list_from_context(
+                dash.callback_context, grouped_presets_dict, checked_values_list
+            )
         )
         # Expect only the last clicked/triggered template (Dengue)
         expected = [
-            ["ARChetype Disease CRF", "Covid"],
-            ["ARChetype Syndromic CRF", "ARI"],
+            ("ARChetype Disease CRF", "Covid"),
+            ("ARChetype Syndromic CRF", "ARI"),
         ]
         assert output == expected
 
