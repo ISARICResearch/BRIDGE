@@ -758,7 +758,7 @@ def display_crf_metadata_modal(
 
         return (
             True,  # Open modal
-            template_id,  # Template ID, which is "<section name>_<template name>"
+            " | ".join(template_id.split("_")),  # "<section name> | <template name>
             crf_metadata_body,  # Body
         )
 
