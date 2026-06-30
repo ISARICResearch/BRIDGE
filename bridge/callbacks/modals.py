@@ -1,6 +1,5 @@
 import io
 import json
-import string
 from functools import lru_cache
 from time import perf_counter
 from typing import Tuple
@@ -76,7 +75,7 @@ def _build_crf_metadata_modal_tabbed_body(
 
     return html.Div(
         [
-            html.H1(f"{string.capwords(template_name)}"),
+            html.H1(f"{template_name.upper()}"),
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
                 value=f"{selected_version}|{template_id}|project-overview-tab",
@@ -580,14 +579,65 @@ def toggle_template_info_icon_visibility(
     switch_ids: list,
     grouped_presets: dict,
     arc_crf_metadata_json: str,
-) -> tuple:
+) -> list:
+    """:py:class:`list` : Returns a list of styling dicts for the CRF preset/template information icons.
+
+    These styling dicts are of the form:
+    ::
+
+        {
+            "background": "none",
+            "border": "none",
+            "cursor": "pointer",
+            "fontSize": "16px",
+            "padding": "0 8px",
+            "marginLeft": "auto",
+            "display": "block" if status else "none",
+        }
+
+    A ``"display"`` value of ``"block"`` for a template corresponds to the
+    information icon being visible for that template, while a display value of
+    ``"none"`` hides the icon.
+
+    Parameters
+    ----------
+    switch_values : list
+        A list of boolean indicators of the toggle status of the CRF
+        presets/templates, one for each template.
+
+    switch_ids : list
+        A list of IDs for the CRF presets/templates, eacn ID a dict in
+        the form:
+        ::
+
+            {
+                "type": "template_check",
+                "index": "<section name>_<template name>"}
+            }
+
+    grouped_presets : dict
+        A dict of CRF presets/templates keyed by section name.
+
+    arc_crf_metadata_json : str
+        The raw JSON of the CRF metadata CSV obtained (via the ARC API client)
+        from an ARC release matching the currently selected version.
+
+    Returns
+    -------
+    list
+        The list of styling dicts for the CRF presets/templates.
+
+    """
+    # Load the CRF metadata CSV from the raw JSON, and extract the list of
+    # sections implicitly defined in the rows of the CSV
     arc_crf_metadata = pd.read_json(io.StringIO(arc_crf_metadata_json), orient="split")
     info_icon_sections = (
         arc_crf_metadata["Title of CRF"].str.split("_").str[0].unique().tolist()
     )
 
-    """Show info icon only when template switch is ON for the template"""
-    # Create a mapping of template_name -> is_on for section templates
+    # For each combination of switch ID and value, determine the visibility
+    # of the corresponding template, and build a map/dict keyed by section and
+    # whose values are template names.
     template_status = {}
 
     for switch_id, is_on in zip(switch_ids, switch_values):
@@ -602,7 +652,8 @@ def toggle_template_info_icon_visibility(
         else:
             template_status[(section, template_name)] = False
 
-    # Build style for each info button, in the same order as templates
+    # Using the map above, build a list of styles, one for each template, and
+    # return.
     styles = []
     for (section, template_name), status in template_status.items():
         styles.append(
@@ -637,12 +688,47 @@ def toggle_template_info_icon_visibility(
     prevent_initial_call=True,
 )
 def display_crf_metadata_modal(
-    info_btn_clicks: list,
-    close_btn_clicks: int,
+    info_btn_clicks: list[bool],
+    close_btn_clicks: bool,
     info_btn_ids: list,
     selected_version_data: dict,
 ) -> tuple:
-    """Open CRF metadata modal when info icon is clicked, close on close button."""
+    """:py:class:`tuple` : Callback for the display of the CRF metadata modal.
+
+    Parameters
+    ----------
+    info_btn_clicks : list
+        A list of boolean (given as ``0``/``1``) indicators of click status
+        for the CRF presets/templates, with ``0`` representing no-click and
+        ``1`` representing a click.
+
+    close_btn_clicks : bool
+        A bool (given as ``0``/``1``) indicating whether the modal Close button
+        was clicked, with ``0`` representing no-click and ``1`` representing
+        a click.
+
+    info_btn_ids : list
+        A list of IDs for the CRF preset/template icons as dicts in the form:
+        ::
+
+            {
+                "type": "template-info-btn",
+                "index": <template name>
+            }
+
+    selected_version_data : dict
+        A dict indicating the currently selected version in the form:
+        ::
+
+            {
+                "selected_version": "<version string>"
+            }
+
+    Returns
+    -------
+    tuple
+        A tuple consisting of display indicator (bool) and Dash update status
+    """
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -680,6 +766,27 @@ def display_crf_metadata_modal(
     Input("crf-metadata-modal-tabbed-body", "value"),
 )
 def display_crf_metadata_modal_body_selected_tab(value_str: str) -> dash.html.Div:
+    """:py:class:`str` : Callback for the display of the currently selected tab in the CRF metadata modal.
+
+    Parameters
+    ----------
+    value_str
+        A value string in the form:
+        ::
+
+            <selected_version>|<template_id>|<tab ID>
+
+        For example:
+        ::
+
+            v1.4.0|ARChetype Disease CRF_Dengue|project-overview-tab
+
+    Returns
+    -------
+    dash.html.Div
+        The CRF metadata modal selected tab div, with content dynamically
+        determined by the selection version, template ID and tab ID.
+    """
     values = value_str.split("|")
     if len(values) == 1:
         selected_version = values[0]
