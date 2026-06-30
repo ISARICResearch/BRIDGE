@@ -155,7 +155,9 @@ def test__build_crf_metadata_modal_tabbed_body():
 
 
 def test__build_crf_metadata_modal_project_overview_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
+    dengue_metadata = (
+        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    )
     expected = dcc.Markdown(
         f"""
         - **Description** - {dengue_metadata['Description']}
@@ -169,7 +171,9 @@ def test__build_crf_metadata_modal_project_overview_tab(arc_1_4_0__crf_metadata)
 
 
 def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
+    dengue_metadata = (
+        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    )
     expected = dcc.Markdown(
         f"""
         - **Research Questions** - {dengue_metadata['Research questions']}
@@ -189,13 +193,15 @@ def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_4_0__crf_metadata)
 def test__build_crf_metadata_modal_governance_and_contributors_tab(
     arc_1_4_0__crf_metadata,
 ):
-    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
+    dengue_metadata = (
+        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    )
     expected = dcc.Markdown(
         f"""
         - **Authors** - {dengue_metadata['Authors']}
         - **Approvers** - {dengue_metadata['Approvers']}
         - **Institutions** - {dengue_metadata['Institutions']}
-        - **Contact** - {dengue_metadata['Contact First Name']} {dengue_metadata['Contact Last Name']} {dengue_metadata['Contact email']}
+        - **Contact** - Unknown
         """
     )
     received = modals._build_crf_metadata_modal_governance_and_contributors_tab(
@@ -207,7 +213,9 @@ def test__build_crf_metadata_modal_governance_and_contributors_tab(
 def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
     arc_1_4_0__crf_metadata,
 ):
-    dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
+    dengue_metadata = (
+        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    )
 
     expected = html.Div(
         [

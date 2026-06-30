@@ -113,7 +113,7 @@ def _build_crf_metadata_modal_tabbed_body(
 def _build_crf_metadata_modal_project_overview_tab(
     template_metadata: pd.Series,
 ) -> dash.html.Div:
-    tm = template_metadata
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
 
     return dcc.Markdown(
         f"""
@@ -128,7 +128,7 @@ def _build_crf_metadata_modal_project_overview_tab(
 def _build_crf_metadata_modal_scientific_scope_tab(
     template_metadata: pd.Series,
 ) -> dash.html.Div:
-    tm = template_metadata
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
 
     return dcc.Markdown(
         f"""
@@ -147,7 +147,7 @@ def _build_crf_metadata_modal_scientific_scope_tab(
 def _build_crf_metadata_modal_governance_and_contributors_tab(
     template_metadata: pd.DataFrame,
 ) -> dash.html.Div:
-    tm = template_metadata
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
 
     contact_field = (
         f'{tm['Contact First Name']} {tm['Contact Last Name']} ({tm['Contact email']})'
@@ -158,18 +158,18 @@ def _build_crf_metadata_modal_governance_and_contributors_tab(
 
     return dcc.Markdown(
         f"""
-            - **Authors** - {tm['Authors']}
-            - **Approvers** - {tm['Approvers']}
-            - **Institutions** - {tm['Institutions']}
-            - **Contact** - {contact_field}
-            """
+        - **Authors** - {tm['Authors']}
+        - **Approvers** - {tm['Approvers']}
+        - **Institutions** - {tm['Institutions']}
+        - **Contact** - {contact_field}
+        """
     )
 
 
 def _build_crf_metadata_modal_documentation_and_discoverability_tab(
     template_metadata: pd.DataFrame,
 ) -> dash.html.Div:
-    tm = template_metadata
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
     try:
         tm["Relevant resources"]
     except KeyError:
