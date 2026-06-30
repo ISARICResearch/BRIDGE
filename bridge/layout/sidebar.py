@@ -58,7 +58,7 @@ class SideBar:
                 "top": "4.75rem",  # Height of the navbar
                 "left": "4rem",
                 "bottom": 0,
-                "width": "20rem",
+                "width": "25rem",
                 "background-color": "#dddddd",
                 "z-index": 2001,
             },

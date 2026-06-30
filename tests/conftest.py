@@ -48,3 +48,10 @@ def arc_1_2_2__english__supplemental_phrases(
     arc_1_2_2__english__supplemental_phrases_filepath,
 ) -> pd.DataFrame:
     return pd.read_csv(arc_1_2_2__english__supplemental_phrases_filepath)
+
+
+@pytest.fixture(scope="module")
+def arc_1_4_0__crf_metadata() -> pd.DataFrame:
+    return pd.read_csv(
+        Path(__file__).parent.joinpath("data", "arc-1.4.0-crf-metadata.csv")
+    )

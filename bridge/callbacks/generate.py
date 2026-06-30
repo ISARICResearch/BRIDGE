@@ -12,8 +12,11 @@ from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
 from bridge.generate_pdf import paper_crf, paper_word
-from bridge.utils.crf_name import get_crf_name
+from bridge.utils.crf import get_crf_name
+from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
+
+logger = setup_logger(__name__)
 
 pd.options.mode.copy_on_write = True
 
@@ -56,6 +59,7 @@ def _has_chikunguny_template(checked_presets: list) -> bool:
         State("selected_data-store", "data"),
         State("selected-version-store", "data"),
         State("selected-language-store", "data"),
+        State("grouped_presets-store", "data"),
         State({"type": "template_check", "index": dash.ALL}, "value"),
         State("crf_name", "value"),
         State("output-files-store", "data"),
@@ -68,6 +72,7 @@ def on_generate_click(
     json_data: str,
     selected_version_data: dict,
     selected_language_data: dict,
+    grouped_presets_dict: dict,
     checked_presets: list,
     crf_name: str,
     output_files: list,
@@ -87,8 +92,14 @@ def on_generate_click(
         return ("", None, None, None, None, None, None)
 
     date = datetime.today().strftime("%Y-%m-%d")
-    crf_name = get_crf_name(crf_name, checked_presets)
+    logger.info(f"grouped_presets_dict={grouped_presets_dict}")
+    logger.info(f"crf_name={crf_name}")
+    logger.info(f"checked_presets={checked_presets}")
 
+    crf_name = get_crf_name(
+        crf_name, checked_presets, grouped_presets=grouped_presets_dict
+    )
+    logger.info(f"crf_name={crf_name}")
     selected_variables_from_data = pd.read_json(io.StringIO(json_data), orient="split")
     version = selected_version_data.get("selected_version")
     language = selected_language_data.get("selected_language")

@@ -8,11 +8,14 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_treeview_antd
 import pandas as pd
-from dash import html, Input, Output, State
+from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
+from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
+from bridge.utils.crf import clean_crf_metadata
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
+
 
 CHECKLIST_STYLE = {"padding": "20px", "maxHeight": "250px", "overflowY": "auto"}
 LIST_GROUP_STYLE = {"maxHeight": "250px", "overflowY": "auto"}
@@ -64,6 +67,204 @@ def build_checklist_dom_from_mapping(
     options = [{"label": label, "value": value} for label, value in options_data]
     checked_items = list(checked_items_data)
     return options, checked_items
+
+
+def _build_crf_metadata_modal_tabbed_body(
+    selected_version: str, template_id: str
+) -> dash.html.Div:
+    return html.Div(
+        [
+            "",
+            dcc.Tabs(
+                id="crf-metadata-modal-tabbed-body",
+                value=f"{selected_version}|{template_id}|project-overview-tab",
+                children=[
+                    dcc.Tab(
+                        label="Project Overview",
+                        value=f"{selected_version}|{template_id}|project-overview-tab",
+                    ),
+                    dcc.Tab(
+                        label="Scientific Scope",
+                        value=f"{selected_version}|{template_id}|scientific-scope-tab",
+                    ),
+                    dcc.Tab(
+                        label="Governance & Contributors",
+                        value=f"{selected_version}|{template_id}|governance-and-contributors-tab",
+                    ),
+                    dcc.Tab(
+                        label="Documentation & Discoverability",
+                        value=f"{selected_version}|{template_id}|documentation-and-discoverability-tab",
+                    ),
+                ],
+            ),
+            html.Div(
+                id="crf-metadata-modal-body-tab-content",
+                style={
+                    "width": "800px",
+                    "height": "250px",
+                    "overflow-x": "hidden",
+                    "white-space": "normal",
+                },
+            ),
+        ],
+    )
+
+
+def _build_crf_metadata_modal_project_overview_tab(
+    template_metadata: pd.Series,
+) -> dash.html.Div:
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
+
+    return dcc.Markdown(
+        f"""
+        - **Description** - {tm['Description']}
+        - **Study Type** - {tm['Study type']}
+        - **Version** - {tm['Version']}
+        - **Publication Date** - {tm['Date of publication/release']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_scientific_scope_tab(
+    template_metadata: pd.Series,
+) -> dash.html.Div:
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
+
+    return dcc.Markdown(
+        f"""
+        - **Research Questions** - {tm['Research questions']}
+        - **Target Population** - {tm['Target population']}
+        - **Inclusion Criteria** - {tm['Inclusion Criteria']}
+        - **Exclusion Criteria** - {tm['Exclusion Criteria']}
+        - **Pathogen/Agent** - {tm['Pathogen or agent']}
+        - **Syndrome** - {tm['Syndrome / clinical presentation']}
+        - **Setting** - {tm['Setting']}
+        - **Geographic Scope** - {tm['Geographic scope']}
+        """
+    )
+
+
+def _build_crf_metadata_modal_governance_and_contributors_tab(
+    template_metadata: pd.DataFrame,
+) -> dash.html.Div:
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
+
+    contact_field = (
+        f'{tm['Contact First Name']} {tm['Contact Last Name']} ({tm['Contact email']})'
+        if tm["Contact First Name"].lower() != "unknown"
+        and tm["Contact Last Name"].lower()
+        else "Unknown"
+    )
+
+    return dcc.Markdown(
+        f"""
+        - **Authors** - {tm['Authors']}
+        - **Approvers** - {tm['Approvers']}
+        - **Institutions** - {tm['Institutions']}
+        - **Contact** - {contact_field}
+        """
+    )
+
+
+def _build_crf_metadata_modal_documentation_and_discoverability_tab(
+    template_metadata: pd.DataFrame,
+) -> dash.html.Div:
+    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
+    try:
+        tm["Relevant resources"]
+    except KeyError:
+        tm["Relevant resources"] = tm[
+            "Related documents, protocols, repositories, websites, publication"
+        ]
+
+    return html.Div(
+        [
+            html.Ul(
+                children=[
+                    html.Li([html.B("Keywords"), f" - {tm['Keywords']}"]),
+                    html.Li(
+                        [html.B("Relevant Links"), " - "]
+                        + (
+                            [
+                                html.A(url, href=url, target="_blank")
+                                for url in tm["Relevant resources"].split(",")
+                            ]
+                            if tm["Relevant resources"].lower() != "unknown"
+                            else ["Unknown"]
+                        )
+                    ),
+                ]
+            )
+        ]
+    )
+
+
+def _build_crf_metadata_modal_tab_content(
+    selected_version: str, template_id: str, tab_id: str
+) -> dash.html.Div:
+    def create_placeholder_template_metadata(template_id) -> pd.Series:
+        placeholder_columns = [
+            "Title of CRF",
+            "Description",
+            "Study type",
+            "Version",
+            "Date of publication/release",
+            "Research questions",
+            "Target population",
+            "Inclusion Criteria",
+            "Exclusion Criteria",
+            "Pathogen or agent",
+            "Syndrome / clinical presentation",
+            "Setting",
+            "Geographic scope",
+            "Authors",
+            "Approvers",
+            "Institutions",
+            "Contact First Name",
+            "Contact Last Name",
+            "Contact email",
+            "Keywords",
+            "Relevant resources",
+            "Related documents, protocols, repositories, websites, publication",
+        ]
+        rowfill = dict(
+            zip(
+                placeholder_columns,
+                ["Unknown"] * len(placeholder_columns),
+            )
+        )
+        rowfill["Title of CRF"] = template_id
+
+        return pd.DataFrame(rowfill, index=range(1)).iloc[0]
+
+    try:
+        arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+    except ArcApiClientError:
+        template_metadata = create_placeholder_template_metadata(template_id)
+    else:
+        arc_crf_metadata = clean_crf_metadata(arc_crf_metadata)
+        try:
+            template_metadata = arc_crf_metadata[
+                arc_crf_metadata["Title of CRF"] == template_id
+            ].iloc[0]
+        except IndexError:
+            template_metadata = create_placeholder_template_metadata(template_id)
+
+    if tab_id == "project-overview-tab":
+        return _build_crf_metadata_modal_project_overview_tab(template_metadata)
+    elif tab_id == "scientific-scope-tab":
+        return _build_crf_metadata_modal_scientific_scope_tab(template_metadata)
+    elif tab_id == "governance-and-contributors-tab":
+        return _build_crf_metadata_modal_governance_and_contributors_tab(
+            template_metadata
+        )
+    elif tab_id == "documentation-and-discoverability-tab":
+        return _build_crf_metadata_modal_documentation_and_discoverability_tab(
+            template_metadata
+        )
+
+    # In case the tab ID is not one of the expected four
+    return html.Div()
 
 
 @lru_cache(maxsize=512)
@@ -376,3 +577,235 @@ def update_list_variables_checked(
         df_current_datadicc,
         json.dumps(variable_choices_list),
     )
+
+
+@dash.callback(
+    Output({"type": "template-info-btn", "index": ALL}, "style"),
+    Input({"type": "template_check", "index": ALL}, "value"),
+    [
+        State({"type": "template_check", "index": ALL}, "id"),
+        State("grouped_presets-store", "data"),
+        State("arc-crf-metadata", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def toggle_template_info_icon_visibility(
+    switch_values: list,
+    switch_ids: list,
+    grouped_presets: dict,
+    arc_crf_metadata_json: str,
+) -> list:
+    """:py:class:`list` : Returns a list of styling dicts for the CRF preset/template information icons.
+
+    These styling dicts are of the form:
+    ::
+
+        {
+            "background": "none",
+            "border": "none",
+            "cursor": "pointer",
+            "fontSize": "16px",
+            "padding": "0 8px",
+            "marginLeft": "auto",
+            "display": "block" if status else "none",
+        }
+
+    A ``"display"`` value of ``"block"`` for a template corresponds to the
+    information icon being visible for that template, while a display value of
+    ``"none"`` hides the icon.
+
+    Parameters
+    ----------
+    switch_values : list
+        A list of boolean indicators of the toggle status of the CRF
+        presets/templates, one for each template.
+
+    switch_ids : list
+        A list of IDs for the CRF presets/templates, eacn ID a dict in
+        the form:
+        ::
+
+            {
+                "type": "template_check",
+                "index": "<section name>_<template name>"}
+            }
+
+    grouped_presets : dict
+        A dict of CRF presets/templates keyed by section name.
+
+    arc_crf_metadata_json : str
+        The raw JSON of the CRF metadata CSV obtained (via the ARC API client)
+        from an ARC release matching the currently selected version.
+
+    Returns
+    -------
+    list
+        The list of styling dicts for the CRF presets/templates.
+
+    """
+    # Load the CRF metadata CSV from the raw JSON, and extract the list of
+    # sections implicitly defined in the rows of the CSV
+    arc_crf_metadata = pd.read_json(io.StringIO(arc_crf_metadata_json), orient="split")
+    info_icon_sections = (
+        arc_crf_metadata["Title of CRF"].str.split("_").str[0].unique().tolist()
+    )
+
+    # For each combination of switch ID and value, determine the visibility
+    # of the corresponding template, and build a map/dict keyed by section and
+    # whose values are template names.
+    template_status = {}
+
+    for switch_id, is_on in zip(switch_ids, switch_values):
+        index_str = (
+            switch_id.get("index", "")
+            if isinstance(switch_id, dict)
+            else str(switch_id)
+        )
+        section, template_name = index_str.split("_")
+        if section in info_icon_sections:
+            template_status[(section, template_name)] = is_on
+        else:
+            template_status[(section, template_name)] = False
+
+    # Using the map above, return a list of styles, one for each template.
+    return [
+        {
+            "background": "none",
+            "border": "none",
+            "cursor": "pointer",
+            "fontSize": "16px",
+            "padding": "0 8px",
+            "marginLeft": "auto",
+            "display": "block" if status else "none",
+        }
+        for (section, template_name), status in template_status.items()
+    ]
+
+
+@dash.callback(
+    [
+        Output("crf_metadata_modal", "is_open"),
+        Output("crf_metadata_modal_title", "children"),
+        Output("crf_metadata_modal_body", "children"),
+    ],
+    [
+        Input({"type": "template-info-btn", "index": ALL}, "n_clicks"),
+        Input("crf_metadata_modal_close", "n_clicks"),
+    ],
+    [
+        State({"type": "template-info-btn", "index": ALL}, "id"),
+        State("selected-version-store", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def display_crf_metadata_modal(
+    info_btn_clicks: list[bool],
+    close_btn_clicks: bool,
+    info_btn_ids: list,
+    selected_version_data: dict,
+) -> tuple:
+    """:py:class:`tuple` : Callback for the display of the CRF metadata modal.
+
+    Parameters
+    ----------
+    info_btn_clicks : list
+        A list of boolean (given as ``0``/``1``) indicators of click status
+        for the CRF presets/templates, with ``0`` representing no-click and
+        ``1`` representing a click.
+
+    close_btn_clicks : bool
+        A bool (given as ``0``/``1``) indicating whether the modal Close button
+        was clicked, with ``0`` representing no-click and ``1`` representing
+        a click.
+
+    info_btn_ids : list
+        A list of IDs for the CRF preset/template icons as dicts in the form:
+        ::
+
+            {
+                "type": "template-info-btn",
+                "index": <template name>
+            }
+
+    selected_version_data : dict
+        A dict indicating the currently selected version in the form:
+        ::
+
+            {
+                "selected_version": "<version string>"
+            }
+
+    Returns
+    -------
+    tuple
+        A tuple consisting of display indicator (bool), template ID or a
+        Dash update indicator, and the CRF metadata body div or Dash
+        update indicator.
+    """
+    ctx = dash.callback_context
+
+    if not ctx.triggered:
+        return False, "", ""
+
+    trigger_id = ctx.triggered[0]["prop_id"]
+    trigger_value = ctx.triggered[0]["value"]
+
+    # Handle close button
+    if "crf_metadata_modal_close" in trigger_id:
+        return False, dash.no_update, dash.no_update
+
+    # Handle info icon click - only proceed if n_clicks > 0
+    if "template-info-btn" in trigger_id and trigger_value and trigger_value > 0:
+        # Extract template name from the button ID
+        button_info = json.loads(trigger_id.split(".")[0])
+        template_id = button_info.get("index", "Unknown")
+        selected_version = selected_version_data.get("selected_version")
+        # The tabbed CRF template metadata div
+        crf_metadata_body = _build_crf_metadata_modal_tabbed_body(
+            selected_version, template_id
+        )
+
+        return (
+            True,  # Open modal
+            " | ".join(template_id.split("_")),  # "<section name> | <template name>
+            crf_metadata_body,  # Body
+        )
+
+    return False, dash.no_update, dash.no_update
+
+
+@dash.callback(
+    Output("crf-metadata-modal-body-tab-content", "children"),
+    Input("crf-metadata-modal-tabbed-body", "value"),
+)
+def display_crf_metadata_modal_body_selected_tab(value_str: str) -> dash.html.Div:
+    """:py:class:`str` : Callback for the display of the currently selected tab in the CRF metadata modal.
+
+    Parameters
+    ----------
+    value_str
+        A value string in the form:
+        ::
+
+            <selected_version>|<template_id>|<tab ID>
+
+        For example:
+        ::
+
+            v1.4.0|ARChetype Disease CRF_Dengue|project-overview-tab
+
+    Returns
+    -------
+    dash.html.Div
+        The CRF metadata modal selected tab div, with content dynamically
+        determined by the selection version, template ID and tab ID.
+    """
+    values = value_str.split("|")
+    if len(values) == 1:
+        selected_version = values[0]
+        template_id = tab_id = ""
+    else:
+        selected_version, template_id, tab_id = values
+    logger.info(f'Tab display for "{template_id}" (version "{selected_version}")')
+
+    return _build_crf_metadata_modal_tab_content(selected_version, template_id, tab_id)

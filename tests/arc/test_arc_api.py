@@ -579,6 +579,32 @@ def test_get_dataframe_supplemental_phrases_prod__api_client_error_caught_and_ra
         mock_write_to_df.assert_called_with(url)
 
 
+def test_get_dataframe_crf_metadata__prod__no_matching_version(client_production):
+    with pytest.raises(ArcApiClientError):
+        client_production.get_dataframe_crf_metadata("non matching version")
+
+
+@mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
+def test_get_dataframe_crf_metadata__prod__no_api_client_error(
+    mock_write_to_df, client_production
+):
+    client_production.get_dataframe_crf_metadata("v1.4.0")
+    url = "https://raw.githubusercontent.com/ISARICResearch/ARC/refs/tags/v1.4.0/crf_metadata.csv"
+    mock_write_to_df.assert_called_with(url)
+
+
+@mock.patch(
+    "bridge.arc.arc_api.ArcApiClient._write_to_dataframe", side_effect=ArcApiClientError
+)
+def test_get_dataframe_crf_metadata__prod__api_client_error_caught_and_raised(
+    mock_write_to_df, client_production
+):
+    with pytest.raises(ArcApiClientError):
+        client_production.get_dataframe_crf_metadata("v1.4.0")
+        url = "https://raw.githubusercontent.com/ISARICResearch/ARC/refs/tags/v1.4.0/crf_metadata.csv"
+        mock_write_to_df.assert_called_with(url)
+
+
 @mock.patch("bridge.arc.arc_api.ArcApiClient._get_api_response")
 @mock.patch("bridge.arc.arc_api.ArcApiClient._write_to_dataframe")
 def test_get_dataframe_supplemental_phrases_dev(

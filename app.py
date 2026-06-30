@@ -93,6 +93,9 @@ for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 
+ARC_CRF_METADATA = ArcApiClient().get_dataframe_crf_metadata(ARC_VERSION_LATEST)
+ARC_CRF_METADATA_JSON = ARC_CRF_METADATA.to_json(date_format="iso", orient="split")
+
 logger.info(
     "ARC bootstrap complete version=%s language=%s total_elapsed_ms=%.3f",
     ARC_VERSION_LATEST,
@@ -106,6 +109,7 @@ app.layout = MainContent(TREE_ITEMS_DATA).define_app_layout(
     MULTILIST_VARIABLE_JSON,
     GROUPED_PRESETS_JSON,
     ARC_LANGUAGE_LIST,
+    ARC_CRF_METADATA_JSON,
 )
 
 app.clientside_callback(

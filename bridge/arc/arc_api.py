@@ -322,6 +322,48 @@ class ArcApiClient:
         else:
             return df
 
+    def get_dataframe_crf_metadata(self, version: str) -> pd.DataFrame:
+        """:py:class:`pandas.DataFrame` : Returns the CRF metadata CSV as a dataframe.
+
+        Parameters
+        ----------
+        version : str
+            ARC version string.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The CRF metadata.
+
+        Raises
+        ------
+        bridge.arc.arc_api.ArcApiClientError
+            In case of a non-matching ARC version or a request error.
+        """
+        try:
+            # Try to fetch the CSV from the given release refs:
+            #
+            #   https://raw.githubusercontent.com/ISARICResearch/ARC/refs/tags/<version>/crf_metadata.csv
+            #
+            url = "/".join(
+                [
+                    self.base_url_raw_content,
+                    "ARC",
+                    "refs",
+                    "tags",
+                    version,
+                    "crf_metadata.csv",
+                ]
+            )
+            df = self._write_to_dataframe(url)
+        except ArcApiClientError as e:
+            raise ArcApiClientError(
+                "Could not find CRF metadata CSV for ARC version "
+                f'"{version}" and English language'
+            ) from e
+        else:
+            return df
+
     @staticmethod
     def get_arch_version_string(version: str) -> str:
         return f'ARCH{str(version.replace('v', ''))}'
