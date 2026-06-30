@@ -12,6 +12,7 @@ from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
+from bridge.utils.crf import clean_crf_metadata
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -148,13 +149,20 @@ def _build_crf_metadata_modal_governance_and_contributors_tab(
 ) -> dash.html.Div:
     tm = template_metadata
 
+    contact_field = (
+        f'{tm['Contact First Name']} {tm['Contact Last Name']} ({tm['Contact email']})'
+        if tm["Contact First Name"].lower() != "unknown"
+        and tm["Contact Last Name"].lower()
+        else "Unknown"
+    )
+
     return dcc.Markdown(
         f"""
-        - **Authors** - {tm['Authors']}
-        - **Approvers** - {tm['Approvers']}
-        - **Institutions** - {tm['Institutions']}
-        - **Contact** - {tm['Contact First Name']} {tm['Contact Last Name']} {tm['Contact email']}
-        """
+            - **Authors** - {tm['Authors']}
+            - **Approvers** - {tm['Approvers']}
+            - **Institutions** - {tm['Institutions']}
+            - **Contact** - {contact_field}
+            """
     )
 
 
@@ -234,6 +242,7 @@ def _build_crf_metadata_modal_tab_content(
     except ArcApiClientError:
         template_metadata = create_placeholder_template_metadata(template_id)
     else:
+        arc_crf_metadata = clean_crf_metadata(arc_crf_metadata)
         try:
             template_metadata = arc_crf_metadata[
                 arc_crf_metadata["Title of CRF"] == template_id

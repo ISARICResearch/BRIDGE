@@ -1,9 +1,20 @@
+# -- IMPORTS --
+
+# -- Standard libraries --
 from contextvars import copy_context
 from unittest import mock
 
+# -- 3rd party libraries --
 import pytest
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
-from bridge.utils.crf import get_selected_crf_presets, get_crf_name
+# -- Internal libraries --
+from bridge.utils.crf import (
+    clean_crf_metadata,
+    get_selected_crf_presets,
+    get_crf_name,
+)
 
 
 @pytest.mark.parametrize(
@@ -112,3 +123,35 @@ def test_get_crf_name(_mock_logger, name, checked, grouped_presets, expected_out
     ctx = copy_context()
     output = ctx.run(run_callback, name, checked, grouped_presets)
     assert output == expected_output
+
+
+@pytest.mark.parametrize(
+    "crf_metadata, expected_output",
+    [
+        # An example case where no cleaning is required
+        (
+            pd.DataFrame().assign(
+                A=["A1", "A2", "A3"], B=["B1", "B2", "B3"], C=["C1", "C2", "C3"]
+            ),
+            pd.DataFrame().assign(
+                A=["A1", "A2", "A3"], B=["B1", "B2", "B3"], C=["C1", "C2", "C3"]
+            ),
+        ),
+        # An example case where cleaning is required
+        (
+            pd.DataFrame().assign(
+                A=["A1", "Fake A2", "A3"],
+                B=["Example B1", "B2", "B3"],
+                C=["C1", "C2", "C3@example.org"],
+            ),
+            pd.DataFrame().assign(
+                A=["A1", "Unknown", "A3"],
+                B=["Unknown", "B2", "B3"],
+                C=["C1", "C2", "Unknown"],
+            ),
+        ),
+    ],
+)
+def test_clean_crf_metadata(crf_metadata, expected_output):
+    received_output = clean_crf_metadata(crf_metadata)
+    assert_frame_equal(received_output, expected_output)

@@ -1,4 +1,5 @@
 __all__ = [
+    "clean_crf_metadata",
     "get_crf_name",
     "get_selected_crf_presets",
 ]
@@ -7,9 +8,11 @@ __all__ = [
 # -- IMPORTS --
 
 # -- Standard libraries --
+import re
 from bridge.utils.logger import setup_logger
 
 # -- 3rd party libraries --
+import pandas as pd
 
 # -- Internal libraries --
 
@@ -82,3 +85,33 @@ def get_crf_name(
     logger.info(f"crf_name: {crf_name}")
 
     return crf_name
+
+
+def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
+    """:py:class:`pandas.DataFrame` : Returns a "clean" version of the incoming CRF metadata dataframe by replacing "dummy" values and text with an appropriate placeholder.
+
+    Any cell values in the original dataframe containing the case-insensitive
+    words ``"example"``, ``"fake"`` or domains ``"example.org"``, are replaced
+    with the value ``"Unknown"``, as are any null values including empty
+    strings.
+
+    Parameters
+    ----------
+    crf_metadata : pandas.DataFrame
+        The original CRF metadata from ARC.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The cleaned CRF metadata.
+    """
+    return (
+        crf_metadata.map(
+            lambda s: "Unknown"
+            if isinstance(s, str)
+            and re.search(r"(dummy|fake|example)", s, flags=re.IGNORECASE)
+            else s
+        )
+        .fillna("Unknown")
+        .replace("", "Unknown")
+    )
