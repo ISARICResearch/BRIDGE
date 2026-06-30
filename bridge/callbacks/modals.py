@@ -176,12 +176,14 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
                     html.Li([html.B("Keywords"), f" - {tm['Keywords']}"]),
                     html.Li(
                         [html.B("Relevant Links"), " - "]
-                        + [
-                            html.A(url, href=url, target="_blank")
-                            if url.lower() != "unknown"
-                            else "Unknown"
-                            for url in tm["Relevant resources"].split(",")
-                        ]
+                        + (
+                            [
+                                html.A(url, href=url, target="_blank")
+                                for url in tm["Relevant resources"].split(",")
+                            ]
+                            if tm["Relevant resources"].lower() != "unknown"
+                            else ["Unknown"]
+                        )
                     ),
                 ]
             )
@@ -656,23 +658,19 @@ def toggle_template_info_icon_visibility(
         else:
             template_status[(section, template_name)] = False
 
-    # Using the map above, build a list of styles, one for each template, and
-    # return.
-    styles = []
-    for (section, template_name), status in template_status.items():
-        styles.append(
-            {
-                "background": "none",
-                "border": "none",
-                "cursor": "pointer",
-                "fontSize": "16px",
-                "padding": "0 8px",
-                "marginLeft": "auto",
-                "display": "block" if status else "none",
-            }
-        )
-
-    return styles
+    # Using the map above, return a list of styles, one for each template.
+    return [
+        {
+            "background": "none",
+            "border": "none",
+            "cursor": "pointer",
+            "fontSize": "16px",
+            "padding": "0 8px",
+            "marginLeft": "auto",
+            "display": "block" if status else "none",
+        }
+        for (section, template_name), status in template_status.items()
+    ]
 
 
 @dash.callback(
@@ -731,7 +729,9 @@ def display_crf_metadata_modal(
     Returns
     -------
     tuple
-        A tuple consisting of display indicator (bool) and Dash update status
+        A tuple consisting of display indicator (bool), template ID or a
+        Dash update indicator, and the CRF metadata body div or Dash
+        update indicator.
     """
     ctx = dash.callback_context
 
