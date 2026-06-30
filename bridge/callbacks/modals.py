@@ -14,7 +14,7 @@ from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
-from bridge.utils.utils import generate_hyperlink_tags
+
 
 CHECKLIST_STYLE = {"padding": "20px", "maxHeight": "250px", "overflowY": "auto"}
 LIST_GROUP_STYLE = {"maxHeight": "250px", "overflowY": "auto"}
@@ -171,17 +171,23 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
             "Related documents, protocols, repositories, websites, publication"
         ]
 
-    if tm["Relevant resources"].lower() == "unknown":
-        return f"""
-        - **Keywords** - {tm['Keywords']}
-        - **Relevant Links** - Unknown
-        """
-
-    return dcc.Markdown(
-        f"""
-        - **Keywords** - {tm['Keywords']}
-        - **Relevant Links** - {','.join(link for link in generate_hyperlink_tags(tm['Relevant resources']))}
-        """
+    return html.Div(
+        [
+            html.Ul(
+                children=[
+                    html.Li([html.B("Keywords"), f" - {tm['Keywords']}"]),
+                    html.Li(
+                        [html.B("Relevant Links"), " - "]
+                        + [
+                            html.A(url, href=url, target="_blank")
+                            if url.lower() != "unknown"
+                            else "Unknown"
+                            for url in tm["Relevant resources"].split(",")
+                        ]
+                    ),
+                ]
+            )
+        ]
     )
 
 

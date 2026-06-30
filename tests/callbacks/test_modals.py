@@ -208,16 +208,24 @@ def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
     arc_1_4_0__crf_metadata,
 ):
     dengue_metadata = arc_1_4_0__crf_metadata.iloc[1]
-    dengue_links = dengue_metadata["Relevant resources"].split(",")
-    links_html = ",".join(
-        f'<a href="{link}" target="_blank">{link}</a>' for link in dengue_links
-    )
 
-    expected = dcc.Markdown(
-        f"""
-        - **Keywords** - {dengue_metadata['Keywords']}
-        - **Relevant Links** - {links_html}
-        """
+    expected = html.Div(
+        [
+            html.Ul(
+                children=[
+                    html.Li([html.B("Keywords"), f" - {dengue_metadata['Keywords']}"]),
+                    html.Li(
+                        [html.B("Relevant Links"), " - "]
+                        + [
+                            html.A(url, href=url, target="_blank")
+                            if url.lower() != "unknown"
+                            else "Unknown"
+                            for url in dengue_metadata["Relevant resources"].split(",")
+                        ]
+                    ),
+                ]
+            )
+        ]
     )
     received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
         dengue_metadata

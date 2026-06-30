@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = [
     "clean_dataframe",
-    "generate_hyperlink_tags",
     "strip_html",
     "strip_nonstandard_unicode_chars",
 ]
@@ -87,26 +86,3 @@ def clean_dataframe(dataframe: pandas.DataFrame) -> pandas.DataFrame:
     # columns which cannot be known in advance, while the cleaning steps
     # currently only apply to string values.
     return dataframe.map(strip_html).map(strip_nonstandard_unicode_chars)
-
-
-def generate_hyperlink_tags(
-    comma_separated_urls: str, new_page_target: bool = True
-) -> typing.Generator[str, None, None]:
-    """:py:class:`typing.Generator` : A sequence of HTML hyperlink tags with new page targets.
-
-    Parameters
-    ----------
-    comma_separated_urls : str
-        A comma-separated string of URLs.
-
-    new_page_target : bool, default=True
-        Optionally set the tags to open in a new page, defaults to ``True``.
-
-    Yields
-    ------
-    str
-        HTML hyperlink
-    """
-    target_attrib = 'target="_blank"' if new_page_target else ""
-    for url in map(str.strip, comma_separated_urls.split(",")):
-        yield f'<a href="{url}" {target_attrib}>{url}</a>'
