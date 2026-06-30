@@ -113,7 +113,7 @@ def test__build_crf_metadata_modal_tabbed_body():
     test_template_name = "test crf"
     expected = html.Div(
         [
-            html.H1("TEST CRF"),
+            "",
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
                 value="test_selected_version|test crf|project-overview-tab",
@@ -647,7 +647,7 @@ def get_output_display_crf_metadata_modal(
                 "Covid",
                 html.Div(
                     [
-                        html.H1("COVID"),
+                        "",
                         dcc.Tabs(
                             children=[
                                 dcc.Tab(
@@ -708,7 +708,7 @@ def get_output_display_crf_metadata_modal(
                 "Dengue",
                 html.Div(
                     [
-                        html.H1("DENGUE"),
+                        "",
                         dcc.Tabs(
                             children=[
                                 dcc.Tab(

@@ -71,11 +71,9 @@ def build_checklist_dom_from_mapping(
 def _build_crf_metadata_modal_tabbed_body(
     selected_version: str, template_id: str
 ) -> dash.html.Div:
-    template_name = template_id.split("_")[-1]
-
     return html.Div(
         [
-            html.H1(f"{template_name.upper()}"),
+            "",
             dcc.Tabs(
                 id="crf-metadata-modal-tabbed-body",
                 value=f"{selected_version}|{template_id}|project-overview-tab",
