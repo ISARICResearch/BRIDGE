@@ -25,4 +25,5 @@ BRIDGE is licensed under the `Open Source Initiative (OSI) <https://opensource.o
 
    sources/getting-started
    sources/cli
+   sources/citing
    sources/contributors

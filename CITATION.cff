@@ -6,23 +6,32 @@ authors:
   - name-particle: Esteban
     family-names: Garcia-Gallo
     email: esteban.garcia@ndm.ox.ac.uk
-    orcid: 0000-0002-8030-9985
+    orcid: https://orcid.org/0000-0002-8030-9985
+
   - name-particle: Sara
     family-names: Duque-Vallejo
     email: sara.duquevallejo@ndm.ox.ac.uk
-    orcid: 0000-0002-6616-8354
+    orcid: https://orcid.org/0000-0002-6616-8354
+
   - name-particle: Alasdair
     family-names: Wilson
     email: alasdair.wilson@dtc.ox.ac.uk
-    orcid: 0000-0003-0820-8159
+    orcid: https://orcid.org/0000-0003-0820-8159
+
   - name-particle: Laura
     family-names: Thomson
     email: laura.thomson@dtc.ox.ac.uk
-    orcid:
+
   - name-particle: Tom
     family-names: Edinburgh
     email: tom.edinburgh@ndm.ox.ac.uk
-    orcid: 0000-0002-3599-7133
+    orcid: https://orcid.org/0000-0002-3599-7133
+
+  - family-names: Murthy
+    given-names: Sandeep R.
+    email: sandeep.murthy@ndm.ox.ac.uk
+    orcid: https://orcid.org/0009-0006-8277-9389
+
 repository-code: 'https://github.com/ISARICResearch/BRIDGE'
 url: 'https://github.com/ISARICResearch/BRIDGE'
 abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks
@@ -42,3 +51,7 @@ keywords:
 license: MIT
 version: 1.2
 date-released: 2026-06-03
+identifiers:
+  - description: BRIDGE Release v1.2
+    type: doi
+    value: "10.5281/zenodo.14162844"
