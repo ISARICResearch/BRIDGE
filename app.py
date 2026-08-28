@@ -21,7 +21,7 @@ logger = setup_logger(__name__)
 app = dash.Dash(
     __name__,
     assets_url_path="assets",
-    assets_folder="bridge/assets",
+    assets_folder="src/bridge/assets",
     external_scripts=[
         {
             "src": "https://plausible-oxrse.fly.dev/js/script.js",

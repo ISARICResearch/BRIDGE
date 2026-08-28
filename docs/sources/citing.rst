@@ -11,12 +11,12 @@ BRIDGE can be **cited** as follows:
 
 	Garcia-Gallo E, Duque-Vallejo S, Wilson A, Thomson L, Edinburgh T, Murthy SR. ISARIC BRIDGE (v1.2). *ISARIC* |year|. doi:`10.5281/zenodo.14162844 <https://doi.org/10.5281/zenodo.14162844>`_
 
-.. _note-for-contributors:
+.. _note-for-maintainers-and-contributors:
 
-A Note For Contributors
------------------------
+A Note For Maintainers & Contributors
+-------------------------------------
 
-Contributors should note that the `citation file <https://github.com/ISARICResearch/BRIDGE/blob/main/CITATION.cff>`_ should be kept up-to-date with changes in authorship. The file can be validated on the command line using the `cffconvert <https://github.com/citation-file-format/cffconvert>`_ library using the following command run from the root of the BRIDGE repository:
+Maintainers and contributors should note that the `citation file <https://github.com/ISARICResearch/BRIDGE/blob/main/CITATION.cff>`_ should be kept up-to-date with changes in authorship. The file can be validated on the command line using the `cffconvert <https://github.com/citation-file-format/cffconvert>`_ library using the following command run from the root of the BRIDGE repository:
 
 .. code:: shell
 
