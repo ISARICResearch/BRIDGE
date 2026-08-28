@@ -20,7 +20,8 @@
   # All current project admins
   maintainers = [
       { name = "Alasdair Wilson", email = "alasdair.wilson@dtc.ox.ac.uk" },
-      { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" }
+      { name = "Sandeep Murthy", email = "sandeep.murthy@ndm.ox.ac.uk" },
+      { name = "ISARIC Development Team", email = "isaric-dev@ndm.ox.ac.uk" },
   ]
 
   readme = "README.md"
@@ -48,6 +49,7 @@
   # to have.
   classifiers = [
           "Environment :: Web Environment",
+          "Environment :: Console",
           "License :: OSI Approved :: MIT License",
           "Programming Language :: Python :: 3",
           "Programming Language :: Python :: 3.12",
