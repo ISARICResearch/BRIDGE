@@ -27,7 +27,8 @@ BRIDGE is licensed under the `MIT license <https://opensource.org/license/mit>`_
    :maxdepth: 1
    :caption: Table of Contents:
 
-   sources/getting-started
-   sources/cli
-   sources/citing
-   sources/contributors
+   Getting Started <sources/getting-started>
+   Running BRIDGE in Docker <sources/running-bridge-in-docker>
+   CLI <sources/cli>
+   Citing BRIDGE <sources/citing>
+   Contributors <sources/contributors>
