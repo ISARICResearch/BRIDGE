@@ -17,7 +17,32 @@ specific dependencies listed in the ``[project]`` section of the `project TOML <
 
 If you're running BRIDGE locally, as described :ref:`here <building-and-running>`, then these dependencies (and their sub-dependencies) will be pre-installed inside the container, so no direct user installation is required.
 
-If you're running BRIDGE directly on your system as a Python (Plotly Dash) app then you need to ensure all of these dependencies are installed in your environment with the current version pins, **before** running the app. If you haven't already done this, then you can do this either by installing the project in editable mode, via :command:`pip install -e .`, which will also install the main ``bridge`` package in your environment, or a direct installation using a package manager such as `Astral UV <https://docs.astral.sh/uv/>`_. For example, if using UV you may consider using the :command:`uv sync` command as described `here <https://docs.astral.sh/uv/concepts/projects/sync/#syncing-the-environment>`_.
+If you're running BRIDGE directly on your system as a Python (Plotly Dash) app then you need to ensure all of these dependencies are installed in your environment with the current version pins, **before** running the app. If you haven't already done this, then you can do this either by installing the project in editable mode, via :command:`pip install -e .`, which will also install the main ``bridge`` package in your environment, or a direct installation using a package manager such as `Astral UV <https://docs.astral.sh/uv/>`_.
+
+A recommended approach to setting up the local BRIDGE environment using UV is described below.
+
+Setting up the project
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. In a Python 3.12+ virtual environment install UV with :program:`pip`:
+
+.. code:: shell
+
+   python3 -m pip install uv
+
+By default UV will make all dependency-related changes inside a new :file:`.venv` subfolder within the working directory - if this is OK then proceed to the next step. **If not** then export the path of the preferred (e.g. pre-existing) virtual environment with the ``UV_PROJECT_ENVIRONMENT`` environment variable:
+
+.. code:: shell
+
+   export UV_PROJECT_ENVIRONMENT="/path/to/preferred/virtual/env"
+
+2. Install (or sync) all the project dependencies into the environment with the command:
+
+.. code:: shell
+
+   uv sync --verbose --all-groups --all-extras --no-install-project --no-cache --refresh --inexact
+
+For more details on :command:`uv sync` see `this <https://docs.astral.sh/uv/concepts/projects/sync/#syncing-the-environment>`_.
 
 .. _building-and-running:
 
