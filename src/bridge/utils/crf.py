@@ -1,12 +1,12 @@
 __all__ = [
     "clean_crf_metadata",
-    "CRFTemplateMetadata",
-    "DocumentationCRFTemplateMetadataSection",
+    "CRFTemplateMetadataModal",
+    "DocumentationCRFTemplateMetadataModalSection",
     "get_crf_name",
     "get_selected_crf_presets",
-    "GovernanceCRFTemplateMetadataSection",
-    "OverviewCRFTemplateMetadataSection",
-    "ScientificScopeCRFTemplateMetadataSection",
+    "GovernanceCRFTemplateMetadataModalSection",
+    "OverviewCRFTemplateMetadataModalSection",
+    "ScientificScopeCRFTemplateMetadataModalSection",
 ]
 
 
@@ -124,8 +124,8 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
 
 
 @dataclass(eq=True, frozen=True)
-class OverviewCRFTemplateMetadataSection:
-    """A dataclass implementation of the project overview section of a CRF template metadata."""
+class OverviewCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the project overview section of a CRF template metadata modal content."""
 
     section_name: str
     description: str
@@ -133,8 +133,8 @@ class OverviewCRFTemplateMetadataSection:
 
 
 @dataclass(eq=True, frozen=True)
-class ScientificScopeCRFTemplateMetadataSection:
-    """A dataclass implementation of the scientific scope section of CRF template metadata."""
+class ScientificScopeCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the scientific scope section of CRF template metadata modal content."""
 
     research_questions: tuple[str]
     syndrome: str
@@ -148,8 +148,8 @@ class ScientificScopeCRFTemplateMetadataSection:
 
 
 @dataclass(eq=True, frozen=True)
-class GovernanceCRFTemplateMetadataSection:
-    """A dataclass implementation of the governance section of CRF template metadata."""
+class GovernanceCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the governance section of CRF template metadata modal content."""
 
     authors: tuple[tuple[str, tuple[int]]]
     approvers: tuple[str]
@@ -158,19 +158,19 @@ class GovernanceCRFTemplateMetadataSection:
 
 
 @dataclass(eq=True, frozen=True)
-class DocumentationCRFTemplateMetadataSection:
-    """A dataclass implementation of the documentation section of CRF template metadata."""
+class DocumentationCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the documentation section of CRF template metadata modal content."""
 
     keywords: tuple[str]
     links: tuple[tuple[str, str]]
 
 
 @dataclass(eq=True, frozen=True)
-class CRFTemplateMetadata:
-    """A dataclass implementation of a CRF template metadata record."""
+class CRFTemplateMetadataModal:
+    """A dataclass implementation of a CRF template metadata modal content."""
 
     title: str
-    overview_section: OverviewCRFTemplateMetadataSection
-    scientific_scope_section: ScientificScopeCRFTemplateMetadataSection
-    governance_section: GovernanceCRFTemplateMetadataSection
-    documentation_section: DocumentationCRFTemplateMetadataSection
+    overview_section: OverviewCRFTemplateMetadataModalSection
+    scientific_scope_section: ScientificScopeCRFTemplateMetadataModalSection
+    governance_section: GovernanceCRFTemplateMetadataModalSection
+    documentation_section: DocumentationCRFTemplateMetadataModalSection

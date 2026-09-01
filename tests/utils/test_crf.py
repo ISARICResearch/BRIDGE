@@ -12,12 +12,13 @@ from pandas.testing import assert_frame_equal
 # -- Internal libraries --
 from bridge.utils.crf import (
     clean_crf_metadata,
-    DocumentationCRFTemplateMetadataSection,
+    CRFTemplateMetadataModal,
+    DocumentationCRFTemplateMetadataModalSection,
     get_selected_crf_presets,
     get_crf_name,
-    GovernanceCRFTemplateMetadataSection,
-    OverviewCRFTemplateMetadataSection,
-    ScientificScopeCRFTemplateMetadataSection,
+    GovernanceCRFTemplateMetadataModalSection,
+    OverviewCRFTemplateMetadataModalSection,
+    ScientificScopeCRFTemplateMetadataModalSection,
 )
 
 
@@ -161,8 +162,11 @@ def test_clean_crf_metadata(crf_metadata, expected_output):
     assert_frame_equal(received_output, expected_output)
 
 
-class TestOverviewCRFTemplateMetadataSection:
-    def test_overview_crf_template_metadata_section(self):
+class TestOverviewCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_overview_crf_template_metadata_modal_section(self):
         expected_data = {
             "section_name": "test_section_name",
             "description": "test_description",
@@ -171,7 +175,7 @@ class TestOverviewCRFTemplateMetadataSection:
                 ("test_metadata_key2", "test_metadata_key2_value"),
             ),
         }
-        test_section = OverviewCRFTemplateMetadataSection(
+        test_section = OverviewCRFTemplateMetadataModalSection(
             section_name="test_section_name",
             description="test_description",
             metadata=(
@@ -183,12 +187,15 @@ class TestOverviewCRFTemplateMetadataSection:
         assert test_section.description == expected_data["description"]
         assert test_section.metadata == expected_data["metadata"]
         assert hash(test_section) == hash(
-            OverviewCRFTemplateMetadataSection(**expected_data)
+            OverviewCRFTemplateMetadataModalSection(**expected_data)
         )
 
 
-class TestScientificScopeCRFTemplateMetadataSection:
-    def test_scientific_scope_crf_template_metadata_section(self):
+class TestScientificScopeCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_scientific_scope_crf_template_metadata_modal_section(self):
         expected_data = {
             "research_questions": (
                 "test_research_question1",
@@ -206,7 +213,7 @@ class TestScientificScopeCRFTemplateMetadataSection:
             "inclusion_criteria": "test_inclusion_criteria",
             "exclusion_criteria": "test_exclusion_criteria",
         }
-        test_section = ScientificScopeCRFTemplateMetadataSection(
+        test_section = ScientificScopeCRFTemplateMetadataModalSection(
             research_questions=(
                 "test_research_question1",
                 "test_research_question2",
@@ -233,12 +240,15 @@ class TestScientificScopeCRFTemplateMetadataSection:
         assert test_section.inclusion_criteria == expected_data["inclusion_criteria"]
         assert test_section.exclusion_criteria == expected_data["exclusion_criteria"]
         assert hash(test_section) == hash(
-            ScientificScopeCRFTemplateMetadataSection(**expected_data)
+            ScientificScopeCRFTemplateMetadataModalSection(**expected_data)
         )
 
 
-class TestGovernanceCRFTemplateMetadataSection:
-    def test_governance_crf_template_metadata_section(self):
+class TestGovernanceCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_governance_crf_template_metadata_modal_section(self):
         expected_data = {
             "authors": (
                 "test_author1",
@@ -257,7 +267,7 @@ class TestGovernanceCRFTemplateMetadataSection:
                 ("test_contact2_name", "test_contact2_email"),
             ),
         }
-        test_section = GovernanceCRFTemplateMetadataSection(
+        test_section = GovernanceCRFTemplateMetadataModalSection(
             authors=(
                 "test_author1",
                 "test_author2",
@@ -280,11 +290,14 @@ class TestGovernanceCRFTemplateMetadataSection:
         assert test_section.affiliations == expected_data["affiliations"]
         assert test_section.contacts == expected_data["contacts"]
         assert hash(test_section) == hash(
-            GovernanceCRFTemplateMetadataSection(**expected_data)
+            GovernanceCRFTemplateMetadataModalSection(**expected_data)
         )
 
 
 class TestDocumentationCRFTemplateMetadataSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
     def test_documentation_crf_template_metadata_section(self):
         expected_data = {
             "keywords": (
@@ -296,7 +309,7 @@ class TestDocumentationCRFTemplateMetadataSection:
                 ("test_link2", "test_link2_url"),
             ),
         }
-        test_section = DocumentationCRFTemplateMetadataSection(
+        test_section = DocumentationCRFTemplateMetadataModalSection(
             keywords=(
                 "test_keyword1",
                 "test_keyword2",
@@ -309,5 +322,146 @@ class TestDocumentationCRFTemplateMetadataSection:
         assert test_section.keywords == expected_data["keywords"]
         assert test_section.links == expected_data["links"]
         assert hash(test_section) == hash(
-            DocumentationCRFTemplateMetadataSection(**expected_data)
+            DocumentationCRFTemplateMetadataModalSection(**expected_data)
+        )
+
+
+class TestCRFTemplateMetadataModal:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_crf_template_metadata_modal(self):
+        expected_data = {
+            "title": "test_crf_metadata_modal_title",
+            "overview_section": OverviewCRFTemplateMetadataModalSection(
+                section_name="test_section_name",
+                description="test_description",
+                metadata=(
+                    ("test_metadata_key1", "test_metadata_key1_value"),
+                    ("test_metadata_key2", "test_metadata_key2_value"),
+                ),
+            ),
+            "scientific_scope_section": ScientificScopeCRFTemplateMetadataModalSection(
+                research_questions=(
+                    "test_research_question1",
+                    "test_research_question2",
+                ),
+                syndrome="test_syndrome",
+                pathogens=(
+                    "test_pathogen1",
+                    "test_pathogen2",
+                ),
+                setting="test_setting",
+                geographic_scope="test_geographic_scope",
+                syndrome_definition="test_syndrome_definition",
+                target_population="test_target_population",
+                inclusion_criteria="test_inclusion_criteria",
+                exclusion_criteria="test_exclusion_criteria",
+            ),
+            "governance_section": GovernanceCRFTemplateMetadataModalSection(
+                authors=(
+                    "test_author1",
+                    "test_author2",
+                ),
+                approvers=(
+                    "test_approver1",
+                    "test_approver2",
+                ),
+                affiliations=(
+                    "test_affiliation1",
+                    "test_affiliation2",
+                ),
+                contacts=(
+                    ("test_contact1_name", "test_contact1_email"),
+                    ("test_contact2_name", "test_contact2_email"),
+                ),
+            ),
+            "documentation_section": DocumentationCRFTemplateMetadataModalSection(
+                keywords=(
+                    "test_keyword1",
+                    "test_keyword2",
+                ),
+                links=(
+                    ("test_link1", "test_link1_url"),
+                    ("test_link2", "test_link2_url"),
+                ),
+            ),
+        }
+
+        test_crf_template_metadata_modal = CRFTemplateMetadataModal(
+            title="test_crf_metadata_modal_title",
+            overview_section=OverviewCRFTemplateMetadataModalSection(
+                section_name="test_section_name",
+                description="test_description",
+                metadata=(
+                    ("test_metadata_key1", "test_metadata_key1_value"),
+                    ("test_metadata_key2", "test_metadata_key2_value"),
+                ),
+            ),
+            scientific_scope_section=ScientificScopeCRFTemplateMetadataModalSection(
+                research_questions=(
+                    "test_research_question1",
+                    "test_research_question2",
+                ),
+                syndrome="test_syndrome",
+                pathogens=(
+                    "test_pathogen1",
+                    "test_pathogen2",
+                ),
+                setting="test_setting",
+                geographic_scope="test_geographic_scope",
+                syndrome_definition="test_syndrome_definition",
+                target_population="test_target_population",
+                inclusion_criteria="test_inclusion_criteria",
+                exclusion_criteria="test_exclusion_criteria",
+            ),
+            governance_section=GovernanceCRFTemplateMetadataModalSection(
+                authors=(
+                    "test_author1",
+                    "test_author2",
+                ),
+                approvers=(
+                    "test_approver1",
+                    "test_approver2",
+                ),
+                affiliations=(
+                    "test_affiliation1",
+                    "test_affiliation2",
+                ),
+                contacts=(
+                    ("test_contact1_name", "test_contact1_email"),
+                    ("test_contact2_name", "test_contact2_email"),
+                ),
+            ),
+            documentation_section=DocumentationCRFTemplateMetadataModalSection(
+                keywords=(
+                    "test_keyword1",
+                    "test_keyword2",
+                ),
+                links=(
+                    ("test_link1", "test_link1_url"),
+                    ("test_link2", "test_link2_url"),
+                ),
+            ),
+        )
+
+        assert test_crf_template_metadata_modal.title == expected_data["title"]
+        assert (
+            test_crf_template_metadata_modal.overview_section
+            == expected_data["overview_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.scientific_scope_section
+            == expected_data["scientific_scope_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.governance_section
+            == expected_data["governance_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.documentation_section
+            == expected_data["documentation_section"]
+        )
+        assert hash(test_crf_template_metadata_modal) == hash(
+            CRFTemplateMetadataModal(**expected_data)
         )
