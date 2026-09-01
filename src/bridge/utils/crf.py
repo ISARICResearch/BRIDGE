@@ -9,12 +9,12 @@ __all__ = [
 
 # -- Standard libraries --
 import re
-from bridge.utils.logger import setup_logger
 
 # -- 3rd party libraries --
 import pandas as pd
 
 # -- Internal libraries --
+from bridge.utils.logger import setup_logger
 
 
 logger = setup_logger(__name__)
