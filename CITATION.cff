@@ -34,7 +34,7 @@ authors:
 
 repository-code: 'https://github.com/ISARICResearch/BRIDGE'
 url: 'https://github.com/ISARICResearch/BRIDGE'
-abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks
+abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks.
 keywords:
     - isaric
     - bridge
