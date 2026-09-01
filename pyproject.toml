@@ -78,14 +78,8 @@
   ]
 
 [dependency-groups]
-  pre-commit = [
-    "pre-commit",
-  ]
-
-  test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
+  debug = [
+    "ipdb",
   ]
 
   docs = [
@@ -102,6 +96,20 @@
     "numpydoc",
     "nb2plots",
     "jupyter-sphinx",
+  ]
+
+  lint = [
+    "ruff",
+  ]
+
+  pre-commit = [
+    "pre-commit",
+  ]
+
+  test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
   ]
 
 [project.optional-dependencies]
