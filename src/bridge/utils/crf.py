@@ -1,7 +1,12 @@
 __all__ = [
     "clean_crf_metadata",
+    "CRFTemplateMetadata",
+    "DocumentationCRFTemplateMetadataSection",
     "get_crf_name",
     "get_selected_crf_presets",
+    "GovernanceCRFTemplateMetadataSection",
+    "OverviewCRFTemplateMetadataSection",
+    "ScientificScopeCRFTemplateMetadataSection",
 ]
 
 
@@ -9,6 +14,7 @@ __all__ = [
 
 # -- Standard libraries --
 import re
+from dataclasses import dataclass
 
 # -- 3rd party libraries --
 import pandas as pd
@@ -115,3 +121,56 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
         .fillna("Unknown")
         .replace("", "Unknown")
     )
+
+
+@dataclass(eq=True, frozen=True)
+class OverviewCRFTemplateMetadataSection:
+    """A dataclass implementation of the project overview section of a CRF template metadata."""
+
+    section_name: str
+    description: str
+    metadata: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class ScientificScopeCRFTemplateMetadataSection:
+    """A dataclass implementation of the scientific scope section of CRF template metadata."""
+
+    research_questions: tuple[str]
+    syndrome: str
+    pathogens: tuple[str]
+    setting: str
+    geographic_scope: str
+    syndrome_definition: str
+    target_population: str
+    inclusion_criteria: str
+    exclusion_criteria: str
+
+
+@dataclass(eq=True, frozen=True)
+class GovernanceCRFTemplateMetadataSection:
+    """A dataclass implementation of the governance section of CRF template metadata."""
+
+    authors: tuple[tuple[str, tuple[int]]]
+    approvers: tuple[str]
+    affiliations: tuple[str]
+    contacts: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class DocumentationCRFTemplateMetadataSection:
+    """A dataclass implementation of the documentation section of CRF template metadata."""
+
+    keywords: tuple[str]
+    links: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class CRFTemplateMetadata:
+    """A dataclass implementation of a CRF template metadata record."""
+
+    title: str
+    overview_section: OverviewCRFTemplateMetadataSection
+    scientific_scope_section: ScientificScopeCRFTemplateMetadataSection
+    governance_section: GovernanceCRFTemplateMetadataSection
+    documentation_section: DocumentationCRFTemplateMetadataSection
