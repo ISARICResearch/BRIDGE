@@ -6,5 +6,6 @@ This repository is actively maintained with a number of security features, inclu
 * CodeQL code quality checks.
 * Dependabot vulnerability and malware alerts.
 * Secrets scanning and push prevention.
+* A number of workflow security measures
 
 Any security issues can be reported directly to the ISARIC development team at isaric-dev@ndm.ox.ac.uk.
