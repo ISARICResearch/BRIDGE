@@ -1,7 +1,12 @@
 __all__ = [
     "clean_crf_metadata",
+    "CRFTemplateMetadataModal",
+    "DocumentationCRFTemplateMetadataModalSection",
     "get_crf_name",
     "get_selected_crf_presets",
+    "GovernanceCRFTemplateMetadataModalSection",
+    "OverviewCRFTemplateMetadataModalSection",
+    "ScientificScopeCRFTemplateMetadataModalSection",
 ]
 
 
@@ -9,12 +14,13 @@ __all__ = [
 
 # -- Standard libraries --
 import re
-from bridge.utils.logger import setup_logger
+from dataclasses import dataclass
 
 # -- 3rd party libraries --
 import pandas as pd
 
 # -- Internal libraries --
+from bridge.utils.logger import setup_logger
 
 
 logger = setup_logger(__name__)
@@ -115,3 +121,56 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
         .fillna("Unknown")
         .replace("", "Unknown")
     )
+
+
+@dataclass(eq=True, frozen=True)
+class OverviewCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the project overview section of a CRF template metadata modal content."""
+
+    section_name: str
+    description: str
+    metadata: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class ScientificScopeCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the scientific scope section of CRF template metadata modal content."""
+
+    research_questions: tuple[str]
+    syndrome: str
+    pathogens: tuple[str]
+    setting: str
+    geographic_scope: str
+    syndrome_definition: str
+    target_population: str
+    inclusion_criteria: str
+    exclusion_criteria: str
+
+
+@dataclass(eq=True, frozen=True)
+class GovernanceCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the governance section of CRF template metadata modal content."""
+
+    authors: tuple[tuple[str, tuple[int]]]
+    approvers: tuple[str]
+    affiliations: tuple[str]
+    contacts: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class DocumentationCRFTemplateMetadataModalSection:
+    """A dataclass implementation of the documentation section of CRF template metadata modal content."""
+
+    keywords: tuple[str]
+    links: tuple[tuple[str, str]]
+
+
+@dataclass(eq=True, frozen=True)
+class CRFTemplateMetadataModal:
+    """A dataclass implementation of a CRF template metadata modal content."""
+
+    title: str
+    overview_section: OverviewCRFTemplateMetadataModalSection
+    scientific_scope_section: ScientificScopeCRFTemplateMetadataModalSection
+    governance_section: GovernanceCRFTemplateMetadataModalSection
+    documentation_section: DocumentationCRFTemplateMetadataModalSection
