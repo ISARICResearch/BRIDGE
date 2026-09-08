@@ -21,6 +21,8 @@ from bridge.utils.crf import (
     ScientificScopeCRFTemplateMetadataModalSection,
 )
 
+pytestmark = [pytest.mark.unit, pytest.mark.utils]
+
 
 @pytest.mark.parametrize(
     "grouped_presets, checked_values, expected_output",

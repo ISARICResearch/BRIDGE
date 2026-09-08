@@ -147,6 +147,15 @@
 [tool.setuptools.package-data]
   "bridge" = ["assets/*", "assets/*/*"]
 
+[tool.pytest.ini_options]
+  markers = [
+    "unit",
+    "arc",
+    "callbacks",
+    "generate_pdf",
+    "utils",
+  ]
+
 [tool.coverage.run]
   omit = [
       "bridge/cli.py",

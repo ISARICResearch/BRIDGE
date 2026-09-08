@@ -7,6 +7,10 @@ from pandas.testing import assert_frame_equal
 from bridge.callbacks.language import Language
 from bridge.callbacks import language as callback_language
 
+import pytest
+
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @mock.patch("bridge.callbacks.language.arc_translations.get_arc_translation")
 def test_get_dataframe_arc_language(mock_translation):

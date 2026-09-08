@@ -7,6 +7,8 @@ from pandas._testing import assert_frame_equal
 
 from bridge.arc import arc_translations
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @mock.patch("bridge.arc.arc_translations.process_skip_logic")
 @mock.patch(
