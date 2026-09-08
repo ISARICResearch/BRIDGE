@@ -13,7 +13,7 @@ import pytest
 @pytest.fixture(scope="module")
 def ccpuk_hantavirus_data_dictionary_2026_filepath() -> pd.DataFrame:
     return Path(__file__).parent.joinpath(
-        "data", "ccpuk-hantavirus-data-dictionary-2026-05-15.csv"
+        "assets", "ccpuk-hantavirus-data-dictionary-2026-05-15.csv"
     )
 
 
@@ -26,7 +26,9 @@ def ccpuk_hantavirus_data_dictionary_2026(
 
 @pytest.fixture(scope="module")
 def arc_1_2_2__english__paperlike_crf_details_filepath() -> pd.DataFrame:
-    return Path(__file__).parent.joinpath("data", "arc-1.2.2-en-paperlike-details.csv")
+    return Path(__file__).parent.joinpath(
+        "assets", "arc-1.2.2-en-paperlike-details.csv"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +41,7 @@ def arc_1_2_2__english__paperlike_crf_details(
 @pytest.fixture(scope="module")
 def arc_1_2_2__english__supplemental_phrases_filepath() -> pd.DataFrame:
     return Path(__file__).parent.joinpath(
-        "data", "arc-1.2.2-en-supplemental-phrases.csv"
+        "assets", "arc-1.2.2-en-supplemental-phrases.csv"
     )
 
 
@@ -53,5 +55,5 @@ def arc_1_2_2__english__supplemental_phrases(
 @pytest.fixture(scope="module")
 def arc_1_4_0__crf_metadata() -> pd.DataFrame:
     return pd.read_csv(
-        Path(__file__).parent.joinpath("data", "arc-1.4.0-crf-metadata.csv")
+        Path(__file__).parent.joinpath("assets", "arc-1.4.0-crf-metadata.csv")
     )

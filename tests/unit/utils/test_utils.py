@@ -11,6 +11,8 @@ from bridge.utils.utils import (
     strip_nonstandard_unicode_chars,
 )
 
+pytestmark = [pytest.mark.unit, pytest.mark.utils]
+
 
 @pytest.mark.parametrize(
     ("value", "expected"),

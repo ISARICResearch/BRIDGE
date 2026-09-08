@@ -2,6 +2,8 @@ import pytest
 
 from bridge.generate_pdf.form import Form
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.mark.parametrize(
     "choices_str, field_type, threshold, is_units, expected_output",

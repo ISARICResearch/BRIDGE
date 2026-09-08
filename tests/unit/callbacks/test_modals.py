@@ -13,6 +13,9 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import modals
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
+
 SUBMIT_N_CLICKS_NONE = None
 CANCEL_N_CLICKS_NONE = None
 CURRENT_DATADICC_SAVED_NONE = None
