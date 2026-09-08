@@ -121,6 +121,7 @@ class Modals:
                 ),
             ],
             id="crf_metadata_modal",
+            className="crf-modal",
             is_open=False,
             size="lg",
             scrollable=True,
