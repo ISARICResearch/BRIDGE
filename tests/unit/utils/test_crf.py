@@ -170,7 +170,6 @@ class TestOverviewCRFTemplateMetadataModalSection:
     # for the CRF template metadata modal and modal section content.
     def test_overview_crf_template_metadata_modal_section(self):
         expected_data = {
-            "section_name": "test_section_name",
             "description": "test_description",
             "metadata": (
                 ("test_metadata_key1", "test_metadata_key1_value"),
@@ -178,14 +177,13 @@ class TestOverviewCRFTemplateMetadataModalSection:
             ),
         }
         test_section = OverviewCRFTemplateMetadataModalSection(
-            section_name="test_section_name",
             description="test_description",
             metadata=(
                 ("test_metadata_key1", "test_metadata_key1_value"),
                 ("test_metadata_key2", "test_metadata_key2_value"),
             ),
         )
-        assert test_section.section_name == expected_data["section_name"]
+        assert test_section.section_name == "Overview"
         assert test_section.description == expected_data["description"]
         assert test_section.metadata == expected_data["metadata"]
         assert hash(test_section) == hash(
@@ -232,6 +230,8 @@ class TestScientificScopeCRFTemplateMetadataModalSection:
             inclusion_criteria="test_inclusion_criteria",
             exclusion_criteria="test_exclusion_criteria",
         )
+
+        assert test_section.section_name == "Scientific Scope"
         assert test_section.research_questions == expected_data["research_questions"]
         assert test_section.syndrome == expected_data["syndrome"]
         assert test_section.pathogens == expected_data["pathogens"]
@@ -287,6 +287,8 @@ class TestGovernanceCRFTemplateMetadataModalSection:
                 ("test_contact2_name", "test_contact2_email"),
             ),
         )
+
+        assert test_section.section_name == "Governance & Contributors"
         assert test_section.authors == expected_data["authors"]
         assert test_section.approvers == expected_data["approvers"]
         assert test_section.affiliations == expected_data["affiliations"]
@@ -321,6 +323,8 @@ class TestDocumentationCRFTemplateMetadataSection:
                 ("test_link2", "test_link2_url"),
             ),
         )
+
+        assert test_section.section_name == "Documentation & Discoverability"
         assert test_section.keywords == expected_data["keywords"]
         assert test_section.links == expected_data["links"]
         assert hash(test_section) == hash(
@@ -336,7 +340,6 @@ class TestCRFTemplateMetadataModal:
         expected_data = {
             "title": "test_crf_metadata_modal_title",
             "overview_section": OverviewCRFTemplateMetadataModalSection(
-                section_name="test_section_name",
                 description="test_description",
                 metadata=(
                     ("test_metadata_key1", "test_metadata_key1_value"),
@@ -393,7 +396,6 @@ class TestCRFTemplateMetadataModal:
         test_crf_template_metadata_modal = CRFTemplateMetadataModal(
             title="test_crf_metadata_modal_title",
             overview_section=OverviewCRFTemplateMetadataModalSection(
-                section_name="test_section_name",
                 description="test_description",
                 metadata=(
                     ("test_metadata_key1", "test_metadata_key1_value"),

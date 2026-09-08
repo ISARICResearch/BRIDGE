@@ -127,7 +127,8 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
 class OverviewCRFTemplateMetadataModalSection:
     """A dataclass implementation of the project overview section of a CRF template metadata modal content."""
 
-    section_name: str
+    section_name = "Overview"
+
     description: str
     metadata: tuple[tuple[str, str]]
 
@@ -135,6 +136,8 @@ class OverviewCRFTemplateMetadataModalSection:
 @dataclass(eq=True, frozen=True)
 class ScientificScopeCRFTemplateMetadataModalSection:
     """A dataclass implementation of the scientific scope section of CRF template metadata modal content."""
+
+    section_name = "Scientific Scope"
 
     research_questions: tuple[str]
     syndrome: str
@@ -151,6 +154,8 @@ class ScientificScopeCRFTemplateMetadataModalSection:
 class GovernanceCRFTemplateMetadataModalSection:
     """A dataclass implementation of the governance section of CRF template metadata modal content."""
 
+    section_name = "Governance & Contributors"
+
     authors: tuple[tuple[str, tuple[int]]]
     approvers: tuple[str]
     affiliations: tuple[str]
@@ -161,6 +166,8 @@ class GovernanceCRFTemplateMetadataModalSection:
 class DocumentationCRFTemplateMetadataModalSection:
     """A dataclass implementation of the documentation section of CRF template metadata modal content."""
 
+    section_name = "Documentation & Discoverability"
+
     keywords: tuple[str]
     links: tuple[tuple[str, str]]
 
@@ -170,6 +177,7 @@ class CRFTemplateMetadataModal:
     """A dataclass implementation of a CRF template metadata modal content."""
 
     title: str
+
     overview_section: OverviewCRFTemplateMetadataModalSection
     scientific_scope_section: ScientificScopeCRFTemplateMetadataModalSection
     governance_section: GovernanceCRFTemplateMetadataModalSection
