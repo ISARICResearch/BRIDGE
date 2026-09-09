@@ -111,6 +111,296 @@ def test_update_list_variables_checked():
     assert_frame_equal(df_output, df_expected)
 
 
+def test__section():
+    test_title = "test_title"
+    expected = html.Section(
+        [
+            html.H3(test_title, className="section-title"),
+            html.Div("test_div"),
+        ],
+        className="section",
+    )
+
+    received = modals._section(test_title, html.Div("test_div"))
+
+    assert isinstance(received, dash.html.Section)
+    assert str(received) == str(expected)
+
+
+def test__metadata_grid():
+    test_items = [
+        ("test_items_label1", "test_items_value1"),
+        ("test_items_label2", "test_items_value2"),
+    ]
+    expected = html.Div(
+        [
+            html.Div(
+                [
+                    html.Span(label, className="metadata-label"),
+                    html.Div(value, className="metadata-value"),
+                ],
+                className="metadata-item",
+            )
+            for label, value in test_items
+        ],
+        className="metadata-grid",
+    )
+
+    received = modals._metadata_grid(test_items)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+def test__scope_item():
+    test_label = "test_label"
+    test_value = "test_value"
+    expected = html.Div(
+        [
+            html.Div(test_label, className="scope-label"),
+            html.Div(test_value, className="scope-value"),
+        ],
+        className="scope-item",
+    )
+
+    received = modals._scope_item(test_label, test_value)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+def test__pathogen_value():
+    test_pathogens = ["test_pathogen1", "test_pathogen2"]
+    expected = html.Div(
+        [html.Span(pathogen, className="pathogen-chip") for pathogen in test_pathogens],
+        className="pathogen-list",
+    )
+
+    received = modals._pathogen_value(test_pathogens)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+def test__approvers_inline():
+    test_approvers = ["test_approver1", "test_approver2"]
+    expected = html.Div(
+        ", ".join(test_approvers),
+        className="approver-line",
+    )
+
+    received = modals._approvers_inline(test_approvers)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+class TestPopulationItem:
+    def test__population_item__population_item_first_false(self):
+        test_label = "test_label"
+        test_value = "test_value"
+        test_population_item_first_false = False
+        expected = html.Div(
+            [
+                html.Div(test_label, className="population-label"),
+                html.Div(test_value, className="population-value"),
+            ],
+            className="population-item",
+        )
+
+        received = modals._population_item(
+            test_label, test_value, first=test_population_item_first_false
+        )
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__population_item__population_item_first_true(self):
+        test_label = "test_label"
+        test_value = "test_value"
+        test_population_item_first_true = True
+        expected = html.Div(
+            [
+                html.Div(test_label, className="population-label"),
+                html.Div(test_value, className="population-value"),
+            ],
+            className="population-item first",
+        )
+
+        received = modals._population_item(
+            test_label, test_value, first=test_population_item_first_true
+        )
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
+class TestAuthorNameWithSuperscripts:
+    def test__author_name_with_superscripts__no_affiliations(self):
+        test_author_name = "test_author_name"
+        test_affiliation_numbers = []
+        test_author = {
+            "name": test_author_name,
+            "affiliations": test_affiliation_numbers,
+        }
+        expected = dash.html.Span(["test_author_name"])
+
+        received = modals._author_name_with_superscripts(test_author)
+
+        assert isinstance(received, dash.html.Span)
+        assert str(received) == str(expected)
+
+    def test__author_name_with_superscripts__affiliations_present(self):
+        test_author_name = "test_author_name"
+        test_affiliation_numbers = ["test_affiliation1", "test_affiliation2"]
+        test_author = {
+            "name": test_author_name,
+            "affiliations": test_affiliation_numbers,
+        }
+        expected = dash.html.Span(
+            [
+                "test_author_name",
+                html.Sup(
+                    ",".join(str(number) for number in test_affiliation_numbers),
+                    className="author-sup",
+                ),
+            ]
+        )
+
+        received = modals._author_name_with_superscripts(test_author)
+
+        assert isinstance(received, dash.html.Span)
+        assert str(received) == str(expected)
+
+
+class TestAuthorsInline:
+    def test__authors_line__no_authors_with_affiliations(self):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = []
+        test_author1 = {
+            "name": test_author1_name,
+            "affiliations": test_author1_affiliation_numbers,
+        }
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = []
+        test_author2 = {
+            "name": test_author2_name,
+            "affiliations": test_author2_affiliation_numbers,
+        }
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(["test_author1_name"]),
+                ", ",
+                dash.html.Span(["test_author2_name"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__authors_line__only_first_author_with_affiliations(self):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = [
+            "test_author1_affiliation1",
+            "test_author1_affiliation2",
+        ]
+        test_author1 = {
+            "name": test_author1_name,
+            "affiliations": test_author1_affiliation_numbers,
+        }
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = []
+        test_author2 = {
+            "name": test_author2_name,
+            "affiliations": test_author2_affiliation_numbers,
+        }
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(
+                    [
+                        "test_author1_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author1_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+                ", ",
+                dash.html.Span(["test_author2_name"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__authors_line__both_authors_with_affiliations(self):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = [
+            "test_author1_affiliation1",
+            "test_author1_affiliation2",
+        ]
+        test_author1 = {
+            "name": test_author1_name,
+            "affiliations": test_author1_affiliation_numbers,
+        }
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = [
+            "test_author2_affiliation1",
+            "test_author2_affiliation2",
+        ]
+        test_author2 = {
+            "name": test_author2_name,
+            "affiliations": test_author2_affiliation_numbers,
+        }
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(
+                    [
+                        "test_author1_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author1_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+                ", ",
+                dash.html.Span(
+                    [
+                        "test_author2_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author2_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+            ],
+            className="author-line",
+        )
+
+        received = modals._authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
 def test__build_crf_metadata_modal_tabbed_body():
     test_selected_version = "test_selected_version"
     test_template_name = "test crf"
