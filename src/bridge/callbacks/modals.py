@@ -1,5 +1,6 @@
 import io
 import json
+import typing
 from functools import lru_cache
 from time import perf_counter
 from typing import Tuple
@@ -67,6 +68,220 @@ def build_checklist_dom_from_mapping(
     options = [{"label": label, "value": value} for label, value in options_data]
     checked_items = list(checked_items_data)
     return options, checked_items
+
+
+# --- Utility functions for the CRF metadata modal callbacks ---
+def _section(title: str, content: dash.html.Div | dash.html.P) -> dash.html.Section:
+    return html.Section(
+        [
+            html.H3(title, className="section-title"),
+            content,
+        ],
+        className="section",
+    )
+
+
+def _metadata_grid(items: tuple[str, str]) -> dash.html.Div:
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Span(label, className="metadata-label"),
+                    html.Div(value, className="metadata-value"),
+                ],
+                className="metadata-item",
+            )
+            for label, value in items
+        ],
+        className="metadata-grid",
+    )
+
+
+def _scope_item(label: str, value: str) -> dash.html.Div:
+    return html.Div(
+        [
+            html.Div(label, className="scope-label"),
+            html.Div(value, className="scope-value"),
+        ],
+        className="scope-item",
+    )
+
+
+def _pathogen_value(pathogens: str) -> dash.html.Div:
+    return html.Div(
+        [html.Span(pathogen, className="pathogen-chip") for pathogen in pathogens],
+        className="pathogen-list",
+    )
+
+
+def _population_item(label: str, value: str, first: bool = False) -> dash.html.Div:
+    class_name = "population-item first" if first else "population-item"
+
+    return html.Div(
+        [
+            html.Div(label, className="population-label"),
+            html.Div(value, className="population-value"),
+        ],
+        className=class_name,
+    )
+
+
+def _author_name_with_superscripts(author: dict[str, typing.Any]) -> dash.html.Span:
+    affiliation_numbers = author.get("affiliations", [])
+
+    children = [author["name"]]
+
+    if affiliation_numbers:
+        children.append(
+            html.Sup(
+                ",".join(str(number) for number in affiliation_numbers),
+                className="author-sup",
+            )
+        )
+
+    return html.Span(children)
+
+
+def _authors_inline(authors: dict[str, typing.Any]) -> dash.html.Div:
+    children = []
+
+    for index, author in enumerate(authors):
+        if index > 0:
+            children.append(", ")
+        children.append(_author_name_with_superscripts(author))
+
+    return html.Div(children, className="author-line")
+
+
+def _approvers_inline(approvers: list[str]) -> dash.html.Div:
+    return html.Div(
+        ", ".join(approvers),
+        className="approver-line",
+    )
+
+
+def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
+    authors = governance["authors"]
+    approvers = governance["approvers"]
+    affiliations = governance["affiliations"]
+    contact = governance["contact"]
+
+    affiliation_nodes = []
+    for number, institution in enumerate(affiliations, start=1):
+        affiliation_nodes.append(
+            html.Div(
+                [
+                    html.Sup(str(number), className="affiliation-number"),
+                    html.Span(institution),
+                ],
+                className="affiliation-item",
+            )
+        )
+
+    return html.Div(
+        [
+            _section(
+                "Contributors",
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H4("Authors", className="paper-subtitle"),
+                                html.Div(
+                                    f"{len(authors)} people",
+                                    className="paper-count",
+                                ),
+                                _authors_inline(authors),
+                            ],
+                            className="paper-subsection",
+                        ),
+                        html.Div(
+                            [
+                                html.H4("Approvers", className="paper-subtitle"),
+                                html.Div(
+                                    f"{len(approvers)} people",
+                                    className="paper-count",
+                                ),
+                                _approvers_inline(approvers),
+                            ],
+                            className="paper-subsection",
+                        ),
+                    ],
+                    className="paper-columns",
+                ),
+            ),
+            _section(
+                "Affiliations",
+                html.Div(
+                    [
+                        html.Div(
+                            f"{len(affiliations)} affiliations",
+                            className="paper-count",
+                        ),
+                        html.Div(
+                            affiliation_nodes,
+                            className="affiliation-list",
+                        ),
+                    ]
+                ),
+            ),
+            html.Div(className="governance-divider"),
+            _section(
+                "Correspondence",
+                html.Div(
+                    [
+                        html.Span(
+                            contact["name"],
+                            style={"fontWeight": "600"},
+                        ),
+                        " - ",
+                        html.A(
+                            contact["email"],
+                            href=f"mailto:{contact['email']}",
+                            className="correspondence-email",
+                        ),
+                    ],
+                    className="correspondence",
+                ),
+            ),
+        ]
+    )
+
+
+def _keyword_section(keywords: list[str]) -> dash.html.Section:
+    return _section(
+        "Keywords",
+        html.Div(
+            [html.Span(keyword, className="keyword") for keyword in keywords],
+            className="keyword-container",
+        ),
+    )
+
+
+def _links_section(links: tuple[str, str]) -> dash.html.Section:
+    return _section(
+        "Resources",
+        html.Div(
+            [
+                html.A(
+                    [
+                        html.Div("↗", className="resource-icon"),
+                        html.Div(
+                            [
+                                html.Div(name, className="resource-name"),
+                                html.Div(url, className="resource-url"),
+                            ]
+                        ),
+                    ],
+                    href=url,
+                    target="_blank",
+                    className="resource-link",
+                )
+                for name, url in links
+            ],
+            className="resource-list",
+        ),
+    )
 
 
 def _build_crf_metadata_modal_tabbed_body(
