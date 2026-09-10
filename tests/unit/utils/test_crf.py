@@ -264,10 +264,7 @@ class TestGovernanceCRFTemplateMetadataModalSection:
                 "test_affiliation1",
                 "test_affiliation2",
             ),
-            "contacts": (
-                ("test_contact1_name", "test_contact1_email"),
-                ("test_contact2_name", "test_contact2_email"),
-            ),
+            "contact": ("test_contact_name", "test_contact_email"),
         }
         test_section = GovernanceCRFTemplateMetadataModalSection(
             authors=(
@@ -282,17 +279,14 @@ class TestGovernanceCRFTemplateMetadataModalSection:
                 "test_affiliation1",
                 "test_affiliation2",
             ),
-            contacts=(
-                ("test_contact1_name", "test_contact1_email"),
-                ("test_contact2_name", "test_contact2_email"),
-            ),
+            contact=("test_contact_name", "test_contact_email"),
         )
 
         assert test_section.section_name == "Governance & Contributors"
         assert test_section.authors == expected_data["authors"]
         assert test_section.approvers == expected_data["approvers"]
         assert test_section.affiliations == expected_data["affiliations"]
-        assert test_section.contacts == expected_data["contacts"]
+        assert test_section.contact == expected_data["contact"]
         assert hash(test_section) == hash(
             GovernanceCRFTemplateMetadataModalSection(**expected_data)
         )
@@ -376,10 +370,7 @@ class TestCRFTemplateMetadataModal:
                     "test_affiliation1",
                     "test_affiliation2",
                 ),
-                contacts=(
-                    ("test_contact1_name", "test_contact1_email"),
-                    ("test_contact2_name", "test_contact2_email"),
-                ),
+                contact=("test_contact_name", "test_contact_email"),
             ),
             "documentation_section": DocumentationCRFTemplateMetadataModalSection(
                 keywords=(
@@ -432,10 +423,7 @@ class TestCRFTemplateMetadataModal:
                     "test_affiliation1",
                     "test_affiliation2",
                 ),
-                contacts=(
-                    ("test_contact1_name", "test_contact1_email"),
-                    ("test_contact2_name", "test_contact2_email"),
-                ),
+                contact=("test_contact_name", "test_contact_email"),
             ),
             documentation_section=DocumentationCRFTemplateMetadataModalSection(
                 keywords=(

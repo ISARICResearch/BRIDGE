@@ -13,7 +13,10 @@ from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
-from bridge.utils.crf import clean_crf_metadata
+from bridge.utils.crf import (
+    clean_crf_metadata,
+    GovernanceCRFTemplateMetadataModalSection,
+)
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -149,7 +152,7 @@ def _get_crf_metadata_modal_author_name_with_superscripts(
 
 
 def _get_crf_metadata_modal_authors_inline(
-    authors: dict[str, typing.Any],
+    authors: tuple[tuple[str, tuple[int]]],
 ) -> dash.html.Div:
     children = []
 
@@ -169,12 +172,12 @@ def _get_crf_metadata_modal_approvers_inline(approvers: list[str]) -> dash.html.
 
 
 def _get_crf_metadata_modal_paper_governance(
-    governance: dict[str, typing.Any],
+    governance: GovernanceCRFTemplateMetadataModalSection,
 ) -> dash.html.Div:
-    authors = governance["authors"]
-    approvers = governance["approvers"]
-    affiliations = governance["affiliations"]
-    contact = governance["contact"]
+    authors = governance.authors
+    approvers = governance.approvers
+    affiliations = governance.affiliations
+    contact_name, contact_email = governance.contact
 
     affiliation_nodes = []
     for number, institution in enumerate(affiliations, start=1):
@@ -241,13 +244,13 @@ def _get_crf_metadata_modal_paper_governance(
                 html.Div(
                     [
                         html.Span(
-                            contact["name"],
+                            contact_name,
                             style={"fontWeight": "600"},
                         ),
                         " - ",
                         html.A(
-                            contact["email"],
-                            href=f"mailto:{contact['email']}",
+                            contact_email,
+                            href=f"mailto:{contact_email}",
                             className="correspondence-email",
                         ),
                     ],

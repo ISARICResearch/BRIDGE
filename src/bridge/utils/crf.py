@@ -159,7 +159,7 @@ class GovernanceCRFTemplateMetadataModalSection:
     authors: tuple[tuple[str, tuple[int]]]
     approvers: tuple[str]
     affiliations: tuple[str]
-    contacts: tuple[tuple[str, str]]
+    contact: tuple[str, str]
 
 
 @dataclass(eq=True, frozen=True)
@@ -182,3 +182,19 @@ class CRFTemplateMetadataModal:
     scientific_scope_section: ScientificScopeCRFTemplateMetadataModalSection
     governance_section: GovernanceCRFTemplateMetadataModalSection
     documentation_section: DocumentationCRFTemplateMetadataModalSection
+
+
+def get_crf_template_modal_content(
+    template_metadata: pd.Series,
+) -> CRFTemplateMetadataModal:
+    """:py:class:`bridge.utils.crf.CRFTemplateMetadataModal` : Returns CRF template metadata content as a dataclass.
+
+    Parameters
+    ----------
+    template_metadata : pd.Series
+        A specific CRF template metadata as a Pandas series.
+
+    Returns
+    -------
+    CRFTemplateMetadataModal
+    """

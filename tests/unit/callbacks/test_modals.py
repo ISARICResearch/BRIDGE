@@ -163,7 +163,7 @@ def test__scope_item():
         className="scope-item",
     )
 
-    received = modals._scope_item(test_label, test_value)
+    received = modals._get_crf_metadata_modal_scope_item(test_label, test_value)
 
     assert isinstance(received, dash.html.Div)
     assert str(received) == str(expected)
