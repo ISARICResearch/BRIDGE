@@ -111,7 +111,7 @@ def test_update_list_variables_checked():
     assert_frame_equal(df_output, df_expected)
 
 
-def test__section():
+def test__get_crf_metadata_modal_section():
     test_title = "test_title"
     expected = html.Section(
         [
@@ -121,13 +121,13 @@ def test__section():
         className="section",
     )
 
-    received = modals._section(test_title, html.Div("test_div"))
+    received = modals._get_crf_metadata_modal_section(test_title, html.Div("test_div"))
 
     assert isinstance(received, dash.html.Section)
     assert str(received) == str(expected)
 
 
-def test__metadata_grid():
+def test__get_crf_metadata_modal_metadata_grid():
     test_items = [
         ("test_items_label1", "test_items_value1"),
         ("test_items_label2", "test_items_value2"),
@@ -146,7 +146,7 @@ def test__metadata_grid():
         className="metadata-grid",
     )
 
-    received = modals._metadata_grid(test_items)
+    received = modals._get_crf_metadata_modal_metadata_grid(test_items)
 
     assert isinstance(received, dash.html.Div)
     assert str(received) == str(expected)
@@ -169,34 +169,34 @@ def test__scope_item():
     assert str(received) == str(expected)
 
 
-def test__pathogen_value():
+def test__get_crf_metadata_modal_pathogen_value():
     test_pathogens = ["test_pathogen1", "test_pathogen2"]
     expected = html.Div(
         [html.Span(pathogen, className="pathogen-chip") for pathogen in test_pathogens],
         className="pathogen-list",
     )
 
-    received = modals._pathogen_value(test_pathogens)
+    received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
 
     assert isinstance(received, dash.html.Div)
     assert str(received) == str(expected)
 
 
-def test__approvers_inline():
+def test__get_crf_metadata_modal_approvers_inline():
     test_approvers = ["test_approver1", "test_approver2"]
     expected = html.Div(
         ", ".join(test_approvers),
         className="approver-line",
     )
 
-    received = modals._approvers_inline(test_approvers)
+    received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
 
     assert isinstance(received, dash.html.Div)
     assert str(received) == str(expected)
 
 
-class TestPopulationItem:
-    def test__population_item__population_item_first_false(self):
+class TestCrfMetadataModalGetPopulationItem:
+    def test__get_crf_metadata_modal_population_item__population_item_first_false(self):
         test_label = "test_label"
         test_value = "test_value"
         test_population_item_first_false = False
@@ -208,14 +208,14 @@ class TestPopulationItem:
             className="population-item",
         )
 
-        received = modals._population_item(
+        received = modals._get_crf_metadata_modal_population_item(
             test_label, test_value, first=test_population_item_first_false
         )
 
         assert isinstance(received, dash.html.Div)
         assert str(received) == str(expected)
 
-    def test__population_item__population_item_first_true(self):
+    def test__get_crf_metadata_modal_population_item__population_item_first_true(self):
         test_label = "test_label"
         test_value = "test_value"
         test_population_item_first_true = True
@@ -227,7 +227,7 @@ class TestPopulationItem:
             className="population-item first",
         )
 
-        received = modals._population_item(
+        received = modals._get_crf_metadata_modal_population_item(
             test_label, test_value, first=test_population_item_first_true
         )
 
@@ -235,8 +235,10 @@ class TestPopulationItem:
         assert str(received) == str(expected)
 
 
-class TestAuthorNameWithSuperscripts:
-    def test__author_name_with_superscripts__no_affiliations(self):
+class TestCrfMetadataModalGetAuthorNameWithSuperscripts:
+    def test__get_crf_metadata_modal_author_name_with_superscripts__no_affiliations(
+        self,
+    ):
         test_author_name = "test_author_name"
         test_affiliation_numbers = []
         test_author = {
@@ -245,12 +247,16 @@ class TestAuthorNameWithSuperscripts:
         }
         expected = dash.html.Span(["test_author_name"])
 
-        received = modals._author_name_with_superscripts(test_author)
+        received = modals._get_crf_metadata_modal_author_name_with_superscripts(
+            test_author
+        )
 
         assert isinstance(received, dash.html.Span)
         assert str(received) == str(expected)
 
-    def test__author_name_with_superscripts__affiliations_present(self):
+    def test__get_crf_metadata_modal_author_name_with_superscripts__affiliations_present(
+        self,
+    ):
         test_author_name = "test_author_name"
         test_affiliation_numbers = ["test_affiliation1", "test_affiliation2"]
         test_author = {
@@ -267,14 +273,16 @@ class TestAuthorNameWithSuperscripts:
             ]
         )
 
-        received = modals._author_name_with_superscripts(test_author)
+        received = modals._get_crf_metadata_modal_author_name_with_superscripts(
+            test_author
+        )
 
         assert isinstance(received, dash.html.Span)
         assert str(received) == str(expected)
 
 
-class TestAuthorsInline:
-    def test__authors_line__no_authors_with_affiliations(self):
+class TestCrfMetadataModalGetAuthorsInline:
+    def test__get_crf_metadata_modal_authors_inline__no_authors_with_affiliations(self):
         test_author1_name = "test_author1_name"
         test_author1_affiliation_numbers = []
         test_author1 = {
@@ -297,12 +305,14 @@ class TestAuthorsInline:
             className="author-line",
         )
 
-        received = modals._authors_inline(test_authors)
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
 
         assert isinstance(received, dash.html.Div)
         assert str(received) == str(expected)
 
-    def test__authors_line__only_first_author_with_affiliations(self):
+    def test__get_crf_metadata_modal_authors_inline__only_first_author_with_affiliations(
+        self,
+    ):
         test_author1_name = "test_author1_name"
         test_author1_affiliation_numbers = [
             "test_author1_affiliation1",
@@ -339,12 +349,14 @@ class TestAuthorsInline:
             className="author-line",
         )
 
-        received = modals._authors_inline(test_authors)
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
 
         assert isinstance(received, dash.html.Div)
         assert str(received) == str(expected)
 
-    def test__authors_line__both_authors_with_affiliations(self):
+    def test__get_crf_metadata_modal_authors_inline__both_authors_with_affiliations(
+        self,
+    ):
         test_author1_name = "test_author1_name"
         test_author1_affiliation_numbers = [
             "test_author1_affiliation1",
@@ -395,7 +407,7 @@ class TestAuthorsInline:
             className="author-line",
         )
 
-        received = modals._authors_inline(test_authors)
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
 
         assert isinstance(received, dash.html.Div)
         assert str(received) == str(expected)

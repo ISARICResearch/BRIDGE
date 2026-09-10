@@ -71,7 +71,9 @@ def build_checklist_dom_from_mapping(
 
 
 # --- Utility functions for the CRF metadata modal callbacks ---
-def _section(title: str, content: dash.html.Div | dash.html.P) -> dash.html.Section:
+def _get_crf_metadata_modal_section(
+    title: str, content: dash.html.Div | dash.html.P
+) -> dash.html.Section:
     return html.Section(
         [
             html.H3(title, className="section-title"),
@@ -81,7 +83,7 @@ def _section(title: str, content: dash.html.Div | dash.html.P) -> dash.html.Sect
     )
 
 
-def _metadata_grid(items: tuple[str, str]) -> dash.html.Div:
+def _get_crf_metadata_modal_metadata_grid(items: tuple[str, str]) -> dash.html.Div:
     return html.Div(
         [
             html.Div(
@@ -97,7 +99,7 @@ def _metadata_grid(items: tuple[str, str]) -> dash.html.Div:
     )
 
 
-def _scope_item(label: str, value: str) -> dash.html.Div:
+def _get_crf_metadata_modal_scope_item(label: str, value: str) -> dash.html.Div:
     return html.Div(
         [
             html.Div(label, className="scope-label"),
@@ -107,14 +109,16 @@ def _scope_item(label: str, value: str) -> dash.html.Div:
     )
 
 
-def _pathogen_value(pathogens: str) -> dash.html.Div:
+def _get_crf_metadata_modal_pathogen_value(pathogens: str) -> dash.html.Div:
     return html.Div(
         [html.Span(pathogen, className="pathogen-chip") for pathogen in pathogens],
         className="pathogen-list",
     )
 
 
-def _population_item(label: str, value: str, first: bool = False) -> dash.html.Div:
+def _get_crf_metadata_modal_population_item(
+    label: str, value: str, first: bool = False
+) -> dash.html.Div:
     class_name = "population-item first" if first else "population-item"
 
     return html.Div(
@@ -126,7 +130,9 @@ def _population_item(label: str, value: str, first: bool = False) -> dash.html.D
     )
 
 
-def _author_name_with_superscripts(author: dict[str, typing.Any]) -> dash.html.Span:
+def _get_crf_metadata_modal_author_name_with_superscripts(
+    author: dict[str, typing.Any],
+) -> dash.html.Span:
     affiliation_numbers = author.get("affiliations", [])
 
     children = [author["name"]]
@@ -142,25 +148,29 @@ def _author_name_with_superscripts(author: dict[str, typing.Any]) -> dash.html.S
     return html.Span(children)
 
 
-def _authors_inline(authors: dict[str, typing.Any]) -> dash.html.Div:
+def _get_crf_metadata_modal_authors_inline(
+    authors: dict[str, typing.Any],
+) -> dash.html.Div:
     children = []
 
     for index, author in enumerate(authors):
         if index > 0:
             children.append(", ")
-        children.append(_author_name_with_superscripts(author))
+        children.append(_get_crf_metadata_modal_author_name_with_superscripts(author))
 
     return html.Div(children, className="author-line")
 
 
-def _approvers_inline(approvers: list[str]) -> dash.html.Div:
+def _get_crf_metadata_modal_approvers_inline(approvers: list[str]) -> dash.html.Div:
     return html.Div(
         ", ".join(approvers),
         className="approver-line",
     )
 
 
-def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
+def _get_crf_metadata_modal_paper_governance(
+    governance: dict[str, typing.Any],
+) -> dash.html.Div:
     authors = governance["authors"]
     approvers = governance["approvers"]
     affiliations = governance["affiliations"]
@@ -180,7 +190,7 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
 
     return html.Div(
         [
-            _section(
+            _get_crf_metadata_modal_section(
                 "Contributors",
                 html.Div(
                     [
@@ -191,7 +201,7 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
                                     f"{len(authors)} people",
                                     className="paper-count",
                                 ),
-                                _authors_inline(authors),
+                                _get_crf_metadata_modal_authors_inline(authors),
                             ],
                             className="paper-subsection",
                         ),
@@ -202,7 +212,7 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
                                     f"{len(approvers)} people",
                                     className="paper-count",
                                 ),
-                                _approvers_inline(approvers),
+                                _get_crf_metadata_modal_approvers_inline(approvers),
                             ],
                             className="paper-subsection",
                         ),
@@ -210,7 +220,7 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
                     className="paper-columns",
                 ),
             ),
-            _section(
+            _get_crf_metadata_modal_section(
                 "Affiliations",
                 html.Div(
                     [
@@ -226,7 +236,7 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
                 ),
             ),
             html.Div(className="governance-divider"),
-            _section(
+            _get_crf_metadata_modal_section(
                 "Correspondence",
                 html.Div(
                     [
@@ -248,8 +258,8 @@ def _paper_governance(governance: dict[str, typing.Any]) -> dash.html.Div:
     )
 
 
-def _keyword_section(keywords: list[str]) -> dash.html.Section:
-    return _section(
+def _get_crf_metadata_modal_keyword_section(keywords: list[str]) -> dash.html.Section:
+    return _get_crf_metadata_modal_section(
         "Keywords",
         html.Div(
             [html.Span(keyword, className="keyword") for keyword in keywords],
@@ -258,8 +268,8 @@ def _keyword_section(keywords: list[str]) -> dash.html.Section:
     )
 
 
-def _links_section(links: tuple[str, str]) -> dash.html.Section:
-    return _section(
+def _get_crf_metadata_modal_links_section(links: tuple[str, str]) -> dash.html.Section:
+    return _get_crf_metadata_modal_section(
         "Resources",
         html.Div(
             [
