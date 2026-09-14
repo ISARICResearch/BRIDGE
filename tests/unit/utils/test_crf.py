@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 # -- Internal libraries --
 from bridge.utils.crf import (
     clean_crf_metadata,
-    CRFTemplateMetadataModal,
+    CRFTemplateMetadataModalContent,
     DocumentationCRFTemplateMetadataModalSection,
     get_selected_crf_presets,
     get_crf_name,
@@ -384,7 +384,7 @@ class TestCRFTemplateMetadataModal:
             ),
         }
 
-        test_crf_template_metadata_modal = CRFTemplateMetadataModal(
+        test_crf_template_metadata_modal = CRFTemplateMetadataModalContent(
             title="test_crf_metadata_modal_title",
             overview_section=OverviewCRFTemplateMetadataModalSection(
                 description="test_description",
@@ -455,5 +455,5 @@ class TestCRFTemplateMetadataModal:
             == expected_data["documentation_section"]
         )
         assert hash(test_crf_template_metadata_modal) == hash(
-            CRFTemplateMetadataModal(**expected_data)
+            CRFTemplateMetadataModalContent(**expected_data)
         )

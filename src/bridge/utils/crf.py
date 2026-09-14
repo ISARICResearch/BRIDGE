@@ -1,6 +1,6 @@
 __all__ = [
     "clean_crf_metadata",
-    "CRFTemplateMetadataModal",
+    "CRFTemplateMetadataModalContent",
     "DocumentationCRFTemplateMetadataModalSection",
     "get_approvers",
     "get_author_and_institutions",
@@ -461,7 +461,7 @@ class DocumentationCRFTemplateMetadataModalSection:
 
 
 @dataclass(eq=True, frozen=True)
-class CRFTemplateMetadataModal:
+class CRFTemplateMetadataModalContent:
     """A dataclass implementation of a CRF template metadata modal content."""
 
     title: str
@@ -631,8 +631,8 @@ def get_crf_template_metadata_modal_documentation(
 
 def get_crf_template_metadata_modal_content(
     template_metadata: pd.Series,
-) -> CRFTemplateMetadataModal:
-    """:py:class:`bridge.utils.crf.CRFTemplateMetadataModal` : Returns CRF template metadata content as a dataclass.
+) -> CRFTemplateMetadataModalContent:
+    """:py:class:`bridge.utils.crf.CRFTemplateMetadataModalContent` : Returns CRF template metadata content as a dataclass.
 
     Parameters
     ----------
@@ -641,7 +641,7 @@ def get_crf_template_metadata_modal_content(
 
     Returns
     -------
-    CRFTemplateMetadataModal
+    CRFTemplateMetadataModalContent
     """
     tm = template_metadata
 
@@ -660,7 +660,7 @@ def get_crf_template_metadata_modal_content(
     # Create and return the CRF template metadata modal content
     modal_title = " | ".join(tm["Title of CRF"].split("_"))
 
-    return CRFTemplateMetadataModal(
+    return CRFTemplateMetadataModalContent(
         title=modal_title,
         overview_section=overview_section,
         scientific_scope_section=scientific_scope_section,
