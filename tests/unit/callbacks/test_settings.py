@@ -9,6 +9,8 @@ from dash._utils import AttributeDict
 
 from bridge.callbacks import settings
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.mark.parametrize(
     "version, expected_output",

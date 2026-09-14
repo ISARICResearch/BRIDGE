@@ -5,6 +5,9 @@ import pytest
 
 from bridge.callbacks import sidebar
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
+
 SETTINGS_ON = "images/settings_on.png"
 SETTINGS_OFF = "images/settings_off.png"
 PRESET_ON = "images/preset_on.png"

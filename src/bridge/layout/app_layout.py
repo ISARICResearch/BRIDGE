@@ -93,8 +93,8 @@ class MainContent:
                                         [
                                             "BRIDGE is being developed by ISARIC. For inquiries, support, or collaboration, please write to: ",
                                             html.A(
-                                                "data@isaric.org",
-                                                href="mailto:data@isaric.org",
+                                                "isaric-dev@ndm.ox.ac.uk",
+                                                href="mailto:isaric-dev@ndm.ox.ac.uk",
                                             ),
                                             ". ",
                                             "Licensed under the ",

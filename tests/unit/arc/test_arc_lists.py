@@ -7,6 +7,8 @@ from pandas._testing import assert_frame_equal, assert_series_equal
 
 from bridge.arc.arc_lists import ArcList
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.fixture
 def translation_dict():

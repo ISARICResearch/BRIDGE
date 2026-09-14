@@ -1,5 +1,6 @@
 import io
 import json
+import typing
 from functools import lru_cache
 from time import perf_counter
 from typing import Tuple
@@ -12,7 +13,10 @@ from dash import dcc, html, Input, Output, State, ALL
 
 from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
-from bridge.utils.crf import clean_crf_metadata
+from bridge.utils.crf import (
+    clean_crf_metadata,
+    GovernanceCRFTemplateMetadataModalSection,
+)
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -67,6 +71,230 @@ def build_checklist_dom_from_mapping(
     options = [{"label": label, "value": value} for label, value in options_data]
     checked_items = list(checked_items_data)
     return options, checked_items
+
+
+# --- Utility functions for the CRF metadata modal callbacks ---
+def _get_crf_metadata_modal_section(
+    title: str, content: dash.html.Div | dash.html.P
+) -> dash.html.Section:
+    return html.Section(
+        [
+            html.H3(title, className="section-title"),
+            content,
+        ],
+        className="section",
+    )
+
+
+def _get_crf_metadata_modal_metadata_grid(items: tuple[str, str]) -> dash.html.Div:
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Span(label, className="metadata-label"),
+                    html.Div(value, className="metadata-value"),
+                ],
+                className="metadata-item",
+            )
+            for label, value in items
+        ],
+        className="metadata-grid",
+    )
+
+
+def _get_crf_metadata_modal_scope_item(label: str, value: str) -> dash.html.Div:
+    return html.Div(
+        [
+            html.Div(label, className="scope-label"),
+            html.Div(value, className="scope-value"),
+        ],
+        className="scope-item",
+    )
+
+
+def _get_crf_metadata_modal_pathogen_value(pathogens: str) -> dash.html.Div:
+    return html.Div(
+        [html.Span(pathogen, className="pathogen-chip") for pathogen in pathogens],
+        className="pathogen-list",
+    )
+
+
+def _get_crf_metadata_modal_population_item(
+    label: str, value: str, first: bool = False
+) -> dash.html.Div:
+    class_name = "population-item first" if first else "population-item"
+
+    return html.Div(
+        [
+            html.Div(label, className="population-label"),
+            html.Div(value, className="population-value"),
+        ],
+        className=class_name,
+    )
+
+
+def _get_crf_metadata_modal_author_name_with_superscripts(
+    author: dict[str, typing.Any],
+) -> dash.html.Span:
+    affiliation_numbers = author.get("affiliations", [])
+
+    children = [author["name"]]
+
+    if affiliation_numbers:
+        children.append(
+            html.Sup(
+                ",".join(str(number) for number in affiliation_numbers),
+                className="author-sup",
+            )
+        )
+
+    return html.Span(children)
+
+
+def _get_crf_metadata_modal_authors_inline(
+    authors: tuple[tuple[str, tuple[int]]],
+) -> dash.html.Div:
+    children = []
+
+    for index, author in enumerate(authors):
+        if index > 0:
+            children.append(", ")
+        children.append(_get_crf_metadata_modal_author_name_with_superscripts(author))
+
+    return html.Div(children, className="author-line")
+
+
+def _get_crf_metadata_modal_approvers_inline(approvers: list[str]) -> dash.html.Div:
+    return html.Div(
+        ", ".join(approvers),
+        className="approver-line",
+    )
+
+
+def _get_crf_metadata_modal_paper_governance(
+    governance: GovernanceCRFTemplateMetadataModalSection,
+) -> dash.html.Div:
+    authors = governance.authors
+    approvers = governance.approvers
+    affiliations = governance.affiliations
+    contact_name, contact_email = governance.contact
+
+    affiliation_nodes = []
+    for number, institution in enumerate(affiliations, start=1):
+        affiliation_nodes.append(
+            html.Div(
+                [
+                    html.Sup(str(number), className="affiliation-number"),
+                    html.Span(institution),
+                ],
+                className="affiliation-item",
+            )
+        )
+
+    return html.Div(
+        [
+            _get_crf_metadata_modal_section(
+                "Contributors",
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H4("Authors", className="paper-subtitle"),
+                                html.Div(
+                                    f"{len(authors)} people",
+                                    className="paper-count",
+                                ),
+                                _get_crf_metadata_modal_authors_inline(authors),
+                            ],
+                            className="paper-subsection",
+                        ),
+                        html.Div(
+                            [
+                                html.H4("Approvers", className="paper-subtitle"),
+                                html.Div(
+                                    f"{len(approvers)} people",
+                                    className="paper-count",
+                                ),
+                                _get_crf_metadata_modal_approvers_inline(approvers),
+                            ],
+                            className="paper-subsection",
+                        ),
+                    ],
+                    className="paper-columns",
+                ),
+            ),
+            _get_crf_metadata_modal_section(
+                "Affiliations",
+                html.Div(
+                    [
+                        html.Div(
+                            f"{len(affiliations)} affiliations",
+                            className="paper-count",
+                        ),
+                        html.Div(
+                            affiliation_nodes,
+                            className="affiliation-list",
+                        ),
+                    ]
+                ),
+            ),
+            html.Div(className="governance-divider"),
+            _get_crf_metadata_modal_section(
+                "Correspondence",
+                html.Div(
+                    [
+                        html.Span(
+                            contact_name,
+                            style={"fontWeight": "600"},
+                        ),
+                        " - ",
+                        html.A(
+                            contact_email,
+                            href=f"mailto:{contact_email}",
+                            className="correspondence-email",
+                        ),
+                    ],
+                    className="correspondence",
+                ),
+            ),
+        ]
+    )
+
+
+def _get_crf_metadata_modal_keyword_section(keywords: list[str]) -> dash.html.Section:
+    return _get_crf_metadata_modal_section(
+        "Keywords",
+        html.Div(
+            [html.Span(keyword, className="keyword") for keyword in keywords],
+            className="keyword-container",
+        ),
+    )
+
+
+def _get_crf_metadata_modal_links_section(links: tuple[str, str]) -> dash.html.Section:
+    return _get_crf_metadata_modal_section(
+        "Resources",
+        html.Div(
+            [
+                html.A(
+                    [
+                        html.Div("↗", className="resource-icon"),
+                        html.Div(
+                            [
+                                html.Div(name, className="resource-name"),
+                                html.Div(url, className="resource-url"),
+                            ]
+                        ),
+                    ],
+                    href=url,
+                    target="_blank",
+                    className="resource-link",
+                )
+                for name, url in links
+            ],
+            className="resource-list",
+        ),
+    )
 
 
 def _build_crf_metadata_modal_tabbed_body(
@@ -250,6 +478,10 @@ def _build_crf_metadata_modal_tab_content(
         except IndexError:
             template_metadata = create_placeholder_template_metadata(template_id)
 
+    # TODO: Add steps to create the CRF metadata modal content object from the
+    #       template metadata, and for each tab pass the relevant content, which
+    #       could either the entire content object, or the relevant section
+    #       content.
     if tab_id == "project-overview-tab":
         return _build_crf_metadata_modal_project_overview_tab(template_metadata)
     elif tab_id == "scientific-scope-tab":

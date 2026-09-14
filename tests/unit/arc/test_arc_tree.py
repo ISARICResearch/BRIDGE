@@ -6,6 +6,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.arc import arc_tree
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.fixture
 def df_tree_units():
