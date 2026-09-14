@@ -2,7 +2,18 @@ __all__ = [
     "clean_crf_metadata",
     "CRFTemplateMetadataModal",
     "DocumentationCRFTemplateMetadataModalSection",
+    "get_approvers",
+    "get_author_and_institutions",
+    "get_contact",
+    "get_keywords",
+    "get_research_questions",
+    "get_resources",
     "get_crf_name",
+    "get_crf_template_metadata_modal_content",
+    "get_crf_template_metadata_modal_documentation",
+    "get_crf_template_metadata_modal_governance",
+    "get_crf_template_metadata_modal_overview",
+    "get_crf_template_metadata_modal_scientific_scope",
     "get_selected_crf_presets",
     "GovernanceCRFTemplateMetadataModalSection",
     "OverviewCRFTemplateMetadataModalSection",
@@ -14,7 +25,10 @@ __all__ = [
 
 # -- Standard libraries --
 import re
+import typing
+from collections import OrderedDict
 from dataclasses import dataclass
+from itertools import chain
 
 # -- 3rd party libraries --
 import pandas as pd
@@ -24,6 +38,9 @@ from bridge.utils.logger import setup_logger
 
 
 logger = setup_logger(__name__)
+
+
+NOT_AVAILABLE_TYPE = typing.Literal["Not available"]
 
 
 def get_selected_crf_presets(
@@ -123,14 +140,285 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def get_research_questions(
+    research_questions_raw: str, /, *, delim: str = ";"
+) -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of research questions for the Scientific Scope section.
+
+    Parameters
+    ----------
+    research_questions_raw : str
+        A raw delimiter-separated (the delimiter defaulting to ``";"``) string
+        containing research questions.
+
+    delim : str, default=";"
+        Optional delimiter for the questions inside the string, defaulting to
+        ``";"``.
+
+    Returns
+    -------
+    tuple
+        A tuple of research questions.
+
+    Examples
+    --------
+    >>> research_questions_raw = '(1) characterise the clinical epidemiology of chikungunya, including presenting signs and symptoms, disease course, and outcomes;   (2) enable comparative clinical epidemiology across diseases, populations, and geographic regions;  (3) identify risk factors associated with disease presentation, progression, and outcomes;   (4) describe clinical management practices, including variations in approaches to care; (5) describe diagnostic approaches and results used in both routine clinical practice and research settings. '
+    >>> get_research_questions(research_questions_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('Characterise the clinical epidemiology of chikungunya, including presenting signs and symptoms, disease course, and outcomes',
+     'Enable comparative clinical epidemiology across diseases, populations, and geographic regions',
+     'Identify risk factors associated with disease presentation, progression, and outcomes',
+     'Describe clinical management practices, including variations in approaches to care',
+     'Describe diagnostic approaches and results used in both routine clinical practice and research settings.')
+    """
+    return tuple(
+        map(
+            lambda s: str.capitalize(re.sub(r"(\s+)?\(\d+\)(\s+)?", "", s)).strip(),
+            research_questions_raw.split(delim),
+        )
+    )
+
+
+def get_author_and_institutions(
+    authors_and_institutions_raw: str,
+    /,
+    *,
+    author_and_institutions_sep: str = "|",
+    author_institutions_delim: str = "/",
+    authors_delim: str = ";",
+) -> tuple[dict[str, tuple[str]], tuple[str]]:
+    """:py:class:`tuple` : Returns a pair of tuples for the Governance & Contributors section, consisting of an ordered map of authors and author-affiliated institutions, and a tuple of all affiliated institutions.
+
+    Parameters
+    ----------
+    authors_and_institutions_raw : str
+        A raw string of authors and author-affiliated institutions in the format:
+        ::
+
+           Author #1 name | Author #1 institution #1 / Author #1 institution #2; Author #2 name | Author #2 institution #1 ...
+
+    author_and_institutions_sep : str, default="|"
+        Optional separator of an author name from the list of their
+        (affiliated) institutions, defaults to ``"|"``.
+
+    author_institutions_delim : str, default="/"
+        Optional delimiter of an author's institutions, defaults to ``"/"``.
+
+    authors_delim : str, default=";"
+        Optional delimiter of authors, defaults to ``";"``.
+
+    Returns
+    -------
+    tuple
+        A pair consisting of (1) ordered dict of authors and author-affiliated
+        institutions, and a tuple of all affiliated institutions in order.
+
+    Examples
+    --------
+    >>> authors_and_institutions_raw = "Anastasiia Demidova | King's College London; Aileen Chang | ISARIC; Viviane S B de Oliveira | ISARIC; Josephine Bourner | ISARIC; Hugh Watson | ISARIC; Lubaba Sharin | ISARIC; Perkell Collie | ISARIC; Anastasia Kiseleva | ISARIC; Lilit Davtian | ISARIC; Jan Wu | ISARIC; Anastasiia Chernavskaya | ISARIC; Sara Duque Vallejo | ISARIC; Esteban Garcia-Gallo | ISARIC / Pandemic Sciences Institute, University of Oxford / Universidad Federal Bahia, Salvador, Brazil"
+    >>> get_authors_and_institutions(authors_and_institutions_raw) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    OrderedDict([('Anastasiia Demidova', (1,)),
+                 ('Aileen Chang', (2,)),
+                 ('Viviane S B de Oliveira', (2,)),
+                 ('Josephine Bourner', (2,)),
+                 ('Hugh Watson', (2,)),
+                 ('Lubaba Sharin', (2,)),
+                 ('Perkell Collie', (2,)),
+                 ('Anastasia Kiseleva', (2,)),
+                 ('Lilit Davtian', (2,)),
+                 ('Jan Wu', (2,)),
+                 ('Anastasiia Chernavskaya', (2,)),
+                 ('Sara Duque Vallejo', (2,)),
+                 ('Esteban Garcia-Gallo', (2, 3, 4))])
+    """
+    authors_and_institutions_map = OrderedDict(
+        [
+            author.strip(),
+            tuple(map(str.strip, institutions.split(author_institutions_delim))),
+        ]
+        for author, institutions in map(
+            lambda s: s.split(author_and_institutions_sep),
+            authors_and_institutions_raw.split(authors_delim),
+        )
+    )
+    ordered_institutions = tuple(
+        map(
+            str.strip,
+            dict.fromkeys(chain.from_iterable(authors_and_institutions_map.values())),
+        )
+    )
+
+    return tuple(
+        tuple(
+            [
+                author,
+                tuple(
+                    [
+                        ordered_institutions.index(institution) + 1
+                        for institution in institutions
+                    ]
+                ),
+            ]
+        )
+        for author, institutions in authors_and_institutions_map.items()
+    ), ordered_institutions
+
+
+def get_approvers(
+    approvers_raw: str,
+    /,
+    *,
+    approvers_prefix_sep: str = ":",
+    approvers_delim: str = ",",
+) -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of approvers for the Governance & Contributors section.
+
+    Parameters
+    ----------
+    approvers_raw : str
+        A delimiter-separated (the delimiter defaulting to ``";"``) string
+        containing a list of study approvers.
+
+    approvers_delim : str, default=";"
+        Optional delimiter for the approver names inside the string, defaulting
+        to ``","``.
+
+    Returns
+    -------
+    tuple
+        A tuple of approver names.
+
+    Examples
+    --------
+    >>> approvers_raw = 'ISARIC chikungunya CRF management committee: Aileen Chang, Viviane S B de Oliveira, Josephine Bourner, Hugh Watson, Lubaba Sharin)'
+    >>> get_approvers(approvers_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('Aileen Chang',
+     'Viviane S B de Oliveira',
+     'Josephine Bourner',
+     'Hugh Watson',
+     'Lubaba Sharin)')
+    """
+    return tuple(
+        map(
+            str.strip,
+            approvers_raw.split(approvers_prefix_sep)[-1].split(approvers_delim),
+        )
+    )
+
+
+def get_contact(
+    contact_firstname: str, contact_lastname: str, contact_email: str
+) -> tuple[str, str]:
+    """:py:class:`tuple` : A pair consisting of the study contact name and email.
+
+    Parameters
+    ----------
+    contact_firstname: str
+        The contact first name.
+
+    contact_lastname : str
+        The contact last name.
+
+    contact_email : str
+        The contact email.
+
+    Returns
+    -------
+    tuple
+        A pair consisting of the contact name and email.
+
+    Examples
+    --------
+    >>> get_contact("John", "Smith", "jsmith@example.com")  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    (John Smith', jsmith@example.com')
+    """
+    return f"{contact_firstname} {contact_lastname}", contact_email
+
+
+def get_keywords(keywords_raw: str, /, *, keywords_delim: str = ";") -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of keywords for the Documentation & Discoverability section.
+
+    Parameters
+    ----------
+    keywords_raw : str
+        A delimiter-separated (the delimiter defaulting to ``";"``) string
+        containing a list of study keywords.
+
+    keywords_delim : str, default=";"
+        Optional delimiter for the keywords inside the string, defaulting
+        to ``";"``.
+
+    Returns
+    -------
+    tuple
+        A tuple of keywords.
+
+    Examples
+    --------
+    >>> keywords_raw = 'chikungunya; CHIKV; arbovirus; case report form; CRF; ISARIC; BRIDGE; ARC; harmonised data collection; clinical characterisation; outbreak preparedness; REDCap; acute infection    '
+    >>> get_keywords(keywords_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('Aileen Chang',
+     'Viviane S B de Oliveira',
+     'Josephine Bourner',
+     'Hugh Watson',
+     'Lubaba Sharin)')
+    """
+    return tuple(map(str.strip, keywords_raw.split(keywords_delim)))
+
+
+def get_resources(
+    resources_raw: str,
+    /,
+    *,
+    resource_name_url_sep: str = ": ",
+    resource_delim: str = "·",
+) -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of resource name and URL pairs for the Documentation & Discoverability section.
+
+    Parameters
+    ----------
+    resources_raw : str
+        A delimiter-separated (the delimiter defaulting to ``"·"``) string
+        of resource names and URLs.
+
+    resource_name_url_sep : str, default=": "
+        Optional separator between the resource name and the URL, defaults
+        to ``": "``.
+
+    resource_delim: str, default="·"
+        Optional delimiter of the resource name and URL pairs, defaults to
+        ``"·"``.
+
+    Returns
+    -------
+    tuple
+        A tuple of pairs, each pair consisting of a resource name and URL.
+
+    Examples
+    --------
+    >>> resources_raw = 'ISARIC CRFs: https://isaric.org/resources/data/case-report-forms/   · BRIDGE: https://bridge.isaric.org/   · ARC variable library: https://github.com/ISARICResearch/ARC · ISARIC: www.isaric.org · '
+    >>> get_resources(resources_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('Aileen Chang',
+     'Viviane S B de Oliveira',
+     'Josephine Bourner',
+     'Hugh Watson',
+     'Lubaba Sharin)')
+    """
+    return tuple(
+        [
+            tuple(map(str.strip, s.split(resource_name_url_sep)))
+            for s in resources_raw.strip().strip(resource_delim).split(resource_delim)
+        ]
+    )
+
+
 @dataclass(eq=True, frozen=True)
 class OverviewCRFTemplateMetadataModalSection:
     """A dataclass implementation of the project overview section of a CRF template metadata modal content."""
 
     section_name = "Overview"
 
-    description: str
-    metadata: tuple[tuple[str, str]]
+    description: str | NOT_AVAILABLE_TYPE
+    metadata: tuple[tuple[str, str]] | NOT_AVAILABLE_TYPE
 
 
 @dataclass(eq=True, frozen=True)
@@ -139,15 +427,15 @@ class ScientificScopeCRFTemplateMetadataModalSection:
 
     section_name = "Scientific Scope"
 
-    research_questions: tuple[str]
-    syndrome: str
-    pathogens: tuple[str]
-    setting: str
-    geographic_scope: str
-    syndrome_definition: str
-    target_population: str
-    inclusion_criteria: str
-    exclusion_criteria: str
+    research_questions: tuple[str] | NOT_AVAILABLE_TYPE
+    syndrome: str | NOT_AVAILABLE_TYPE
+    pathogens: tuple[str] | NOT_AVAILABLE_TYPE
+    setting: str | NOT_AVAILABLE_TYPE
+    geographic_scope: str | NOT_AVAILABLE_TYPE
+    syndrome_definition: str | NOT_AVAILABLE_TYPE
+    target_population: str | NOT_AVAILABLE_TYPE
+    inclusion_criteria: str | NOT_AVAILABLE_TYPE
+    exclusion_criteria: str | NOT_AVAILABLE_TYPE
 
 
 @dataclass(eq=True, frozen=True)
@@ -156,10 +444,10 @@ class GovernanceCRFTemplateMetadataModalSection:
 
     section_name = "Governance & Contributors"
 
-    authors: tuple[tuple[str, tuple[int]]]
-    approvers: tuple[str]
-    affiliations: tuple[str]
-    contact: tuple[str, str]
+    authors: tuple[tuple[str, tuple[int]]] | NOT_AVAILABLE_TYPE
+    approvers: tuple[str] | NOT_AVAILABLE_TYPE
+    affiliations: tuple[str] | NOT_AVAILABLE_TYPE
+    contact: tuple[str, str] | NOT_AVAILABLE_TYPE
 
 
 @dataclass(eq=True, frozen=True)
@@ -168,8 +456,8 @@ class DocumentationCRFTemplateMetadataModalSection:
 
     section_name = "Documentation & Discoverability"
 
-    keywords: tuple[str]
-    links: tuple[tuple[str, str]]
+    keywords: tuple[str] | NOT_AVAILABLE_TYPE
+    links: tuple[tuple[str, str]] | NOT_AVAILABLE_TYPE
 
 
 @dataclass(eq=True, frozen=True)
@@ -184,7 +472,164 @@ class CRFTemplateMetadataModal:
     documentation_section: DocumentationCRFTemplateMetadataModalSection
 
 
-def get_crf_template_modal_content(
+def get_crf_template_metadata_modal_overview(
+    template_metadata: pd.Series,
+) -> OverviewCRFTemplateMetadataModalSection:
+    """:py:class:`OverviewCRFTemplateMetadataModalSection` : The Overview section content of the CRF template metadata modal.
+
+    Parameters
+    ----------
+    template_metadata : pandas.Series
+        The CRF template metadata.
+
+    Returns
+    -------
+    OverviewCRFTemplateMetadataModalSection
+        The Overview section content of the CRF template metadata modal.
+    """
+    tm = template_metadata
+
+    description = tm.get("Description", "Not available")
+    metadata = [
+        (
+            "Study type",
+            tm.get("Study type", "Not available"),
+        ),
+        (
+            "Version",
+            tm.get("Version", "Not available"),
+        ),
+        (
+            "Publication date",
+            tm.get("Date of publication/release", "Not known"),
+        ),
+    ]
+
+    return OverviewCRFTemplateMetadataModalSection(
+        description=description,
+        metadata=metadata,
+    )
+
+
+def get_crf_template_metadata_modal_scientific_scope(
+    template_metadata: pd.Series,
+) -> ScientificScopeCRFTemplateMetadataModalSection:
+    """:py:class:`ScientificScopeCRFTemplateMetadataModalSection` : The Scientific Scope section content of the CRF template metadata modal.
+
+    Parameters
+    ----------
+    template_metadata : pandas.Series
+        The CRF template metadata.
+
+    Returns
+    -------
+    ScientificScopeCRFTemplateMetadataModalSection
+        The Scientific Scope section of the CRF template metadata modal.
+    """
+    tm = template_metadata
+
+    research_questions = (
+        get_research_questions(tm["Research_questions"])
+        if tm.get("Research questions")
+        else "Not available"
+    )
+    syndrome = tm.get("Syndrome / clinical presentation", "Not available")
+    pathogens = tuple(tm.get("Pathogen or agent", ["Not available"]))
+    setting = tm.get("Setting", "Not available")
+    geographic_scope = tm.get("Geographic scope", "Not available")
+    syndrome_definition = tm.get("Syndrome definition", "Not available")
+    target_population = tm.get("Target population", "Not available")
+    inclusion_criteria = tm.get("Inclusion Criteria", "Not available")
+    exclusion_criteria = tm.get("Exclusion Criteria", "Not available")
+
+    return ScientificScopeCRFTemplateMetadataModalSection(
+        research_questions=research_questions,
+        syndrome=syndrome,
+        pathogens=pathogens,
+        setting=setting,
+        geographic_scope=geographic_scope,
+        syndrome_definition=syndrome_definition,
+        target_population=target_population,
+        inclusion_criteria=inclusion_criteria,
+        exclusion_criteria=exclusion_criteria,
+    )
+
+
+def get_crf_template_metadata_modal_governance(
+    template_metadata: pd.Series,
+) -> GovernanceCRFTemplateMetadataModalSection:
+    """:py:class:`GovernanceCRFTemplateMetadataModalSection` : The Governors & Contributors section content of the CRF template metadata modal.
+
+    Parameters
+    ----------
+    template_metadata : pandas.Series
+        The CRF template metadata.
+
+    Returns
+    -------
+    GovernanceCRFTemplateMetadataModalSection
+        The Governance & Contributors section of the CRF template metadata modal.
+    """
+    tm = template_metadata
+
+    authors, affiliations = (
+        get_author_and_institutions(tm["Authors"])
+        if tm.get("Authors")
+        else ("Not available", "Not available")
+    )
+    approvers = (
+        get_approvers(tm["Approvers"]) if tm.get("Approvers") else "Not available"
+    )
+    contact_name, contact_email = get_contact(
+        tm["Contact First Name"],
+        tm["Contact Last Name"],
+        tm["Contact email"]
+        if (
+            tm.get("Contact First Name")
+            and tm.get("Contact Last Name")
+            and tm.get("Contact email")
+        )
+        else "Not available",
+    )
+
+    return GovernanceCRFTemplateMetadataModalSection(
+        authors=authors,
+        affiliations=affiliations,
+        approvers=approvers,
+        contact=(contact_name, contact_email),
+    )
+
+
+def get_crf_template_metadata_modal_documentation(
+    template_metadata: pd.Series,
+) -> DocumentationCRFTemplateMetadataModalSection:
+    """:py:class:`DocumentationCRFTemplateMetadataModalSection` : The Documentation & Discoverability section content of the CRF template metadata modal.
+
+    Parameters
+    ----------
+    template_metadata : pandas.Series
+        The CRF template metadata.
+
+    Returns
+    -------
+    DocumentationCRFTemplateMetadataModalSection
+        The Documentation & Discoverability section of the CRF template metadata modal.
+    """
+    tm = template_metadata
+
+    keywords = get_keywords(tm["Keywords"]) if tm.get("Keywords") else "Not available"
+    resources = (
+        get_resources(tm["Relevant resources"])
+        if tm.get("Relevant resources")
+        else "Not available"
+    )
+
+    return DocumentationCRFTemplateMetadataModalSection(
+        keywords=keywords, resources=resources
+    )
+
+
+def get_crf_template_metadata_modal_content(
     template_metadata: pd.Series,
 ) -> CRFTemplateMetadataModal:
     """:py:class:`bridge.utils.crf.CRFTemplateMetadataModal` : Returns CRF template metadata content as a dataclass.
@@ -198,3 +643,27 @@ def get_crf_template_modal_content(
     -------
     CRFTemplateMetadataModal
     """
+    tm = template_metadata
+
+    # Get the Overview section content
+    overview_section = get_crf_template_metadata_modal_overview(tm)
+
+    # Get the Scientific Scope section content
+    scientific_scope_section = get_crf_template_metadata_modal_scientific_scope(tm)
+
+    # Get the Governance & Contributors section content
+    governance_section = get_crf_template_metadata_modal_governance(tm)
+
+    # Get the Documentation & Discoverability section content
+    documentation_section = get_crf_template_metadata_modal_documentation(tm)
+
+    # Create and return the CRF template metadata modal content
+    modal_title = " | ".join(tm["Title of CRF"].split("_"))
+
+    return CRFTemplateMetadataModal(
+        title=modal_title,
+        overview_section=overview_section,
+        scientific_scope_section=scientific_scope_section,
+        governance_section=governance_section,
+        documentation_section=documentation_section,
+    )
