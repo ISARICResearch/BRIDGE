@@ -478,6 +478,10 @@ def _build_crf_metadata_modal_tab_content(
         except IndexError:
             template_metadata = create_placeholder_template_metadata(template_id)
 
+    # TODO: Add steps to create the CRF metadata modal content object from the
+    #       template metadata, and for each tab pass the relevant content, which
+    #       could either the entire content object, or the relevant section
+    #       content.
     if tab_id == "project-overview-tab":
         return _build_crf_metadata_modal_project_overview_tab(template_metadata)
     elif tab_id == "scientific-scope-tab":
