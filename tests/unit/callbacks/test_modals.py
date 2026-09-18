@@ -628,6 +628,32 @@ def test__build_crf_metadata_modal_scientific_scope_tab(
     assert str(received) == str(expected)
 
 
+def test__build_crf_metadata_modal_governance_and_contributors_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__governance_and_contributors__chikungunya,
+):
+    expected = (
+        arc_1_6_0__crf_metadata_modal_tab__governance_and_contributors__chikungunya
+    )
+    received = modals._build_crf_metadata_modal_governance_and_contributors_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
+    )
+
+    assert str(received) == str(expected)
+
+
+def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__documentation_and_discoverability__chikungunya,
+):
+    expected = arc_1_6_0__crf_metadata_modal_tab__documentation_and_discoverability__chikungunya
+    received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
+    )
+
+    assert str(received) == str(expected)
+
+
 def test_on_modal_button_click_not_triggered():
     trigger = None
     output = get_output_on_modal_button_click(

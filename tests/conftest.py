@@ -427,6 +427,429 @@ def arc_1_6_0__crf_metadata_modal_content__governance_and_contributors__chikungu
 
 
 @pytest.fixture(scope="module")
+def arc_1_6_0__crf_metadata_modal_tab__governance_and_contributors__chikungunya() -> (
+    html.Div
+):
+    return html.Div(
+        [
+            html.Section(
+                children=[
+                    html.H3(children="Contributors", className="section-title"),
+                    html.Div(
+                        children=[
+                            html.Div(
+                                children=[
+                                    html.H4(
+                                        children="Authors", className="paper-subtitle"
+                                    ),
+                                    html.Div(
+                                        children="19 people", className="paper-count"
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Span(
+                                                [
+                                                    "Anastasiia Demidova",
+                                                    html.Sup(
+                                                        children="1",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Aileen Chang",
+                                                    html.Sup(
+                                                        children="2",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Viviane Boaventura",
+                                                    html.Sup(
+                                                        children="3",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Hugh Watson",
+                                                    html.Sup(
+                                                        children="4,5",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Lubaba Sharin",
+                                                    html.Sup(
+                                                        children="6",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Perkell Collie",
+                                                    html.Sup(
+                                                        children="7",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Anastasia Kiseleva",
+                                                    html.Sup(
+                                                        children="4",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Lilit Davtian",
+                                                    html.Sup(
+                                                        children="5",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Jan Wu",
+                                                    html.Sup(
+                                                        children="7",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Veronika Rogozhina",
+                                                    html.Sup(
+                                                        children="8",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Elena Piatenko",
+                                                    html.Sup(
+                                                        children="9",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Anastasiia Chernyavskaya",
+                                                    html.Sup(
+                                                        children="4",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Sara Duque Vallejo",
+                                                    html.Sup(
+                                                        children="10",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Esteban Garcia-Gallo",
+                                                    html.Sup(
+                                                        children="10",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Dhruv Darji",
+                                                    html.Sup(
+                                                        children="10",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Tom Edinburgh",
+                                                    html.Sup(
+                                                        children="10",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Laura Merson",
+                                                    html.Sup(
+                                                        children="11",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Daniel Munblit",
+                                                    html.Sup(
+                                                        children="1,4",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                            ", ",
+                                            html.Span(
+                                                [
+                                                    "Expert Working Group",
+                                                    html.Sup(
+                                                        children="12",
+                                                        className="author-sup",
+                                                    ),
+                                                ]
+                                            ),
+                                        ],
+                                        className="author-line",
+                                    ),
+                                ],
+                                className="paper-subsection",
+                            ),
+                            html.Div(
+                                children=[
+                                    html.H4(
+                                        children="Approvers", className="paper-subtitle"
+                                    ),
+                                    html.Div(
+                                        children="5 people", className="paper-count"
+                                    ),
+                                    html.Div(
+                                        children="Aileen Chang, Viviane S B de Oliveira, Josephine Bourner, Hugh Watson, Lubaba Sharin)",
+                                        className="approver-line",
+                                    ),
+                                ],
+                                className="paper-subsection",
+                            ),
+                        ],
+                        className="paper-columns",
+                    ),
+                ],
+                className="section",
+            ),
+            html.Section(
+                children=[
+                    html.H3(children="Affiliations", className="section-title"),
+                    html.Div(
+                        [
+                            html.Div(
+                                children="12 affiliations", className="paper-count"
+                            ),
+                            html.Div(
+                                children=[
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="1",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Care in Long Term Conditions Division, Florence Nightingale Faculty of Nursing, Midwifery and Palliative Care, King's College London, London, UK"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="2",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Department of Medicine, George Washington University, Washington, DC, USA"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="3",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Precision Medicine and Public Health Laboratory, Gonçalo Moniz Institute, Fiocruz Bahia, Oswaldo Cruz Foundation, Fiocruz"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="4",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Department of Paediatrics and Paediatric Infectious Diseases, Institute of Child's Health, Sechenov First Moscow State Medical University, Moscow, Russia"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="5",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Federal Scientific and Clinical Center for Children and Adolescents, Federal Medical-Biological Agency (FMBA) of Russia, Moscow, Russia"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="6",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Dhaka Hospital, International Centre for Diarrheal Disease Research, Bangladesh (icddr,b), Dhaka, Bangladesh"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="7",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "American Canadian School of Medicine, Picard, Dominica"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="8",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Clinical Pathophysiology Laboratory, Veltischev Research and Clinical Institute for Pediatrics and Pediatric Surgery, Pirogov Russian National Research Medical University, 2, Taldomskaya Street, 125412 Moscow, Russia"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="9",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Nassau University Medical Center, NY, USA"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="10",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "ISARIC, Pandemic Sciences Institute, University of Oxford, UK"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="11",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span(
+                                                "Public Health Department, Institut Pasteur de Dakar, Dakar, Senegal"
+                                            ),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                    html.Div(
+                                        children=[
+                                            html.Sup(
+                                                children="12",
+                                                className="affiliation-number",
+                                            ),
+                                            html.Span("N/A"),
+                                        ],
+                                        className="affiliation-item",
+                                    ),
+                                ],
+                                className="affiliation-list",
+                            ),
+                        ]
+                    ),
+                ],
+                className="section",
+            ),
+            html.Div(className="governance-divider"),
+            html.Section(
+                children=[
+                    html.H3(children="Correspondence", className="section-title"),
+                    html.Div(
+                        children=[
+                            html.Span(
+                                children="Anastasiia Demidova",
+                                style={"fontWeight": "600"},
+                            ),
+                            " - ",
+                            html.A(
+                                children="anastasiia.demidova@kcl.ac.uk",
+                                className="correspondence-email",
+                                href="mailto:anastasiia.demidova@kcl.ac.uk",
+                            ),
+                        ],
+                        className="correspondence",
+                    ),
+                ],
+                className="section",
+            ),
+        ]
+    )
+
+
+@pytest.fixture(scope="module")
 def arc_1_6_0__crf_metadata_modal_content__documentation_and_discoverability__chikungunya() -> (
     DocumentationCRFTemplateMetadataModalSection
 ):
@@ -452,6 +875,123 @@ def arc_1_6_0__crf_metadata_modal_content__documentation_and_discoverability__ch
             "https://github.com/ISARICResearch/ARC",
             "www.isaric.org",
         ),
+    )
+
+
+@pytest.fixture(scope="module")
+def arc_1_6_0__crf_metadata_modal_tab__documentation_and_discoverability__chikungunya() -> (
+    html.Div
+):
+    return html.Div(
+        [
+            html.Section(
+                children=[
+                    html.H3(children="Keywords", className="section-title"),
+                    html.Div(
+                        children=[
+                            html.Span(children="chikungunya", className="keyword"),
+                            html.Span(children="CHIKV", className="keyword"),
+                            html.Span(children="arbovirus", className="keyword"),
+                            html.Span(children="case report form", className="keyword"),
+                            html.Span(children="CRF", className="keyword"),
+                            html.Span(children="ISARIC", className="keyword"),
+                            html.Span(children="BRIDGE", className="keyword"),
+                            html.Span(children="ARC", className="keyword"),
+                            html.Span(
+                                children="harmonised data collection",
+                                className="keyword",
+                            ),
+                            html.Span(
+                                children="clinical characterisation",
+                                className="keyword",
+                            ),
+                            html.Span(
+                                children="outbreak preparedness", className="keyword"
+                            ),
+                            html.Span(children="REDCap", className="keyword"),
+                            html.Span(children="acute infection", className="keyword"),
+                        ],
+                        className="keyword-container",
+                    ),
+                ],
+                className="section",
+            ),
+            html.Section(
+                children=[
+                    html.H3(children="Resources", className="section-title"),
+                    html.Div(
+                        children=[
+                            html.A(
+                                children=[
+                                    html.Div(children="↗", className="resource-icon"),
+                                    html.Div(
+                                        [
+                                            html.Div(
+                                                children="https://isaric.org/resources/data/case-report-forms/",
+                                                className="resource-url",
+                                            )
+                                        ]
+                                    ),
+                                ],
+                                className="resource-link",
+                                href="https://isaric.org/resources/data/case-report-forms/",
+                                target="_blank",
+                            ),
+                            html.A(
+                                children=[
+                                    html.Div(children="↗", className="resource-icon"),
+                                    html.Div(
+                                        [
+                                            html.Div(
+                                                children="https://bridge.isaric.org/",
+                                                className="resource-url",
+                                            )
+                                        ]
+                                    ),
+                                ],
+                                className="resource-link",
+                                href="https://bridge.isaric.org/",
+                                target="_blank",
+                            ),
+                            html.A(
+                                children=[
+                                    html.Div(children="↗", className="resource-icon"),
+                                    html.Div(
+                                        [
+                                            html.Div(
+                                                children="https://github.com/ISARICResearch/ARC",
+                                                className="resource-url",
+                                            )
+                                        ]
+                                    ),
+                                ],
+                                className="resource-link",
+                                href="https://github.com/ISARICResearch/ARC",
+                                target="_blank",
+                            ),
+                            html.A(
+                                children=[
+                                    html.Div(children="↗", className="resource-icon"),
+                                    html.Div(
+                                        [
+                                            html.Div(
+                                                children="www.isaric.org",
+                                                className="resource-url",
+                                            )
+                                        ]
+                                    ),
+                                ],
+                                className="resource-link",
+                                href="www.isaric.org",
+                                target="_blank",
+                            ),
+                        ],
+                        className="resource-list",
+                    ),
+                ],
+                className="section",
+            ),
+        ]
     )
 
 
