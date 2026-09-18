@@ -97,25 +97,31 @@ pre-commit: clean
 
 # --- Tests ---
 #
-# Unit tests - use the `MARKER` variable to indicate markers, e.g.
-# "critical or high", or "medium or low". Note that in the `test` target
-# command below, the `MARKER` variable must be quoted to prevent expansion
-# in case of spaces in the marker.
+# Unit tests - use the `MARKER` variable to indicate markers, e.g. "unit",
+# "arc", "callbacks", "generate_pdf", "utils" etc., and the
+# `TESTS_PATH` variable to specify the test path, which could be a test (sub)folder
+# or a test file.
 .PHONY: test
 test: clean
 	@echo "$(PACKAGE_NAME)[$(BRANCH)@$(HEAD)]: Running unit tests + measuring coverage"
 	PYTHONPATH=src uv run --verbose --active -m pytest \
-	                               -p pytest_cov \
-	                               -q -m "$(MARKER)" \
-	                               --cache-clear \
-	                               --capture=no \
-	                               --code-highlight=yes \
-	                               --color=yes \
-	                               --cov=src \
-	                               --cov-report=term-missing:skip-covered \
-	                               --cov-report=xml \
-	                               --cov-report=html \
-	                               -ra \
-	                               --tb=native \
-	                               --verbosity=3 \
-	                               $(TESTS_PATH)
+				                               -p pytest_cov \
+				                               -q -m "$(MARKER)" \
+				                               --cache-clear \
+				                               --capture=no \
+				                               --code-highlight=yes \
+				                               --color=yes \
+				                               --cov=src \
+				                               --cov-report=term-missing:skip-covered \
+				                               --cov-report=xml \
+				                               --cov-report=html \
+				                               -ra \
+				                               --tb=native \
+				                               --verbosity=3 \
+				                               $(TESTS_PATH)
+
+# Doctests
+.PHONY: clean
+doctest: clean
+	@echo "$(PACKAGE_NAME)[$(BRANCH)@$(HEAD)]: Running doctests in all core libraries"
+	PYTHONPATH="src" uv run --verbose --active python3 -m doctest -v src/bridge/*/*.py

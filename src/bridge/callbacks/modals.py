@@ -1,6 +1,5 @@
 import io
 import json
-import typing
 from functools import lru_cache
 from time import perf_counter
 from typing import Tuple
@@ -15,7 +14,9 @@ from bridge.arc import arc_translations, arc_tree
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
 from bridge.utils.crf import (
     clean_crf_metadata,
-    GovernanceCRFTemplateMetadataModalSection,
+    get_crf_template_metadata_modal_content,
+    CRFTemplateMetadataModalContent,
+    NOT_AVAILABLE_TYPE,
 )
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
@@ -112,7 +113,12 @@ def _get_crf_metadata_modal_scope_item(label: str, value: str) -> dash.html.Div:
     )
 
 
-def _get_crf_metadata_modal_pathogen_value(pathogens: str) -> dash.html.Div:
+def _get_crf_metadata_modal_pathogen_value(
+    pathogens: tuple[str] | NOT_AVAILABLE_TYPE,
+) -> dash.html.Div:
+    if pathogens == "Not available":
+        pathogens = ["Not available"]
+
     return html.Div(
         [html.Span(pathogen, className="pathogen-chip") for pathogen in pathogens],
         className="pathogen-list",
@@ -134,11 +140,11 @@ def _get_crf_metadata_modal_population_item(
 
 
 def _get_crf_metadata_modal_author_name_with_superscripts(
-    author: dict[str, typing.Any],
+    author_record: tuple[str, tuple[int]],
 ) -> dash.html.Span:
-    affiliation_numbers = author.get("affiliations", [])
+    author, affiliation_numbers = author_record
 
-    children = [author["name"]]
+    children = [author]
 
     if affiliation_numbers:
         children.append(
@@ -152,28 +158,219 @@ def _get_crf_metadata_modal_author_name_with_superscripts(
 
 
 def _get_crf_metadata_modal_authors_inline(
-    authors: tuple[tuple[str, tuple[int]]],
+    authors: tuple[tuple[str, tuple[int]]] | NOT_AVAILABLE_TYPE,
 ) -> dash.html.Div:
+    if authors == "Not available":
+        return html.Div([dash.html.Span(["Not available"])], className="author-line")
+
     children = []
 
-    for index, author in enumerate(authors):
+    for index, author_record in enumerate(authors):
         if index > 0:
             children.append(", ")
-        children.append(_get_crf_metadata_modal_author_name_with_superscripts(author))
+        children.append(
+            _get_crf_metadata_modal_author_name_with_superscripts(author_record)
+        )
 
     return html.Div(children, className="author-line")
 
 
-def _get_crf_metadata_modal_approvers_inline(approvers: list[str]) -> dash.html.Div:
+def _get_crf_metadata_modal_approvers_inline(
+    approvers: tuple[str] | NOT_AVAILABLE_TYPE,
+) -> dash.html.Div:
+    if approvers == "Not available":
+        approvers = ["Not available"]
+
     return html.Div(
         ", ".join(approvers),
         className="approver-line",
     )
 
 
-def _get_crf_metadata_modal_paper_governance(
-    governance: GovernanceCRFTemplateMetadataModalSection,
+def _get_crf_metadata_modal_keywords(
+    keywords: tuple[str] | NOT_AVAILABLE_TYPE,
+) -> dash.html.Section:
+    if keywords == "Not available":
+        keywords = ["Not available"]
+
+    return _get_crf_metadata_modal_section(
+        "Keywords",
+        html.Div(
+            [html.Span(keyword, className="keyword") for keyword in keywords],
+            className="keyword-container",
+        ),
+    )
+
+
+def _get_crf_metadata_modal_resources(
+    resources: tuple[str] | NOT_AVAILABLE_TYPE,
+) -> dash.html.Section:
+    if resources == "Not available":
+        resources = ["Not available"]
+
+    return _get_crf_metadata_modal_section(
+        "Resources",
+        html.Div(
+            [
+                html.A(
+                    [
+                        html.Div("↗", className="resource-icon"),
+                        html.Div([html.Div(url, className="resource-url")]),
+                    ],
+                    href=url,
+                    target="_blank",
+                    className="resource-link",
+                )
+                for url in resources
+            ],
+            className="resource-list",
+        ),
+    )
+
+
+def _build_crf_metadata_modal_tabbed_body(
+    selected_version: str, template_id: str
 ) -> dash.html.Div:
+    return html.Div(
+        [
+            "",
+            dcc.Tabs(
+                id="crf-metadata-modal-tabbed-body",
+                value=f"{selected_version}|{template_id}|project-overview-tab",
+                children=[
+                    dcc.Tab(
+                        label="Project Overview",
+                        value=f"{selected_version}|{template_id}|project-overview-tab",
+                    ),
+                    dcc.Tab(
+                        label="Scientific Scope",
+                        value=f"{selected_version}|{template_id}|scientific-scope-tab",
+                    ),
+                    dcc.Tab(
+                        label="Governance & Contributors",
+                        value=f"{selected_version}|{template_id}|governance-and-contributors-tab",
+                    ),
+                    dcc.Tab(
+                        label="Documentation & Discoverability",
+                        value=f"{selected_version}|{template_id}|documentation-and-discoverability-tab",
+                    ),
+                ],
+            ),
+            html.Div(
+                id="crf-metadata-modal-body-tab-content",
+                style={
+                    "width": "800px",
+                    "height": "250px",
+                    "overflow-x": "hidden",
+                    "white-space": "normal",
+                },
+            ),
+        ],
+    )
+
+
+def _build_crf_metadata_modal_project_overview_tab(
+    modal_content: CRFTemplateMetadataModalContent,
+) -> dash.html.Div:
+    overview = modal_content.overview_section
+    scientific_scope = modal_content.scientific_scope_section
+
+    return html.Div(
+        [
+            _get_crf_metadata_modal_section(
+                "Description",
+                html.P(
+                    overview.description,
+                    className="section-text",
+                ),
+            ),
+            _get_crf_metadata_modal_section(
+                "CRF metadata",
+                _get_crf_metadata_modal_metadata_grid(overview.metadata),
+            ),
+            _get_crf_metadata_modal_section(
+                "Study population",
+                html.Div(
+                    [
+                        _get_crf_metadata_modal_population_item(
+                            "Target population",
+                            scientific_scope.target_population,
+                            first=True,
+                        ),
+                        _get_crf_metadata_modal_population_item(
+                            "Inclusion criteria",
+                            scientific_scope.inclusion_criteria,
+                        ),
+                        _get_crf_metadata_modal_population_item(
+                            "Exclusion criteria",
+                            scientific_scope.exclusion_criteria,
+                        ),
+                    ]
+                ),
+            ),
+        ]
+    )
+
+
+def _build_crf_metadata_modal_scientific_scope_tab(
+    modal_content: CRFTemplateMetadataModalContent,
+) -> dash.html.Div:
+    scientific_scope = modal_content.scientific_scope_section
+
+    questions = html.Ol(
+        [html.Li(q) for q in scientific_scope.research_questions],
+        className="research-list",
+    )
+
+    clinical_context = html.Div(
+        [
+            _get_crf_metadata_modal_scope_item("Syndrome", scientific_scope.syndrome),
+            _get_crf_metadata_modal_scope_item(
+                "Pathogen / agent",
+                _get_crf_metadata_modal_pathogen_value(scientific_scope.pathogens),
+            ),
+            _get_crf_metadata_modal_scope_item("Setting", scientific_scope.setting),
+            _get_crf_metadata_modal_scope_item(
+                "Geographic scope", scientific_scope.geographic_scope
+            ),
+        ],
+        className="scope-grid",
+    )
+
+    syndrome_definition = None
+    if hasattr(scientific_scope, "syndrome_definition"):
+        syndrome_definition = html.Div(
+            [
+                html.Span(
+                    "Syndrome definition",
+                    className="definition-label",
+                ),
+                scientific_scope.syndrome_definition,
+            ],
+            className="definition-block",
+        )
+
+    return html.Div(
+        [
+            _get_crf_metadata_modal_section(
+                "Clinical context",
+                html.Div(
+                    [
+                        clinical_context,
+                        syndrome_definition,
+                    ]
+                ),
+            ),
+            _get_crf_metadata_modal_section("Research questions", questions),
+        ]
+    )
+
+
+def _build_crf_metadata_modal_governance_and_contributors_tab(
+    modal_content: CRFTemplateMetadataModalContent,
+) -> dash.html.Div:
+    governance = modal_content.governance_section
+
     authors = governance.authors
     approvers = governance.approvers
     affiliations = governance.affiliations
@@ -261,214 +458,62 @@ def _get_crf_metadata_modal_paper_governance(
     )
 
 
-def _get_crf_metadata_modal_keyword_section(keywords: list[str]) -> dash.html.Section:
-    return _get_crf_metadata_modal_section(
-        "Keywords",
-        html.Div(
-            [html.Span(keyword, className="keyword") for keyword in keywords],
-            className="keyword-container",
-        ),
-    )
-
-
-def _get_crf_metadata_modal_links_section(links: tuple[str, str]) -> dash.html.Section:
-    return _get_crf_metadata_modal_section(
-        "Resources",
-        html.Div(
-            [
-                html.A(
-                    [
-                        html.Div("↗", className="resource-icon"),
-                        html.Div(
-                            [
-                                html.Div(name, className="resource-name"),
-                                html.Div(url, className="resource-url"),
-                            ]
-                        ),
-                    ],
-                    href=url,
-                    target="_blank",
-                    className="resource-link",
-                )
-                for name, url in links
-            ],
-            className="resource-list",
-        ),
-    )
-
-
-def _build_crf_metadata_modal_tabbed_body(
-    selected_version: str, template_id: str
-) -> dash.html.Div:
-    return html.Div(
-        [
-            "",
-            dcc.Tabs(
-                id="crf-metadata-modal-tabbed-body",
-                value=f"{selected_version}|{template_id}|project-overview-tab",
-                children=[
-                    dcc.Tab(
-                        label="Project Overview",
-                        value=f"{selected_version}|{template_id}|project-overview-tab",
-                    ),
-                    dcc.Tab(
-                        label="Scientific Scope",
-                        value=f"{selected_version}|{template_id}|scientific-scope-tab",
-                    ),
-                    dcc.Tab(
-                        label="Governance & Contributors",
-                        value=f"{selected_version}|{template_id}|governance-and-contributors-tab",
-                    ),
-                    dcc.Tab(
-                        label="Documentation & Discoverability",
-                        value=f"{selected_version}|{template_id}|documentation-and-discoverability-tab",
-                    ),
-                ],
-            ),
-            html.Div(
-                id="crf-metadata-modal-body-tab-content",
-                style={
-                    "width": "800px",
-                    "height": "250px",
-                    "overflow-x": "hidden",
-                    "white-space": "normal",
-                },
-            ),
-        ],
-    )
-
-
-def _build_crf_metadata_modal_project_overview_tab(
-    template_metadata: pd.Series,
-) -> dash.html.Div:
-    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
-
-    return dcc.Markdown(
-        f"""
-        - **Description** - {tm['Description']}
-        - **Study Type** - {tm['Study type']}
-        - **Version** - {tm['Version']}
-        - **Publication Date** - {tm['Date of publication/release']}
-        """
-    )
-
-
-def _build_crf_metadata_modal_scientific_scope_tab(
-    template_metadata: pd.Series,
-) -> dash.html.Div:
-    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
-
-    return dcc.Markdown(
-        f"""
-        - **Research Questions** - {tm['Research questions']}
-        - **Target Population** - {tm['Target population']}
-        - **Inclusion Criteria** - {tm['Inclusion Criteria']}
-        - **Exclusion Criteria** - {tm['Exclusion Criteria']}
-        - **Pathogen/Agent** - {tm['Pathogen or agent']}
-        - **Syndrome** - {tm['Syndrome / clinical presentation']}
-        - **Setting** - {tm['Setting']}
-        - **Geographic Scope** - {tm['Geographic scope']}
-        """
-    )
-
-
-def _build_crf_metadata_modal_governance_and_contributors_tab(
-    template_metadata: pd.DataFrame,
-) -> dash.html.Div:
-    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
-
-    contact_field = (
-        f'{tm['Contact First Name']} {tm['Contact Last Name']} ({tm['Contact email']})'
-        if tm["Contact First Name"].lower() != "unknown"
-        and tm["Contact Last Name"].lower()
-        else "Unknown"
-    )
-
-    return dcc.Markdown(
-        f"""
-        - **Authors** - {tm['Authors']}
-        - **Approvers** - {tm['Approvers']}
-        - **Institutions** - {tm['Institutions']}
-        - **Contact** - {contact_field}
-        """
-    )
-
-
 def _build_crf_metadata_modal_documentation_and_discoverability_tab(
-    template_metadata: pd.DataFrame,
+    modal_content: CRFTemplateMetadataModalContent,
 ) -> dash.html.Div:
-    tm = template_metadata.fillna("Unknown").replace("", "Unknown")
-    try:
-        tm["Relevant resources"]
-    except KeyError:
-        tm["Relevant resources"] = tm[
-            "Related documents, protocols, repositories, websites, publication"
-        ]
+    documentation = modal_content.documentation_section
 
     return html.Div(
         [
-            html.Ul(
-                children=[
-                    html.Li([html.B("Keywords"), f" - {tm['Keywords']}"]),
-                    html.Li(
-                        [html.B("Relevant Links"), " - "]
-                        + (
-                            [
-                                html.A(url, href=url, target="_blank")
-                                for url in tm["Relevant resources"].split(",")
-                            ]
-                            if tm["Relevant resources"].lower() != "unknown"
-                            else ["Unknown"]
-                        )
-                    ),
-                ]
-            )
+            _get_crf_metadata_modal_keywords(documentation.keywords),
+            _get_crf_metadata_modal_resources(documentation.resources),
         ]
     )
+
+
+def _create_placeholder_template_metadata(template_id: str) -> pd.Series:
+    placeholder_columns = [
+        "Title of CRF",
+        "Description",
+        "Study type",
+        "Version",
+        "Date of publication/release",
+        "Research questions",
+        "Target population",
+        "Inclusion Criteria",
+        "Exclusion Criteria",
+        "Pathogen or agent",
+        "Syndrome / clinical presentation",
+        "Setting",
+        "Geographic scope",
+        "Authors",
+        "Approvers",
+        "Institutions",
+        "Contact First Name",
+        "Contact Last Name",
+        "Contact email",
+        "Keywords",
+        "Relevant resources",
+        "Related documents, protocols, repositories, websites, publication",
+    ]
+    rowfill = dict(
+        zip(
+            placeholder_columns,
+            ["Not available"] * len(placeholder_columns),
+        )
+    )
+    rowfill["Title of CRF"] = template_id
+
+    return pd.DataFrame(rowfill, index=range(1)).iloc[0]
 
 
 def _build_crf_metadata_modal_tab_content(
     selected_version: str, template_id: str, tab_id: str
 ) -> dash.html.Div:
-    def create_placeholder_template_metadata(template_id) -> pd.Series:
-        placeholder_columns = [
-            "Title of CRF",
-            "Description",
-            "Study type",
-            "Version",
-            "Date of publication/release",
-            "Research questions",
-            "Target population",
-            "Inclusion Criteria",
-            "Exclusion Criteria",
-            "Pathogen or agent",
-            "Syndrome / clinical presentation",
-            "Setting",
-            "Geographic scope",
-            "Authors",
-            "Approvers",
-            "Institutions",
-            "Contact First Name",
-            "Contact Last Name",
-            "Contact email",
-            "Keywords",
-            "Relevant resources",
-            "Related documents, protocols, repositories, websites, publication",
-        ]
-        rowfill = dict(
-            zip(
-                placeholder_columns,
-                ["Unknown"] * len(placeholder_columns),
-            )
-        )
-        rowfill["Title of CRF"] = template_id
-
-        return pd.DataFrame(rowfill, index=range(1)).iloc[0]
-
     try:
         arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
     except ArcApiClientError:
-        template_metadata = create_placeholder_template_metadata(template_id)
+        template_metadata = _create_placeholder_template_metadata(template_id)
     else:
         arc_crf_metadata = clean_crf_metadata(arc_crf_metadata)
         try:
@@ -476,27 +521,25 @@ def _build_crf_metadata_modal_tab_content(
                 arc_crf_metadata["Title of CRF"] == template_id
             ].iloc[0]
         except IndexError:
-            template_metadata = create_placeholder_template_metadata(template_id)
+            template_metadata = _create_placeholder_template_metadata(template_id)
 
-    # TODO: Add steps to create the CRF metadata modal content object from the
-    #       template metadata, and for each tab pass the relevant content, which
-    #       could either the entire content object, or the relevant section
-    #       content.
-    if tab_id == "project-overview-tab":
-        return _build_crf_metadata_modal_project_overview_tab(template_metadata)
-    elif tab_id == "scientific-scope-tab":
-        return _build_crf_metadata_modal_scientific_scope_tab(template_metadata)
-    elif tab_id == "governance-and-contributors-tab":
-        return _build_crf_metadata_modal_governance_and_contributors_tab(
-            template_metadata
-        )
-    elif tab_id == "documentation-and-discoverability-tab":
-        return _build_crf_metadata_modal_documentation_and_discoverability_tab(
-            template_metadata
-        )
+    modal_content = get_crf_template_metadata_modal_content(template_metadata)
 
-    # In case the tab ID is not one of the expected four
-    return html.Div()
+    match tab_id:
+        case "project-overview-tab":
+            return _build_crf_metadata_modal_project_overview_tab(modal_content)
+        case "scientific-scope-tab":
+            return _build_crf_metadata_modal_scientific_scope_tab(modal_content)
+        case "governance-and-contributors-tab":
+            return _build_crf_metadata_modal_governance_and_contributors_tab(
+                modal_content
+            )
+        case "documentation-and-discoverability-tab":
+            return _build_crf_metadata_modal_documentation_and_discoverability_tab(
+                modal_content
+            )
+        case _:
+            return html.Div()
 
 
 @lru_cache(maxsize=512)

@@ -14,6 +14,11 @@ from bridge.utils.crf import (
     clean_crf_metadata,
     CRFTemplateMetadataModalContent,
     DocumentationCRFTemplateMetadataModalSection,
+    get_approvers,
+    get_authors_and_institutions,
+    get_contact,
+    get_keywords,
+    get_resources,
     get_selected_crf_presets,
     get_crf_name,
     GovernanceCRFTemplateMetadataModalSection,
@@ -164,6 +169,112 @@ def test_clean_crf_metadata(crf_metadata, expected_output):
     assert_frame_equal(received_output, expected_output)
 
 
+@pytest.mark.parametrize(
+    "authors_and_institutions_raw, expected",
+    [
+        (
+            "Author #1 | Author #1 Institution #1 / Author #1 Institution #2; Author #2 | Author #2 Institution #1; Author #3 | Author #3 Institution #1 / Author #3 Institution #2; Group Author #1",
+            (
+                (
+                    ("Author #1", (1, 2)),
+                    ("Author #2", (3,)),
+                    ("Author #3", (4, 5)),
+                    ("Group Author #1", (6,)),
+                ),
+                (
+                    "Author #1 Institution #1",
+                    "Author #1 Institution #2",
+                    "Author #2 Institution #1",
+                    "Author #3 Institution #1",
+                    "Author #3 Institution #2",
+                    "N/A",
+                ),
+            ),
+        ),
+    ],
+)
+def test_get_authors_and_institutions(authors_and_institutions_raw, expected):
+    received = get_authors_and_institutions(
+        authors_and_institutions_raw,
+    )
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "approvers_raw, expected",
+    [
+        (
+            "Test approvers prefix: Author1FirstName Author1Surname, Author2FirstName Author2Surname, Author3FirstName Author3Surname",
+            (
+                "Author1FirstName Author1Surname",
+                "Author2FirstName Author2Surname",
+                "Author3FirstName Author3Surname",
+            ),
+        ),
+    ],
+)
+def test_get_approvers(approvers_raw, expected):
+    received = get_approvers(approvers_raw)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "contact_firstname, contact_surname, contact_email, expected",
+    [
+        (
+            "test_contact_firstname",
+            "test_contact_surname",
+            "test_contact@email.com",
+            ("test_contact_firstname test_contact_surname", "test_contact@email.com"),
+        ),
+    ],
+)
+def test_get_contact(contact_firstname, contact_surname, contact_email, expected):
+    received = get_contact(contact_firstname, contact_surname, contact_email)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "keywords_raw, expected",
+    [
+        (
+            "Keyword #1 text;  Keyword #2 text ;Keyword #3 text",
+            (
+                "Keyword #1 text",
+                "Keyword #2 text",
+                "Keyword #3 text",
+            ),
+        ),
+    ],
+)
+def test_get_keywords(keywords_raw, expected):
+    received = get_keywords(keywords_raw)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "resources_raw, expected",
+    [
+        (
+            "Resource URL #1,Resource URL #2,  Resource URL #3 ",
+            (
+                "Resource URL #1",
+                "Resource URL #2",
+                "Resource URL #3",
+            ),
+        ),
+    ],
+)
+def test_get_resources(resources_raw, expected):
+    received = get_resources(resources_raw)
+
+    assert received == expected
+
+
 class TestOverviewCRFTemplateMetadataModalSection:
     # Test data here could probably be created using fixtures, but this can be
     # done later, as it is not a priority. We just need some working tests for
@@ -302,25 +413,19 @@ class TestDocumentationCRFTemplateMetadataSection:
                 "test_keyword1",
                 "test_keyword2",
             ),
-            "links": (
-                ("test_link1", "test_link1_url"),
-                ("test_link2", "test_link2_url"),
-            ),
+            "resources": ("test_resource1_url", "test_resource2_url"),
         }
         test_section = DocumentationCRFTemplateMetadataModalSection(
             keywords=(
                 "test_keyword1",
                 "test_keyword2",
             ),
-            links=(
-                ("test_link1", "test_link1_url"),
-                ("test_link2", "test_link2_url"),
-            ),
+            resources=("test_resource1_url", "test_resource2_url"),
         )
 
         assert test_section.section_name == "Documentation & Discoverability"
         assert test_section.keywords == expected_data["keywords"]
-        assert test_section.links == expected_data["links"]
+        assert test_section.resources == expected_data["resources"]
         assert hash(test_section) == hash(
             DocumentationCRFTemplateMetadataModalSection(**expected_data)
         )
@@ -377,10 +482,7 @@ class TestCRFTemplateMetadataModal:
                     "test_keyword1",
                     "test_keyword2",
                 ),
-                links=(
-                    ("test_link1", "test_link1_url"),
-                    ("test_link2", "test_link2_url"),
-                ),
+                resources=("test_resource1_url", "test_resource2_url"),
             ),
         }
 
@@ -430,10 +532,7 @@ class TestCRFTemplateMetadataModal:
                     "test_keyword1",
                     "test_keyword2",
                 ),
-                links=(
-                    ("test_link1", "test_link1_url"),
-                    ("test_link2", "test_link2_url"),
-                ),
+                resources=("test_resource1_url", "test_resource2_url"),
             ),
         )
 

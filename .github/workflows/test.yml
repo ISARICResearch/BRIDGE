@@ -25,7 +25,11 @@ jobs:
           python3 -m pip install uv
           make sync-deps-exact
 
-      - name: Run tests and measure code coverage
+      - name: Run doctests
+        run: |
+            make doctest
+
+      - name: Run unit tests and measure code coverage
         run: |
           make test MARKER="unit" TESTS_PATH=tests/unit
 

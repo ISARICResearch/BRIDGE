@@ -3,9 +3,10 @@ __all__ = [
     "CRFTemplateMetadataModalContent",
     "DocumentationCRFTemplateMetadataModalSection",
     "get_approvers",
-    "get_author_and_institutions",
+    "get_authors_and_institutions",
     "get_contact",
     "get_keywords",
+    "get_pathogens",
     "get_research_questions",
     "get_resources",
     "get_crf_name",
@@ -16,6 +17,7 @@ __all__ = [
     "get_crf_template_metadata_modal_scientific_scope",
     "get_selected_crf_presets",
     "GovernanceCRFTemplateMetadataModalSection",
+    "NOT_AVAILABLE_TYPE",
     "OverviewCRFTemplateMetadataModalSection",
     "ScientificScopeCRFTemplateMetadataModalSection",
 ]
@@ -178,7 +180,34 @@ def get_research_questions(
     )
 
 
-def get_author_and_institutions(
+def get_pathogens(pathogens_raw: str, /, *, pathogen_delim: str = ",") -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of pathogens (or agents) for the Scientific Scope section.
+
+    Parameters
+    ----------
+    pathogens_raw : str
+        A delimiter-separated (the delimiter defaulting to ``","``) string
+        of pathogen (or agent) names.
+
+    resource_delim: str, default=","
+        Optional delimiter of the pathogen names, defaults to
+        ``","``.
+
+    Returns
+    -------
+    tuple
+        A tuple of names of pathogens (or agents).
+
+    Examples
+    --------
+    >>> pathogens_raw = 'Chikungunya virus (CHIKV) - an alphavirus transmitted by Aedes aegypti and Aedes albopictus.'
+    >>> get_pathogens(pathogens_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('Chikungunya virus (CHIKV) - an alphavirus transmitted by Aedes aegypti and Aedes albopictus.',)
+    """
+    return tuple(map(str.strip, pathogens_raw.split(pathogen_delim)))
+
+
+def get_authors_and_institutions(
     authors_and_institutions_raw: str,
     /,
     *,
@@ -216,30 +245,58 @@ def get_author_and_institutions(
     --------
     >>> authors_and_institutions_raw = "Anastasiia Demidova | King's College London; Aileen Chang | ISARIC; Viviane S B de Oliveira | ISARIC; Josephine Bourner | ISARIC; Hugh Watson | ISARIC; Lubaba Sharin | ISARIC; Perkell Collie | ISARIC; Anastasia Kiseleva | ISARIC; Lilit Davtian | ISARIC; Jan Wu | ISARIC; Anastasiia Chernavskaya | ISARIC; Sara Duque Vallejo | ISARIC; Esteban Garcia-Gallo | ISARIC / Pandemic Sciences Institute, University of Oxford / Universidad Federal Bahia, Salvador, Brazil"
     >>> get_authors_and_institutions(authors_and_institutions_raw) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    OrderedDict([('Anastasiia Demidova', (1,)),
-                 ('Aileen Chang', (2,)),
-                 ('Viviane S B de Oliveira', (2,)),
-                 ('Josephine Bourner', (2,)),
-                 ('Hugh Watson', (2,)),
-                 ('Lubaba Sharin', (2,)),
-                 ('Perkell Collie', (2,)),
-                 ('Anastasia Kiseleva', (2,)),
-                 ('Lilit Davtian', (2,)),
-                 ('Jan Wu', (2,)),
-                 ('Anastasiia Chernavskaya', (2,)),
-                 ('Sara Duque Vallejo', (2,)),
-                 ('Esteban Garcia-Gallo', (2, 3, 4))])
+    ((('Anastasiia Demidova', (1,)),
+      ('Aileen Chang', (2,)),
+      ('Viviane S B de Oliveira', (2,)),
+      ('Josephine Bourner', (2,)),
+      ('Hugh Watson', (2,)),
+      ('Lubaba Sharin', (2,)),
+      ('Perkell Collie', (2,)),
+      ('Anastasia Kiseleva', (2,)),
+      ('Lilit Davtian', (2,)),
+      ('Jan Wu', (2,)),
+      ('Anastasiia Chernavskaya', (2,)),
+      ('Sara Duque Vallejo', (2,)),
+      ('Esteban Garcia-Gallo', (2, 3, 4))),
+     ("King's College London",
+      'ISARIC',
+      'Pandemic Sciences Institute, University of Oxford',
+      'Universidad Federal Bahia, Salvador, Brazil'))
     """
-    authors_and_institutions_map = OrderedDict(
-        [
-            author.strip(),
-            tuple(map(str.strip, institutions.split(author_institutions_delim))),
-        ]
-        for author, institutions in map(
-            lambda s: s.split(author_and_institutions_sep),
-            authors_and_institutions_raw.split(authors_delim),
-        )
-    )
+    # A temporary list to store authors and their affiliated institutions.
+    authors_and_institutions_map = []
+
+    # Build an ordered dict from the raw string with authors as keys and
+    # tuples of their affiliated institutions as values.
+    for author_institutions in map(
+        lambda s: s.split(author_and_institutions_sep),
+        authors_and_institutions_raw.split(authors_delim),
+    ):
+        if not author_institutions:
+            continue
+
+        if len(author_institutions) == 1:
+            authors_and_institutions_map.append(
+                (author_institutions[0].strip(), ("N/A",))
+            )
+            continue
+
+        if len(author_institutions) == 2:
+            authors_and_institutions_map.append(
+                (
+                    author_institutions[0].strip(),
+                    tuple(
+                        map(
+                            str.strip,
+                            author_institutions[-1].split(author_institutions_delim),
+                        )
+                    ),
+                )
+            )
+    authors_and_institutions_map = OrderedDict(authors_and_institutions_map)
+
+    # Now create a tuple of institutions across all the authors in the map
+    # in order of occurrence.
     ordered_institutions = tuple(
         map(
             str.strip,
@@ -247,6 +304,10 @@ def get_author_and_institutions(
         )
     )
 
+    # Return a tuple of tuples whose elements are pairs, consisting of (1) the
+    # author name and (2) a tuple of indexes of their affiliated institutions
+    # where the indexing is against the ordered list of all institutions in order
+    # of occurrence in the original raw string.
     return tuple(
         tuple(
             [
@@ -290,7 +351,7 @@ def get_approvers(
     Examples
     --------
     >>> approvers_raw = 'ISARIC chikungunya CRF management committee: Aileen Chang, Viviane S B de Oliveira, Josephine Bourner, Hugh Watson, Lubaba Sharin)'
-    >>> get_approvers(approvers_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    >>> get_approvers(approvers_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     ('Aileen Chang',
      'Viviane S B de Oliveira',
      'Josephine Bourner',
@@ -329,9 +390,12 @@ def get_contact(
     Examples
     --------
     >>> get_contact("John", "Smith", "jsmith@example.com")  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    (John Smith', jsmith@example.com')
+    ('John Smith', 'jsmith@example.com')
     """
-    return f"{contact_firstname} {contact_lastname}", contact_email
+    return (
+        f"{contact_firstname.strip()} {contact_lastname.strip()}",
+        contact_email.strip(),
+    )
 
 
 def get_keywords(keywords_raw: str, /, *, keywords_delim: str = ";") -> tuple[str]:
@@ -355,60 +419,49 @@ def get_keywords(keywords_raw: str, /, *, keywords_delim: str = ";") -> tuple[st
     Examples
     --------
     >>> keywords_raw = 'chikungunya; CHIKV; arbovirus; case report form; CRF; ISARIC; BRIDGE; ARC; harmonised data collection; clinical characterisation; outbreak preparedness; REDCap; acute infection    '
-    >>> get_keywords(keywords_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    ('Aileen Chang',
-     'Viviane S B de Oliveira',
-     'Josephine Bourner',
-     'Hugh Watson',
-     'Lubaba Sharin)')
+    >>> get_keywords(keywords_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('chikungunya',
+     'CHIKV',
+     'arbovirus',
+     'case report form',
+     'CRF',
+     'ISARIC',
+     'BRIDGE',
+     'ARC',
+     'harmonised data collection',
+     'clinical characterisation',
+     'outbreak preparedness',
+     'REDCap',
+     'acute infection')
     """
     return tuple(map(str.strip, keywords_raw.split(keywords_delim)))
 
 
-def get_resources(
-    resources_raw: str,
-    /,
-    *,
-    resource_name_url_sep: str = ": ",
-    resource_delim: str = "·",
-) -> tuple[str]:
-    """:py:class:`tuple` : Returns a tuple of resource name and URL pairs for the Documentation & Discoverability section.
+def get_resources(resources_raw: str, /, *, resource_delim: str = ",") -> tuple[str]:
+    """:py:class:`tuple` : Returns a tuple of resource URLs for the Documentation & Discoverability section.
 
     Parameters
     ----------
     resources_raw : str
-        A delimiter-separated (the delimiter defaulting to ``"·"``) string
-        of resource names and URLs.
+        A delimiter-separated (the delimiter defaulting to ``","``) string
+        of resource URLs.
 
-    resource_name_url_sep : str, default=": "
-        Optional separator between the resource name and the URL, defaults
-        to ``": "``.
-
-    resource_delim: str, default="·"
-        Optional delimiter of the resource name and URL pairs, defaults to
-        ``"·"``.
+    resource_delim: str, default=","
+        Optional delimiter of the resource URLs, defaults to
+        ``","``.
 
     Returns
     -------
     tuple
-        A tuple of pairs, each pair consisting of a resource name and URL.
+        A tuple of resource URLs.
 
     Examples
     --------
-    >>> resources_raw = 'ISARIC CRFs: https://isaric.org/resources/data/case-report-forms/   · BRIDGE: https://bridge.isaric.org/   · ARC variable library: https://github.com/ISARICResearch/ARC · ISARIC: www.isaric.org · '
-    >>> get_resources(resources_raw). # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    ('Aileen Chang',
-     'Viviane S B de Oliveira',
-     'Josephine Bourner',
-     'Hugh Watson',
-     'Lubaba Sharin)')
+    >>> resources_raw = 'https://isaric.org/resources/data/case-report-forms/,  https://bridge.isaric.org/, https://github.com/ISARICResearch/ARC, www.isaric.org '
+    >>> get_resources(resources_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    ('https://isaric.org/resources/data/case-report-forms/', 'https://bridge.isaric.org/', 'https://github.com/ISARICResearch/ARC', 'www.isaric.org')
     """
-    return tuple(
-        [
-            tuple(map(str.strip, s.split(resource_name_url_sep)))
-            for s in resources_raw.strip().strip(resource_delim).split(resource_delim)
-        ]
-    )
+    return tuple(map(str.strip, resources_raw.split(resource_delim)))
 
 
 @dataclass(eq=True, frozen=True)
@@ -457,7 +510,7 @@ class DocumentationCRFTemplateMetadataModalSection:
     section_name = "Documentation & Discoverability"
 
     keywords: tuple[str] | NOT_AVAILABLE_TYPE
-    links: tuple[tuple[str, str]] | NOT_AVAILABLE_TYPE
+    resources: tuple[str] | NOT_AVAILABLE_TYPE
 
 
 @dataclass(eq=True, frozen=True)
@@ -489,21 +542,21 @@ def get_crf_template_metadata_modal_overview(
     """
     tm = template_metadata
 
-    description = tm.get("Description", "Not available")
-    metadata = [
+    description = tm.get("Description", "Not available").strip()
+    metadata = (
         (
             "Study type",
-            tm.get("Study type", "Not available"),
+            tm.get("Study type", "Not available").strip(),
         ),
         (
             "Version",
-            tm.get("Version", "Not available"),
+            tm.get("Version", "Not available").strip(),
         ),
         (
             "Publication date",
-            tm.get("Date of publication/release", "Not known"),
+            tm.get("Date of publication/release", "Not known").strip(),
         ),
-    ]
+    )
 
     return OverviewCRFTemplateMetadataModalSection(
         description=description,
@@ -529,18 +582,22 @@ def get_crf_template_metadata_modal_scientific_scope(
     tm = template_metadata
 
     research_questions = (
-        get_research_questions(tm["Research_questions"])
+        get_research_questions(tm["Research questions"])
         if tm.get("Research questions")
         else "Not available"
     )
-    syndrome = tm.get("Syndrome / clinical presentation", "Not available")
-    pathogens = tuple(tm.get("Pathogen or agent", ["Not available"]))
-    setting = tm.get("Setting", "Not available")
-    geographic_scope = tm.get("Geographic scope", "Not available")
-    syndrome_definition = tm.get("Syndrome definition", "Not available")
-    target_population = tm.get("Target population", "Not available")
-    inclusion_criteria = tm.get("Inclusion Criteria", "Not available")
-    exclusion_criteria = tm.get("Exclusion Criteria", "Not available")
+    syndrome = tm.get("Syndrome", "Not available").strip()
+    pathogens = (
+        get_pathogens(tm["Pathogen or agent"])
+        if tm.get("Pathogen or agent")
+        else "Not available"
+    )
+    setting = tm.get("Setting", "Not available").strip()
+    geographic_scope = tm.get("Geographic scope", "Not available").strip()
+    syndrome_definition = tm.get("Syndrome definition", "Not available").strip()
+    target_population = tm.get("Target population", "Not available").strip()
+    inclusion_criteria = tm.get("Inclusion Criteria", "Not available").strip()
+    exclusion_criteria = tm.get("Exclusion Criteria", "Not available").strip()
 
     return ScientificScopeCRFTemplateMetadataModalSection(
         research_questions=research_questions,
@@ -573,8 +630,8 @@ def get_crf_template_metadata_modal_governance(
     tm = template_metadata
 
     authors, affiliations = (
-        get_author_and_institutions(tm["Authors"])
-        if tm.get("Authors")
+        get_authors_and_institutions(tm["Authors and affiliations"])
+        if tm.get("Authors and affiliations")
         else ("Not available", "Not available")
     )
     approvers = (
@@ -645,6 +702,9 @@ def get_crf_template_metadata_modal_content(
     """
     tm = template_metadata
 
+    # Create and return the CRF template metadata modal content
+    modal_title = " | ".join(tm["Title of CRF"].split("_"))
+
     # Get the Overview section content
     overview_section = get_crf_template_metadata_modal_overview(tm)
 
@@ -656,9 +716,6 @@ def get_crf_template_metadata_modal_content(
 
     # Get the Documentation & Discoverability section content
     documentation_section = get_crf_template_metadata_modal_documentation(tm)
-
-    # Create and return the CRF template metadata modal content
-    modal_title = " | ".join(tm["Title of CRF"].split("_"))
 
     return CRFTemplateMetadataModalContent(
         title=modal_title,
