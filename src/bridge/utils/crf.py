@@ -132,13 +132,13 @@ def clean_crf_metadata(crf_metadata: pd.DataFrame) -> pd.DataFrame:
     """
     return (
         crf_metadata.map(
-            lambda s: "Unknown"
+            lambda s: "Not available"
             if isinstance(s, str)
             and re.search(r"(dummy|fake|example)", s, flags=re.IGNORECASE)
             else s
         )
-        .fillna("Unknown")
-        .replace("", "Unknown")
+        .fillna("Not available")
+        .replace("", "Not available")
     )
 
 
