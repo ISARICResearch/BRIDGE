@@ -169,30 +169,36 @@ def test__scope_item():
     assert str(received) == str(expected)
 
 
-def test__get_crf_metadata_modal_pathogen_value():
-    test_pathogens = ["test_pathogen1", "test_pathogen2"]
-    expected = html.Div(
-        [html.Span(pathogen, className="pathogen-chip") for pathogen in test_pathogens],
-        className="pathogen-list",
-    )
+class TestGetCrfMetadataModalPathogenValue:
+    def test__get_crf_metadata_modal_pathogen_value__pathogens_defined(self):
+        test_pathogens = ["test_pathogen1", "test_pathogen2"]
+        expected = html.Div(
+            [
+                html.Span(pathogen, className="pathogen-chip")
+                for pathogen in test_pathogens
+            ],
+            className="pathogen-list",
+        )
 
-    received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
+        received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
 
-    assert isinstance(received, dash.html.Div)
-    assert str(received) == str(expected)
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
 
+    def test__get_crf_metadata_modal_pathogen_value__pathogens_not_available(self):
+        test_pathogens = "Not available"
+        expected = html.Div(
+            [
+                html.Span(pathogen, className="pathogen-chip")
+                for pathogen in [test_pathogens]
+            ],
+            className="pathogen-list",
+        )
 
-def test__get_crf_metadata_modal_approvers_inline():
-    test_approvers = ["test_approver1", "test_approver2"]
-    expected = html.Div(
-        ", ".join(test_approvers),
-        className="approver-line",
-    )
+        received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
 
-    received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
-
-    assert isinstance(received, dash.html.Div)
-    assert str(received) == str(expected)
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
 
 
 class TestCrfMetadataModalGetPopulationItem:
@@ -235,66 +241,214 @@ class TestCrfMetadataModalGetPopulationItem:
         assert str(received) == str(expected)
 
 
-class TestCrfMetadataModalGetAuthorNameWithSuperscripts:
-    def test__get_crf_metadata_modal_author_name_with_superscripts__no_affiliations(
-        self,
-    ):
-        test_author_name = "test_author_name"
-        test_affiliation_numbers = []
-        test_author = {
-            "name": test_author_name,
-            "affiliations": test_affiliation_numbers,
-        }
-        expected = dash.html.Span(["test_author_name"])
-
-        received = modals._get_crf_metadata_modal_author_name_with_superscripts(
-            test_author
+class TestGetCrfMetadataModalApproversInline:
+    def test__get_crf_metadata_modal_approvers_inline__approvers_defined(self):
+        test_approvers = ["test_approver1", "test_approver2"]
+        expected = html.Div(
+            ", ".join(test_approvers),
+            className="approver-line",
         )
 
-        assert isinstance(received, dash.html.Span)
+        received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
+
+        assert isinstance(received, dash.html.Div)
         assert str(received) == str(expected)
 
-    def test__get_crf_metadata_modal_author_name_with_superscripts__affiliations_present(
-        self,
-    ):
-        test_author_name = "test_author_name"
-        test_affiliation_numbers = ["test_affiliation1", "test_affiliation2"]
-        test_author = {
-            "name": test_author_name,
-            "affiliations": test_affiliation_numbers,
-        }
-        expected = dash.html.Span(
-            [
-                "test_author_name",
-                html.Sup(
-                    ",".join(str(number) for number in test_affiliation_numbers),
-                    className="author-sup",
+    def test__get_crf_metadata_modal_approvers_inline__approvers_not_available(self):
+        test_approvers = "Not available"
+        expected = html.Div(
+            ", ".join(["Not available"]),
+            className="approver-line",
+        )
+
+        received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalKeywords:
+    def test__get_crf_metadata_modal_keywords__keywords_defined(self):
+        test_keywords = ("test_keyword1", "test_keyword2")
+        expected = html.Section(
+            children=[
+                html.H3(children="Keywords", className="section-title"),
+                html.Div(
+                    children=[
+                        html.Span(children="test_keyword1", className="keyword"),
+                        html.Span(children="test_keyword2", className="keyword"),
+                    ],
+                    className="keyword-container",
                 ),
-            ]
+            ],
+            className="section",
         )
 
-        received = modals._get_crf_metadata_modal_author_name_with_superscripts(
-            test_author
-        )
+        received = modals._get_crf_metadata_modal_keywords(test_keywords)
 
-        assert isinstance(received, dash.html.Span)
+        assert isinstance(received, dash.html.Section)
         assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_keywords__keywords_not_available(self):
+        test_keywords = "Not available"
+        expected = html.Section(
+            children=[
+                html.H3(children="Keywords", className="section-title"),
+                html.Div(
+                    children=[
+                        html.Span(children="Not available", className="keyword"),
+                    ],
+                    className="keyword-container",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_keywords(test_keywords)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalResources:
+    def test__get_crf_metadata_modal_resources__resources_defined(self):
+        test_resources = ("test_resource1_url", "test_resource2_url")
+        expected = html.Section(
+            children=[
+                html.H3(children="Resources", className="section-title"),
+                html.Div(
+                    children=[
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="test_resource1_url",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="test_resource1_url",
+                            target="_blank",
+                        ),
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="test_resource2_url",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="test_resource2_url",
+                            target="_blank",
+                        ),
+                    ],
+                    className="resource-list",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_resources(test_resources)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_resources__resources_not_available(self):
+        test_resources = "Not available"
+        expected = html.Section(
+            children=[
+                html.H3(children="Resources", className="section-title"),
+                html.Div(
+                    children=[
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="Not available",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="Not available",
+                            target="_blank",
+                        )
+                    ],
+                    className="resource-list",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_resources(test_resources)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+
+def test__get_crf_metadata_modal_author_name_with_superscripts():
+    test_author_name = "test_author_name"
+    test_affiliation_numbers = (1, 2)
+    test_author = (
+        test_author_name,
+        test_affiliation_numbers,
+    )
+    expected = dash.html.Span(
+        [
+            "test_author_name",
+            html.Sup(
+                ",".join(str(number) for number in test_affiliation_numbers),
+                className="author-sup",
+            ),
+        ]
+    )
+
+    received = modals._get_crf_metadata_modal_author_name_with_superscripts(test_author)
+
+    assert isinstance(received, dash.html.Span)
+    assert str(received) == str(expected)
 
 
 class TestCrfMetadataModalGetAuthorsInline:
+    def test__get_crf_metadata_modal_authors_inline__authors_not_available(self):
+        test_authors = "Not available"
+        expected = html.Div(
+            [
+                dash.html.Span(["Not available"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
     def test__get_crf_metadata_modal_authors_inline__no_authors_with_affiliations(self):
         test_author1_name = "test_author1_name"
-        test_author1_affiliation_numbers = []
-        test_author1 = {
-            "name": test_author1_name,
-            "affiliations": test_author1_affiliation_numbers,
-        }
+        test_author1_affiliation_numbers = tuple()
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
         test_author2_name = "test_author2_name"
-        test_author2_affiliation_numbers = []
-        test_author2 = {
-            "name": test_author2_name,
-            "affiliations": test_author2_affiliation_numbers,
-        }
+        test_author2_affiliation_numbers = tuple()
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
         test_authors = [test_author1, test_author2]
         expected = html.Div(
             [
@@ -314,20 +468,17 @@ class TestCrfMetadataModalGetAuthorsInline:
         self,
     ):
         test_author1_name = "test_author1_name"
-        test_author1_affiliation_numbers = [
-            "test_author1_affiliation1",
-            "test_author1_affiliation2",
-        ]
-        test_author1 = {
-            "name": test_author1_name,
-            "affiliations": test_author1_affiliation_numbers,
-        }
+        test_author1_affiliation_numbers = (1, 2)
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
         test_author2_name = "test_author2_name"
-        test_author2_affiliation_numbers = []
-        test_author2 = {
-            "name": test_author2_name,
-            "affiliations": test_author2_affiliation_numbers,
-        }
+        test_author2_affiliation_numbers = tuple()
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
         test_authors = [test_author1, test_author2]
         expected = html.Div(
             [
@@ -358,23 +509,17 @@ class TestCrfMetadataModalGetAuthorsInline:
         self,
     ):
         test_author1_name = "test_author1_name"
-        test_author1_affiliation_numbers = [
-            "test_author1_affiliation1",
-            "test_author1_affiliation2",
-        ]
-        test_author1 = {
-            "name": test_author1_name,
-            "affiliations": test_author1_affiliation_numbers,
-        }
+        test_author1_affiliation_numbers = (1, 2)
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
         test_author2_name = "test_author2_name"
-        test_author2_affiliation_numbers = [
-            "test_author2_affiliation1",
-            "test_author2_affiliation2",
-        ]
-        test_author2 = {
-            "name": test_author2_name,
-            "affiliations": test_author2_affiliation_numbers,
-        }
+        test_author2_affiliation_numbers = (3, 4)
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
         test_authors = [test_author1, test_author2]
         expected = html.Div(
             [
@@ -459,90 +604,27 @@ def test__build_crf_metadata_modal_tabbed_body():
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_project_overview_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
-    )
-    expected = dcc.Markdown(
-        f"""
-        - **Description** - {dengue_metadata['Description']}
-        - **Study Type** - {dengue_metadata['Study type']}
-        - **Version** - {dengue_metadata['Version']}
-        - **Publication Date** - {dengue_metadata['Date of publication/release']}
-        """
-    )
-    received = modals._build_crf_metadata_modal_project_overview_tab(dengue_metadata)
-    assert str(received) == str(expected)
-
-
-def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
-    )
-    expected = dcc.Markdown(
-        f"""
-        - **Research Questions** - {dengue_metadata['Research questions']}
-        - **Target Population** - {dengue_metadata['Target population']}
-        - **Inclusion Criteria** - {dengue_metadata['Inclusion Criteria']}
-        - **Exclusion Criteria** - {dengue_metadata['Exclusion Criteria']}
-        - **Pathogen/Agent** - {dengue_metadata['Pathogen or agent']}
-        - **Syndrome** - {dengue_metadata['Syndrome / clinical presentation']}
-        - **Setting** - {dengue_metadata['Setting']}
-        - **Geographic Scope** - {dengue_metadata['Geographic scope']}
-        """
-    )
-    received = modals._build_crf_metadata_modal_scientific_scope_tab(dengue_metadata)
-    assert str(received) == str(expected)
-
-
-def test__build_crf_metadata_modal_governance_and_contributors_tab(
-    arc_1_4_0__crf_metadata,
+def test__build_crf_metadata_modal_project_overview_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__overview__chikungunya,
 ):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    expected = arc_1_6_0__crf_metadata_modal_tab__overview__chikungunya
+    received = modals._build_crf_metadata_modal_project_overview_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
-    expected = dcc.Markdown(
-        f"""
-        - **Authors** - {dengue_metadata['Authors']}
-        - **Approvers** - {dengue_metadata['Approvers']}
-        - **Institutions** - {dengue_metadata['Institutions']}
-        - **Contact** - Unknown
-        """
-    )
-    received = modals._build_crf_metadata_modal_governance_and_contributors_tab(
-        dengue_metadata
-    )
+
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
-    arc_1_4_0__crf_metadata,
+def test__build_crf_metadata_modal_scientific_scope_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__scientific_scope__chikungunya,
 ):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    expected = arc_1_6_0__crf_metadata_modal_tab__scientific_scope__chikungunya
+    received = modals._build_crf_metadata_modal_scientific_scope_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
 
-    expected = html.Div(
-        [
-            html.Ul(
-                children=[
-                    html.Li([html.B("Keywords"), f" - {dengue_metadata['Keywords']}"]),
-                    html.Li(
-                        [html.B("Relevant Links"), " - "]
-                        + [
-                            html.A(url, href=url, target="_blank")
-                            if url.lower() != "unknown"
-                            else "Unknown"
-                            for url in dengue_metadata["Relevant resources"].split(",")
-                        ]
-                    ),
-                ]
-            )
-        ]
-    )
-    received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
-        dengue_metadata
-    )
     assert str(received) == str(expected)
 
 
