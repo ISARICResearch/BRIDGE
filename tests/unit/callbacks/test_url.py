@@ -5,6 +5,8 @@ import pytest
 
 from bridge.callbacks import url
 
+pytestmark = [pytest.mark.unit, pytest.mark.callbacks]
+
 
 @pytest.mark.parametrize(
     "template_check, presets, address, expected_output",
