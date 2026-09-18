@@ -157,9 +157,9 @@ def test_get_crf_name(_mock_logger, name, checked, grouped_presets, expected_out
                 C=["C1", "C2", "C3@example.org"],
             ),
             pd.DataFrame().assign(
-                A=["A1", "Unknown", "A3"],
-                B=["Unknown", "B2", "B3"],
-                C=["C1", "C2", "Unknown"],
+                A=["A1", "Not available", "A3"],
+                B=["Not available", "B2", "B3"],
+                C=["C1", "C2", "Not available"],
             ),
         ),
     ],
