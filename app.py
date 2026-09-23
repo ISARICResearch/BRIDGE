@@ -1,8 +1,10 @@
 import json
+from pathlib import Path
 from time import perf_counter
 
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
 from dash import html, Input, Output, State
 
 import bridge.callbacks  # noqa
@@ -93,7 +95,8 @@ for key, value in PRESETS:
     GROUPED_PRESETS.setdefault(key, []).append(value)
 GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 
-ARC_CRF_METADATA = ArcApiClient().get_dataframe_crf_metadata(ARC_VERSION_LATEST)
+#ARC_CRF_METADATA = ArcApiClient().get_dataframe_crf_metadata(ARC_VERSION_LATEST)
+ARC_CRF_METADATA = pd.read_csv("./arc-1.6.0-crf-metadata.csv")
 ARC_CRF_METADATA_JSON = ARC_CRF_METADATA.to_json(date_format="iso", orient="split")
 logger.info(f"ARC_CRF_METADATA_JSON={ARC_CRF_METADATA_JSON}")
 

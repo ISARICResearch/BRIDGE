@@ -1,6 +1,7 @@
 import io
 import json
 from functools import lru_cache
+from pathlib import Path
 from time import perf_counter
 from typing import Tuple
 
@@ -511,7 +512,8 @@ def _build_crf_metadata_modal_tab_content(
     selected_version: str, template_id: str, tab_id: str
 ) -> dash.html.Div:
     try:
-        arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+        #arc_crf_metadata = ArcApiClient().get_dataframe_crf_metadata(selected_version)
+        arc_crf_metadata = pd.read_csv("./arc-1.6.0-crf-metadata.csv")
     except ArcApiClientError:
         template_metadata = _create_placeholder_template_metadata(template_id)
     else:
