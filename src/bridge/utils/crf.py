@@ -356,7 +356,7 @@ def get_approvers(
      'Viviane S B de Oliveira',
      'Josephine Bourner',
      'Hugh Watson',
-     'Lubaba Sharin)')
+     'Lubaba Sharin')
     """
     return tuple(
         map(
