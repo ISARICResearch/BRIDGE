@@ -95,6 +95,7 @@ GROUPED_PRESETS_JSON = json.dumps(GROUPED_PRESETS)
 
 ARC_CRF_METADATA = ArcApiClient().get_dataframe_crf_metadata(ARC_VERSION_LATEST)
 ARC_CRF_METADATA_JSON = ARC_CRF_METADATA.to_json(date_format="iso", orient="split")
+logger.info(f"ARC_CRF_METADATA_JSON={ARC_CRF_METADATA_JSON}")
 
 logger.info(
     "ARC bootstrap complete version=%s language=%s total_elapsed_ms=%.3f",

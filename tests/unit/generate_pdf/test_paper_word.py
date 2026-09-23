@@ -4,9 +4,12 @@
 import sys
 
 # -- 3rd party libraries --
+import pytest
 
 # -- Internal libraries --
 from bridge.generate_pdf.paper_word import df_to_word
+
+pytestmark = [pytest.mark.unit, pytest.mark.generate_pdf]
 
 
 class TestGeneratePaperlikeWord:

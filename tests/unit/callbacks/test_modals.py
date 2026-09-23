@@ -13,6 +13,9 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import modals
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
+
 SUBMIT_N_CLICKS_NONE = None
 CANCEL_N_CLICKS_NONE = None
 CURRENT_DATADICC_SAVED_NONE = None
@@ -108,6 +111,453 @@ def test_update_list_variables_checked():
     assert_frame_equal(df_output, df_expected)
 
 
+def test__get_crf_metadata_modal_section():
+    test_title = "test_title"
+    expected = html.Section(
+        [
+            html.H3(test_title, className="section-title"),
+            html.Div("test_div"),
+        ],
+        className="section",
+    )
+
+    received = modals._get_crf_metadata_modal_section(test_title, html.Div("test_div"))
+
+    assert isinstance(received, dash.html.Section)
+    assert str(received) == str(expected)
+
+
+def test__get_crf_metadata_modal_metadata_grid():
+    test_items = [
+        ("test_items_label1", "test_items_value1"),
+        ("test_items_label2", "test_items_value2"),
+    ]
+    expected = html.Div(
+        [
+            html.Div(
+                [
+                    html.Span(label, className="metadata-label"),
+                    html.Div(value, className="metadata-value"),
+                ],
+                className="metadata-item",
+            )
+            for label, value in test_items
+        ],
+        className="metadata-grid",
+    )
+
+    received = modals._get_crf_metadata_modal_metadata_grid(test_items)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+def test__scope_item():
+    test_label = "test_label"
+    test_value = "test_value"
+    expected = html.Div(
+        [
+            html.Div(test_label, className="scope-label"),
+            html.Div(test_value, className="scope-value"),
+        ],
+        className="scope-item",
+    )
+
+    received = modals._get_crf_metadata_modal_scope_item(test_label, test_value)
+
+    assert isinstance(received, dash.html.Div)
+    assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalPathogenValue:
+    def test__get_crf_metadata_modal_pathogen_value__pathogens_defined(self):
+        test_pathogens = ["test_pathogen1", "test_pathogen2"]
+        expected = html.Div(
+            [
+                html.Span(pathogen, className="pathogen-chip")
+                for pathogen in test_pathogens
+            ],
+            className="pathogen-list",
+        )
+
+        received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_pathogen_value__pathogens_not_available(self):
+        test_pathogens = "Not available"
+        expected = html.Div(
+            [
+                html.Span(pathogen, className="pathogen-chip")
+                for pathogen in [test_pathogens]
+            ],
+            className="pathogen-list",
+        )
+
+        received = modals._get_crf_metadata_modal_pathogen_value(test_pathogens)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
+class TestCrfMetadataModalGetPopulationItem:
+    def test__get_crf_metadata_modal_population_item__population_item_first_false(self):
+        test_label = "test_label"
+        test_value = "test_value"
+        test_population_item_first_false = False
+        expected = html.Div(
+            [
+                html.Div(test_label, className="population-label"),
+                html.Div(test_value, className="population-value"),
+            ],
+            className="population-item",
+        )
+
+        received = modals._get_crf_metadata_modal_population_item(
+            test_label, test_value, first=test_population_item_first_false
+        )
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_population_item__population_item_first_true(self):
+        test_label = "test_label"
+        test_value = "test_value"
+        test_population_item_first_true = True
+        expected = html.Div(
+            [
+                html.Div(test_label, className="population-label"),
+                html.Div(test_value, className="population-value"),
+            ],
+            className="population-item first",
+        )
+
+        received = modals._get_crf_metadata_modal_population_item(
+            test_label, test_value, first=test_population_item_first_true
+        )
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalApproversInline:
+    def test__get_crf_metadata_modal_approvers_inline__approvers_defined(self):
+        test_approvers = ["test_approver1", "test_approver2"]
+        expected = html.Div(
+            ", ".join(test_approvers),
+            className="approver-line",
+        )
+
+        received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_approvers_inline__approvers_not_available(self):
+        test_approvers = "Not available"
+        expected = html.Div(
+            ", ".join(["Not available"]),
+            className="approver-line",
+        )
+
+        received = modals._get_crf_metadata_modal_approvers_inline(test_approvers)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalKeywords:
+    def test__get_crf_metadata_modal_keywords__keywords_defined(self):
+        test_keywords = ("test_keyword1", "test_keyword2")
+        expected = html.Section(
+            children=[
+                html.H3(children="Keywords", className="section-title"),
+                html.Div(
+                    children=[
+                        html.Span(children="test_keyword1", className="keyword"),
+                        html.Span(children="test_keyword2", className="keyword"),
+                    ],
+                    className="keyword-container",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_keywords(test_keywords)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_keywords__keywords_not_available(self):
+        test_keywords = "Not available"
+        expected = html.Section(
+            children=[
+                html.H3(children="Keywords", className="section-title"),
+                html.Div(
+                    children=[
+                        html.Span(children="Not available", className="keyword"),
+                    ],
+                    className="keyword-container",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_keywords(test_keywords)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+
+class TestGetCrfMetadataModalResources:
+    def test__get_crf_metadata_modal_resources__resources_defined(self):
+        test_resources = ("test_resource1_url", "test_resource2_url")
+        expected = html.Section(
+            children=[
+                html.H3(children="Resources", className="section-title"),
+                html.Div(
+                    children=[
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="test_resource1_url",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="test_resource1_url",
+                            target="_blank",
+                        ),
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="test_resource2_url",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="test_resource2_url",
+                            target="_blank",
+                        ),
+                    ],
+                    className="resource-list",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_resources(test_resources)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_resources__resources_not_available(self):
+        test_resources = "Not available"
+        expected = html.Section(
+            children=[
+                html.H3(children="Resources", className="section-title"),
+                html.Div(
+                    children=[
+                        html.A(
+                            children=[
+                                html.Div(children="↗", className="resource-icon"),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            children="Not available",
+                                            className="resource-url",
+                                        )
+                                    ]
+                                ),
+                            ],
+                            className="resource-link",
+                            href="Not available",
+                            target="_blank",
+                        )
+                    ],
+                    className="resource-list",
+                ),
+            ],
+            className="section",
+        )
+
+        received = modals._get_crf_metadata_modal_resources(test_resources)
+
+        assert isinstance(received, dash.html.Section)
+        assert str(received) == str(expected)
+
+
+def test__get_crf_metadata_modal_author_name_with_superscripts():
+    test_author_name = "test_author_name"
+    test_affiliation_numbers = (1, 2)
+    test_author = (
+        test_author_name,
+        test_affiliation_numbers,
+    )
+    expected = dash.html.Span(
+        [
+            "test_author_name",
+            html.Sup(
+                ",".join(str(number) for number in test_affiliation_numbers),
+                className="author-sup",
+            ),
+        ]
+    )
+
+    received = modals._get_crf_metadata_modal_author_name_with_superscripts(test_author)
+
+    assert isinstance(received, dash.html.Span)
+    assert str(received) == str(expected)
+
+
+class TestCrfMetadataModalGetAuthorsInline:
+    def test__get_crf_metadata_modal_authors_inline__authors_not_available(self):
+        test_authors = "Not available"
+        expected = html.Div(
+            [
+                dash.html.Span(["Not available"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_authors_inline__no_authors_with_affiliations(self):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = tuple()
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = tuple()
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(["test_author1_name"]),
+                ", ",
+                dash.html.Span(["test_author2_name"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_authors_inline__only_first_author_with_affiliations(
+        self,
+    ):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = (1, 2)
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = tuple()
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(
+                    [
+                        "test_author1_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author1_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+                ", ",
+                dash.html.Span(["test_author2_name"]),
+            ],
+            className="author-line",
+        )
+
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+    def test__get_crf_metadata_modal_authors_inline__both_authors_with_affiliations(
+        self,
+    ):
+        test_author1_name = "test_author1_name"
+        test_author1_affiliation_numbers = (1, 2)
+        test_author1 = (
+            test_author1_name,
+            test_author1_affiliation_numbers,
+        )
+        test_author2_name = "test_author2_name"
+        test_author2_affiliation_numbers = (3, 4)
+        test_author2 = (
+            test_author2_name,
+            test_author2_affiliation_numbers,
+        )
+        test_authors = [test_author1, test_author2]
+        expected = html.Div(
+            [
+                dash.html.Span(
+                    [
+                        "test_author1_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author1_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+                ", ",
+                dash.html.Span(
+                    [
+                        "test_author2_name",
+                        html.Sup(
+                            ",".join(
+                                str(number)
+                                for number in test_author2_affiliation_numbers
+                            ),
+                            className="author-sup",
+                        ),
+                    ]
+                ),
+            ],
+            className="author-line",
+        )
+
+        received = modals._get_crf_metadata_modal_authors_inline(test_authors)
+
+        assert isinstance(received, dash.html.Div)
+        assert str(received) == str(expected)
+
+
 def test__build_crf_metadata_modal_tabbed_body():
     test_selected_version = "test_selected_version"
     test_template_name = "test crf"
@@ -154,90 +604,53 @@ def test__build_crf_metadata_modal_tabbed_body():
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_project_overview_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+def test__build_crf_metadata_modal_project_overview_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__overview__chikungunya,
+):
+    expected = arc_1_6_0__crf_metadata_modal_tab__overview__chikungunya
+    received = modals._build_crf_metadata_modal_project_overview_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
-    expected = dcc.Markdown(
-        f"""
-        - **Description** - {dengue_metadata['Description']}
-        - **Study Type** - {dengue_metadata['Study type']}
-        - **Version** - {dengue_metadata['Version']}
-        - **Publication Date** - {dengue_metadata['Date of publication/release']}
-        """
-    )
-    received = modals._build_crf_metadata_modal_project_overview_tab(dengue_metadata)
+
     assert str(received) == str(expected)
 
 
-def test__build_crf_metadata_modal_scientific_scope_tab(arc_1_4_0__crf_metadata):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+def test__build_crf_metadata_modal_scientific_scope_tab(
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__scientific_scope__chikungunya,
+):
+    expected = arc_1_6_0__crf_metadata_modal_tab__scientific_scope__chikungunya
+    received = modals._build_crf_metadata_modal_scientific_scope_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
-    expected = dcc.Markdown(
-        f"""
-        - **Research Questions** - {dengue_metadata['Research questions']}
-        - **Target Population** - {dengue_metadata['Target population']}
-        - **Inclusion Criteria** - {dengue_metadata['Inclusion Criteria']}
-        - **Exclusion Criteria** - {dengue_metadata['Exclusion Criteria']}
-        - **Pathogen/Agent** - {dengue_metadata['Pathogen or agent']}
-        - **Syndrome** - {dengue_metadata['Syndrome / clinical presentation']}
-        - **Setting** - {dengue_metadata['Setting']}
-        - **Geographic Scope** - {dengue_metadata['Geographic scope']}
-        """
-    )
-    received = modals._build_crf_metadata_modal_scientific_scope_tab(dengue_metadata)
+
     assert str(received) == str(expected)
 
 
 def test__build_crf_metadata_modal_governance_and_contributors_tab(
-    arc_1_4_0__crf_metadata,
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__governance_and_contributors__chikungunya,
 ):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
-    )
-    expected = dcc.Markdown(
-        f"""
-        - **Authors** - {dengue_metadata['Authors']}
-        - **Approvers** - {dengue_metadata['Approvers']}
-        - **Institutions** - {dengue_metadata['Institutions']}
-        - **Contact** - Unknown
-        """
+    expected = (
+        arc_1_6_0__crf_metadata_modal_tab__governance_and_contributors__chikungunya
     )
     received = modals._build_crf_metadata_modal_governance_and_contributors_tab(
-        dengue_metadata
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
+
     assert str(received) == str(expected)
 
 
 def test__build_crf_metadata_modal_documentation_and_discoverability_tab(
-    arc_1_4_0__crf_metadata,
+    arc_1_6_0__crf_metadata_modal_content__chikungunya,
+    arc_1_6_0__crf_metadata_modal_tab__documentation_and_discoverability__chikungunya,
 ):
-    dengue_metadata = (
-        arc_1_4_0__crf_metadata.iloc[1].fillna("Unknown").replace("", "Unknown")
+    expected = arc_1_6_0__crf_metadata_modal_tab__documentation_and_discoverability__chikungunya
+    received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
+        arc_1_6_0__crf_metadata_modal_content__chikungunya
     )
 
-    expected = html.Div(
-        [
-            html.Ul(
-                children=[
-                    html.Li([html.B("Keywords"), f" - {dengue_metadata['Keywords']}"]),
-                    html.Li(
-                        [html.B("Relevant Links"), " - "]
-                        + [
-                            html.A(url, href=url, target="_blank")
-                            if url.lower() != "unknown"
-                            else "Unknown"
-                            for url in dengue_metadata["Relevant resources"].split(",")
-                        ]
-                    ),
-                ]
-            )
-        ]
-    )
-    received = modals._build_crf_metadata_modal_documentation_and_discoverability_tab(
-        dengue_metadata
-    )
     assert str(received) == str(expected)
 
 
@@ -798,9 +1211,26 @@ def test_display_crf_metadata_modal(
 @pytest.mark.parametrize(
     "switch_values, switch_ids, grouped_presets, expected_styles",
     [
-        # ARChetype Disease CRF presets - test input for Covid-only selection
+        # CRF presets - test input for ARChetype Chikungunya-only selection
         (
-            [True, False, False, False, False, False, [], [], [], [], [], [], [], []],
+            [
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
             [
                 {"type": "template_check", "index": "ARChetype Disease CRF_Covid"},
                 {"type": "template_check", "index": "ARChetype Disease CRF_H5Nx"},
@@ -816,6 +1246,14 @@ def test_display_crf_metadata_modal(
                 },
                 {"type": "template_check", "index": "ARChetype Syndromic CRF_ARI"},
                 {"type": "template_check", "index": "ARChetype Syndromic CRF_VHF"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Encephalitis",
+                },
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Arbovirus",
+                },
                 {"type": "template_check", "index": "Score_CharlsonCI"},
                 {"type": "template_check", "index": "Score_mSOFA"},
                 {"type": "template_check", "index": "Score_mSOFA Dengue"},
@@ -832,7 +1270,7 @@ def test_display_crf_metadata_modal(
                     "Mpox",
                     "Mpox Pregnancy and Paediatric",
                 ],
-                "ARChetype Syndromic CRF": ["ARI", "VHF"],
+                "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis", "Arbovirus"],
                 "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
                 "Recommended Outcomes": ["Dengue"],
                 "Populations": ["Paediatric", "Pregnancy"],
@@ -845,7 +1283,7 @@ def test_display_crf_metadata_modal(
                     "fontSize": "16px",
                     "padding": "0 8px",
                     "marginLeft": "auto",
-                    "display": "block",
+                    "display": "none",
                 },
                 {
                     "background": "none",
@@ -855,6 +1293,24 @@ def test_display_crf_metadata_modal(
                     "padding": "0 8px",
                     "marginLeft": "auto",
                     "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "block",
                 },
                 {
                     "background": "none",
@@ -966,9 +1422,26 @@ def test_display_crf_metadata_modal(
                 },
             ],
         ),
-        # ARChetype Disease CRF presets - test input for Covid and Dengue selections
+        # CRF presets - test input for ARChetype Covid and ARChetype Chikungunya selections
         (
-            [True, False, True, False, False, False, [], [], [], [], [], [], [], []],
+            [
+                True,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
             [
                 {"type": "template_check", "index": "ARChetype Disease CRF_Covid"},
                 {"type": "template_check", "index": "ARChetype Disease CRF_H5Nx"},
@@ -984,6 +1457,14 @@ def test_display_crf_metadata_modal(
                 },
                 {"type": "template_check", "index": "ARChetype Syndromic CRF_ARI"},
                 {"type": "template_check", "index": "ARChetype Syndromic CRF_VHF"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Encephalitis",
+                },
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Arbovirus",
+                },
                 {"type": "template_check", "index": "Score_CharlsonCI"},
                 {"type": "template_check", "index": "Score_mSOFA"},
                 {"type": "template_check", "index": "Score_mSOFA Dengue"},
@@ -1000,7 +1481,7 @@ def test_display_crf_metadata_modal(
                     "Mpox",
                     "Mpox Pregnancy and Paediatric",
                 ],
-                "ARChetype Syndromic CRF": ["ARI", "VHF"],
+                "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis", "Arbovirus"],
                 "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
                 "Recommended Outcomes": ["Dengue"],
                 "Populations": ["Paediatric", "Pregnancy"],
@@ -1013,6 +1494,33 @@ def test_display_crf_metadata_modal(
                     "fontSize": "16px",
                     "padding": "0 8px",
                     "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
                     "display": "block",
                 },
                 {
@@ -1031,6 +1539,199 @@ def test_display_crf_metadata_modal(
                     "fontSize": "16px",
                     "padding": "0 8px",
                     "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+            ],
+        ),
+        # CRF presets - test input for ARChetype Covid, ARChetype Chikungunya and Syndromic Arbovirus
+        (
+            [
+                True,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
+            [
+                {"type": "template_check", "index": "ARChetype Disease CRF_Covid"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_H5Nx"},
+                {"type": "template_check", "index": "ARChetype Disease CRF_Dengue"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Chikungunya",
+                },
+                {"type": "template_check", "index": "ARChetype Disease CRF_Mpox"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Disease CRF_Mpox Pregnancy and Paediatric",
+                },
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_ARI"},
+                {"type": "template_check", "index": "ARChetype Syndromic CRF_VHF"},
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Encephalitis",
+                },
+                {
+                    "type": "template_check",
+                    "index": "ARChetype Syndromic CRF_Arbovirus",
+                },
+                {"type": "template_check", "index": "Score_CharlsonCI"},
+                {"type": "template_check", "index": "Score_mSOFA"},
+                {"type": "template_check", "index": "Score_mSOFA Dengue"},
+                {"type": "template_check", "index": "Recommended Outcomes_Dengue"},
+                {"type": "template_check", "index": "Populations_Paediatric"},
+                {"type": "template_check", "index": "Populations_Pregnancy"},
+            ],
+            {
+                "ARChetype Disease CRF": [
+                    "Covid",
+                    "H5Nx",
+                    "Dengue",
+                    "Chikungunya",
+                    "Mpox",
+                    "Mpox Pregnancy and Paediatric",
+                ],
+                "ARChetype Syndromic CRF": ["ARI", "VHF", "Encephalitis", "Arbovirus"],
+                "Score": ["CharlsonCI", "mSOFA", "mSOFA Dengue"],
+                "Recommended Outcomes": ["Dengue"],
+                "Populations": ["Paediatric", "Pregnancy"],
+            },
+            [
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
                     "display": "block",
                 },
                 {
@@ -1077,6 +1778,15 @@ def test_display_crf_metadata_modal(
                     "padding": "0 8px",
                     "marginLeft": "auto",
                     "display": "none",
+                },
+                {
+                    "background": "none",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "fontSize": "16px",
+                    "padding": "0 8px",
+                    "marginLeft": "auto",
+                    "display": "block",
                 },
                 {
                     "background": "none",
@@ -1141,13 +1851,14 @@ def test_toggle_template_info_icon_visibility(
     switch_ids: list,
     grouped_presets: dict,
     expected_styles: list[dict],
-    arc_1_4_0__crf_metadata,
+    arc_1_6_0__crf_metadata,
 ):
+    # import ipdb; ipdb.set_trace()
     received_styles = modals.toggle_template_info_icon_visibility(
         switch_values,
         switch_ids,
         grouped_presets,
-        arc_1_4_0__crf_metadata.to_json(date_format="iso", orient="split"),
+        arc_1_6_0__crf_metadata.to_json(date_format="iso", orient="split"),
     )
 
     assert received_styles == expected_styles

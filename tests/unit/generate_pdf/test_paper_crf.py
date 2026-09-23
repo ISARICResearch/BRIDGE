@@ -5,9 +5,12 @@ import sys
 import unittest.mock as mock
 
 # -- 3rd party libraries --
+import pytest
 
 # -- Internal libraries --
 from bridge.generate_pdf.paper_crf import generate_paperlike_pdf
+
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
 
 
 class TestGeneratePaperlikePdf:
