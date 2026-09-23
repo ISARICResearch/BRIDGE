@@ -329,7 +329,7 @@ def get_approvers(
     /,
     *,
     approvers_prefix_sep: str = ":",
-    approvers_delim: str = ",",
+    approvers_delim: str = ";",
 ) -> tuple[str]:
     """:py:class:`tuple` : Returns a tuple of approvers for the Governance & Contributors section.
 
@@ -341,7 +341,7 @@ def get_approvers(
 
     approvers_delim : str, default=";"
         Optional delimiter for the approver names inside the string, defaulting
-        to ``","``.
+        to ``";"``.
 
     Returns
     -------
@@ -350,7 +350,7 @@ def get_approvers(
 
     Examples
     --------
-    >>> approvers_raw = 'ISARIC chikungunya CRF management committee: Aileen Chang, Viviane S B de Oliveira, Josephine Bourner, Hugh Watson, Lubaba Sharin)'
+    >>> approvers_raw = 'ISARIC chikungunya CRF management committee: Aileen Chang; Viviane S B de Oliveira; Josephine Bourner; Hugh Watson; Lubaba Sharin'
     >>> get_approvers(approvers_raw)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     ('Aileen Chang',
      'Viviane S B de Oliveira',
