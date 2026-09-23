@@ -205,7 +205,7 @@ def test_get_authors_and_institutions(authors_and_institutions_raw, expected):
     "approvers_raw, expected",
     [
         (
-            "Test approvers prefix: Author1FirstName Author1Surname, Author2FirstName Author2Surname, Author3FirstName Author3Surname",
+            "Test approvers prefix: Author1FirstName Author1Surname; Author2FirstName Author2Surname; Author3FirstName Author3Surname",
             (
                 "Author1FirstName Author1Surname",
                 "Author2FirstName Author2Surname",
