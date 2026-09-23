@@ -921,9 +921,7 @@ def toggle_template_info_icon_visibility(
     # Load the CRF metadata CSV from the raw JSON, and extract the list of
     # sections implicitly defined in the rows of the CSV
     arc_crf_metadata = pd.read_json(io.StringIO(arc_crf_metadata_json), orient="split")
-    info_icon_sections = (
-        arc_crf_metadata["Title of CRF"].str.split("_").str[0].unique().tolist()
-    )
+    info_icon_template_ids = arc_crf_metadata["Title of CRF"].tolist()
 
     # For each combination of switch ID and value, determine the visibility
     # of the corresponding template, and build a map/dict keyed by section and
@@ -931,13 +929,13 @@ def toggle_template_info_icon_visibility(
     template_status = {}
 
     for switch_id, is_on in zip(switch_ids, switch_values):
-        index_str = (
+        template_id = (
             switch_id.get("index", "")
             if isinstance(switch_id, dict)
             else str(switch_id)
         )
-        section, template_name = index_str.split("_")
-        if section in info_icon_sections:
+        section, template_name = template_id.split("_")
+        if template_id in info_icon_template_ids:
             template_status[(section, template_name)] = is_on
         else:
             template_status[(section, template_name)] = False
