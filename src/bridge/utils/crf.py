@@ -550,7 +550,7 @@ def get_crf_template_metadata_modal_overview(
         ),
         (
             "Version",
-            tm.get("Version", "Not available").strip(),
+            tm.get("Version", "Not available"),
         ),
         (
             "Publication date",
