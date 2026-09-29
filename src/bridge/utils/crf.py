@@ -594,7 +594,7 @@ def get_crf_template_metadata_modal_scientific_scope(
     )
     setting = tm.get("Setting", "Not available").strip()
     geographic_scope = tm.get("Geographic scope", "Not available").strip()
-    syndrome_definition = tm.get("Syndrome definition", "Not available").strip()
+    syndrome_definition = tm.get("Clinical presentation", "Not available").strip()
     target_population = tm.get("Target population", "Not available").strip()
     inclusion_criteria = tm.get("Inclusion Criteria", "Not available").strip()
     exclusion_criteria = tm.get("Exclusion Criteria", "Not available").strip()

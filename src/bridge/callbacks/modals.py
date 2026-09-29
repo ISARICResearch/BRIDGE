@@ -342,7 +342,7 @@ def _build_crf_metadata_modal_scientific_scope_tab(
         syndrome_definition = html.Div(
             [
                 html.Span(
-                    "Syndrome definition",
+                    "Clinical presentation",
                     className="definition-label",
                 ),
                 scientific_scope.syndrome_definition,
@@ -483,7 +483,7 @@ def _create_placeholder_template_metadata(template_id: str) -> pd.Series:
         "Inclusion Criteria",
         "Exclusion Criteria",
         "Pathogen or agent",
-        "Syndrome / clinical presentation",
+        "Clinical presentation",
         "Setting",
         "Geographic scope",
         "Authors",
