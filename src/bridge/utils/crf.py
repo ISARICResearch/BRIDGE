@@ -175,7 +175,7 @@ def get_research_questions(
     return tuple(
         map(
             lambda s: str.capitalize(re.sub(r"(\s+)?\(\d+\)(\s+)?", "", s)).strip(),
-            research_questions_raw.split(delim),
+            filter(lambda s: s, research_questions_raw.split(delim)),
         )
     )
 
