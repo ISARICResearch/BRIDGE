@@ -296,7 +296,7 @@ class TestGetCrfMetadataModalKeywords:
                 html.H3(children="Keywords", className="section-title"),
                 html.Div(
                     children=[
-                        html.Span(children="Not available", className="keyword"),
+                        html.P(children="Not available", className="section-text")
                     ],
                     className="keyword-container",
                 ),
@@ -369,22 +369,7 @@ class TestGetCrfMetadataModalResources:
                 html.H3(children="Resources", className="section-title"),
                 html.Div(
                     children=[
-                        html.A(
-                            children=[
-                                html.Div(children="↗", className="resource-icon"),
-                                html.Div(
-                                    [
-                                        html.Div(
-                                            children="Not available",
-                                            className="resource-url",
-                                        )
-                                    ]
-                                ),
-                            ],
-                            className="resource-link",
-                            href="Not available",
-                            target="_blank",
-                        )
+                        html.P(children="Not available", className="section-text")
                     ],
                     className="resource-list",
                 ),

@@ -190,8 +190,19 @@ def _get_crf_metadata_modal_approvers_inline(
 def _get_crf_metadata_modal_keywords(
     keywords: tuple[str] | NOT_AVAILABLE_TYPE,
 ) -> dash.html.Section:
-    if keywords == "Not available":
-        keywords = ["Not available"]
+    if keywords == "Not available" or keywords == ("Not available",):
+        return _get_crf_metadata_modal_section(
+            "Keywords",
+            html.Div(
+                [
+                    html.P(
+                        "Not available",
+                        className="section-text",
+                    )
+                ],
+                className="keyword-container",
+            ),
+        )
 
     return _get_crf_metadata_modal_section(
         "Keywords",
@@ -205,8 +216,19 @@ def _get_crf_metadata_modal_keywords(
 def _get_crf_metadata_modal_resources(
     resources: tuple[str] | NOT_AVAILABLE_TYPE,
 ) -> dash.html.Section:
-    if resources == "Not available":
-        resources = ["Not available"]
+    if resources == "Not available" or resources == ("Not available",):
+        return _get_crf_metadata_modal_section(
+            "Resources",
+            html.Div(
+                [
+                    html.P(
+                        "Not available",
+                        className="section-text",
+                    )
+                ],
+                className="resource-list",
+            ),
+        )
 
     return _get_crf_metadata_modal_section(
         "Resources",
@@ -462,7 +484,7 @@ def _build_crf_metadata_modal_documentation_and_discoverability_tab(
     modal_content: CRFTemplateMetadataModalContent,
 ) -> dash.html.Div:
     documentation = modal_content.documentation_section
-
+    logger.info(f"Documentation resources: {documentation.resources}")
     return html.Div(
         [
             _get_crf_metadata_modal_keywords(documentation.keywords),
