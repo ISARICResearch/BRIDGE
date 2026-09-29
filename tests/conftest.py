@@ -249,7 +249,13 @@ def arc_1_6_0__crf_metadata_modal_content__scientific_scope__chikungunya() -> (
         ),
         setting="Hospital",
         geographic_scope="Global",
-        syndrome_definition="Not available",
+        syndrome_definition=(
+            "Person who lives in or has traveled within the last 2 weeks to "
+            "areas with chikungunya transmission and presents with fever "
+            "associated with arthralgia or arthritis not explained by other "
+            "medical conditions, with or without other extra-articular "
+            "manifestations that may range from mild to severe."
+        ),
         target_population="Hospitalised adults during the acute phase of chikungunya infection.",
         inclusion_criteria="Hospitalised individuals with suspected or laboratory-confirmed acute chikungunya virus infection.",
         exclusion_criteria="Alternative confirmed diagnosis;",
@@ -333,10 +339,10 @@ def arc_1_6_0__crf_metadata_modal_tab__scientific_scope__chikungunya() -> html.D
                             html.Div(
                                 children=[
                                     html.Span(
-                                        children="Syndrome definition",
+                                        children="Clinical presentation",
                                         className="definition-label",
                                     ),
-                                    "Not available",
+                                    "Person who lives in or has traveled within the last 2 weeks to areas with chikungunya transmission and presents with fever associated with arthralgia or arthritis not explained by other medical conditions, with or without other extra-articular manifestations that may range from mild to severe.",
                                 ],
                                 className="definition-block",
                             ),
