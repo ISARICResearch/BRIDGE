@@ -74,7 +74,7 @@ class Modals:
                     [
                         html.Div(
                             [
-                                #html.H1(""),
+                                # html.H1(""),
                                 dcc.Tabs(
                                     id="crf-metadata-modal-tabbed-body",
                                     value="project-overview-tab",
@@ -103,8 +103,8 @@ class Modals:
                                         "width": "100%",
                                         "maxWidth": "100%",
                                         "boxSizing": "border-box",
-                                        #"height": "100%",
-                                        #"height": "800px",
+                                        # "height": "100%",
+                                        # "height": "800px",
                                         "minHeight": "800px",
                                         "overflow-x": "hidden",
                                         "white-space": "normal",

@@ -281,12 +281,11 @@ def _build_crf_metadata_modal_tabbed_body(
             html.Div(
                 id="crf-metadata-modal-body-tab-content",
                 style={
-                    #"width": "800px",
+                    # "width": "800px",
                     "width": "100%",
-
-                    #"height": "800px",
+                    # "height": "800px",
                     "minHeight": "800px",
-                    #"height": "100%",
+                    # "height": "100%",
                     "overflow-x": "hidden",
                     "white-space": "normal",
                     "overflowY": "auto",
