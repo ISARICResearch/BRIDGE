@@ -574,10 +574,11 @@ def test__build_crf_metadata_modal_tabbed_body():
             html.Div(
                 id="crf-metadata-modal-body-tab-content",
                 style={
-                    "width": "800px",
-                    "height": "250px",
+                    "width": "100%",
+                    "minHeight": "800px",
                     "overflow-x": "hidden",
                     "white-space": "normal",
+                    "overflowY": "auto",
                 },
             ),
         ]
@@ -1079,10 +1080,11 @@ def get_output_display_crf_metadata_modal(
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
                             style={
-                                "width": "800px",
-                                "height": "250px",
+                                "width": "100%",
+                                "minHeight": "800px",
                                 "overflow-x": "hidden",
                                 "white-space": "normal",
+                                "overflowY": "auto",
                             },
                         ),
                     ]
@@ -1140,10 +1142,11 @@ def get_output_display_crf_metadata_modal(
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
                             style={
-                                "width": "800px",
-                                "height": "250px",
+                                "width": "100%",
+                                "minHeight": "800px",
                                 "overflow-x": "hidden",
                                 "white-space": "normal",
+                                "overflowY": "auto",
                             },
                         ),
                     ]
