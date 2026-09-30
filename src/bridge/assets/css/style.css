@@ -215,7 +215,7 @@
 }
 
 .section-text {
-    max-width: 850px;
+    max-width: 100%;
     font-size: 14px;
     line-height: 1.65;
     color: #555d66;
