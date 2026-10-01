@@ -888,7 +888,6 @@ def update_list_variables_checked(
         State("grouped_presets-store", "data"),
         State("arc-crf-metadata", "data"),
     ],
-    prevent_initial_call=True,
 )
 def toggle_template_info_icon_visibility(
     switch_values: list,
@@ -962,7 +961,7 @@ def toggle_template_info_icon_visibility(
         )
         section, template_name = template_id.split("_")
         if template_id in info_icon_template_ids:
-            template_status[(section, template_name)] = is_on
+            template_status[(section, template_name)] = True
         else:
             template_status[(section, template_name)] = False
 

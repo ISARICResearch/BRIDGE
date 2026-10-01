@@ -1346,7 +1346,7 @@ def test_display_crf_metadata_modal(
                     "fontSize": "16px",
                     "padding": "0 8px",
                     "marginLeft": "auto",
-                    "display": "none",
+                    "display": "block",
                 },
                 {
                     "background": "none",
@@ -1557,7 +1557,7 @@ def test_display_crf_metadata_modal(
                     "fontSize": "16px",
                     "padding": "0 8px",
                     "marginLeft": "auto",
-                    "display": "none",
+                    "display": "block",
                 },
                 {
                     "background": "none",
@@ -1835,7 +1835,6 @@ def test_toggle_template_info_icon_visibility(
     expected_styles: list[dict],
     arc_1_6_0__crf_metadata,
 ):
-    # import ipdb; ipdb.set_trace()
     received_styles = modals.toggle_template_info_icon_visibility(
         switch_values,
         switch_ids,
