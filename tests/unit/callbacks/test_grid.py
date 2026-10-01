@@ -8,6 +8,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import grid
 
+pytestmark = [pytest.mark.unit, pytest.mark.callbacks]
+
 
 @pytest.mark.parametrize(
     "checked",

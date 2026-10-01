@@ -1,0 +1,558 @@
+# -- IMPORTS --
+
+# -- Standard libraries --
+from contextvars import copy_context
+from unittest import mock
+
+# -- 3rd party libraries --
+import pytest
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
+# -- Internal libraries --
+from bridge.utils.crf import (
+    clean_crf_metadata,
+    CRFTemplateMetadataModalContent,
+    DocumentationCRFTemplateMetadataModalSection,
+    get_approvers,
+    get_authors_and_institutions,
+    get_contact,
+    get_keywords,
+    get_resources,
+    get_selected_crf_presets,
+    get_crf_name,
+    GovernanceCRFTemplateMetadataModalSection,
+    OverviewCRFTemplateMetadataModalSection,
+    ScientificScopeCRFTemplateMetadataModalSection,
+)
+
+pytestmark = [pytest.mark.unit, pytest.mark.utils]
+
+
+@pytest.mark.parametrize(
+    "grouped_presets, checked_values, expected_output",
+    [
+        (
+            {
+                "test_section1": [
+                    "test_option1__first_selected",
+                    "test_option2",
+                    "test_option3",
+                ],
+                "test_section2": ["test_option4", "test_option5", "test_option6"],
+            },
+            [True, False, False, False, False, False],
+            (("test_section1", "test_option1__first_selected"),),
+        ),
+        (
+            {
+                "test_section1": [
+                    "test_option1__first_selected",
+                    "test_option2",
+                    "test_option3__second_selected",
+                ],
+                "test_section2": ["test_option4", "test_option5", "test_option6"],
+            },
+            [True, False, True, False, False, False],
+            (
+                ("test_section1", "test_option1__first_selected"),
+                ("test_section1", "test_option3__second_selected"),
+            ),
+        ),
+        (
+            {
+                "test_section1": [
+                    "test_option1",
+                    "test_option2__first_selected",
+                    "test_option3",
+                ],
+                "test_section2": [
+                    "test_option4",
+                    "test_option5__second_selected",
+                    "test_option6",
+                ],
+            },
+            [False, True, False, False, True, False],
+            (
+                ("test_section1", "test_option2__first_selected"),
+                ("test_section2", "test_option5__second_selected"),
+            ),
+        ),
+    ],
+)
+@mock.patch("bridge.utils.crf.logger")
+def test_get_selected_crf_presets(
+    _mock_logger, grouped_presets, checked_values, expected_output
+):
+    received_output = get_selected_crf_presets(grouped_presets, checked_values)
+
+    assert expected_output == received_output
+
+
+@pytest.mark.parametrize(
+    "name, checked, grouped_presets, expected_output",
+    [
+        (["name1", "name2", "name3"], [], None, "name1"),
+        (
+            None,
+            [True, False, False, False, False, False],
+            {
+                "test_section1": [
+                    "test_option1__first_selected",
+                    "test_option2",
+                    "test_option3",
+                ],
+                "test_section2": ["test_option4", "test_option5", "test_option6"],
+            },
+            "test_option1__first_selected",
+        ),
+        (
+            None,
+            [True, False, False, True, False, False],
+            {
+                "test_section1": [
+                    "test_option1__first_selected",
+                    "test_option2",
+                    "test_option3",
+                ],
+                "test_section2": [
+                    "test_option4__first_selected",
+                    "test_option5",
+                    "test_option6",
+                ],
+            },
+            "test_option1__first_selected",
+        ),
+    ],
+)
+@mock.patch("bridge.utils.crf.logger")
+def test_get_crf_name(_mock_logger, name, checked, grouped_presets, expected_output):
+    def run_callback(crf_name, checked_values, grouped_presets):
+        return get_crf_name(
+            crf_name, checked_values, grouped_presets=(grouped_presets or None)
+        )
+
+    ctx = copy_context()
+    output = ctx.run(run_callback, name, checked, grouped_presets)
+    assert output == expected_output
+
+
+@pytest.mark.parametrize(
+    "crf_metadata, expected_output",
+    [
+        # An example case where no cleaning is required
+        (
+            pd.DataFrame().assign(
+                A=["A1", "A2", "A3"], B=["B1", "B2", "B3"], C=["C1", "C2", "C3"]
+            ),
+            pd.DataFrame().assign(
+                A=["A1", "A2", "A3"], B=["B1", "B2", "B3"], C=["C1", "C2", "C3"]
+            ),
+        ),
+        # An example case where cleaning is required
+        (
+            pd.DataFrame().assign(
+                A=["A1", "Fake A2", "A3"],
+                B=["Example B1", "B2", "B3"],
+                C=["C1", "C2", "C3@example.org"],
+            ),
+            pd.DataFrame().assign(
+                A=["A1", "Not available", "A3"],
+                B=["Not available", "B2", "B3"],
+                C=["C1", "C2", "Not available"],
+            ),
+        ),
+    ],
+)
+def test_clean_crf_metadata(crf_metadata, expected_output):
+    received_output = clean_crf_metadata(crf_metadata)
+    assert_frame_equal(received_output, expected_output)
+
+
+@pytest.mark.parametrize(
+    "authors_and_institutions_raw, expected",
+    [
+        (
+            "Author #1 | Author #1 Institution #1 / Author #1 Institution #2; Author #2 | Author #2 Institution #1; Author #3 | Author #3 Institution #1 / Author #3 Institution #2; Group Author #1",
+            (
+                (
+                    ("Author #1", (1, 2)),
+                    ("Author #2", (3,)),
+                    ("Author #3", (4, 5)),
+                    ("Group Author #1", (6,)),
+                ),
+                (
+                    "Author #1 Institution #1",
+                    "Author #1 Institution #2",
+                    "Author #2 Institution #1",
+                    "Author #3 Institution #1",
+                    "Author #3 Institution #2",
+                    "N/A",
+                ),
+            ),
+        ),
+    ],
+)
+def test_get_authors_and_institutions(authors_and_institutions_raw, expected):
+    received = get_authors_and_institutions(
+        authors_and_institutions_raw,
+    )
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "approvers_raw, expected",
+    [
+        (
+            "Test approvers prefix: Author1FirstName Author1Surname; Author2FirstName Author2Surname; Author3FirstName Author3Surname",
+            (
+                "Author1FirstName Author1Surname",
+                "Author2FirstName Author2Surname",
+                "Author3FirstName Author3Surname",
+            ),
+        ),
+    ],
+)
+def test_get_approvers(approvers_raw, expected):
+    received = get_approvers(approvers_raw)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "contact_firstname, contact_surname, contact_email, expected",
+    [
+        (
+            "test_contact_firstname",
+            "test_contact_surname",
+            "test_contact@email.com",
+            ("test_contact_firstname test_contact_surname", "test_contact@email.com"),
+        ),
+    ],
+)
+def test_get_contact(contact_firstname, contact_surname, contact_email, expected):
+    received = get_contact(contact_firstname, contact_surname, contact_email)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "keywords_raw, expected",
+    [
+        (
+            "Keyword #1 text;  Keyword #2 text ;Keyword #3 text",
+            (
+                "Keyword #1 text",
+                "Keyword #2 text",
+                "Keyword #3 text",
+            ),
+        ),
+    ],
+)
+def test_get_keywords(keywords_raw, expected):
+    received = get_keywords(keywords_raw)
+
+    assert received == expected
+
+
+@pytest.mark.parametrize(
+    "resources_raw, expected",
+    [
+        (
+            "Resource URL #1,Resource URL #2,  Resource URL #3 ",
+            (
+                "Resource URL #1",
+                "Resource URL #2",
+                "Resource URL #3",
+            ),
+        ),
+    ],
+)
+def test_get_resources(resources_raw, expected):
+    received = get_resources(resources_raw)
+
+    assert received == expected
+
+
+class TestOverviewCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_overview_crf_template_metadata_modal_section(self):
+        expected_data = {
+            "description": "test_description",
+            "metadata": (
+                ("test_metadata_key1", "test_metadata_key1_value"),
+                ("test_metadata_key2", "test_metadata_key2_value"),
+            ),
+        }
+        test_section = OverviewCRFTemplateMetadataModalSection(
+            description="test_description",
+            metadata=(
+                ("test_metadata_key1", "test_metadata_key1_value"),
+                ("test_metadata_key2", "test_metadata_key2_value"),
+            ),
+        )
+        assert test_section.section_name == "Overview"
+        assert test_section.description == expected_data["description"]
+        assert test_section.metadata == expected_data["metadata"]
+        assert hash(test_section) == hash(
+            OverviewCRFTemplateMetadataModalSection(**expected_data)
+        )
+
+
+class TestScientificScopeCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_scientific_scope_crf_template_metadata_modal_section(self):
+        expected_data = {
+            "research_questions": (
+                "test_research_question1",
+                "test_research_question2",
+            ),
+            "syndrome": "test_syndrome",
+            "pathogens": (
+                "test_pathogen1",
+                "test_pathogen2",
+            ),
+            "setting": "test_setting",
+            "geographic_scope": "test_geographic_scope",
+            "syndrome_definition": "test_syndrome_definition",
+            "target_population": "test_target_population",
+            "inclusion_criteria": "test_inclusion_criteria",
+            "exclusion_criteria": "test_exclusion_criteria",
+        }
+        test_section = ScientificScopeCRFTemplateMetadataModalSection(
+            research_questions=(
+                "test_research_question1",
+                "test_research_question2",
+            ),
+            syndrome="test_syndrome",
+            pathogens=(
+                "test_pathogen1",
+                "test_pathogen2",
+            ),
+            setting="test_setting",
+            geographic_scope="test_geographic_scope",
+            syndrome_definition="test_syndrome_definition",
+            target_population="test_target_population",
+            inclusion_criteria="test_inclusion_criteria",
+            exclusion_criteria="test_exclusion_criteria",
+        )
+
+        assert test_section.section_name == "Scientific Scope"
+        assert test_section.research_questions == expected_data["research_questions"]
+        assert test_section.syndrome == expected_data["syndrome"]
+        assert test_section.pathogens == expected_data["pathogens"]
+        assert test_section.setting == expected_data["setting"]
+        assert test_section.geographic_scope == expected_data["geographic_scope"]
+        assert test_section.syndrome_definition == expected_data["syndrome_definition"]
+        assert test_section.target_population == expected_data["target_population"]
+        assert test_section.inclusion_criteria == expected_data["inclusion_criteria"]
+        assert test_section.exclusion_criteria == expected_data["exclusion_criteria"]
+        assert hash(test_section) == hash(
+            ScientificScopeCRFTemplateMetadataModalSection(**expected_data)
+        )
+
+
+class TestGovernanceCRFTemplateMetadataModalSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_governance_crf_template_metadata_modal_section(self):
+        expected_data = {
+            "authors": (
+                "test_author1",
+                "test_author2",
+            ),
+            "approvers": (
+                "test_approver1",
+                "test_approver2",
+            ),
+            "affiliations": (
+                "test_affiliation1",
+                "test_affiliation2",
+            ),
+            "contact": ("test_contact_name", "test_contact_email"),
+        }
+        test_section = GovernanceCRFTemplateMetadataModalSection(
+            authors=(
+                "test_author1",
+                "test_author2",
+            ),
+            approvers=(
+                "test_approver1",
+                "test_approver2",
+            ),
+            affiliations=(
+                "test_affiliation1",
+                "test_affiliation2",
+            ),
+            contact=("test_contact_name", "test_contact_email"),
+        )
+
+        assert test_section.section_name == "Governance & Contributors"
+        assert test_section.authors == expected_data["authors"]
+        assert test_section.approvers == expected_data["approvers"]
+        assert test_section.affiliations == expected_data["affiliations"]
+        assert test_section.contact == expected_data["contact"]
+        assert hash(test_section) == hash(
+            GovernanceCRFTemplateMetadataModalSection(**expected_data)
+        )
+
+
+class TestDocumentationCRFTemplateMetadataSection:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_documentation_crf_template_metadata_section(self):
+        expected_data = {
+            "keywords": (
+                "test_keyword1",
+                "test_keyword2",
+            ),
+            "resources": ("test_resource1_url", "test_resource2_url"),
+        }
+        test_section = DocumentationCRFTemplateMetadataModalSection(
+            keywords=(
+                "test_keyword1",
+                "test_keyword2",
+            ),
+            resources=("test_resource1_url", "test_resource2_url"),
+        )
+
+        assert test_section.section_name == "Documentation & Discoverability"
+        assert test_section.keywords == expected_data["keywords"]
+        assert test_section.resources == expected_data["resources"]
+        assert hash(test_section) == hash(
+            DocumentationCRFTemplateMetadataModalSection(**expected_data)
+        )
+
+
+class TestCRFTemplateMetadataModal:
+    # Test data here could probably be created using fixtures, but this can be
+    # done later, as it is not a priority. We just need some working tests for
+    # for the CRF template metadata modal and modal section content.
+    def test_crf_template_metadata_modal(self):
+        expected_data = {
+            "title": "test_crf_metadata_modal_title",
+            "overview_section": OverviewCRFTemplateMetadataModalSection(
+                description="test_description",
+                metadata=(
+                    ("test_metadata_key1", "test_metadata_key1_value"),
+                    ("test_metadata_key2", "test_metadata_key2_value"),
+                ),
+            ),
+            "scientific_scope_section": ScientificScopeCRFTemplateMetadataModalSection(
+                research_questions=(
+                    "test_research_question1",
+                    "test_research_question2",
+                ),
+                syndrome="test_syndrome",
+                pathogens=(
+                    "test_pathogen1",
+                    "test_pathogen2",
+                ),
+                setting="test_setting",
+                geographic_scope="test_geographic_scope",
+                syndrome_definition="test_syndrome_definition",
+                target_population="test_target_population",
+                inclusion_criteria="test_inclusion_criteria",
+                exclusion_criteria="test_exclusion_criteria",
+            ),
+            "governance_section": GovernanceCRFTemplateMetadataModalSection(
+                authors=(
+                    "test_author1",
+                    "test_author2",
+                ),
+                approvers=(
+                    "test_approver1",
+                    "test_approver2",
+                ),
+                affiliations=(
+                    "test_affiliation1",
+                    "test_affiliation2",
+                ),
+                contact=("test_contact_name", "test_contact_email"),
+            ),
+            "documentation_section": DocumentationCRFTemplateMetadataModalSection(
+                keywords=(
+                    "test_keyword1",
+                    "test_keyword2",
+                ),
+                resources=("test_resource1_url", "test_resource2_url"),
+            ),
+        }
+
+        test_crf_template_metadata_modal = CRFTemplateMetadataModalContent(
+            title="test_crf_metadata_modal_title",
+            overview_section=OverviewCRFTemplateMetadataModalSection(
+                description="test_description",
+                metadata=(
+                    ("test_metadata_key1", "test_metadata_key1_value"),
+                    ("test_metadata_key2", "test_metadata_key2_value"),
+                ),
+            ),
+            scientific_scope_section=ScientificScopeCRFTemplateMetadataModalSection(
+                research_questions=(
+                    "test_research_question1",
+                    "test_research_question2",
+                ),
+                syndrome="test_syndrome",
+                pathogens=(
+                    "test_pathogen1",
+                    "test_pathogen2",
+                ),
+                setting="test_setting",
+                geographic_scope="test_geographic_scope",
+                syndrome_definition="test_syndrome_definition",
+                target_population="test_target_population",
+                inclusion_criteria="test_inclusion_criteria",
+                exclusion_criteria="test_exclusion_criteria",
+            ),
+            governance_section=GovernanceCRFTemplateMetadataModalSection(
+                authors=(
+                    "test_author1",
+                    "test_author2",
+                ),
+                approvers=(
+                    "test_approver1",
+                    "test_approver2",
+                ),
+                affiliations=(
+                    "test_affiliation1",
+                    "test_affiliation2",
+                ),
+                contact=("test_contact_name", "test_contact_email"),
+            ),
+            documentation_section=DocumentationCRFTemplateMetadataModalSection(
+                keywords=(
+                    "test_keyword1",
+                    "test_keyword2",
+                ),
+                resources=("test_resource1_url", "test_resource2_url"),
+            ),
+        )
+
+        assert test_crf_template_metadata_modal.title == expected_data["title"]
+        assert (
+            test_crf_template_metadata_modal.overview_section
+            == expected_data["overview_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.scientific_scope_section
+            == expected_data["scientific_scope_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.governance_section
+            == expected_data["governance_section"]
+        )
+        assert (
+            test_crf_template_metadata_modal.documentation_section
+            == expected_data["documentation_section"]
+        )
+        assert hash(test_crf_template_metadata_modal) == hash(
+            CRFTemplateMetadataModalContent(**expected_data)
+        )

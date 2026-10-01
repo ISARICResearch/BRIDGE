@@ -9,6 +9,8 @@ from requests.exceptions import RequestException
 from bridge.arc import arc_api
 from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.fixture(scope="session")
 def client_production():

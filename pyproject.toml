@@ -78,14 +78,8 @@
   ]
 
 [dependency-groups]
-  pre-commit = [
-    "pre-commit",
-  ]
-
-  test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
+  debug = [
+    "ipdb",
   ]
 
   docs = [
@@ -102,6 +96,20 @@
     "numpydoc",
     "nb2plots",
     "jupyter-sphinx",
+  ]
+
+  lint = [
+    "ruff",
+  ]
+
+  pre-commit = [
+    "pre-commit",
+  ]
+
+  test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
   ]
 
 [project.optional-dependencies]
@@ -138,6 +146,15 @@
 
 [tool.setuptools.package-data]
   "bridge" = ["assets/*", "assets/*/*"]
+
+[tool.pytest.ini_options]
+  markers = [
+    "unit",
+    "arc",
+    "callbacks",
+    "generate_pdf",
+    "utils",
+  ]
 
 [tool.coverage.run]
   omit = [

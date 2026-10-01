@@ -9,6 +9,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import generate
 
+pytestmark = [pytest.mark.unit, pytest.mark.callbacks]
+
 
 @pytest.mark.parametrize(
     "n_clicks, json_data, selected_version_data, selected_language_data, grouped_presets, checked_presets, crf_name, output_files,"

@@ -10,6 +10,9 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import tree
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
+
 TRIGGER_NONE = None
 CHECKED_VARIABLES_NONE = None
 CURRENT_DATADICC_SAVED_NONE = None

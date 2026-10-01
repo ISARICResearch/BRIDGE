@@ -23,19 +23,15 @@ jobs:
       - name: Install project and unit test dependencies
         run: |
           python3 -m pip install uv
-          uv sync --verbose --all-groups --no-install-project
+          make sync-deps-exact
 
-      - name: Run tests and measure code coverage
+      - name: Run doctests
         run: |
-          PYTHONPATH="src" uv run python3 -m pytest \
-                                             --code-highlight=yes \
-                                             --color=yes \
-                                             --verbosity=3 \
-                                             -p pytest_cov \
-                                             --cov=bridge \
-                                             --cov-report=term-missing \
-                                             --cov-report=xml \
-                                             --cov-report=html
+            make doctest
+
+      - name: Run unit tests and measure code coverage
+        run: |
+          make test MARKER="unit" TESTS_PATH=tests/unit
 
       - name: Upload code coverage report (coverage.xml)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

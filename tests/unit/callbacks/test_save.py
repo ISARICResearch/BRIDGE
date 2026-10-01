@@ -9,6 +9,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import save
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.fixture
 def df_list():

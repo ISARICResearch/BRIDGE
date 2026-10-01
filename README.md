@@ -14,4 +14,4 @@ Refer to the [BRIDGE documentation](https://isaric-bridge.readthedocs.io/en/late
 
 ---
 
-**Note**: BRIDGE is maintained by ISARIC. For inquiries, support, or collaboration, please [contact us](mailto:data@isaric.org).
+**Note**: BRIDGE is maintained by ISARIC. For inquiries, support, or collaboration, please [contact us](mailto:isaric-dev@ndm.ox.ac.uk).
