@@ -998,12 +998,12 @@ def get_output_display_selected_in_modal(
 
 
 def get_output_display_crf_metadata_modal(
-    trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
+    trigger, info_btn_clicks, info_btn_ids, selected_version_data
 ):
     def run_callback():
         context_value.set(AttributeDict(**{"triggered_inputs": trigger}))
         return modals.display_crf_metadata_modal(
-            info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data
+            info_btn_clicks, info_btn_ids, selected_version_data
         )
 
     ctx = copy_context()
@@ -1012,13 +1012,12 @@ def get_output_display_crf_metadata_modal(
 
 
 @pytest.mark.parametrize(
-    "trigger, info_btn_clicks, close_btn_clicks, info_btn_ids, selected_version_data, expected_output",
+    "trigger, info_btn_clicks, info_btn_ids, selected_version_data, expected_output",
     [
         # ARChetype Disease CRF preset modal - test input when no option is selected
         (
             None,
             [0, 0, 0, 0, 0, 0],
-            0,
             [
                 {"type": "template-info-btn", "index": "Covid"},
                 {"type": "template-info-btn", "index": "H5Nx"},
@@ -1039,7 +1038,6 @@ def get_output_display_crf_metadata_modal(
                 }
             ],
             [1, 0, 0, 0, 0, 0],
-            0,
             [
                 {"type": "template-info-btn", "index": "Covid"},
                 {"type": "template-info-btn", "index": "H5Nx"},
@@ -1101,7 +1099,6 @@ def get_output_display_crf_metadata_modal(
                 }
             ],
             [1, 0, 1, 0, 0, 0],
-            0,
             [
                 {"type": "template-info-btn", "index": "Covid"},
                 {"type": "template-info-btn", "index": "H5Nx"},
@@ -1158,7 +1155,6 @@ def get_output_display_crf_metadata_modal(
         (
             [{"prop_id": "crf_metadata_modal_close.n_clicks", "value": 1}],
             [1, 0, 1, 0, 0, 0],
-            1,
             [
                 {"type": "template-info-btn", "index": "Covid"},
                 {"type": "template-info-btn", "index": "H5Nx"},
@@ -1175,7 +1171,6 @@ def get_output_display_crf_metadata_modal(
 def test_display_crf_metadata_modal(
     trigger,
     info_btn_clicks: list,
-    close_btn_clicks: int | list,
     info_btn_ids: list,
     selected_version_data: dict,
     expected_output: tuple,
@@ -1184,7 +1179,6 @@ def test_display_crf_metadata_modal(
         get_output_display_crf_metadata_modal(
             trigger,
             info_btn_clicks,
-            close_btn_clicks,
             info_btn_ids,
             selected_version_data,
         )

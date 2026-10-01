@@ -989,7 +989,6 @@ def toggle_template_info_icon_visibility(
     ],
     [
         Input({"type": "template-info-btn", "index": ALL}, "n_clicks"),
-        Input("crf_metadata_modal_close", "n_clicks"),
     ],
     [
         State({"type": "template-info-btn", "index": ALL}, "id"),
@@ -999,7 +998,6 @@ def toggle_template_info_icon_visibility(
 )
 def display_crf_metadata_modal(
     info_btn_clicks: list[bool],
-    close_btn_clicks: bool,
     info_btn_ids: list,
     selected_version_data: dict,
 ) -> tuple:
@@ -1011,11 +1009,6 @@ def display_crf_metadata_modal(
         A list of boolean (given as ``0``/``1``) indicators of click status
         for the CRF presets/templates, with ``0`` representing no-click and
         ``1`` representing a click.
-
-    close_btn_clicks : bool
-        A bool (given as ``0``/``1``) indicating whether the modal Close button
-        was clicked, with ``0`` representing no-click and ``1`` representing
-        a click.
 
     info_btn_ids : list
         A list of IDs for the CRF preset/template icons as dicts in the form:
@@ -1048,10 +1041,6 @@ def display_crf_metadata_modal(
 
     trigger_id = ctx.triggered[0]["prop_id"]
     trigger_value = ctx.triggered[0]["value"]
-
-    # Handle close button
-    if "crf_metadata_modal_close" in trigger_id:
-        return False, dash.no_update, dash.no_update
 
     # Handle info icon click - only proceed if n_clicks > 0
     if "template-info-btn" in trigger_id and trigger_value and trigger_value > 0:
