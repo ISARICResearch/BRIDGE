@@ -116,14 +116,6 @@ class Modals:
                         )
                     ],
                 ),
-                dbc.ModalFooter(
-                    dbc.Button(
-                        "Close",
-                        id="crf_metadata_modal_close",
-                        className="ms-auto",
-                        n_clicks=0,
-                    )
-                ),
             ],
             id="crf_metadata_modal",
             className="crf-modal",
