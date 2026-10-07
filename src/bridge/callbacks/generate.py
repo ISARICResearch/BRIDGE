@@ -1,6 +1,7 @@
 import io
 import json
 import importlib.resources
+import typing
 import zipfile
 from datetime import datetime
 from os.path import join
@@ -12,7 +13,7 @@ from dash import dcc, Input, Output, State
 from unidecode import unidecode
 
 from bridge.generate_pdf import paper_crf, paper_word
-from bridge.utils.crf import get_crf_name
+from bridge.utils.crf import get_crf_name, get_selected_crf_presets
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id
 
@@ -25,7 +26,7 @@ ASSETS_DIR = PKG_PATH / "assets"
 CONFIG_DIR = ASSETS_DIR / "config_files"
 
 XML_FILE_NAME = "ISARIC Clinical Characterisation Setup"
-CHIKUNGUNYA_PDF_FILE = "chik_das.pdf"
+CHIKUNGUNYA_PDF_FILE = ASSETS_DIR / "chik_das.pdf"
 
 
 def _load_asset_file_bytes(filename: str) -> bytes:
@@ -34,11 +35,14 @@ def _load_asset_file_bytes(filename: str) -> bytes:
         return f.read()
 
 
-def _has_chikunguny_template(checked_presets: list) -> bool:
+def _has_chikunguny_template(
+    grouped_presets_dict: dict[str, typing.Any], checked_presets: list[bool]
+) -> bool:
+    flattened_grouped_presets = get_selected_crf_presets(
+        grouped_presets_dict, checked_presets
+    )
     return any(
-        "chikungunya" in str(template).lower()
-        for template in (checked_presets or [])
-        if template is not None
+        "Chikungunya" in preset_tuple for preset_tuple in flattened_grouped_presets
     )
 
 
@@ -93,7 +97,6 @@ def on_generate_click(
 
     date = datetime.today().strftime("%Y-%m-%d")
     logger.info(f"grouped_presets_dict={grouped_presets_dict}")
-    logger.info(f"crf_name={crf_name}")
     logger.info(f"checked_presets={checked_presets}")
 
     crf_name = get_crf_name(
@@ -150,7 +153,10 @@ def on_generate_click(
     include_xml = "redcap_xml" in output_files
     include_word = "paper_word" in output_files
 
-    include_chikunguny_pdf = _has_chikunguny_template(checked_presets)
+    include_chikunguny_pdf = _has_chikunguny_template(
+        grouped_presets_dict, checked_presets
+    )
+
     chikunguny_pdf_bytes = (
         _load_asset_file_bytes(CHIKUNGUNYA_PDF_FILE) if include_chikunguny_pdf else None
     )
@@ -203,7 +209,7 @@ def on_generate_click(
         dcc.send_bytes(word_bytes, f"{crf_name}_CRFreview_{date}.docx")
         if include_word
         else None,
-        dcc.send_bytes(chikunguny_pdf_bytes, CHIKUNGUNYA_PDF_FILE)
+        dcc.send_bytes(chikunguny_pdf_bytes, "chik_das.pdf")
         if include_chikunguny_pdf
         else None,
     )
