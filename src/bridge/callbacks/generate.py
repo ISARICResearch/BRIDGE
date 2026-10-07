@@ -209,7 +209,7 @@ def on_generate_click(
         dcc.send_bytes(word_bytes, f"{crf_name}_CRFreview_{date}.docx")
         if include_word
         else None,
-        dcc.send_bytes(chikunguny_pdf_bytes, "chik_das.pdf")
+        dcc.send_bytes(chikunguny_pdf_bytes, CHIKUNGUNYA_PDF_FILE.name)
         if include_chikunguny_pdf
         else None,
     )
