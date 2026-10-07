@@ -179,7 +179,7 @@ def on_generate_click(
             if include_xml:
                 zip_file.writestr(xml_file_name, xml_content)
             if include_chikunguny_pdf:
-                zip_file.writestr(CHIKUNGUNYA_PDF_FILE, chikunguny_pdf_bytes)
+                zip_file.writestr(CHIKUNGUNYA_PDF_FILE.name, chikunguny_pdf_bytes)
 
         zip_buffer.seek(0)
         return (
