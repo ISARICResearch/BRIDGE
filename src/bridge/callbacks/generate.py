@@ -98,7 +98,6 @@ def on_generate_click(
     date = datetime.today().strftime("%Y-%m-%d")
     logger.info(f"grouped_presets_dict={grouped_presets_dict}")
     logger.info(f"checked_presets={checked_presets}")
-
     crf_name = get_crf_name(
         crf_name, checked_presets, grouped_presets=grouped_presets_dict
     )

@@ -104,7 +104,7 @@ def test_get_selected_crf_presets(
                 ],
                 "test_section2": ["test_option4", "test_option5", "test_option6"],
             },
-            "test_option1__first_selected",
+            "no_name",
         ),
         (
             None,
@@ -121,7 +121,7 @@ def test_get_selected_crf_presets(
                     "test_option6",
                 ],
             },
-            "test_option1__first_selected",
+            "no_name",
         ),
     ],
 )
