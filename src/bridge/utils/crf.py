@@ -105,8 +105,8 @@ def get_crf_name(
     if crf_name:
         if isinstance(crf_name, list):
             crf_name = crf_name[0]
-        else:
-            crf_name = get_selected_crf_presets(grouped_presets, checked_values)[0][1]
+        elif isinstance(crf_name, str):
+            return crf_name
     else:
         crf_name = "no_name"
 
