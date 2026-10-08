@@ -9,7 +9,7 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc_translations, arc_tree, arc_core
+from arc import arc_translations, arc_tree, arc_core
 from bridge.callbacks.language import Language
 from bridge.utils.logger import setup_logger
 

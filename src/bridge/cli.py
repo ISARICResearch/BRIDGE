@@ -20,7 +20,7 @@ import bridge.generate_pdf.paper_crf as paper_crf
 import bridge.generate_pdf.paper_word as paper_word
 
 from bridge import __version__
-from bridge.arc.arc_api import ArcApiClientError
+from arc.arc_api import ArcApiClientError
 from bridge.utils.logger import setup_logger
 
 

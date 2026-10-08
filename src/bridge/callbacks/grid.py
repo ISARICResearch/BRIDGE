@@ -8,7 +8,7 @@ import dash
 import pandas as pd
 from dash import Input, Output, State
 
-from bridge.arc import arc_core
+from arc import arc_core
 from bridge.generate_pdf.form import Form
 from bridge.utils.logger import setup_logger
 

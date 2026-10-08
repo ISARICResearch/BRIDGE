@@ -6,8 +6,8 @@ import dash_bootstrap_components as dbc
 from dash import html
 import pandas as pd
 
-from bridge.arc import arc_core, arc_translations
-from bridge.arc.arc_lists import ArcList
+from arc import arc_core, arc_translations
+from arc.arc_lists import ArcList
 from bridge.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
