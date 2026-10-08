@@ -112,6 +112,7 @@ test: clean
 				                               --code-highlight=yes \
 				                               --color=yes \
 				                               --cov=src \
+				                               --cov-config=pyproject.toml \
 				                               --cov-report=term-missing:skip-covered \
 				                               --cov-report=xml \
 				                               --cov-report=html \

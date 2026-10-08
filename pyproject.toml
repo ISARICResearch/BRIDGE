@@ -159,5 +159,12 @@
 
 [tool.coverage.run]
   omit = [
-      "bridge/cli.py",
+      "tests/*",
+      "src/bridge/cli.py",
+  ]
+
+[tool.coverage.report]
+  omit = [
+    "tests/*",
+    "src/bridge/cli.py"
   ]
