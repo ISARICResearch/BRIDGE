@@ -126,6 +126,9 @@ numpydoc_xref_param_type = False
 # Intersphinx mappings to reference external documentation domains - only
 # the Python
 intersphinx_mapping = {
+    "isaric-arc": ("https://arc.docs.isaric.org/en/latest", None),
+    "isaric-vertex": ("https://vertex.docs.isaric.org/en/latest", None),
+    "isaric-analytics": ("https://analytics.docs.isaric.org/en/latest", None),
     #'dash': ('https://dash.plotly.com/', None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
