@@ -389,7 +389,7 @@
 }
 
 .author-line {
-    
+
     font-size: 15px;
     line-height: 1.7;
     color: #27313a;
@@ -405,7 +405,7 @@
 }
 
 .approver-line {
-   
+
     font-size: 15px;
     line-height: 1.7;
     color: #27313a;
@@ -421,7 +421,7 @@
 
 .affiliation-item {
     break-inside: avoid;
-   
+
     font-size: 14px;
     line-height: 1.55;
     color: #27313a;
@@ -442,7 +442,7 @@
 }
 
 .correspondence {
-  
+
     font-size: 14px;
     line-height: 1.6;
     color: #3e464f;
