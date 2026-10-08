@@ -87,7 +87,7 @@ class Language:
                             value=False,
                         ),
                         html.Button(
-                            "ℹ️",
+                            "ⓘ",
                             id={
                                 "type": "template-info-btn",
                                 "index": f"{section}_{preset_name}",

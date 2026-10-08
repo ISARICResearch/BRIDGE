@@ -9,7 +9,7 @@ BRIDGE is **published** on `GitHub <https://github.com/ISARICResearch/BRIDGE/rel
 
 BRIDGE can be **cited** as follows:
 
-	Garcia-Gallo E, Duque-Vallejo S, Wilson A, Thomson L, Edinburgh T, Murthy SR. ISARIC BRIDGE (v1.2). *ISARIC* |year|. doi:`10.5281/zenodo.14162844 <https://doi.org/10.5281/zenodo.14162844>`_
+	Garcia-Gallo E, Duque-Vallejo S, Wilson A, Thomson L, Murthy SR. ISARIC BRIDGE (v1.3). *ISARIC* |year|. doi:`10.5281/zenodo.14162844 <https://doi.org/10.5281/zenodo.14162844>`_
 
 .. _note-for-maintainers-and-contributors:
 

@@ -11,6 +11,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import upload
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.mark.parametrize(
     "upload_filename, upload_contents, expected_output",

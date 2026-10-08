@@ -172,7 +172,7 @@ class Index:
                                                                     "BRIDGE uses the machine-readable library ",
                                                                     html.A(
                                                                         "ARC",
-                                                                        href="https://example.com",
+                                                                        href="https://arc.docs.isaric.org",
                                                                         target="_blank",
                                                                     ),
                                                                     " and allows the user to choose the questions they want to include in the CRF. ",
@@ -589,7 +589,7 @@ class Index:
                                                                     html.A(
                                                                         "Find Out More",
                                                                         target="_blank",
-                                                                        href="https://github.com/ISARICResearch/ARC",
+                                                                        href="https://arc.docs.isaric.org",
                                                                         style={
                                                                             "display": "block",
                                                                             "margin-top": "10px",

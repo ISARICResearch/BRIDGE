@@ -9,6 +9,8 @@ from pandas.testing import assert_frame_equal
 
 from bridge.callbacks import generate
 
+pytestmark = [pytest.mark.unit, pytest.mark.callbacks]
+
 
 @pytest.mark.parametrize(
     "n_clicks, json_data, selected_version_data, selected_language_data, grouped_presets, checked_presets, crf_name, output_files,"
@@ -119,7 +121,17 @@ def test_on_generate_click(
         "{" '"columns":["Form"],' '"index":[0],' '"data":[["presentation"]]' "}"
     )  # This isn't being used, but needs to be readable
     selected_version_data = {"selected_version": "v1.1.2"}
-    grouped_presets = "test_grouped_presets"
+    grouped_presets = {
+        "test_section1_name": [
+            "test_section1_preset1_name",
+            "test_section2_preset2_name",
+            "test_section2_preset3_name",
+        ],
+        "test_section2_name": [
+            "test_section2_preset1_name",
+            "test_section2_preset2_name",
+        ],
+    }
     checked_presets = [[], [], [], [], []]
     crf_name = "test"
     output_files = [

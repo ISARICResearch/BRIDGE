@@ -2,6 +2,8 @@ import pytest
 
 from bridge.generate_pdf.header_footer import get_page_numeral
 
+pytestmark = [pytest.mark.unit, pytest.mark.arc]
+
 
 @pytest.mark.parametrize(
     "page_number, expected_output",
