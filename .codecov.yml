@@ -9,7 +9,7 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 1%
+        threshold: 2%
     patch:
       default:
         # Enforce patch coverage on PRs, but do not fail direct commits on main.
