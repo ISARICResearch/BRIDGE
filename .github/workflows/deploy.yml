@@ -39,6 +39,9 @@ jobs:
           docker tag isaric-bridge:latest ${{ secrets.ECR_REPOSITORY }}:latest
           docker push ${{ secrets.ECR_REPOSITORY }}:latest
 
+      - name: Set CPU core count
+        run: echo "CPU_CORES=$(nproc)" >> "$GITHUB_ENV"
+
       - name: Deploy on EC2 via SSM Run Command
         env:
           ECR_REPO: ${{ secrets.ECR_REPOSITORY }}
@@ -70,7 +73,7 @@ jobs:
               fi
 
               docker pull "${ECR_REPO}:latest"
-              docker run -d --restart unless-stopped --name isaric-bridge \
+              docker run -d --restart unless-stopped GUNICORN_WORKERS=$CPU_CORES --name isaric-bridge \
                 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
                 -p 8050:8050 \
                 "${ECR_REPO}:latest"

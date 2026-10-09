@@ -1,6 +1,8 @@
 FROM python:3.12-slim
 
+ENV GUNICORN_WORKERS=2
 WORKDIR /app
+
 
 COPY pyproject.toml ./
 # Compile requirements.txt from pyproject.toml using pip-tools
