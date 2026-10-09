@@ -3,7 +3,6 @@ FROM python:3.12-slim
 ENV GUNICORN_WORKERS=2
 WORKDIR /app
 
-
 COPY pyproject.toml ./
 # Compile requirements.txt from pyproject.toml using pip-tools
 RUN pip install --no-cache-dir pip-tools && \
@@ -17,4 +16,4 @@ RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 8050
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server"]
+CMD ["sh", "-c", "exec gunicorn --workers \"$GUNICORN_WORKERS\" --bind 0.0.0.0:8050 app:server"]

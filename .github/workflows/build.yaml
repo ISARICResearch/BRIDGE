@@ -23,7 +23,7 @@ jobs:
 
       - name: Run Docker container
         run: |
-          docker run -d -p 80:8050 GUNICORN_WORKERS=$CPU_CORES --name isaric-bridge isaric-bridge
+          docker run -d -p 80:8050 --env GUNICORN_WORKERS=$CPU_CORES --name isaric-bridge isaric-bridge
 
       - name: Wait for container to be ready
         run: |

@@ -73,7 +73,7 @@ jobs:
               fi
 
               docker pull "${ECR_REPO}:latest"
-              docker run -d --restart unless-stopped GUNICORN_WORKERS=$CPU_CORES --name isaric-bridge \
+              docker run -d --restart unless-stopped --env GUNICORN_WORKERS=$CPU_CORES --name isaric-bridge \
                 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
                 -p 8050:8050 \
                 "${ECR_REPO}:latest"
