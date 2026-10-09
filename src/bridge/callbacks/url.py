@@ -25,7 +25,7 @@ logger = setup_logger(__name__)
 )
 def update_output_based_on_url(
     template_check_flag: bool, grouped_presets: dict, href: str
-) -> tuple(list[str], list[list[str]]) | dash._callback.NoUpdate:
+):
     if not template_check_flag:
         return dash.no_update
 

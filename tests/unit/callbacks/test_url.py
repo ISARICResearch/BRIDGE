@@ -32,7 +32,7 @@ def test_update_output_based_on_url_no_action(
                 "ARChetype Syndromic CRF": ["ARI"],
             },
             "http://127.0.0.1:8050/main?param=ARChetype%20Disease%20CRF_Dengue",
-            (["Dengue"], [["Dengue"], []]),
+            (["Dengue"], [[], ["Dengue"], [], []]),
         ),
         (
             True,
@@ -41,7 +41,7 @@ def test_update_output_based_on_url_no_action(
                 "Recommended Outcomes": ["Dengue"],
             },
             "http://127.0.0.1:8050/main?param=Recommended%20Outcomes_Dengue",
-            (["Dengue"], [[], ["Dengue"]]),
+            (["Dengue"], [[], [], [], ["Dengue"]]),
         ),
     ],
 )
