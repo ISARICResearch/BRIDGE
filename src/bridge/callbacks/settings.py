@@ -6,8 +6,8 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State
 
-from bridge.arc import arc_core
-from bridge.arc.arc_api import ArcApiClient
+from arc import arc_core
+from arc.arc_api import ArcApiClient
 from bridge.callbacks.language import Language
 from bridge.utils.logger import setup_logger
 from bridge.utils.trigger_id import get_trigger_id

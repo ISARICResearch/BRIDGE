@@ -3,6 +3,10 @@ FROM python:3.12-slim
 ENV GUNICORN_WORKERS=2
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY pyproject.toml ./
 # Compile requirements.txt from pyproject.toml using pip-tools
 RUN pip install --no-cache-dir pip-tools && \

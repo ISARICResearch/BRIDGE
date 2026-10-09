@@ -10,8 +10,8 @@ import dash_treeview_antd
 import pandas as pd
 from dash import dcc, html, Input, Output, State, ALL
 
-from bridge.arc import arc_translations, arc_tree
-from bridge.arc.arc_api import ArcApiClient, ArcApiClientError
+from arc import arc_translations, arc_tree
+from arc.arc_api import ArcApiClient, ArcApiClientError
 from bridge.utils.crf import (
     clean_crf_metadata,
     get_crf_template_metadata_modal_content,

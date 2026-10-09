@@ -12,7 +12,7 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate
 
-from bridge.arc.arc_core import ArcApiClient
+from arc.arc_core import ArcApiClient
 from bridge.generate_pdf.form import Form
 from bridge.generate_pdf.guide import generate_guide_doc
 from bridge.generate_pdf.header_footer import generate_paperlike_header_footer
@@ -80,7 +80,7 @@ def generate_paperlike_pdf(
 
     Raises
     ------
-    bridge.arc.arc_api.ArcApiClientError
+    arc.arc_api.ArcApiClientError
         If either the paperlike form details or supplemental phrases CSVs
         cannot be found for the given combination of ARC version and language,
         when ARC is being used as the source for these.

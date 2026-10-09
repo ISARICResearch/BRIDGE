@@ -1,9 +1,9 @@
-from . import generate as generate
-from . import grid as grid
-from . import modals as modals
-from . import save as save
-from . import settings as settings
-from . import sidebar as sidebar
-from . import tree as tree
-from . import upload as upload
-from . import url as url
+import bridge.callbacks.generate as generate  # noqa: F401
+import bridge.callbacks.grid as grid  # noqa: F401
+import bridge.callbacks.modals as modals  # noqa: F401
+import bridge.callbacks.save as save  # noqa: F401
+import bridge.callbacks.settings as settings  # noqa: F401
+import bridge.callbacks.sidebar as sidebar  # noqa: F401
+import bridge.callbacks.tree as tree  # noqa: F401
+import bridge.callbacks.upload as upload  # noqa: F401
+import bridge.callbacks.url as url  # noqa: F401
