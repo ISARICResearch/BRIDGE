@@ -27,6 +27,11 @@ authors:
     email: sandeep.murthy@ndm.ox.ac.uk
     orcid: https://orcid.org/0009-0006-8277-9389
 
+  - family-names: Merson
+    given-names: Laura
+    email: laura.merson@ndm.ox.ac.uk
+    orcid: https://orcid.org/0000-0002-4168-1960
+
 repository-code: 'https://github.com/ISARICResearch/BRIDGE'
 url: 'https://github.com/ISARICResearch/BRIDGE'
 abstract: A web-based application designed to operationalize ISARIC ARC and tailor ISARIC CRFs to disease outbreaks.

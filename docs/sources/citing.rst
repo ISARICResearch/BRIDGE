@@ -9,7 +9,7 @@ BRIDGE is **published** on `GitHub <https://github.com/ISARICResearch/BRIDGE/rel
 
 BRIDGE can be **cited** as follows:
 
-	Garcia-Gallo E, Duque-Vallejo S, Wilson A, Thomson L, Murthy SR. ISARIC BRIDGE (v1.3). *ISARIC* |year|. doi:`10.5281/zenodo.14162844 <https://doi.org/10.5281/zenodo.14162844>`_
+	Garcia-Gallo E, Duque-Vallejo S, Wilson A, Thomson L, Murthy SR, Merson L. ISARIC BRIDGE (v1.3). *ISARIC* |year|. doi:`10.5281/zenodo.14162844 <https://doi.org/10.5281/zenodo.14162844>`_
 
 .. _note-for-maintainers-and-contributors:
 
@@ -22,4 +22,10 @@ Maintainers and contributors should note that the `citation file <https://github
 
    cffconvert --validate
 
-Any reported errors should be fixed, and the file staged and committed in the normal way. Citation file validation is included in the pre-commit status checks that happen automatically in GitHub on branch and PR updates.
+You should see validation succeeding:
+
+.. code:: shell
+
+   Citation metadata are valid according to schema version 1.2.0.
+
+Any reported errors should be fixed, and the citation file staged and committed in the normal way. Citation file validation is included in the pre-commit status checks that happen automatically in GitHub on branch and PR updates.

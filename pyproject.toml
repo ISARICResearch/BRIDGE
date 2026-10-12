@@ -78,6 +78,10 @@
   ]
 
 [dependency-groups]
+  citation = [
+    "cffconvert",
+  ]
+
   debug = [
     "ipdb",
   ]
