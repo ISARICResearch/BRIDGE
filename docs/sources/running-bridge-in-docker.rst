@@ -35,6 +35,4 @@ The app will accessible at ``http://localhost:80``.
 
 The app will be available as long as the container (and also the main Docker daemon) is running.
 
-You can also run the app directly (outside of Docker) just using Python, but this requires more precise control over the environment and BRIDGE dependencies, as described :ref:`here <plotly-dash-set-up>`.
-
 See the `Docker Command Line Reference (CLI) <https://docs.docker.com/reference/cli/docker/>`_ for more information on Docker commands for managing running containers and images.

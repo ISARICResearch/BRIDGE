@@ -29,6 +29,7 @@ BRIDGE is licensed under the `MIT license <https://opensource.org/license/mit>`_
 
    Getting Started <sources/getting-started>
    Running BRIDGE in Docker <sources/running-bridge-in-docker>
+   Running BRIDGE as a Plotly Dash app <sources/running-bridge-as-plotly-dash-app>
    CLI <sources/cli>
    Citing BRIDGE <sources/citing>
    Contributors <sources/contributors>
