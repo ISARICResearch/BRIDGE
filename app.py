@@ -6,9 +6,9 @@ import dash_bootstrap_components as dbc
 from dash import html, Input, Output, State
 
 import bridge.callbacks  # noqa
-from bridge.arc import arc_core, arc_tree
-from bridge.arc.arc_api import ArcApiClient
-from bridge.arc.arc_lists import ArcList
+from arc import arc_core, arc_tree
+from arc.arc_api import ArcApiClient
+from arc.arc_lists import ArcList
 from bridge.layout.app_layout import MainContent
 from bridge.layout.index import Index
 from bridge.layout.navbar import NavBar

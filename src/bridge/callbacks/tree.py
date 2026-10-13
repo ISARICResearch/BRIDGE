@@ -7,8 +7,8 @@ import dash_treeview_antd
 import pandas as pd
 from dash import html, Input, Output, State
 
-from bridge.arc import arc_translations, arc_tree
-from bridge.arc.arc_api import ArcApiClient
+from arc import arc_translations, arc_tree
+from arc.arc_api import ArcApiClient
 from bridge.utils.logger import setup_logger
 from bridge.utils.crf import get_selected_crf_presets
 

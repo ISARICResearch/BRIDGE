@@ -139,8 +139,8 @@ def test_get_focused_cell_index(
         False,
     ],
 )
-@mock.patch("bridge.arc.arc_core.get_variable_order")
-@mock.patch("bridge.arc.arc_core.add_transformed_rows")
+@mock.patch("arc.arc_core.get_variable_order")
+@mock.patch("arc.arc_core.add_transformed_rows")
 @mock.patch("bridge.callbacks.grid._units_transformation")
 @mock.patch("bridge.callbacks.grid._get_include_not_show")
 def test_create_selected_dataframe(
@@ -306,7 +306,7 @@ def test_create_new_row_list():
         False,
     ],
 )
-@mock.patch("bridge.arc.arc_core.get_dynamic_units_conversion_bool")
+@mock.patch("arc.arc_core.get_dynamic_units_conversion_bool")
 def test_add_select_units_field(mock_dynamic_units_bool, dynamic_units_conversion):
     mock_dynamic_units_bool.return_value = dynamic_units_conversion
     data = {
@@ -401,7 +401,7 @@ def test_add_select_units_field(mock_dynamic_units_bool, dynamic_units_conversio
     assert_frame_equal(df_output, df_expected)
 
 
-@mock.patch("bridge.arc.arc_core.get_dynamic_units_conversion_bool")
+@mock.patch("arc.arc_core.get_dynamic_units_conversion_bool")
 def test_add_select_units_field_remove_select_units(mock_dynamic_units_bool):
     dynamic_units_conversion = False
     mock_dynamic_units_bool.return_value = dynamic_units_conversion
