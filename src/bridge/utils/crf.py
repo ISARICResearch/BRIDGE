@@ -102,13 +102,20 @@ def get_crf_name(
     str
         The selected CRF preset name.
     """
+    print(f"crf_name={crf_name}")
+    print(f"checked_values={checked_values}")
+    print(f"grouped_presets={grouped_presets}")
     if crf_name:
         if isinstance(crf_name, list):
             crf_name = crf_name[0]
         elif isinstance(crf_name, str):
             return crf_name
     else:
-        crf_name = "no_name"
+        selected_crf_presets = get_selected_crf_presets(grouped_presets, checked_values)
+        if selected_crf_presets:
+            crf_name = selected_crf_presets[0][1]
+        else:
+            crf_name = "no_name"
 
     return crf_name
 

@@ -92,7 +92,19 @@ def test_get_selected_crf_presets(
 @pytest.mark.parametrize(
     "name, checked, grouped_presets, expected_output",
     [
-        (["name1", "name2", "name3"], [], None, "name1"),
+        (
+            "test_custom_crf_name",
+            [True, False, False, False, False, False],
+            {
+                "test_section1": [
+                    "test_option1__first_selected",
+                    "test_option2",
+                    "test_option3",
+                ],
+                "test_section2": ["test_option4", "test_option5", "test_option6"],
+            },
+            "test_custom_crf_name",
+        ),
         (
             None,
             [True, False, False, False, False, False],
@@ -104,7 +116,7 @@ def test_get_selected_crf_presets(
                 ],
                 "test_section2": ["test_option4", "test_option5", "test_option6"],
             },
-            "no_name",
+            "test_option1__first_selected",
         ),
         (
             None,
@@ -116,12 +128,12 @@ def test_get_selected_crf_presets(
                     "test_option3",
                 ],
                 "test_section2": [
-                    "test_option4__first_selected",
+                    "test_option4__second_selected",
                     "test_option5",
                     "test_option6",
                 ],
             },
-            "no_name",
+            "test_option1__first_selected",
         ),
     ],
 )
