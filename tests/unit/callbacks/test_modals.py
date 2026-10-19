@@ -574,6 +574,7 @@ def test__build_crf_metadata_modal_tabbed_body():
             html.Div(
                 id="crf-metadata-modal-body-tab-content",
                 style={
+                    "marginTop": "15px",
                     "width": "100%",
                     "minHeight": "800px",
                     "overflow-x": "hidden",
@@ -1078,6 +1079,7 @@ def get_output_display_crf_metadata_modal(
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
                             style={
+                                "marginTop": "15px",
                                 "width": "100%",
                                 "minHeight": "800px",
                                 "overflow-x": "hidden",
@@ -1139,6 +1141,7 @@ def get_output_display_crf_metadata_modal(
                         html.Div(
                             id="crf-metadata-modal-body-tab-content",
                             style={
+                                "marginTop": "15px",
                                 "width": "100%",
                                 "minHeight": "800px",
                                 "overflow-x": "hidden",

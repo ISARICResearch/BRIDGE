@@ -100,6 +100,7 @@ class Modals:
                                 html.Div(
                                     id="crf-metadata-modal-body-tab-content",
                                     style={
+                                        "marginTop": "15px",
                                         "width": "100%",
                                         "maxWidth": "100%",
                                         "boxSizing": "border-box",
