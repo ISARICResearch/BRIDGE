@@ -1,8 +1,3 @@
-.. BRIDGE documentation master file, created by
-   sphinx-quickstart on Thu Apr 30 15:24:02 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 ISARIC BRIDGE
 =============
 
@@ -10,7 +5,10 @@ ISARIC BRIDGE
    :height: 252.017
    :width:  304
 
-`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is an open source web-based `application <https://bridge.isaric.org>`_ developed by `ISARIC <https://isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks.
+.. role:: raw-html(raw)
+   :format: html
+
+`BRIDGE <https://github.com/ISARICResearch/BRIDGE>`_ (BioResearch Integrated Data tool GEnerator) is an open source web-based `application <https://bridge.isaric.org>`_ developed by `ISARIC <https://isaric.org>`_ designed to operationalize `ISARIC ARC <https://github.com/ISARICResearch/ARC>`_ to tailor `ARC case report forms (CRF) <https://isaricresearch.github.io/CCP/ARChetype-CRF-Guidelines>`_ to disease outbreaks, and is a core component of the :raw-html:`<a href="https://docs.isaric.org" target="_blank">ISARIC Clinical Epidemiology Platform</a>`.
 
 By selecting and customizing clinical questions and ensuring necessary data points for each, BRIDGE automates the creation of CRFs for each disease and specific research context. It generates the data dictionary and XML needed to create a `REDCap <https://project-redcap.org/>`_ database for capturing data in the ARC structure. Additionally, it produces paper-like versions of the CRFs and completion guides via library functions - there are also made available as command-line/console project scripts that are described in more detail :ref:`here <cli>`.
 
