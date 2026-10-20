@@ -82,6 +82,9 @@ class MainContent:
                                                     color="primary",
                                                 ),
                                                 id="upload-crf",
+                                                max_size=(
+                                                    2 * 1024 * 1024
+                                                ),  # 2 Mb upload limit
                                             ),
                                             width="auto",
                                         ),
