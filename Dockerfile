@@ -20,4 +20,4 @@ RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 8050
 
-CMD ["sh", "-c", "exec gunicorn --workers \"$GUNICORN_WORKERS\" --bind 0.0.0.0:8050 app:server"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server"]
