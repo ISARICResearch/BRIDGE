@@ -82,9 +82,11 @@ class MainContent:
                                                     color="primary",
                                                 ),
                                                 id="upload-crf",
+                                                accept=".csv",  # Accept only CSV files
+                                                multiple=False,  # Allow only a single file upload
                                                 max_size=(
                                                     2 * 1024 * 1024
-                                                ),  # 2 Mb upload limit
+                                                ),  # Limit file size to 2 Mb
                                             ),
                                             width="auto",
                                         ),
