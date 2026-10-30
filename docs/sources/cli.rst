@@ -3,11 +3,11 @@
 Command Line Interface (CLI)
 ============================
 
-BRIDGE contains a very simple command line interface (CLI) named :program:`bridge-cli` that become available once the project is installed locally in `editable mode <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_:
+BRIDGE contains a very simple command line interface (CLI) named :program:`bridge-cli` that become available once the project is installed locally (from the project root):
 
 .. code:: shell
 
-   pip install -e .
+   python3 -m pip install .
 
 This will install the project locally in a package named ``isaric-bridge``, and set up :program:`bridge-cli`. The (current) command hierarchy is displayed below as a tree:
 
