@@ -39,13 +39,13 @@
 </GlobalVariables>
 <MetaDataVersion OID="Metadata.Test2spanishxml_2025-10-21_1306" Name="test2_spanishxml" redcap:RecordIdField="subjid">
 	<Protocol>
-		<StudyEventRef StudyEventOID="Event.evaluacin_inicial_arm_1" OrderNumber="1" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.evaluacion_inicial_arm_1" OrderNumber="1" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.diario_arm_1" OrderNumber="2" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.resumen_medicament_arm_1" OrderNumber="3" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.desenlace__fin_del_arm_1" OrderNumber="4" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.seguimiento_arm_1" OrderNumber="5" Mandatory="No"/>
 	</Protocol>
-	<StudyEventDef OID="Event.evaluacin_inicial_arm_1" Name="Evaluación Inicial/ Admisión" Type="Common" Repeating="No" redcap:EventName="Evaluación Inicial/ Admisión" redcap:CustomEventLabel="" redcap:UniqueEventName="evaluacin_inicial_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.evaluacion_inicial_arm_1" Name="Evaluacion Inicial/ Admision" Type="Common" Repeating="No" redcap:EventName="Evaluacion Inicial/ Admision" redcap:CustomEventLabel="" redcap:UniqueEventName="evaluacion_inicial_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.presentacion" OrderNumber="1" Mandatory="No" redcap:FormName="presentacion"/>
 		<FormRef FormOID="Form.diario" OrderNumber="2" Mandatory="No" redcap:FormName="diario"/>
 	</StudyEventDef>

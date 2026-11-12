@@ -28,7 +28,7 @@
 	<redcap:ProtectedEmailModeTrigger>ALL</redcap:ProtectedEmailModeTrigger>
 	<redcap:ProtectedEmailModeLogo></redcap:ProtectedEmailModeLogo>
 	<redcap:RepeatingInstrumentsAndEvents>
-		<redcap:RepeatingEvent redcap:UniqueEventName="dirio_arm_1"/>
+		<redcap:RepeatingEvent redcap:UniqueEventName="diario_arm_1"/>
 		<redcap:RepeatingEvent redcap:UniqueEventName="acompanhamento_arm_1"/>
 		<redcap:RepeatingInstruments>
 			<redcap:RepeatingInstrument redcap:UniqueEventName="resumo_medicamento_arm_1" redcap:RepeatInstrument="medicacao" redcap:CustomLabel=""/>
@@ -39,17 +39,17 @@
 </GlobalVariables>
 <MetaDataVersion OID="Metadata.Testportxml_2025-10-21_1259" Name="test_portxml" redcap:RecordIdField="subjid">
 	<Protocol>
-		<StudyEventRef StudyEventOID="Event.avaliao_inicial__a_arm_1" OrderNumber="1" Mandatory="No"/>
-		<StudyEventRef StudyEventOID="Event.dirio_arm_1" OrderNumber="2" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.avaliacao_inicial_arm_1" OrderNumber="1" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.diario_arm_1" OrderNumber="2" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.resumo_medicamento_arm_1" OrderNumber="3" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.desfecho__fim_do_e_arm_1" OrderNumber="4" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.acompanhamento_arm_1" OrderNumber="5" Mandatory="No"/>
 	</Protocol>
-	<StudyEventDef OID="Event.avaliao_inicial__a_arm_1" Name="Avaliação Inicial / Admissão" Type="Common" Repeating="No" redcap:EventName="Avaliação Inicial / Admissão" redcap:CustomEventLabel="" redcap:UniqueEventName="avaliao_inicial__a_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.avaliacao_inicial_arm_1" Name="Avaliacao Inicial" Type="Common" Repeating="No" redcap:EventName="Avaliacao Inicial" redcap:CustomEventLabel="" redcap:UniqueEventName="avaliacao_inicial_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.apresentacao" OrderNumber="1" Mandatory="No" redcap:FormName="apresentacao"/>
 		<FormRef FormOID="Form.diario" OrderNumber="2" Mandatory="No" redcap:FormName="diario"/>
 	</StudyEventDef>
-	<StudyEventDef OID="Event.dirio_arm_1" Name="Diário" Type="Common" Repeating="Yes" redcap:EventName="Diário" redcap:CustomEventLabel="" redcap:UniqueEventName="dirio_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="3" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.diario_arm_1" Name="Diario" Type="Common" Repeating="Yes" redcap:EventName="Diario" redcap:CustomEventLabel="" redcap:UniqueEventName="diario_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="3" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.diario" OrderNumber="1" Mandatory="No" redcap:FormName="diario"/>
 	</StudyEventDef>
 	<StudyEventDef OID="Event.resumo_medicamento_arm_1" Name="Resumo: Medicamentos / Exames" Type="Common" Repeating="No" redcap:EventName="Resumo: Medicamentos / Exames" redcap:CustomEventLabel="" redcap:UniqueEventName="resumo_medicamento_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="4" redcap:OffsetMin="0" redcap:OffsetMax="0">
