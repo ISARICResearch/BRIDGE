@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version='1.0' encoding='UTF-8'?>
 <ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:redcap="https://projectredcap.org" xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 schema/odm/ODM1-3-1.xsd" ODMVersion="1.3.1" FileOID="000-00-0000" FileType="Snapshot" Description="test_frenchxml" AsOfDateTime="2025-10-21T13:01:40" CreationDateTime="2025-10-21T13:01:40" SourceSystem="REDCap" SourceSystemVersion="14.5.15">
 <Study OID="Project.Testfrenchxml">
 <GlobalVariables>
@@ -6,58 +6,58 @@
 	<StudyDescription>This file contains the metadata, events, and data for REDCap project "test_frenchxml".</StudyDescription>
 	<ProtocolName>test_frenchxml</ProtocolName>
 	<redcap:RecordAutonumberingEnabled>1</redcap:RecordAutonumberingEnabled>
-	<redcap:CustomRecordLabel></redcap:CustomRecordLabel>
-	<redcap:SecondaryUniqueField></redcap:SecondaryUniqueField>
+	<redcap:CustomRecordLabel/>
+	<redcap:SecondaryUniqueField/>
 	<redcap:SecondaryUniqueFieldDisplayValue>1</redcap:SecondaryUniqueFieldDisplayValue>
 	<redcap:SecondaryUniqueFieldDisplayLabel>1</redcap:SecondaryUniqueFieldDisplayLabel>
 	<redcap:SchedulingEnabled>0</redcap:SchedulingEnabled>
 	<redcap:SurveysEnabled>0</redcap:SurveysEnabled>
-	<redcap:SurveyInvitationEmailField></redcap:SurveyInvitationEmailField>
+	<redcap:SurveyInvitationEmailField/>
 	<redcap:DisplayTodayNowButton>1</redcap:DisplayTodayNowButton>
 	<redcap:PreventBranchingEraseValues>0</redcap:PreventBranchingEraseValues>
 	<redcap:RequireChangeReason>0</redcap:RequireChangeReason>
 	<redcap:DataHistoryPopup>1</redcap:DataHistoryPopup>
-	<redcap:OrderRecordsByField></redcap:OrderRecordsByField>
+	<redcap:OrderRecordsByField/>
 	<redcap:MyCapEnabled>0</redcap:MyCapEnabled>
 	<redcap:Purpose>0</redcap:Purpose>
-	<redcap:PurposeOther></redcap:PurposeOther>
-	<redcap:ProjectNotes></redcap:ProjectNotes>
-	<redcap:MissingDataCodes></redcap:MissingDataCodes>
+	<redcap:PurposeOther/>
+	<redcap:ProjectNotes/>
+	<redcap:MissingDataCodes/>
 	<redcap:ProtectedEmailMode>0</redcap:ProtectedEmailMode>
-	<redcap:ProtectedEmailModeCustomText></redcap:ProtectedEmailModeCustomText>
+	<redcap:ProtectedEmailModeCustomText/>
 	<redcap:ProtectedEmailModeTrigger>ALL</redcap:ProtectedEmailModeTrigger>
-	<redcap:ProtectedEmailModeLogo></redcap:ProtectedEmailModeLogo>
+	<redcap:ProtectedEmailModeLogo/>
 	<redcap:RepeatingInstrumentsAndEvents>
 		<redcap:RepeatingEvent redcap:UniqueEventName="quotidien_arm_1"/>
 		<redcap:RepeatingEvent redcap:UniqueEventName="suivi_arm_1"/>
 		<redcap:RepeatingInstruments>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="medicament" redcap:CustomLabel=""/>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="pathogenes" redcap:CustomLabel=""/>
-			<redcap:RepeatingInstrument redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:RepeatInstrument="fotografias" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="resume_medicaments_arm_1" redcap:RepeatInstrument="medicament" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="resume_medicaments_arm_1" redcap:RepeatInstrument="pathogenes" redcap:CustomLabel=""/>
+			<redcap:RepeatingInstrument redcap:UniqueEventName="resume_medicaments_arm_1" redcap:RepeatInstrument="fotografias" redcap:CustomLabel=""/>
 		</redcap:RepeatingInstruments>
 	</redcap:RepeatingInstrumentsAndEvents>
 </GlobalVariables>
 <MetaDataVersion OID="Metadata.Testfrenchxml_2025-10-21_1301" Name="test_frenchxml" redcap:RecordIdField="subjid">
 	<Protocol>
-		<StudyEventRef StudyEventOID="Event.valuation_initiale_arm_1" OrderNumber="1" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.presentation_arm_1" OrderNumber="1" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.quotidien_arm_1" OrderNumber="2" Mandatory="No"/>
-		<StudyEventRef StudyEventOID="Event.rsum__mdicaments_arm_1" OrderNumber="3" Mandatory="No"/>
-		<StudyEventRef StudyEventOID="Event.issue__fin_de_ltud_arm_1" OrderNumber="4" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.resume_medicaments_arm_1" OrderNumber="3" Mandatory="No"/>
+		<StudyEventRef StudyEventOID="Event.issue_fin_etude_arm_1" OrderNumber="4" Mandatory="No"/>
 		<StudyEventRef StudyEventOID="Event.suivi_arm_1" OrderNumber="5" Mandatory="No"/>
 	</Protocol>
-	<StudyEventDef OID="Event.valuation_initiale_arm_1" Name="Évaluation initiale / Admissio" Type="Common" Repeating="No" redcap:EventName="Évaluation initiale / Admissio" redcap:CustomEventLabel="" redcap:UniqueEventName="valuation_initiale_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.presentation_arm_1" Name="Presentation" Type="Common" Repeating="No" redcap:EventName="Presentation" redcap:CustomEventLabel="" redcap:UniqueEventName="presentation_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="2" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.presentation" OrderNumber="1" Mandatory="No" redcap:FormName="presentation"/>
 		<FormRef FormOID="Form.quotidien" OrderNumber="2" Mandatory="No" redcap:FormName="quotidien"/>
 	</StudyEventDef>
 	<StudyEventDef OID="Event.quotidien_arm_1" Name="Quotidien" Type="Common" Repeating="Yes" redcap:EventName="Quotidien" redcap:CustomEventLabel="" redcap:UniqueEventName="quotidien_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="3" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.quotidien" OrderNumber="1" Mandatory="No" redcap:FormName="quotidien"/>
 	</StudyEventDef>
-	<StudyEventDef OID="Event.rsum__mdicaments_arm_1" Name="Résumé : Médicaments / Examens" Type="Common" Repeating="No" redcap:EventName="Résumé : Médicaments / Examens" redcap:CustomEventLabel="" redcap:UniqueEventName="rsum__mdicaments_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="4" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.resume_medicaments_arm_1" Name="Resume medicaments" Type="Common" Repeating="No" redcap:EventName="Resume medicaments" redcap:CustomEventLabel="" redcap:UniqueEventName="resume_medicaments_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="4" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.medicament" OrderNumber="1" Mandatory="No" redcap:FormName="medicament"/>
 		<FormRef FormOID="Form.pathogenes" OrderNumber="2" Mandatory="No" redcap:FormName="pathogenes"/>
 		<FormRef FormOID="Form.fotografias" OrderNumber="3" Mandatory="No" redcap:FormName="fotografias"/>
 	</StudyEventDef>
-	<StudyEventDef OID="Event.issue__fin_de_ltud_arm_1" Name="Issue / Fin de l&#039;étude" Type="Common" Repeating="No" redcap:EventName="Issue / Fin de l&#039;étude" redcap:CustomEventLabel="" redcap:UniqueEventName="issue__fin_de_ltud_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="5" redcap:OffsetMin="0" redcap:OffsetMax="0">
+	<StudyEventDef OID="Event.issue_fin_etude_arm_1" Name="Issue fin etude" Type="Common" Repeating="No" redcap:EventName="Issue fin etude" redcap:CustomEventLabel="" redcap:UniqueEventName="issue_fin_etude_arm_1" redcap:ArmNum="1" redcap:ArmName="Arm 1" redcap:DayOffset="5" redcap:OffsetMin="0" redcap:OffsetMax="0">
 		<FormRef FormOID="Form.resultat" OrderNumber="1" Mandatory="No" redcap:FormName="resultat"/>
 		<FormRef FormOID="Form.retrait" OrderNumber="2" Mandatory="No" redcap:FormName="retrait"/>
 	</StudyEventDef>
